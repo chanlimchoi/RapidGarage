@@ -6,7 +6,7 @@ export default class Header extends React.Component{
   render(){
     return (
       <div>
-      <h1> RapidGarage</h1>
+            <h1> RapidGarage</h1>
       <NavigationBar />
       </div>
     );

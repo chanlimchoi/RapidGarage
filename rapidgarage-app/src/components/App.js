@@ -10,8 +10,8 @@ class App extends Component {
     return (
       <div>
         <Header />
-        <div class="container-fluid">
-          <div class="row">
+        <div className="container-fluid">
+          <div className="row">
           <Posts />
           <Profile />
         </div>

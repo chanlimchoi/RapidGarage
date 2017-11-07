@@ -4,7 +4,7 @@ export default class Footer extends Component {
 
   render() {
     return (
-        <footer class="container-fluid text-center">footer </footer>
+        <footer class="container-fluid text-center">footer reserved</footer>
     );
   }
 }
