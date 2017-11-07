@@ -4,6 +4,9 @@ import Footer from './components/Footer';
 import Profile from './components/Profile';
 import PostList from './components/PostList';
 import Post from './post/Post';
+import Login from './user/Login';
+import SignUp from './user/SignUp';
+
 
 class App extends Component {
 
@@ -13,8 +16,7 @@ class App extends Component {
         <Header />
         <div className="container-fluid">
           <div className="row">
-          <PostList />
-          <Profile />
+            <SignUp />
         </div>
         </div>
         <Footer />

@@ -1,9 +1,16 @@
 import React from 'react';
+import Post from '../post/Post'
 
 export default class PostList extends React.Component{
+  constructor(){
+    super();
+    this.state = {
+      user: ""
+    };
+  }
   render(){
     return (
-          <div class="col-sm-9">
+          <div>
             <h4><small>RECENT POSTS</small></h4>
 
             <h2>Sales</h2>
