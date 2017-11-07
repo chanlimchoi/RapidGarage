@@ -1,8 +1,9 @@
 import React, {Component } from 'react';
-import Header from './Header';
-import Footer from './Footer';
-import Profile from './Profile';
-import Posts from './Posts';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Profile from './components/Profile';
+import PostList from './components/PostList';
+import Post from './post/Post';
 
 class App extends Component {
 
@@ -12,7 +13,7 @@ class App extends Component {
         <Header />
         <div className="container-fluid">
           <div className="row">
-          <Posts />
+          <PostList />
           <Profile />
         </div>
         </div>

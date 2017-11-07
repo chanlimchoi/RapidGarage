@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default class Posts extends React.Component{
+export default class PostList extends React.Component{
   render(){
     return (
           <div class="col-sm-9">
