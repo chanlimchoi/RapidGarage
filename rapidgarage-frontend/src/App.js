@@ -16,7 +16,8 @@ class App extends Component {
         <Header />
         <div className="container-fluid">
           <div className="row">
-            <SignUp />
+            <PostList />
+            <Profile />
         </div>
         </div>
         <Footer />
