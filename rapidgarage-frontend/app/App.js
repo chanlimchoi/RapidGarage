@@ -12,7 +12,7 @@ class App extends Component {
   render() {
     return (
       <div>
-        <div className="row">
+        <div>
             <h1> RapidGarage</h1>
               <nav className = "navbar navbar-inverse">
               <div className="container-fluid">
@@ -36,7 +36,8 @@ class App extends Component {
                 </div>
             </div>
             </nav>
-
+            <div className="container-fluid">
+            <div className="row content">
             <Switch>
               <Route exact path='/' component={PostList} />
               <Route path='/signup' component={SignUp} />
@@ -44,6 +45,8 @@ class App extends Component {
               <Route path='/newpost' component={NewPost} />
             </Switch>
             <Profile />
+            </div>
+            </div>
             </div>
           <br />
         <Footer />
