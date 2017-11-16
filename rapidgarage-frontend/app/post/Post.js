@@ -2,8 +2,8 @@ import React, {Component} from 'react';
 
 
 export default class Post extends Component{
-    constructor(){
-      super();
+    constructor(props){
+      super(props);
       this.state = {
       title:"RapidGarage",
       text: "RapidGarage sale!!! ",

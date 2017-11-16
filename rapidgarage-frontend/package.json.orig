@@ -15,6 +15,8 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
+<<<<<<< HEAD
+=======
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
@@ -27,5 +29,6 @@
     "webpack": "^3.8.1",
     "webpack-dev-server": "^2.9.4"
   },
+>>>>>>> 217ce72a212acfea4f013b351640b4b7bad5de94
   "proxy": "http://localhost:8000"
 }

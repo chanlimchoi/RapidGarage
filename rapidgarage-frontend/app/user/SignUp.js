@@ -5,7 +5,7 @@ const spanstyle = {
     width: '100px',
 };
 
-export default class SignUp extends React.Component{
+class SignUp extends React.Component{
   constructor(props){
     super(props);
     this.state = {
@@ -64,3 +64,5 @@ export default class SignUp extends React.Component{
       );
   }
 }
+
+export default SignUp;
