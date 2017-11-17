@@ -3,6 +3,35 @@ const models = require('../models');
 
 const router = express.Router();
 
+// here
+
+
+router.get('/allPosts', (req, res) => {
+  models.Post.findAll()
+    .then((allPosts) => {
+      res.json(allPosts)
+    })
+    .catch((err) => {
+      console.log('Failure Get');
+    res.json({
+    msg: "failed GET to '/' route"
+     });
+    })
+});
+
+router.get('/one', (req, res) => {
+  models.Post.findById(2)
+    .then((allPosts) => {
+      res.json(allPosts)
+    })
+    .catch((err) => {
+      console.log('Failure Get');
+    res.json({
+    msg: "failed GET to '/' route"
+     });
+    })
+});
+// here
 
 router.get('/', (req, res) => {
   res.json({

@@ -1,5 +1,6 @@
 import React from 'react';
-import Post from '../post/Post'
+import Post from '../post/Post';
+import Map from './Map';
 
 function resultList(props){
       return (
@@ -60,7 +61,8 @@ class PostList extends React.Component{
 
   render(){
     return (
-          <div className="col-sm-9 well">
+        <div>
+          <div className="col-sm-4 well">
           <form onSubmit= {this.searchUpdate}>
             <input type="text" style={{width:300}} value={this.state.search} onChange={this.handleChange} placeholder="ZipCode or city" />
             <input type="submit" value="Search" />
@@ -69,7 +71,11 @@ class PostList extends React.Component{
             <h5><small>RECENT POSTS</small></h5>
               {resultList(this.state.searchResult)}
           </div>
-    </div>
+          </div>
+           <div className="col-sm-5 well">
+            <Map />
+           </div>
+          </div>
     );
   }
 }
