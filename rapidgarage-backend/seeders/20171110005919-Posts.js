@@ -13,54 +13,60 @@ module.exports = {
       }], {});
     */
   return queryInterface.bulkInsert('Posts', [{
-        address: '485 10th Ave',
+        street: '485 10th Ave',
         city: 'New York',
         zipCode: '10018',
+        title: 'Great sales by John',
         description: 'The first user',
         userId:'1',
          createdAt: new Date(),
     updatedAt: new Date()
       }, 
   {
-        address: '431 W 37th St',
+        street: '431 W 37th St',
         city: 'New York',
         zipCode: '10018',
+        title: 'Great sales by Jane',
         description: 'The second user',
         userId:'2',
          createdAt: new Date(),
     updatedAt: new Date()
       },
   {
-        address: '225 W 37th St',
+        street: '225 W 37th St',
         city: 'New York',
         zipCode: '10018',
+        title: 'Great sales by Troy',
         description: 'The third user',
         userId:'3',
          createdAt: new Date(),
     updatedAt: new Date()
       },
   {
-         address: '1564 1st Avenue',
+         street: '1564 1st Avenue',
         city: 'New York',
         zipCode: '10028',
+        title: 'Great sales by Tiger',
         description: 'The fourth user',
         userId:'4',
          createdAt: new Date(),
     updatedAt: new Date()
       },
   {
-         address: '1556 2nd Ave',
+         street: '1556 2nd Ave',
         city: 'New York',
         zipCode: '10028',
+        title: 'Great sales by Dragon',
         description: 'The fifth user',
         userId:'5',
          createdAt: new Date(),
     updatedAt: new Date()
       },
   {
-        address: '2245 Broadway',
+        street: '2245 Broadway',
         city: 'New York',
         zipCode: '10024',
+        title: 'Great sales by West',
         description: 'The sixth user',
         userId:'6',
          createdAt: new Date(),
