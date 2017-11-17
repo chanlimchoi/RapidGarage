@@ -43,6 +43,7 @@ class App extends Component {
               <Route path='/signup' component={SignUp} />
               <Route path='/login' component={Login} />
               <Route path='/newpost' component={NewPost} />
+              <Route path='/post/:id' component={NewPost} />
             </Switch>
             <Profile />
             <Link to="/newpost"><button type="submit" className="btn btn-info">Create Post</button></Link>
