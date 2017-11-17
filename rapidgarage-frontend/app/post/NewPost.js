@@ -1,6 +1,4 @@
 import React, {Component} from 'react'
-import {Taggle} from 'taggle'
-
 
 class NewPost extends Component{
     constructor(props){
@@ -13,11 +11,11 @@ class NewPost extends Component{
       zipCode: "10001"
     };
     //new Taggle('example1');
-  
+
   }
     render(){
       return (
-          <div className="col-lg-8" >
+          <div className="col-sm-9" >
             <form>
               <div className="input-group">
                 <span className="input-group-addon">Title:</span>
@@ -47,7 +45,7 @@ class NewPost extends Component{
             <br />
               <button type="post" className="btn btn-info">Post</button>
           </div>
-      )  
+      )
     }
 
 }
