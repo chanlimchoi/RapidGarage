@@ -24,6 +24,9 @@ class App extends Component {
                     <li>
                       <Link to="/about">About</Link>
                     </li>
+                    <li>
+                      <Link to="/NewPost">New Post</Link>
+                    </li>
                   </ul>
                   <ul className="nav navbar-nav navbar-right">
                     <li>

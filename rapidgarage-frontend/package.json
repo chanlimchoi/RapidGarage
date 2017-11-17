@@ -7,7 +7,8 @@
     "react": "^16.0.0",
     "react-country-region-selector": "^1.2.2",
     "react-dom": "^16.0.0",
-    "react-scripts": "1.0.16"
+    "react-scripts": "1.0.16",
+    "taggle": "^1.12.0"
   },
   "scripts": {
     "start": "webpack-dev-server",
