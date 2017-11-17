@@ -8,7 +8,6 @@ class Profile extends React.Component{
            <div className="well">
              <p><a href="/userprofile">My Profile</a></p>
            </div>
-           <button> Create Post</button>
          </div>
     );
   }
