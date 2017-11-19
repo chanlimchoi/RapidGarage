@@ -27,6 +27,5 @@
     "react-router-native": "^4.2.0",
     "webpack": "^3.8.1",
     "webpack-dev-server": "^2.9.4"
-  },
-  "proxy": "http://localhost:8000"
+  }
 }

@@ -9,11 +9,12 @@ router.post('/', (req, res) => {
     email: req.body.email,
     password: req.body.password,
   }).then((user) => {
-    req.login(user, () =>
-      res.redirect('')
-    );
+    res.send('heyyy')
+    // req.login(user, () =>
+    //   res.send('went through')
+    // );
   }).catch(() => {
-    res.render('');
+      res.send('error')
   });
 });
 
