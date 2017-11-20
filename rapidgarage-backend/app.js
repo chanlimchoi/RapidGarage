@@ -1,5 +1,7 @@
 const bodyParser = require('body-parser');
 const express = require('express');
+const expressSession = require('express-session');
+const passport = require('./middlewares/authentication');
 const models = require('./models');
 
 const PORT = process.env.PORT || 8000;
@@ -15,6 +17,10 @@ app.use(function(req, res, next) {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Enable sessions & passport
+app.use(expressSession(({ secret: 'keyboard cat', resave: false, saveUninitialized: true })));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Uncomment the following if you want to serve up static assets.
 // (You must create the public folder)
