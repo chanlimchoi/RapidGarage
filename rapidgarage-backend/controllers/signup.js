@@ -9,10 +9,9 @@ router.post('/', (req, res) => {
     email: req.body.email,
     password: req.body.password,
   }).then((user) => {
-    res.send('heyyy')
-    // req.login(user, () =>
-    //   res.send('went through')
-    // );
+    req.login(user, () =>
+      res.send('signup sucess')
+    );
   }).catch(() => {
       res.send('error')
   });
