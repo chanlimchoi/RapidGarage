@@ -24,12 +24,15 @@ class App extends Component {
                     <li>
                       <Link to="/about">About</Link>                 
                     </li>
+<<<<<<< HEAD
                     <li>
                       <Link to="/NewPost">New Post</Link>
                     </li>
                     <li>
-                      <Link to="/Profile">Profile</Link>
+                      <Link to="/Profile"><span className="glyphicon glyphicon-user"></span>Profile</Link>
                     </li>
+=======
+>>>>>>> bcc6017b237338ba7f49e88eb1e95febee6b4872
                   </ul>
                   <ul className="nav navbar-nav navbar-right">
                     <li>
@@ -48,9 +51,9 @@ class App extends Component {
               <Route path='/signup' component={SignUp} />
               <Route path='/login' component={Login} />
               <Route path='/newpost' component={NewPost} />
-              <Route path='/profile' component={Profile} />
             </Switch>
             </div>
+            <Link to="/Profile"><span className="glyphicon glyphicon-user"></span>Profile</Link>
             <Footer />
           <br />
     </div>

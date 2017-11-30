@@ -1,4 +1,5 @@
 import React, {Component} from 'react'
+import Taggle from 'taggle'
 
 class NewPost extends Component{
     constructor(props){
@@ -10,10 +11,9 @@ class NewPost extends Component{
       city: "New York",
       zipCode: "10001"
     };
-    //new Taggle('example1');
-
   }
     render(){
+      console.log(Taggle)
       return (
           <div className="col-sm-9" >
             <form>
