@@ -13,7 +13,7 @@ class App extends Component {
     return (
       <div>
         <div>
-            <h1>RapidGarage</h1>
+            <h1> RapidGarage</h1>
               <nav className = "navbar navbar-inverse">
               <div className="container-fluid">
                 <div className="collapse navbar-collapse" id="myNavbar">
@@ -22,10 +22,13 @@ class App extends Component {
                       <Link to="/">Home</Link>
                     </li>
                     <li>
-                      <Link to="/about">About</Link>
+                      <Link to="/about">About</Link>                 
                     </li>
                     <li>
                       <Link to="/NewPost">New Post</Link>
+                    </li>
+                    <li>
+                      <Link to="/Profile"><span className="glyphicon glyphicon-user"></span>Profile</Link>
                     </li>
                   </ul>
                   <ul className="nav navbar-nav navbar-right">
@@ -39,22 +42,17 @@ class App extends Component {
                 </div>
             </div>
             </nav>
-            <div className="container-fluid">
-            <div className="row content">
+
             <Switch>
               <Route exact path='/' component={PostList} />
               <Route path='/signup' component={SignUp} />
               <Route path='/login' component={Login} />
               <Route path='/newpost' component={NewPost} />
-              <Route path='/post/:id' component={NewPost} />
             </Switch>
-            <Profile />
-            <Link to="/newpost"><button type="submit" className="btn btn-info">Create Post</button></Link>
             </div>
-            </div>
-            </div>
+            <Link to="/Profile"><span className="glyphicon glyphicon-user"></span>Profile</Link>
+            <Footer />
           <br />
-        <Footer />
     </div>
     );
   }
