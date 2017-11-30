@@ -1,5 +1,9 @@
 import React, {Component} from 'react'
+<<<<<<< HEAD
 import Taggle from 'taggle'
+
+=======
+>>>>>>> bcc6017b237338ba7f49e88eb1e95febee6b4872
 
 class NewPost extends Component{
     constructor(props){
@@ -11,6 +15,11 @@ class NewPost extends Component{
       city: "New York",
       zipCode: "10001"
     };
+<<<<<<< HEAD
+=======
+    //new Taggle('example1');
+
+>>>>>>> bcc6017b237338ba7f49e88eb1e95febee6b4872
   }
     render(){
       console.log(Taggle)

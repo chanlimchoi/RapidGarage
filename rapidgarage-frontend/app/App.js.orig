@@ -24,9 +24,15 @@ class App extends Component {
                     <li>
                       <Link to="/about">About</Link>                 
                     </li>
+<<<<<<< HEAD
+                    <li>
+                      <Link to="/NewPost">New Post</Link>
+                    </li>
                     <li>
                       <Link to="/Profile"><span className="glyphicon glyphicon-user"></span>Profile</Link>
                     </li>
+=======
+>>>>>>> bcc6017b237338ba7f49e88eb1e95febee6b4872
                   </ul>
                   <ul className="nav navbar-nav navbar-right">
                     <li>
