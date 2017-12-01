@@ -15,6 +15,7 @@ module.exports = {
   return queryInterface.bulkInsert('Posts', [{
         street: '485 10th Ave',
         city: 'New York',
+        state: 'NY',
         zipCode: '10018',
         title: 'Great sales by John',
         description: 'The first user',
@@ -25,6 +26,7 @@ module.exports = {
   {
         street: '431 W 37th St',
         city: 'New York',
+         state: 'NY',
         zipCode: '10018',
         title: 'Great sales by Jane',
         description: 'The second user',
@@ -35,6 +37,7 @@ module.exports = {
   {
         street: '225 W 37th St',
         city: 'New York',
+         state: 'NY',
         zipCode: '10018',
         title: 'Great sales by Troy',
         description: 'The third user',
@@ -45,6 +48,7 @@ module.exports = {
   {
          street: '1564 1st Avenue',
         city: 'New York',
+         state: 'NY',
         zipCode: '10028',
         title: 'Great sales by Tiger',
         description: 'The fourth user',
@@ -55,6 +59,7 @@ module.exports = {
   {
          street: '1556 2nd Ave',
         city: 'New York',
+         state: 'NY',
         zipCode: '10028',
         title: 'Great sales by Dragon',
         description: 'The fifth user',
@@ -65,6 +70,7 @@ module.exports = {
   {
         street: '2245 Broadway',
         city: 'New York',
+         state: 'NY',
         zipCode: '10024',
         title: 'Great sales by West',
         description: 'The sixth user',

@@ -3,6 +3,7 @@ module.exports = (sequelize, DataTypes) => {
   var Post = sequelize.define('Post', {
     street: DataTypes.STRING,
     city: DataTypes.STRING,
+    state: DataTypes.STRING,
     zipCode: DataTypes.STRING,
     title: DataTypes.STRING,
     description: DataTypes.TEXT,

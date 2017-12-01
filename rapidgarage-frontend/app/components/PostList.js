@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import Post from '../post/Post';
 import Map from './Map';
 
@@ -33,14 +33,31 @@ class PostList extends React.Component{
   constructor(props){
     super(props);
     this.state = {
-      searchResult: [{title:'sale1', address: '123 main Street', city: 'New York', states: 'New York',
-                  postDate:'8/21/2017', usr:'Isale', startDate:'8/21/2017', endDate:'8/21/2017'},
-                    {title:'sale2', address: '321 5th Ave', city: 'New York', state: 'New York',
-                    postDate:'8/22/2017', usr:'Isale2', startDate:'8/23/2017', endDate:'8/23/2017'}],
+      searchResult: '',
       search:'',
     };
     this.searchUpdate = this.searchUpdate.bind(this);
     this.handleChange = this.handleChange.bind(this);
+    
+  }
+componentDidMount() {
+    fetch('http://localhost:8000/AllPosts', {
+      method: 'get', 
+      header: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then((response) => {
+      console.log('response:', response)
+      return response.json()
+    })
+    .then((data) => {
+      let result = data;
+      console.log('data:', data)
+      this.setState({searchResult: data})
+    })
+
   }
 
   handleChange(event){
@@ -60,6 +77,7 @@ class PostList extends React.Component{
 
 
   render(){
+    console.log('searchResult: ',this.state.searchResult);
     return (
         <div>
           <div className="col-sm-4 well">
@@ -69,7 +87,19 @@ class PostList extends React.Component{
           </ form>
           <div className="panel-group">
             <h5><small>RECENT POSTS</small></h5>
-              {resultList(this.state.searchResult)}
+              {
+          (this.state.searchResult) ?
+          (this.state.searchResult.map((post,key)=>{
+            return (
+              <li key={key}>
+                <p>{post.city} {post.street} {post.zipCode} {post.state} {post.startDate} {post.endDate}</p>
+              </li>
+            )
+          })
+          ): <h1>No data</h1>
+        }
+
+            {/* {resultList(this.state.searchResult)} */}
           </div>
           </div>
            <div className="col-sm-5 well">
