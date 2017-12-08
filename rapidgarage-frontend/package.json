@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "express": "^4.16.2",
+    "history": "^4.7.2",
     "react": "^16.0.0",
     "react-country-region-selector": "^1.2.2",
     "react-dom": "^16.0.0",

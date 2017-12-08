@@ -4,28 +4,18 @@ import Map from './Map';
 
 function resultList(props){
       return (
-        <div>
+        
     <div className="panel-info">
       <div className="panel-heading">
-      <span><h4>{props[0].title} </h4><span className="glyphicon glyphicon-time"></span> Post by {props[0].usr}, post on {props[0].postDate} </span>
+      <span><h4>{props.title} </h4><span className="glyphicon glyphicon-time"></span> Post by {props.userId}, post on {props.updatedAt} </span>
       </div>
       <div className="panel-body">
         <h5><span className="label label-danger">Devices</span> <span className="label label-primary">Furniture</span></h5>
-        Location: {props[0].address}, {props[0].city}, {props[0].states} <br/>
-        <h5>start on {props[0].startDate} end on {props[0].endDate}</h5>
+        Location: {props.street}, {props.city}, {props.state} <br/>
+        <h5>start on {props.startDate} end on {props.endDate}</h5>
       </div>
     </div>
-    <div className="panel-info">
-      <div className="panel-heading">
-      <span><h4>{props[1].title} </h4><span className="glyphicon glyphicon-time"></span> Post by {props[1].usr}, post on {props[1].postDate} </span>
-      </div>
-      <div className="panel-body">
-        <h5><span className="label label-danger">Devices</span> <span className="label label-primary">Furniture</span></h5>
-        Location: {props[1].address}, {props[1].city}, {props[1].states} <br/>
-        <h5>start on {props[1].startDate} end on {props[1].endDate}</h5>
-      </div>
-    </div>
-    </div>
+    
   );
 }
 
@@ -94,6 +84,7 @@ componentDidMount() {
               <li key={key}>
                 <p>{post.city} {post.street} {post.zipCode} {post.state} {post.startDate} {post.endDate}</p>
               </li>
+
             )
           })
           ): <h1>No data</h1>

@@ -10,6 +10,9 @@ import NewPost from './post/NewPost';
 
 class App extends Component {
   render() {
+    console.log('this.props:', this.props)
+    console.log('thisSession', sessionStorage.getItem('loggedIn'))
+    console.log('sessionItem', sessionStorage.getItem('userID'))
     return (
       <div>
         <div>
