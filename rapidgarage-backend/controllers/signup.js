@@ -10,7 +10,7 @@ router.post('/', (req, res) => {
     password: req.body.password,
   }).then((user) => {
     req.login(user, () =>
-      res.send('signup sucess')
+      res.send(user)
     );
   }).catch(() => {
       res.send('error')
