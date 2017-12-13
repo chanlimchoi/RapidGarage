@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import PostList from './components/PostList';
 import Post from './post/Post';
 import Login from './user/Login';
+import Logout from './user/Logout';
 import SignUp from './user/SignUp';
 import NewPost from './post/NewPost';
 
@@ -35,7 +36,7 @@ sessionStorage.removeItem('userID');
 console.log('isLoggedIn', isLoggedIn)
     let button = null;
     if (isLoggedIn) {
-     button = <li><a href="" onClick={this.logout}>Logout</a></li>;
+     button = <li><Link to="/logout"><span className="glyphicon glyphicon-log-in"></span>Logout</Link></li>;
     } else {
        button = <li><Link to="/login"><span className="glyphicon glyphicon-log-in"></span>Login</Link></li>;
     }
@@ -79,6 +80,7 @@ console.log('isLoggedIn', isLoggedIn)
               <Route exact path='/' component={PostList} />
               <Route path='/signup' component={SignUp} />
               <Route path='/login' component={Login} />
+              <Route path='/logout' component={Logout} />
               <Route path='/newpost' component={NewPost} />
               <Route path='/profile' component={Profile} />
             </Switch>
