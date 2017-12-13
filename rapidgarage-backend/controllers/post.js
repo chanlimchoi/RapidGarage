@@ -17,6 +17,8 @@ router.post('/', (req, res) => {
   });
 });
 
+
+
 router.get('/all/:id?', (req, res) => {
   const id = req.params.id ? req.params.id : 10021;
   Post.findAll()

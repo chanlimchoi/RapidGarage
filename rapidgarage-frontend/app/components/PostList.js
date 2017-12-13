@@ -31,7 +31,7 @@ class PostList extends React.Component{
     
   }
 componentDidMount() {
-    fetch('http://localhost:8000/AllPosts', {
+    fetch('http://localhost:8000/allPosts', {
       method: 'get', 
       header: {
         'Accept': 'application/json',

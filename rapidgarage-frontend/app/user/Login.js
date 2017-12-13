@@ -34,8 +34,9 @@ export default class Login extends React.Component{
         return response.json();
     })
     .then((data) => {
+      console.log('what data: ', data)
       this.setState({
-        currentUser: data,
+       // currentUser: data,
         redirectToNewPage: true,
       })
       sessionStorage.setItem('loggedIn', true);
@@ -53,7 +54,7 @@ export default class Login extends React.Component{
        return <Redirect to="../"/>;
     
     }
-    console.log('this.state', this.state)
+   // console.log('this.state', this.state)
     console.log('sessionItem', sessionStorage.getItem('loggedIn'))
     console.log('sessionItem', sessionStorage.getItem('userID'))
     return (
