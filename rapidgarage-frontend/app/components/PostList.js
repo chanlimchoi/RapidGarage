@@ -58,11 +58,22 @@ componentDidMount() {
   searchUpdate(event){
     const val = event.target.value;
 
-    this.setState({
-      search: val
+     fetch('http://localhost:8000/:id', {
+      method: 'get', 
+      header: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
     })
-  alert('Search ' + this.state.search);
-  alert('Search ' + this.state.searchResult[0].title + ' ' + this.state.searchResult[0].postDate);
+    .then((response) => {
+      console.log('response:', response)
+      return response.json()
+    })
+    .then((data) => {
+      let result = data;
+      console.log('data:', data)
+      this.setState({searchResult: data})
+    })
   }
 
 

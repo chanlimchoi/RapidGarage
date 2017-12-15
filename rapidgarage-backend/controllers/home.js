@@ -30,6 +30,19 @@ router.get('/one', (req, res) => {
      });
     })
 });
+
+router.get('/:id', (req, res) => {
+  Post.findAll(req.params.id)
+    .then((post) => {
+      res.json(post)
+    })
+    .catch((err) => {
+      console.log('Failure Get');
+      res.json({
+        msg: "failed GET to '/' route"
+      });
+    })
+});
 // here
 
 

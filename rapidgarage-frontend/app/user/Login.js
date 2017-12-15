@@ -1,6 +1,6 @@
 import React from 'react';
 import { Redirect } from 'react-router';
-
+import { Link, withRouter } from "react-router-dom";
 
 
 
@@ -39,11 +39,17 @@ export default class Login extends React.Component{
        // currentUser: data,
         redirectToNewPage: true,
       })
-      sessionStorage.setItem('loggedIn', true);
-      sessionStorage.setItem('userID', data.user.id);
 
-     
-    })
+        sessionStorage.setItem('loggedIn', true);
+        sessionStorage.setItem('userID', data.user.id);
+        this.setState({currentUser: data})
+      }).then(() =>
+      {
+        this.props.history.push("../");
+      }
+
+    )
+   
     
    
   }
@@ -51,12 +57,14 @@ export default class Login extends React.Component{
 
   render() {
     if(this.state.redirectToNewPage) {
-       return <Redirect to="../"/>;
+     
+      // return <Redirect to="../" push />;
     
     }
    // console.log('this.state', this.state)
     console.log('sessionItem', sessionStorage.getItem('loggedIn'))
     console.log('sessionItem', sessionStorage.getItem('userID'))
+    console.log('currentUser ', this.state.currentUser)
     return (
       <div className="col-lg-4 col-lg-offset-4">
         <form onSubmit={this.handleSubmit}>

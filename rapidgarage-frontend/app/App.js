@@ -16,21 +16,14 @@ class App extends Component {
         message: '',
         isLoggedIn: sessionStorage.getItem('loggedIn') === 'true'
       };
-      this.logout = this.logout.bind(this);
+      
   }
 
-  logout() {
-sessionStorage.removeItem('loggedIn');
-sessionStorage.removeItem('userID');
-    //here update the state variable
 
-    this.setState({
-      isLoggedIn: false
-    });
-  }
+ 
   render() {
     console.log('this.props:', this.props)
-    console.log('thisSession', sessionStorage.getItem('loggedIn'))
+    console.log('thisSessionFrontPage', sessionStorage.getItem('loggedIn'))
     console.log('sessionItem', sessionStorage.getItem('userID'))
     let isLoggedIn = sessionStorage.getItem('loggedIn');
 console.log('isLoggedIn', isLoggedIn)
