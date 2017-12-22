@@ -18,10 +18,14 @@ router.get('/allPosts', (req, res) => {
     })
 });
 
-router.get('/one', (req, res) => {
-  models.Post.findById(2)
-    .then((allPosts) => {
-      res.json(allPosts)
+router.get('/profile/:id', (req, res) => {
+  models.User.findOne({
+    where: {  
+      id: req.params.id,
+    }
+  }).then((allPosts) => {
+   
+      res.json(allPosts);
     })
     .catch((err) => {
       console.log('Failure Get');
@@ -32,9 +36,49 @@ router.get('/one', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  Post.findAll(req.params.id)
+  models.Post.findAll(req.params.id)
     .then((post) => {
       res.json(post)
+    })
+    .catch((err) => {
+      console.log('Failure Get');
+      res.json({
+        msg: "failed GET to '/' route"
+      });
+    })
+});
+
+router.get('/all/:zipCode', (req, res) => {
+  const id = req.params.zipCode ? req.params.zipCode : 10021;
+  models.Post.findAll({
+    where: {
+      zipCode: req.params.zipCode,
+    }
+  }).then((allPosts) => {
+      // allPosts.sort((a, b) => {
+      //   return Math.abs(parseInt(a.zipCode) - id) - Math.abs(parseInt(b.zipCode) - id);
+      // });
+      res.json(allPosts);
+    })
+    .catch((err) => {
+      console.log('Failure Get');
+      res.json({
+        msg: "failed GET to '/' route"
+      });
+    })
+});
+
+
+
+router.get('/allbyuserId/:userId', (req, res) => {
+  
+  models.Post.findAll({
+    where: {  
+      userId: req.params.userId,
+    }
+  }).then((allPosts) => {
+   
+      res.json(allPosts);
     })
     .catch((err) => {
       console.log('Failure Get');

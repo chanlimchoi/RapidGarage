@@ -56,9 +56,10 @@ componentDidMount() {
     });
   }
   searchUpdate(event){
-    const val = event.target.value;
-
-     fetch('http://localhost:8000/:id', {
+    event.preventDefault();
+    const val = this.state.search;
+console.log("search value: " + val);
+     fetch('http://localhost:8000/all/'+val, {
       method: 'get', 
       header: {
         'Accept': 'application/json',
@@ -83,7 +84,7 @@ componentDidMount() {
         <div>
           <div className="col-sm-4 well">
           <form onSubmit= {this.searchUpdate}>
-            <input type="text" style={{width:300}} value={this.state.search} onChange={this.handleChange} placeholder="ZipCode or city" />
+            <input type="text" style={{width:300}} value={this.state.search} onChange={this.handleChange} placeholder="ZipCode only" />
             <input type="submit" value="Search" />
           </ form>
           <div className="panel-group">
@@ -93,7 +94,8 @@ componentDidMount() {
           (this.state.searchResult.map((post,key)=>{
             return (
               <li key={key}>
-                <p>{post.city} {post.street} {post.zipCode} {post.state} {post.startDate} {post.endDate}</p>
+                
+  { (resultList(post))} 
               </li>
 
             )
@@ -101,7 +103,7 @@ componentDidMount() {
           ): <h1>No data</h1>
         }
 
-            {/* {resultList(this.state.searchResult)} */}
+           
           </div>
           </div>
            <div className="col-sm-5 well">
