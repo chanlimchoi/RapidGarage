@@ -1,5 +1,6 @@
 import React, {Component} from 'react'
 import Taggle from 'taggle'
+import { Redirect } from 'react-router';
 
 class NewPost extends Component{
     constructor(props){
@@ -9,41 +10,82 @@ class NewPost extends Component{
       text: "We're selling a lot of electronics, clothes, and house decor!",
       address: "1234 Fulton St. Apt 10",
       city: "New York",
-      zipCode: "10001"
+      zipCode: "10001",
+      created: false,
+      error: '',
     };
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
+
+    handleSubmit(e) {
+      e.preventDefault();
+
+      const userId = sessionStorage.getItem('userID');
+      if (!userId) {
+        this.setState({ error: 'Please log in before creating a post.' });
+        return;
+      }
+
+      fetch('/api/post', {
+        method: 'POST',
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          userId: Number(userId),
+          title: this.refs.title.value,
+          street: this.refs.address.value,
+          city: this.refs.city.value,
+          zipCode: this.refs.zipcode.value,
+          description: this.refs.description.value,
+        })
+      })
+      .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          this.setState({ error: (data && data.msg) || 'Could not create the post.' });
+          return;
+        }
+        this.setState({ created: true, error: '' });
+      })
+      .catch(() => {
+        this.setState({ error: 'Unable to reach the server. Please try again.' });
+      });
+    }
+
     render(){
       console.log(Taggle)
+      if (this.state.created) {
+        return <Redirect to="/" />;
+      }
       return (
           <div className="col-sm-9" >
-            <form>
+            <form onSubmit={this.handleSubmit}>
               <div className="input-group">
                 <span className="input-group-addon">Title:</span>
-                <input className="form-control" id="title" type="text" name="title" required autofocus/>
+                <input className="form-control" id="title" type="text" name="title" ref="title" defaultValue={this.state.title} required autoFocus/>
               </div>
               <br />
               <div className="input-group">
                 <span className="input-group-addon">Address:</span>
-                <input className="form-control" id="address" type="text" name="address" required />
+                <input className="form-control" id="address" type="text" name="address" ref="address" defaultValue={this.state.address} required />
               </div>
               <div className="input-group">
                 <span className="input-group-addon">City:</span>
-                <input className="form-control" id="city" type="text" name="city" required />
+                <input className="form-control" id="city" type="text" name="city" ref="city" defaultValue={this.state.city} required />
               </div>
               <div className="input-group">
                 <span className="input-group-addon">ZipCode:</span>
-                <input className="form-control" id="zipcode" type="text" name="zipcode" required />
+                <input className="form-control" id="zipcode" type="text" name="zipcode" ref="zipcode" defaultValue={this.state.zipCode} required />
               </div>
               <br />
               <div className="input-group">
                 <span className="input-group-addon">Description:</span>
-                <textarea class="form-control" rows="8" id="description"></textarea>
+                <textarea className="form-control" rows="8" id="description" ref="description" defaultValue={this.state.text}></textarea>
               </div>
               <div id="example1"></div>
               <p id="log"></p>
+              { this.state.error ? <p className="text-danger">{this.state.error}</p> : null }
+              <button type="submit" className="btn btn-info">Post</button>
             </form>
-            <br />
-              <button type="post" className="btn btn-info">Post</button>
           </div>
       )
     }

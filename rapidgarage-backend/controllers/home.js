@@ -5,6 +5,12 @@ const router = express.Router();
 // here
 
 
+// Destroy the passport session (used by the client's Logout component).
+router.post('/logout', (req, res) => {
+  req.logout();
+  res.json({ success: true });
+});
+
 router.get('/allPosts', (req, res) => {
   models.Post.findAll()
     .then((allPosts) => {
@@ -36,7 +42,13 @@ router.get('/profile/:id', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  models.Post.findAll(req.params.id)
+  // findAll() expects an options object; passing the raw id string threw
+  // (or silently returned nothing), so this route always responded with an error.
+  models.Post.findAll({
+    where: {
+      id: req.params.id,
+    }
+  })
     .then((post) => {
       res.json(post)
     })

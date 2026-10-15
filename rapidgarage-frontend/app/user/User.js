@@ -7,7 +7,7 @@ export default class User extends Component{
           userId: "rible",
           email: "123@gmail.com",
           address:" 123 5th Ave",
-          city:"New York"
+          city:"New York",
           zipCode:"10001"
         }
       };

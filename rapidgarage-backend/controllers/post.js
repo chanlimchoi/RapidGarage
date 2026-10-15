@@ -2,7 +2,9 @@ const router = require('express').Router();
 const models = require('../models');
 const Post = models.Post;
 
-router.post('/post', (req, res) => {
+// Mounted at /post, so this handler serves POST /post.
+// (It used to be router.post('/post'), which made the real endpoint /post/post.)
+router.post('/', (req, res) => {
   Post.create({
     userId: req.body.userId,
     title: req.body.title,
@@ -11,9 +13,10 @@ router.post('/post', (req, res) => {
     zipCode: req.body.zipCode,
     description: req.body.description
   }).then((post) => {
-    res.send(post);
-  }).catch(() => {
-    res.send('error');
+    res.status(201).json(post);
+  }).catch((err) => {
+    console.log('Failure creating post:', err.message);
+    res.status(400).json({ msg: 'failed to create post' });
   });
 });
 

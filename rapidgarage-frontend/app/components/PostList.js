@@ -23,7 +23,7 @@ class PostList extends React.Component{
   constructor(props){
     super(props);
     this.state = {
-      searchResult: '',
+      searchResult: [],
       search:'',
     };
     this.searchUpdate = this.searchUpdate.bind(this);
@@ -31,9 +31,11 @@ class PostList extends React.Component{
     
   }
 componentDidMount() {
-    fetch('http://localhost:8000/allPosts', {
+    // Use the dev-server proxy (/api -> http://localhost:8000) instead of a
+    // hard-coded host so this works outside the author's machine.
+    fetch('/api/allPosts', {
       method: 'get', 
-      header: {
+      headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       }
@@ -43,9 +45,12 @@ componentDidMount() {
       return response.json()
     })
     .then((data) => {
-      let result = data;
       console.log('data:', data)
-      this.setState({searchResult: data})
+      this.setState({ searchResult: Array.isArray(data) ? data : [] })
+    })
+    .catch((err) => {
+      console.log('Failed to load posts:', err);
+      this.setState({ searchResult: [] });
     })
 
   }
@@ -59,9 +64,9 @@ componentDidMount() {
     event.preventDefault();
     const val = this.state.search;
 console.log("search value: " + val);
-     fetch('http://localhost:8000/all/'+val, {
+     fetch('/api/all/'+encodeURIComponent(val), {
       method: 'get', 
-      header: {
+      headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       }
@@ -71,9 +76,12 @@ console.log("search value: " + val);
       return response.json()
     })
     .then((data) => {
-      let result = data;
       console.log('data:', data)
-      this.setState({searchResult: data})
+      this.setState({ searchResult: Array.isArray(data) ? data : [] })
+    })
+    .catch((err) => {
+      console.log('Search failed:', err);
+      this.setState({ searchResult: [] });
     })
   }
 
@@ -86,11 +94,11 @@ console.log("search value: " + val);
           <form onSubmit= {this.searchUpdate}>
             <input type="text" style={{width:300}} value={this.state.search} onChange={this.handleChange} placeholder="ZipCode only" />
             <input type="submit" value="Search" />
-          </ form>
+          </form>
           <div className="panel-group">
             <h5><small>RECENT POSTS</small></h5>
               {
-          (this.state.searchResult) ?
+          (this.state.searchResult && this.state.searchResult.length) ?
           (this.state.searchResult.map((post,key)=>{
             return (
               <li key={key}>

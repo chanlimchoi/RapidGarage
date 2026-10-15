@@ -10,6 +10,7 @@ export default class Login extends React.Component{
     this.state = {
       redirectToNewPage: false,
       currentUser: '',
+      error: '',
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -18,7 +19,6 @@ export default class Login extends React.Component{
   handleSubmit(e) {
     e.preventDefault();
     var self = this;
-    // this.setState(currentUser : this.self.refs.email.value);
     fetch('/api/login', {
       method: 'POST',
       headers: {"Content-Type": "application/json"},
@@ -28,43 +28,30 @@ export default class Login extends React.Component{
       })
     })
     .then((response) => {
-      // if(response.ok)
-        // this.setState({redirectToNewPage: true})
-        console.log('response: ', response)
-        return response.json();
+      // Always try to read the JSON body, even on 401, so we can show the
+      // server's error message instead of throwing on a non-JSON response.
+      return response.json().then((data) => ({ ok: response.ok, data }));
     })
-    .then((data) => {
-      console.log('what data: ', data)
-      this.setState({
-       // currentUser: data,
-        redirectToNewPage: true,
-      })
-
-        sessionStorage.setItem('loggedIn', true);
-        sessionStorage.setItem('userID', data.user.id);
-        this.setState({currentUser: data})
-      }).then(() =>
-      {
-        this.props.history.push("../");
+    .then(({ ok, data }) => {
+      console.log('login response:', ok, data);
+      if (!ok || !data.success) {
+        this.setState({ error: data.message || 'Incorrect email or password.' });
+        return;
       }
-
-    )
-   
-    
-   
+      sessionStorage.setItem('loggedIn', 'true');
+      sessionStorage.setItem('userID', data.user.id);
+      this.setState({ currentUser: data, redirectToNewPage: true, error: '' });
+    })
+    .catch(() => {
+      this.setState({ error: 'Unable to reach the server. Please try again.' });
+    });
   }
 
 
   render() {
     if(this.state.redirectToNewPage) {
-     
-      // return <Redirect to="../" push />;
-    
+      return <Redirect to="/" />;
     }
-   // console.log('this.state', this.state)
-    console.log('sessionItem', sessionStorage.getItem('loggedIn'))
-    console.log('sessionItem', sessionStorage.getItem('userID'))
-    console.log('currentUser ', this.state.currentUser)
     return (
       <div className="col-lg-4 col-lg-offset-4">
         <form onSubmit={this.handleSubmit}>
@@ -76,6 +63,7 @@ export default class Login extends React.Component{
           <span className="input-group-addon"><i className="glyphicon glyphicon-lock"></i></span>
           <input id="password" type="password" className="form-control" ref="password" placeholder="Password"/>
         </div>
+        { this.state.error ? <p className="text-danger">{this.state.error}</p> : null }
         <br />
         <button type="submit" className="btn btn-success">Login</button>
       </form>
