@@ -10,7 +10,7 @@ const Post = models.Post;
 function loadPost(req, res, next) {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'Post id must be a positive integer.');
-  Post.findById(id)
+  Post.findByPk(id)
     .then((post) => {
       if (!post) return notFound(res, 'Post not found.');
       req.post = post;

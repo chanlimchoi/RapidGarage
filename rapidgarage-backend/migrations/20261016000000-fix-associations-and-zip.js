@@ -8,10 +8,10 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.changeColumn('Subscribers', 'zipCode', { type: Sequelize.STRING })
       .then(() => queryInterface.changeColumn('Users', 'email', { type: Sequelize.STRING, allowNull: false }))
-      .then(() => queryInterface.addConstraint('Users', ['email'], { type: 'unique', name: 'users_email_unique' }))
+      .then(() => queryInterface.addConstraint('Users', { fields: ['email'], type: 'unique', name: 'users_email_unique' }))
       .then(() => queryInterface.sequelize.query('ALTER TABLE "Posts" DROP CONSTRAINT IF EXISTS "Posts_userId_fkey"'))
       .then(() => queryInterface.changeColumn('Posts', 'userId', { type: Sequelize.INTEGER, allowNull: false }))
-      .then(() => queryInterface.addConstraint('Posts', ['userId'], {
+      .then(() => queryInterface.addConstraint('Posts', { fields: ['userId'],
         type: 'foreign key',
         name: 'Posts_userId_fkey',
         references: { table: 'Users', field: 'id' },

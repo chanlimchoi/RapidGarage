@@ -26,7 +26,7 @@ router.get('/allPosts', (req, res) => {
 router.get('/profile/:id', (req, res) => {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'User id must be a positive integer.');
-  models.User.findById(id)
+  models.User.findByPk(id)
     .then((user) => (user ? res.json(user) : notFound(res, 'User not found.')))
     .catch((err) => serverError(res, err));
 });

@@ -47,7 +47,7 @@ router.put('/maps-key', requireLogin, (req, res) => {
   if (!MAPS_KEY_RE.test(key)) {
     return badRequest(res, 'That does not look like a Google Maps API key (they start with "AIza").');
   }
-  models.User.findById(req.user.id)
+  models.User.findByPk(req.user.id)
     .then((user) => {
       if (!user) return notFound(res, 'User not found.');
       return user.update({ mapsKeyEncrypted: secretBox.encrypt(key), mapsKeyLast4: key.slice(-4) })
@@ -58,7 +58,7 @@ router.put('/maps-key', requireLogin, (req, res) => {
 
 router.delete('/maps-key', requireLogin, (req, res) => {
   noStore(res);
-  models.User.findById(req.user.id)
+  models.User.findByPk(req.user.id)
     .then((user) => {
       if (!user) return notFound(res, 'User not found.');
       return user.update({ mapsKeyEncrypted: null, mapsKeyLast4: null }).then(() => res.status(204).end());

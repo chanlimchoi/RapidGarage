@@ -25,7 +25,7 @@ router.get('/key', (req, res) => {
 
     // With BYOK off, stored user keys are never read.
     if (!byok || !req.user || !req.user.mapsKeyLast4) return fallback();
-    return models.User.scope('withMapsKey').findById(req.user.id)
+    return models.User.scope('withMapsKey').findByPk(req.user.id)
       .then((user) => {
         if (!user || !user.mapsKeyEncrypted) return fallback();
         let key;

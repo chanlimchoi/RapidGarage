@@ -21,7 +21,7 @@ function models() {
 function getSetting(name) {
   const def = SETTINGS[name];
   if (!def) return Promise.reject(new Error('Unknown setting ' + name));
-  return models().Setting.findById(name).then((row) => {
+  return models().Setting.findByPk(name).then((row) => {
     if (!row || row.value === null) return def.default();
     try { return JSON.parse(row.value); } catch (e) { return def.default(); }
   });

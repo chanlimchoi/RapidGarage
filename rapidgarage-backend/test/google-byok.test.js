@@ -50,7 +50,7 @@ describe('Google sign-in + BYOK Maps key', function () {
       const { user, reason } = await passport.handleGoogleProfile(profile('g-1', 'New@Gmail.com', true));
       assert.strictEqual(reason, 'created');
       assert.strictEqual(user.email, 'new@gmail.com');
-      const row = await models.User.scope('withPassword').findById(user.id);
+      const row = await models.User.scope('withPassword').findByPk(user.id);
       assert.strictEqual(row.get('password'), null);
       assert.strictEqual(row.get('googleId'), 'g-1');
       // A Google-only account cannot be logged into with a local password.
@@ -75,7 +75,7 @@ describe('Google sign-in + BYOK Maps key', function () {
       assert.strictEqual(r1.reason, 'email_not_verified');
       const r2 = await passport.handleGoogleProfile(profile('g-4', 'stranger@example.com', 'false'));
       assert.strictEqual(r2.user, null);
-      const alice = await models.User.findById(aliceId);
+      const alice = await models.User.findByPk(aliceId);
       assert.strictEqual(alice.get('googleId'), null);
       assert.strictEqual(await models.User.count(), 2);
     });
@@ -141,7 +141,7 @@ describe('Google sign-in + BYOK Maps key', function () {
       assertNoSecret(saved, KEY_A);
       assert.strictEqual(saved.headers['cache-control'], 'no-store');
 
-      const row = await models.User.scope('withMapsKey').findById(aliceId);
+      const row = await models.User.scope('withMapsKey').findByPk(aliceId);
       assert.ok(row.mapsKeyEncrypted.startsWith('v1:'));
       assert.ok(!row.mapsKeyEncrypted.includes(KEY_A), 'stored in plaintext');
       assert.strictEqual(secretBox.decrypt(row.mapsKeyEncrypted), KEY_A);
