@@ -1,6 +1,7 @@
 import React from 'react';
 import { Redirect } from 'react-router';
 import { Link, withRouter } from "react-router-dom";
+import { errorMessage } from '../api';
 
 
 
@@ -35,11 +36,10 @@ export default class Login extends React.Component{
     .then(({ ok, data }) => {
       console.log('login response:', ok, data);
       if (!ok || !data.success) {
-        this.setState({ error: data.message || 'Incorrect email or password.' });
+        this.setState({ error: errorMessage(data, 'Incorrect email or password.') });
         return;
       }
-      sessionStorage.setItem('loggedIn', 'true');
-      sessionStorage.setItem('userID', data.user.id);
+      if (this.props.onAuthChange) this.props.onAuthChange();
       this.setState({ currentUser: data, redirectToNewPage: true, error: '' });
     })
     .catch(() => {

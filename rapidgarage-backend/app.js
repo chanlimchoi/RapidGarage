@@ -80,11 +80,23 @@ const controllers = require('./controllers');
 app.use(controllers);
 
 
-// First, make sure the Database tables and models are in sync
-// then, start up the server and start listening.
-models.sequelize.sync({force: false})
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server is up and running on port: ${PORT}`)
+// Consistent JSON error handler for anything passed to next(err).
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: { code: 'bad_request', message: 'Malformed JSON body.' } });
+  }
+  console.error(err);
+  res.status(500).json({ error: { code: 'server_error', message: 'Something went wrong.' } });
+});
+
+module.exports = app;
+
+// Start the server only when run directly (tests require the app instead).
+if (require.main === module) {
+  models.sequelize.sync({ force: false })
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server is up and running on port: ${PORT}`);
+      });
     });
-  });
+}

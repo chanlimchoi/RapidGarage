@@ -1,6 +1,7 @@
 import React, {Component} from 'react'
 import Taggle from 'taggle'
 import { Redirect } from 'react-router';
+import { errorMessage } from '../api';
 
 class NewPost extends Component{
     constructor(props){
@@ -20,8 +21,8 @@ class NewPost extends Component{
     handleSubmit(e) {
       e.preventDefault();
 
-      const userId = sessionStorage.getItem('userID');
-      if (!userId) {
+      // The server enforces login; this is just a friendlier early message.
+      if (!this.props.user) {
         this.setState({ error: 'Please log in before creating a post.' });
         return;
       }
@@ -40,7 +41,7 @@ class NewPost extends Component{
       .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
       .then(({ ok, data }) => {
         if (!ok) {
-          this.setState({ error: (data && data.msg) || 'Could not create the post.' });
+          this.setState({ error: errorMessage(data, 'Could not create the post.') });
           return;
         }
         this.setState({ created: true, error: '' });

@@ -1,65 +1,52 @@
 const router = require('express').Router();
 const models = require('../models');
+const { badRequest, forbidden, notFound, serverError, requireLogin, parseId } = require('../lib/http');
+const { validatePost } = require('../lib/validate');
+
 const Post = models.Post;
 
-// Mounted at /post, so this handler serves POST /post.
-// (It used to be router.post('/post'), which made the real endpoint /post/post.)
-// Creating a post requires a logged-in user; the owner is always the session
-// user, never a userId supplied in the request body.
-router.post('/', (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ msg: 'login required' });
-  }
-  Post.create({
-    userId: req.user.id,
-    title: req.body.title,
-    street: req.body.street,
-    city: req.body.city,
-    zipCode: req.body.zipCode,
-    description: req.body.description
-  }).then((post) => {
-    res.status(201).json(post);
-  }).catch((err) => {
-    console.log('Failure creating post:', err.message);
-    res.status(400).json({ msg: 'failed to create post' });
-  });
+// Load the post named by :id (400 if the id is malformed, 404 if missing).
+function loadPost(req, res, next) {
+  const id = parseId(req.params.id);
+  if (!id) return badRequest(res, 'Post id must be a positive integer.');
+  Post.findById(id)
+    .then((post) => {
+      if (!post) return notFound(res, 'Post not found.');
+      req.post = post;
+      return next();
+    })
+    .catch((err) => serverError(res, err));
+}
+
+function requireOwner(req, res, next) {
+  if (req.post.userId !== req.user.id) return forbidden(res, 'Only the owner can change this post.');
+  return next();
+}
+
+// Create: the owner is always the session user, never a body userId.
+router.post('/', requireLogin, (req, res) => {
+  const { errors, values } = validatePost(req.body || {}, false);
+  if (Object.keys(errors).length) return badRequest(res, 'Invalid post.', errors);
+  Post.create(Object.assign({}, values, { userId: req.user.id }))
+    .then((post) => res.status(201).json(post))
+    .catch((err) => serverError(res, err));
 });
 
+router.get('/:id', loadPost, (req, res) => res.json(req.post));
 
+router.put('/:id', requireLogin, loadPost, requireOwner, (req, res) => {
+  const { errors, values } = validatePost(req.body || {}, true);
+  if (Object.keys(errors).length) return badRequest(res, 'Invalid post.', errors);
+  if (!Object.keys(values).length) return badRequest(res, 'Nothing to update.');
+  req.post.update(values)
+    .then((post) => res.json(post))
+    .catch((err) => serverError(res, err));
+});
 
-
-
-// router.get('/post/all/:zipCode', (req, res) => {
-//   const id = req.params.zipCode ? req.params.zipCode : 10021;
-//   models.Post.findAll({
-//     where: {
-//       zipCode: req.params.zipCode,
-//     }
-//   }).then((allPosts) => {
-//       // allPosts.sort((a, b) => {
-//       //   return Math.abs(parseInt(a.zipCode) - id) - Math.abs(parseInt(b.zipCode) - id);
-//       // });
-//       res.json(allPosts);
-//     })
-//     .catch((err) => {
-//       console.log('Failure Get');
-//       res.json({
-//         msg: "failed GET to '/' route"
-//       });
-//     })
-// });
-
-// router.get('/:id', (req, res) => {
-//   Post.findById(req.params.id)
-//     .then((post) => {
-//       res.json(post)
-//     })
-//     .catch((err) => {
-//       console.log('Failure Get');
-//       res.json({
-//         msg: "failed GET to '/' route"
-//       });
-//     })
-// });
+router.delete('/:id', requireLogin, loadPost, requireOwner, (req, res) => {
+  req.post.destroy()
+    .then(() => res.status(204).end())
+    .catch((err) => serverError(res, err));
+});
 
 module.exports = router;
