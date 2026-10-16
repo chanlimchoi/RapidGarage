@@ -3,8 +3,8 @@ const router = express.Router();
 
 router.use('/login', require('./login'));
 router.use('/signup', require('./signup'));
+router.use('/me', require('./me'));
 router.use('/post', require('./post'));
 router.use('/', require('./home'));
 
 module.exports = router;
-

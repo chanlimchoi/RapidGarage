@@ -5,12 +5,14 @@
   "main": "app.js",
   "scripts": {
     "start": "nodemon -L app.js",
-    "test": "jest"
+    "test": "NODE_ENV=test SESSION_SECRET=test-secret mocha --exit test"
   },
   "author": "Edgardo Molina",
   "license": "ISC",
   "devDependencies": {
-    "jest": "^21.2.1"
+    "mocha": "^10.7.3",
+    "supertest": "^7.0.0",
+    "sqlite3": "^5.1.7"
   },
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",

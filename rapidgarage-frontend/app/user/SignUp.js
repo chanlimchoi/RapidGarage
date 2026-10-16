@@ -1,5 +1,6 @@
 import React from 'react';
 import { Redirect } from 'react-router';
+import { errorMessage } from '../api';
 
 const spanstyle = {
   width: '100px',
@@ -31,15 +32,14 @@ class SignUp extends React.Component{
         password: self.refs.password.value
       })
     })
-    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+    .then(response => response.json().catch(() => null).then(data => ({ ok: response.ok, data })))
     .then(({ ok, data }) => {
       if (!ok) {
-        this.setState({ error: data.msg || 'Could not create your account.' });
+        this.setState({ error: errorMessage(data, 'Could not create your account.') });
         return;
       }
       // The signup endpoint logs the user in, so reflect that in the UI.
-      sessionStorage.setItem('loggedIn', 'true');
-      sessionStorage.setItem('userID', data.id);
+      if (this.props.onAuthChange) this.props.onAuthChange();
       this.setState({redirectToNewPage: true, error: ''});
     })
     .catch(() => {

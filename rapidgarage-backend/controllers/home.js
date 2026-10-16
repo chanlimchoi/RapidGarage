@@ -1,133 +1,52 @@
 const express = require('express');
 const models = require('../models');
+const { badRequest, notFound, serverError, parseId } = require('../lib/http');
+const { ZIP_RE } = require('../lib/validate');
+
 const router = express.Router();
+const newestFirst = { order: [['createdAt', 'DESC']] };
 
-// here
-
-
-// Destroy the passport session (used by the client's Logout component).
-router.post('/logout', (req, res) => {
+// Destroy the passport session.
+router.post('/logout', (req, res, next) => {
   req.logout();
-  res.json({ success: true });
+  if (!req.session) return res.json({ success: true });
+  req.session.destroy((err) => {
+    if (err) return next(err);
+    res.clearCookie('connect.sid');
+    return res.json({ success: true });
+  });
 });
 
 router.get('/allPosts', (req, res) => {
-  models.Post.findAll()
-    .then((allPosts) => {
-      res.json(allPosts)
-    })
-    .catch((err) => {
-      console.log('Failure Get');
-    res.json({
-    msg: "failed GET to '/' route"
-     });
-    })
+  models.Post.findAll(newestFirst)
+    .then((posts) => res.json(posts))
+    .catch((err) => serverError(res, err));
 });
 
 router.get('/profile/:id', (req, res) => {
-  models.User.findOne({
-    where: {  
-      id: req.params.id,
-    }
-  }).then((allPosts) => {
-   
-      res.json(allPosts);
-    })
-    .catch((err) => {
-      console.log('Failure Get');
-    res.json({
-    msg: "failed GET to '/' route"
-     });
-    })
-});
-
-router.get('/:id', (req, res) => {
-  // findAll() expects an options object; passing the raw id string threw
-  // (or silently returned nothing), so this route always responded with an error.
-  models.Post.findAll({
-    where: {
-      id: req.params.id,
-    }
-  })
-    .then((post) => {
-      res.json(post)
-    })
-    .catch((err) => {
-      console.log('Failure Get');
-      res.json({
-        msg: "failed GET to '/' route"
-      });
-    })
+  const id = parseId(req.params.id);
+  if (!id) return badRequest(res, 'User id must be a positive integer.');
+  models.User.findById(id)
+    .then((user) => (user ? res.json(user) : notFound(res, 'User not found.')))
+    .catch((err) => serverError(res, err));
 });
 
 router.get('/all/:zipCode', (req, res) => {
-  const id = req.params.zipCode ? req.params.zipCode : 10021;
-  models.Post.findAll({
-    where: {
-      zipCode: req.params.zipCode,
-    }
-  }).then((allPosts) => {
-      // allPosts.sort((a, b) => {
-      //   return Math.abs(parseInt(a.zipCode) - id) - Math.abs(parseInt(b.zipCode) - id);
-      // });
-      res.json(allPosts);
-    })
-    .catch((err) => {
-      console.log('Failure Get');
-      res.json({
-        msg: "failed GET to '/' route"
-      });
-    })
+  const zipCode = req.params.zipCode;
+  if (!ZIP_RE.test(zipCode)) return badRequest(res, 'Zip code must be 5 digits.');
+  models.Post.findAll(Object.assign({ where: { zipCode } }, newestFirst))
+    .then((posts) => res.json(posts))
+    .catch((err) => serverError(res, err));
 });
-
-
 
 router.get('/allbyuserId/:userId', (req, res) => {
-  
-  models.Post.findAll({
-    where: {  
-      userId: req.params.userId,
-    }
-  }).then((allPosts) => {
-   
-      res.json(allPosts);
-    })
-    .catch((err) => {
-      console.log('Failure Get');
-      res.json({
-        msg: "failed GET to '/' route"
-      });
-    })
+  const userId = parseId(req.params.userId);
+  if (!userId) return badRequest(res, 'User id must be a positive integer.');
+  models.Post.findAll(Object.assign({ where: { userId } }, newestFirst))
+    .then((posts) => res.json(posts))
+    .catch((err) => serverError(res, err));
 });
-// here
 
-
-
-// router.get('/', (req, res) => {
-//   res.json({
-//     msg: "Successful GET to '/' route"
-//   });
-// });
-
-// router.post('/', (req, res) => {
-//   res.json({
-//     msg: "Successful POST to '/' route"
-//   });
-// });
-
-// router.put('/:id', (req, res) => {
-//   res.json({
-//     msg: "Successful PUT to '/' route",
-//     id: req.params.id
-//   });
-// });
-
-// router.delete('/:id', (req, res) => {
-//   res.json({
-//     msg: "Successful DELETE to '/' route",
-//     id: req.params.id
-//   });
-// });
-
+// The old catch-all GET /:id (which shadowed other routes) is replaced by GET /post/:id.
 
 module.exports = router;

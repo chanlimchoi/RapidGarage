@@ -1,29 +1,25 @@
 import React from 'react';
 import { Redirect } from 'react-router';
-
-
-
+import { apiFetch } from '../api';
 
 export default class Logout extends React.Component{
   constructor(props) {
     super(props);
-    this.state = {
-    };
+    this.state = { done: false };
   }
 
   componentDidMount() {
-    // Ask the server to destroy the session, then clear the client state.
-    fetch('/api/logout', { method: 'POST' })
+    // Wait for the server to destroy the session before leaving, so the nav
+    // (which asks /me) never shows a stale "Logout" link.
+    apiFetch('/logout', { method: 'POST' })
       .catch(() => {})
       .then(() => {
-        sessionStorage.removeItem('loggedIn');
-        sessionStorage.removeItem('userID');
+        if (this.props.onAuthChange) this.props.onAuthChange();
+        this.setState({ done: true });
       });
   }
 
   render() {
-
-       return <Redirect to="../"/>;
+    return this.state.done ? <Redirect to="/"/> : <p>Logging out…</p>;
   }
-
 }

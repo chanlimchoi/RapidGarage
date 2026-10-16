@@ -1,5 +1,6 @@
 import React, {Component} from 'react'
 import styled from "styled-components";
+import { apiFetch, errorMessage } from '../api';
 
 function resultList(props){
       return (
@@ -35,51 +36,58 @@ class Profile extends Component{
       this.state = {
         userResult: '',
         listResult: [],
+        error: '',
       };
      
   }
  componentDidMount() {
-    // Show the signed-in user's profile, not a hard-coded user id.
-    const userId = sessionStorage.getItem('userID');
+    this.load();
+  }
 
-    fetch('/api/profile/'+userId, {
-      method: 'get', 
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    })
-    .then((response) => {
-      return response.json();
-    })
-    .then((data) => {
-      console.log('data:', data);
-      this.setState({userResult: data});
-    })
-    .catch((err) => {
-      console.log('Failed to load profile:', err);
-    })
+  componentDidUpdate(prevProps) {
+    const prev = prevProps.user && prevProps.user.id;
+    const cur = this.props.user && this.props.user.id;
+    if (prev !== cur) this.load();
+  }
 
+  // Show the signed-in user's profile; the user comes from GET /me (via App).
+  load() {
+    const user = this.props.user;
+    if (!user) {
+      this.setState({ userResult: '', listResult: [] });
+      return;
+    }
+    this.setState({ userResult: user });
+    apiFetch('/allbyuserId/' + user.id)
+      .then(({ ok, data }) => this.setState({ listResult: ok && Array.isArray(data) ? data : [] }))
+      .catch(() => this.setState({ listResult: [] }));
+  }
 
-        fetch('/api/allbyuserId/'+ userId, {
-      method: 'get', 
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    })
-    .then((response) => {
-      console.log('response:', response)
-      return response.json()
-    })
-    .then((data) => {
-      console.log('data:', data)
-      this.setState({listResult: Array.isArray(data) ? data : []})
-    })
-    .catch((err) => {
-      console.log('Failed to load user posts:', err);
-      this.setState({listResult: []});
-    })
+  deletePost(post) {
+    if (!window.confirm('Delete "' + post.title + '"?')) return;
+    apiFetch('/post/' + post.id, { method: 'DELETE' })
+      .then(({ ok, data }) => {
+        if (!ok) {
+          this.setState({ error: errorMessage(data, 'Could not delete the post.') });
+          return;
+        }
+        this.setState({ error: '', listResult: this.state.listResult.filter((p) => p.id !== post.id) });
+      })
+      .catch(() => this.setState({ error: 'Unable to reach the server. Please try again.' }));
+  }
+
+  editTitle(post) {
+    const title = window.prompt('New title', post.title);
+    if (title === null) return;
+    apiFetch('/post/' + post.id, { method: 'PUT', body: JSON.stringify({ title }) })
+      .then(({ ok, data }) => {
+        if (!ok) {
+          this.setState({ error: errorMessage(data, 'Could not update the post.') });
+          return;
+        }
+        this.setState({ error: '', listResult: this.state.listResult.map((p) => (p.id === post.id ? data : p)) });
+      })
+      .catch(() => this.setState({ error: 'Unable to reach the server. Please try again.' }));
   }
 
 	render(){
@@ -93,6 +101,8 @@ class Profile extends Component{
         </Title>
         
       </Wrapper>
+      { !this.props.user ? <p>Please log in to see your profile.</p> : null }
+      { this.state.error ? <p className="text-danger">{this.state.error}</p> : null }
       <h3> Recent Listings </h3>
       <div>
           <div className="panel-group">
@@ -104,6 +114,8 @@ class Profile extends Component{
               <li key={key}>
                 
   { (resultList(post))} 
+                <button type="button" className="btn btn-default btn-xs" onClick={() => this.editTitle(post)}>Edit title</button>{' '}
+                <button type="button" className="btn btn-danger btn-xs" onClick={() => this.deletePost(post)}>Delete</button>
               </li>
 
             )

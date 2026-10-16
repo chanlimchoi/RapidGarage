@@ -1,5 +1,6 @@
 import React, {Component } from 'react';
-import {BrowserRouter, Route, Switch, Redirect, Link} from 'react-router-dom'
+import {Route, Switch, Link, withRouter} from 'react-router-dom'
+import { fetchMe } from './api';
 import Profile from './components/Profile';
 import Footer from './components/Footer';
 import PostList from './components/PostList';
@@ -14,21 +15,33 @@ class App extends Component {
       super(props);
       this.state = {
         message: '',
-        isLoggedIn: sessionStorage.getItem('loggedIn') === 'true'
+        // The server (GET /me) is the source of truth for who is logged in.
+        user: null,
       };
-      
+      this.refreshUser = this.refreshUser.bind(this);
+  }
+
+  componentDidMount() {
+    this.refreshUser();
+  }
+
+  componentDidUpdate(prevProps) {
+    // Re-check on navigation so the nav never goes stale.
+    if (prevProps.location.pathname !== this.props.location.pathname) {
+      this.refreshUser();
+    }
+  }
+
+  refreshUser() {
+    return fetchMe().then((user) => this.setState({ user }));
   }
 
 
  
   render() {
-    console.log('this.props:', this.props)
-    console.log('thisSessionFrontPage', sessionStorage.getItem('loggedIn'))
-    console.log('sessionItem', sessionStorage.getItem('userID'))
-    let isLoggedIn = sessionStorage.getItem('loggedIn');
-console.log('isLoggedIn', isLoggedIn)
+    const user = this.state.user;
     let button = null;
-    if (isLoggedIn === 'true') {
+    if (user) {
      button = <li><Link to="/logout"><span className="glyphicon glyphicon-log-in"></span>Logout</Link></li>;
     } else {
        button = <li><Link to="/login"><span className="glyphicon glyphicon-log-in"></span>Login</Link></li>;
@@ -71,11 +84,11 @@ console.log('isLoggedIn', isLoggedIn)
 
             <Switch>
               <Route exact path='/' component={PostList} />
-              <Route path='/signup' component={SignUp} />
-              <Route path='/login' component={Login} />
-              <Route path='/logout' component={Logout} />
-              <Route path='/newpost' component={NewPost} />
-              <Route path='/profile' component={Profile} />
+              <Route path='/signup' render={(props) => <SignUp {...props} onAuthChange={this.refreshUser} />} />
+              <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
+              <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />
+              <Route path='/newpost' render={(props) => <NewPost {...props} user={user} />} />
+              <Route path='/profile' render={(props) => <Profile {...props} user={user} />} />
             </Switch>
             </div>
             <Footer />
@@ -85,4 +98,4 @@ console.log('isLoggedIn', isLoggedIn)
   }
 }
 
-export default App;
+export default withRouter(App);

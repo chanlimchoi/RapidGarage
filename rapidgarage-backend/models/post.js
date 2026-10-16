@@ -7,16 +7,15 @@ module.exports = (sequelize, DataTypes) => {
     zipCode: DataTypes.STRING,
     title: DataTypes.STRING,
     description: DataTypes.TEXT,
-    userId: DataTypes.INTEGER,
+    userId: { type: DataTypes.INTEGER, allowNull: false },
     imagesUrl: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE
-  }, {
-    classMethods: {
-      associate: function(models) {
-        Post.belongsTo(models.User);
-      }
-    }
   });
+
+  // Sequelize 4 ignores classMethods; associations must be set like this.
+  Post.associate = (models) => {
+    Post.belongsTo(models.User, { foreignKey: 'userId', onDelete: 'CASCADE' });
+  };
   return Post;
 };
