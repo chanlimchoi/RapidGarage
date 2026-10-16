@@ -7,7 +7,9 @@
     "start": "nodemon -L app.js",
     "test": "NODE_ENV=test SESSION_SECRET=test-secret mocha --exit test",
     "migrate": "sequelize-cli db:migrate",
-    "migrate:undo": "sequelize-cli db:migrate:undo"
+    "migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:precheck": "node scripts/db-precheck.js precheck",
+    "db:cleanup": "node scripts/db-precheck.js cleanup"
   },
   "author": "Edgardo Molina",
   "license": "ISC",
