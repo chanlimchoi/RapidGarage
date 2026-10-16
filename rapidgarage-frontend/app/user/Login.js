@@ -12,9 +12,27 @@ export default class Login extends React.Component{
       redirectToNewPage: false,
       currentUser: '',
       error: '',
+      google: false,
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  componentDidMount() {
+    // Show "Sign in with Google" only if the server has it configured.
+    fetch('/api/auth/providers', { credentials: 'same-origin' })
+      .then((r) => r.json())
+      .then((p) => this.setState({ google: !!(p && p.google) }))
+      .catch(() => {});
+    const m = /[?&]googleError=([^&]+)/.exec(window.location.search);
+    if (m) {
+      const reason = decodeURIComponent(m[1]);
+      const text = {
+        email_not_verified: 'Google sign-in failed: your Google email is not verified.',
+        linked_to_other_google_account: 'That email is already linked to a different Google account.',
+      }[reason] || 'Google sign-in failed. Please try again.';
+      this.setState({ error: text });
+    }
   }
 
   handleSubmit(e) {
@@ -67,6 +85,13 @@ export default class Login extends React.Component{
         <br />
         <button type="submit" className="btn btn-success">Login</button>
       </form>
+      { this.state.google ? (
+        <div style={{ marginTop: '1em' }}>
+          <p>or</p>
+          {/* Full-page navigation: the OAuth redirect flow can't run over fetch. */}
+          <a className="btn btn-default" href="/api/auth/google">Sign in with Google</a>
+        </div>
+      ) : null }
     </div>
     );
   }

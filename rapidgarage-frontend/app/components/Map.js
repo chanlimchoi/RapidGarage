@@ -1,5 +1,6 @@
 import React from 'react';
-import { MAPS_API_KEY, loadGoogleMaps, onAuthFailure, geocode, addressOf } from './googleMaps';
+import { Link } from 'react-router-dom';
+import { resolveMapsKey, loadGoogleMaps, onAuthFailure, geocode, addressOf } from './googleMaps';
 
 const NYC = { lat: 40.73061, lng: -73.935242 };
 const MAX_GEOCODE = 25; // cap geocoding calls per render of the list
@@ -10,7 +11,7 @@ const fallbackStyle = Object.assign({}, boxStyle, {
 });
 
 const MESSAGES = {
-  missing_key: 'Map unavailable: no Google Maps API key is configured (set GOOGLE_MAPS_API_KEY).',
+  key_changed: 'Your Maps key changed. Reload the page to use the new key.',
   auth: 'Map unavailable: the Google Maps API key was rejected. Check that the key is valid, the Maps JavaScript API is enabled, and this site is allowed.',
   load_failed: 'Map unavailable: could not load Google Maps. Check your connection and try again.',
 };
@@ -20,7 +21,7 @@ const MESSAGES = {
 class Map extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { error: MAPS_API_KEY ? '' : 'missing_key', ready: false };
+    this.state = { error: '', ready: false, keySource: null };
     this.container = null;
     this.map = null;
     this.markers = [];
@@ -28,24 +29,41 @@ class Map extends React.Component {
   }
 
   componentDidMount() {
-    if (!MAPS_API_KEY) return;
     this.mounted = true;
     onAuthFailure(() => this.mounted && this.setState({ error: 'auth' }));
-    loadGoogleMaps()
-      .then((maps) => {
-        if (!this.mounted) return;
-        this.maps = maps;
-        this.geocoder = new maps.Geocoder();
-        this.info = new maps.InfoWindow();
-        this.map = new maps.Map(this.container, { center: NYC, zoom: 12 });
-        this.setState({ ready: true });
-        this.renderMarkers();
+    this.init();
+  }
+
+  // Resolve which key to use (user's own > server's), then load the map.
+  init() {
+    resolveMapsKey()
+      .then(({ key, source }) => {
+        if (!this.mounted) return null;
+        this.setState({ keySource: source });
+        return loadGoogleMaps(key).then((maps) => {
+          if (!this.mounted) return;
+          if (!this.map) {
+            this.maps = maps;
+            this.geocoder = new maps.Geocoder();
+            this.info = new maps.InfoWindow();
+            this.map = new maps.Map(this.container, { center: NYC, zoom: 12 });
+          }
+          this.setState({ ready: true, error: '' });
+          this.renderMarkers();
+        });
       })
-      .catch((err) => this.mounted && this.setState({ error: err.message === 'missing_key' ? 'missing_key' : 'load_failed' }));
+      .catch((err) => {
+        if (!this.mounted) return;
+        const known = ['no_key', 'key_changed'];
+        this.setState({ error: known.indexOf(err.message) >= 0 ? err.message : 'load_failed' });
+      });
   }
 
   componentDidUpdate(prevProps) {
     if (prevProps.posts !== this.props.posts) this.renderMarkers();
+    // Logging in/out or saving a key in Settings can change which key applies.
+    const sig = (u) => (u ? u.id + ':' + (u.mapsKeyLast4 || '') : '');
+    if (sig(prevProps.user) !== sig(this.props.user)) this.init();
   }
 
   componentWillUnmount() {
@@ -96,6 +114,25 @@ class Map extends React.Component {
   }
 
   render() {
+    if (this.state.error === 'no_key') {
+      return (
+        <div className="rg-map-fallback" role="status" style={fallbackStyle}>
+          <div>
+            Map unavailable: no Google Maps API key.{' '}
+            {this.props.user
+              ? <span><Link to="/settings">Add your own key in Settings</Link> to see the map.</span>
+              : <span><Link to="/login">Log in</Link> and add your own key in Settings to see the map.</span>}
+          </div>
+        </div>
+      );
+    }
+    if (this.state.error === 'key_changed') {
+      return (
+        <div className="rg-map-fallback" role="status" style={fallbackStyle}>
+          <div>{MESSAGES.key_changed} <button type="button" className="btn btn-default btn-xs" onClick={() => window.location.reload()}>Reload</button></div>
+        </div>
+      );
+    }
     if (this.state.error) {
       return <div className="rg-map-fallback" role="status" style={fallbackStyle}>{MESSAGES[this.state.error]}</div>;
     }

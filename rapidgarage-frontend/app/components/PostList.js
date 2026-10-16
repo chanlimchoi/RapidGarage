@@ -115,7 +115,7 @@ console.log("search value: " + val);
           </div>
           </div>
            <div className="col-sm-5 well">
-            <Map posts={this.state.searchResult} />
+            <Map posts={this.state.searchResult} user={this.props.user} />
            </div>
           </div>
     );

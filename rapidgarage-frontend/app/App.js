@@ -9,6 +9,7 @@ import Login from './user/Login';
 import Logout from './user/Logout';
 import SignUp from './user/SignUp';
 import NewPost from './post/NewPost';
+import Settings from './user/Settings';
 
 class App extends Component {
   constructor(props) {
@@ -66,6 +67,7 @@ class App extends Component {
                     <li>
                       <Link to="/profile">Profile</Link>
                     </li>
+                    { user ? <li><Link to="/settings">Settings</Link></li> : null }
                   </ul>
                  
                    
@@ -83,7 +85,8 @@ class App extends Component {
             </nav>
 
             <Switch>
-              <Route exact path='/' component={PostList} />
+              <Route exact path='/' render={(props) => <PostList {...props} user={user} />} />
+              <Route path='/settings' render={(props) => <Settings {...props} user={user} onAuthChange={this.refreshUser} />} />
               <Route path='/signup' render={(props) => <SignUp {...props} onAuthChange={this.refreshUser} />} />
               <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
               <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />

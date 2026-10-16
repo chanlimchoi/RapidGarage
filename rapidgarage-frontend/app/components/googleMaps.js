@@ -1,7 +1,30 @@
 // Loads the Google Maps JavaScript API once, using the key injected at build
 // time (GOOGLE_MAPS_API_KEY, see .env.example). Never hard-code a key here.
 /* global GOOGLE_MAPS_API_KEY */
-export const MAPS_API_KEY = (typeof GOOGLE_MAPS_API_KEY === 'string' ? GOOGLE_MAPS_API_KEY : '').trim();
+import { apiFetch } from '../api';
+
+// Build-time key: last-resort fallback for static deployments.
+export const BUILD_MAPS_API_KEY = (typeof GOOGLE_MAPS_API_KEY === 'string' ? GOOGLE_MAPS_API_KEY : '').trim();
+
+// Ask the server which key to use: the logged-in user's own key, else the
+// server-wide key. Resolves to { key, source } or rejects with 'no_key'.
+export function resolveMapsKey() {
+  return apiFetch('/maps/key')
+    .then(({ ok, data }) => {
+      if (ok && data && data.key) return { key: data.key, source: data.source };
+      if (BUILD_MAPS_API_KEY) return { key: BUILD_MAPS_API_KEY, source: 'build' };
+      throw new Error('no_key');
+    }, () => {
+      if (BUILD_MAPS_API_KEY) return { key: BUILD_MAPS_API_KEY, source: 'build' };
+      throw new Error('no_key');
+    });
+}
+
+// The Maps script can only be loaded once per page, with one key.
+let loadedKey = null;
+export function loadedMapsKey() {
+  return loadedKey;
+}
 
 let loadPromise = null;
 let authFailed = false;
@@ -12,8 +35,9 @@ export function onAuthFailure(fn) {
   else authListeners.push(fn);
 }
 
-export function loadGoogleMaps() {
-  if (!MAPS_API_KEY) return Promise.reject(new Error('missing_key'));
+export function loadGoogleMaps(key) {
+  if (!key) return Promise.reject(new Error('no_key'));
+  if (loadedKey && loadedKey !== key) return Promise.reject(new Error('key_changed'));
   if (window.google && window.google.maps && window.google.maps.Map) return Promise.resolve(window.google.maps);
   if (loadPromise) return loadPromise;
 
@@ -23,6 +47,7 @@ export function loadGoogleMaps() {
     authListeners.splice(0).forEach((fn) => fn());
   };
 
+  loadedKey = key;
   loadPromise = new Promise((resolve, reject) => {
     const cb = '__rapidGarageMapsReady';
     window[cb] = () => {
@@ -30,11 +55,12 @@ export function loadGoogleMaps() {
       resolve(window.google.maps);
     };
     const script = document.createElement('script');
-    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(MAPS_API_KEY) +
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) +
       '&v=weekly&loading=async&callback=' + cb;
     script.async = true;
     script.onerror = () => {
       loadPromise = null;
+      loadedKey = null;
       reject(new Error('load_failed'));
     };
     document.head.appendChild(script);
