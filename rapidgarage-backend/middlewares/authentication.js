@@ -5,30 +5,38 @@ const LocalStrategy = require('passport-local').Strategy;
 const User = require('../models').User;
 
 function passwordsMatch(passwordSubmitted, storedPassword) {
-  return bcrypt.compareSync(passwordSubmitted, storedPassword);
+  if (typeof passwordSubmitted !== 'string' || typeof storedPassword !== 'string') {
+    return false;
+  }
+  try {
+    return bcrypt.compareSync(passwordSubmitted, storedPassword);
+  } catch (err) {
+    // Malformed stored hash: treat as a failed login instead of crashing.
+    return false;
+  }
 }
 
 passport.use(new LocalStrategy({
     usernameField: 'email',
   },
   (email, password, done) => {
-    User.findOne({
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return done(null, false, { message: 'Incorrect email or password.' });
+    }
+    User.scope('withPassword').findOne({
       where: { email },
     }).then((user) => {
-      debugger;
 
       if(!user) {
         return done(null, false, { message: 'Incorrect email.' });
       }
 
       if (passwordsMatch(password, user.password) === false) {
-        console.log('\n\nerror match\n\n')
         return done(null, false, { message: 'Incorrect password.' });
       }
 
-      console.log('\n\ncorrect login!!\n\n')
       return done(null, user, { message: 'Successfully Logged In!' });
-    });
+    }).catch(done);
   })
 );
 
@@ -43,7 +51,7 @@ passport.deserializeUser((id, done) => {
     }
 
     return done(null, user);
-  });
+  }).catch(done);
 });
 // 
 // passport.redirectIfLoggedIn = (route) =>
