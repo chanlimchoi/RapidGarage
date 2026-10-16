@@ -8,13 +8,19 @@ const spanstyle = {
 class SignUp extends React.Component{
   constructor(props){
     super(props);
-    this.state = {redirectToNewPage: false};
+    this.state = {redirectToNewPage: false, error: ''};
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   handleSubmit(e) {
     e.preventDefault();
     var self = this;
+
+    if (self.refs.password.value !== self.refs.passwordConfirm.value) {
+      this.setState({ error: 'Passwords do not match.' });
+      return;
+    }
+
     fetch('/api/signup', {
       method: 'POST',
       headers: {"Content-Type": "application/json"},
@@ -25,9 +31,19 @@ class SignUp extends React.Component{
         password: self.refs.password.value
       })
     })
-    .then(response => {
-      if(response.ok)
-        this.setState({redirectToNewPage: true})
+    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) {
+        this.setState({ error: data.msg || 'Could not create your account.' });
+        return;
+      }
+      // The signup endpoint logs the user in, so reflect that in the UI.
+      sessionStorage.setItem('loggedIn', 'true');
+      sessionStorage.setItem('userID', data.id);
+      this.setState({redirectToNewPage: true, error: ''});
+    })
+    .catch(() => {
+      this.setState({ error: 'Unable to reach the server. Please try again.' });
     });
   }
 
@@ -40,7 +56,7 @@ class SignUp extends React.Component{
           <form onSubmit={this.handleSubmit}>
           <div className="input-group">
             <span className="input-group-addon" style={spanstyle}>Email:</span>
-            <input id="email" type="text" className="form-control" ref="email" placeholder="Email address" required autofocus/>
+            <input id="email" type="text" className="form-control" ref="email" placeholder="Email address" required autoFocus/>
           </div>
           <div className="input-group">
           <span className="input-group-addon" style={spanstyle}>Password:</span>
@@ -48,16 +64,17 @@ class SignUp extends React.Component{
           </div>
           <div className="input-group">
           <span className="input-group-addon" style={spanstyle}>Re-type:</span>
-          <input id="password" type="password" className="form-control" ref="passwordConfirm" placeholder="Confirm Password" required/>
+          <input id="passwordConfirm" type="password" className="form-control" ref="passwordConfirm" placeholder="Confirm Password" required/>
           </div>
           <div className="input-group">
             <span className="input-group-addon" style={spanstyle}>First Name</span>
             <input id="firstname" type="text" className="form-control" ref="firstName" placeholder="first name" required />
           </div>
           <div className="input-group">
-            <span className="input-group-addon" style={spanstyle}>Last Name</span>
+          <span className="input-group-addon" style={spanstyle}>Last Name</span>
             <input id="lastname" type="text" className="form-control" ref="lastName" placeholder="last name" required />
           </div>
+            { this.state.error ? <p className="text-danger">{this.state.error}</p> : null }
             <button type="submit" className="btn btn-info">Sign Up</button>
           </form>
       </div>

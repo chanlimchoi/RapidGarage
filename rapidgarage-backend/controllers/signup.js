@@ -9,11 +9,15 @@ router.post('/', (req, res) => {
     email: req.body.email,
     password: req.body.password,
   }).then((user) => {
-    req.login(user, () =>
-      res.send(user)
+    // Never send the stored (hashed) password back to the client.
+    const safeUser = user.toJSON();
+    delete safeUser.password;
+    req.login(safeUser, () =>
+      res.json(safeUser)
     );
-  }).catch(() => {
-      res.send('error')
+  }).catch((err) => {
+      console.log('Failure creating user:', err.message);
+      res.status(400).json({ msg: 'failed to create user' });
   });
 });
 

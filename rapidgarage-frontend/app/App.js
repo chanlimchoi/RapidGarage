@@ -28,7 +28,7 @@ class App extends Component {
     let isLoggedIn = sessionStorage.getItem('loggedIn');
 console.log('isLoggedIn', isLoggedIn)
     let button = null;
-    if (isLoggedIn) {
+    if (isLoggedIn === 'true') {
      button = <li><Link to="/logout"><span className="glyphicon glyphicon-log-in"></span>Logout</Link></li>;
     } else {
        button = <li><Link to="/login"><span className="glyphicon glyphicon-log-in"></span>Login</Link></li>;
@@ -48,10 +48,10 @@ console.log('isLoggedIn', isLoggedIn)
                       <Link to="/about">About</Link>                 
                     </li>
                     <li>
-                      <Link to="/NewPost">New Post</Link>
+                      <Link to="/newpost">New Post</Link>
                     </li>
                     <li>
-                      <Link to="/Profile">Profile</Link>
+                      <Link to="/profile">Profile</Link>
                     </li>
                   </ul>
                  

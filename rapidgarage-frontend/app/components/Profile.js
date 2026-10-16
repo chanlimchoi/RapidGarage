@@ -34,35 +34,36 @@ class Profile extends Component{
       super(props);
       this.state = {
         userResult: '',
-        listResult:'',
+        listResult: [],
       };
      
   }
  componentDidMount() {
-   
-    fetch('http://localhost:8000/profile/1', {
+    // Show the signed-in user's profile, not a hard-coded user id.
+    const userId = sessionStorage.getItem('userID');
+
+    fetch('/api/profile/'+userId, {
       method: 'get', 
-      header: {
+      headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       }
     })
     .then((response) => {
-     
       return response.json();
-      
     })
     .then((data) => {
-      let result = data;
       console.log('data:', data);
       this.setState({userResult: data});
-      console.log('userstate:', this.state.userResult);
     })
- 
+    .catch((err) => {
+      console.log('Failed to load profile:', err);
+    })
 
-        fetch('http://localhost:8000/allbyuserId/'+ sessionStorage.getItem('userID'), {
+
+        fetch('/api/allbyuserId/'+ userId, {
       method: 'get', 
-      header: {
+      headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       }
@@ -72,9 +73,12 @@ class Profile extends Component{
       return response.json()
     })
     .then((data) => {
-      let result = data;
       console.log('data:', data)
-      this.setState({listResult: data})
+      this.setState({listResult: Array.isArray(data) ? data : []})
+    })
+    .catch((err) => {
+      console.log('Failed to load user posts:', err);
+      this.setState({listResult: []});
     })
   }
 
@@ -94,7 +98,7 @@ class Profile extends Component{
           <div className="panel-group">
             
                {
-          (this.state.listResult) ?
+          (this.state.listResult && this.state.listResult.length) ?
           (this.state.listResult.map((post,key)=>{
             return (
               <li key={key}>
