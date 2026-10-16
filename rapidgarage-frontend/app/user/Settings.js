@@ -17,11 +17,12 @@ export default class Settings extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if ((prevProps.user && prevProps.user.id) !== (this.props.user && this.props.user.id)) this.load();
+    const flag = (p) => !(p.config && p.config.userMapsKeys === false);
+    if ((prevProps.user && prevProps.user.id) !== (this.props.user && this.props.user.id) || flag(prevProps) !== flag(this.props)) this.load();
   }
 
   load() {
-    if (!this.props.user) {
+    if (!this.props.user || (this.props.config && this.props.config.userMapsKeys === false)) {
       this.setState({ loading: false });
       return;
     }
@@ -64,6 +65,14 @@ export default class Settings extends React.Component {
   render() {
     if (!this.props.user) {
       return <div className="col-sm-8"><p><Link to="/login">Log in</Link> to manage your settings.</p></div>;
+    }
+    if (this.props.config && this.props.config.userMapsKeys === false) {
+      return (
+        <div className="col-sm-8 rg-settings">
+          <h3>Settings</h3>
+          <p className="rg-settings-empty">There are no settings to change right now.</p>
+        </div>
+      );
     }
     const s = this.state;
     return (

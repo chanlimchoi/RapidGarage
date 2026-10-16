@@ -2,6 +2,7 @@ const router = require('express').Router();
 const models = require('../models');
 const { badRequest, forbidden, notFound, serverError, requireLogin, parseId } = require('../lib/http');
 const { validatePost } = require('../lib/validate');
+const { isAdmin } = require('../lib/roles');
 
 const Post = models.Post;
 
@@ -43,7 +44,13 @@ router.put('/:id', requireLogin, loadPost, requireOwner, (req, res) => {
     .catch((err) => serverError(res, err));
 });
 
-router.delete('/:id', requireLogin, loadPost, requireOwner, (req, res) => {
+// Admins may delete any post (moderation); editing stays owner-only.
+function requireOwnerOrAdmin(req, res, next) {
+  if (isAdmin(req.user)) return next();
+  return requireOwner(req, res, next);
+}
+
+router.delete('/:id', requireLogin, loadPost, requireOwnerOrAdmin, (req, res) => {
   req.post.destroy()
     .then(() => res.status(204).end())
     .catch((err) => serverError(res, err));

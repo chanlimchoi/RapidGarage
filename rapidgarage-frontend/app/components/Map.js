@@ -63,7 +63,8 @@ class Map extends React.Component {
     if (prevProps.posts !== this.props.posts) this.renderMarkers();
     // Logging in/out or saving a key in Settings can change which key applies.
     const sig = (u) => (u ? u.id + ':' + (u.mapsKeyLast4 || '') : '');
-    if (sig(prevProps.user) !== sig(this.props.user)) this.init();
+    const cfg = (c) => (c && c.userMapsKeys === false ? 'off' : 'on');
+    if (sig(prevProps.user) !== sig(this.props.user) || cfg(prevProps.config) !== cfg(this.props.config)) this.init();
   }
 
   componentWillUnmount() {
@@ -114,6 +115,11 @@ class Map extends React.Component {
   }
 
   render() {
+    const byok = !this.props.config || this.props.config.userMapsKeys !== false;
+    if (this.state.error === 'no_key' && !byok) {
+      // Users can't add keys on this server, so don't tell them to.
+      return <div className="rg-map-fallback" role="status" style={fallbackStyle}>The map is unavailable right now.</div>;
+    }
     if (this.state.error === 'no_key') {
       return (
         <div className="rg-map-fallback" role="status" style={fallbackStyle}>

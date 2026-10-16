@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     mapsKeyEncrypted: { type: DataTypes.TEXT, allowNull: true },
     // Last 4 characters only, for display ("…abcd"). Not secret.
     mapsKeyLast4: { type: DataTypes.STRING(4), allowNull: true },
+    role: { type: DataTypes.STRING, allowNull: false, defaultValue: 'user', validate: { isIn: [['user', 'admin']] } },
   }, {
     // Never load the password hash unless explicitly asked for (login only).
     // The encrypted Maps key is excluded too; load it only via scope('withMapsKey').

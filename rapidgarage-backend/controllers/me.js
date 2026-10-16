@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const models = require('../models');
 const secretBox = require('../lib/secretBox');
+const { userMapsKeysEnabled } = require('../lib/features');
 const { badRequest, unauthorized, notFound, sendError, serverError, requireLogin } = require('../lib/http');
 
 // The server is the source of truth for who is logged in.
@@ -19,6 +20,17 @@ function noStore(res) {
 function status(user) {
   return { hasKey: !!user.mapsKeyLast4, last4: user.mapsKeyLast4 || null };
 }
+
+// When the operator turns BYOK off (ENABLE_USER_MAPS_KEYS=false), these
+// endpoints act as if they don't exist and never read or write stored keys.
+// Stored keys are left untouched so turning the flag back on restores them.
+function requireUserMapsKeys(req, res, next) {
+  return userMapsKeysEnabled().then((on) => {
+    if (!on) return sendError(res, 404, 'feature_disabled', 'Personal Google Maps keys are turned off on this server.');
+    return next();
+  }).catch((err) => serverError(res, err));
+}
+router.use('/maps-key', requireUserMapsKeys);
 
 // Masked status for the settings page (never the key itself).
 router.get('/maps-key', requireLogin, (req, res) => {

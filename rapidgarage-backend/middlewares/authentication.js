@@ -126,7 +126,10 @@ function ensureGoogleStrategy() {
     const GoogleStrategy = require('passport-google-oauth20').Strategy;
     passport.use('google', new GoogleStrategy(Object.assign({ state: true }, config), (accessToken, refreshToken, profile, done) => {
       handleGoogleProfile(profile)
-        .then(({ user, reason }) => (user ? done(null, user) : done(null, false, { message: reason })))
+        // Google emails are verified (checked in handleGoogleProfile), so they may bootstrap an admin.
+        .then(({ user, reason }) => (user
+          ? require('../lib/roles').applyAdminBootstrap(user, true).then((u) => done(null, u))
+          : done(null, false, { message: reason })))
         .catch(done);
     }));
     googleRegistered = true;
