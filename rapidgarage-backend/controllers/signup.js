@@ -2,6 +2,7 @@ const router = require('express').Router();
 const models = require('../models');
 const { badRequest, conflict, serverError } = require('../lib/http');
 const { validateSignup } = require('../lib/validate');
+const { applyAdminBootstrap } = require('../lib/roles');
 
 const User = models.User;
 
@@ -19,7 +20,7 @@ router.post('/', (req, res, next) => {
         lastName: typeof body.lastName === 'string' ? body.lastName.trim() : null,
         email,
         password: body.password,
-      }).then((user) => {
+      }).then((created) => applyAdminBootstrap(created, false)).then((user) => {
         req.login(user, (err) => {
           if (err) return next(err);
           return res.status(201).json(user.toJSON());

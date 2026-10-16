@@ -9,6 +9,9 @@ import Login from './user/Login';
 import Logout from './user/Logout';
 import SignUp from './user/SignUp';
 import NewPost from './post/NewPost';
+import Settings from './user/Settings';
+import Admin from './admin/Admin';
+import { apiFetch } from './api';
 
 class App extends Component {
   constructor(props) {
@@ -17,18 +20,29 @@ class App extends Component {
         message: '',
         // The server (GET /me) is the source of truth for who is logged in.
         user: null,
+        // Public server config: { googleLogin, userMapsKeys }.
+        config: { googleLogin: false, userMapsKeys: true },
       };
       this.refreshUser = this.refreshUser.bind(this);
+      this.refreshConfig = this.refreshConfig.bind(this);
   }
 
   componentDidMount() {
     this.refreshUser();
+    this.refreshConfig();
+  }
+
+  refreshConfig() {
+    return apiFetch('/config')
+      .then(({ ok, data }) => { if (ok && data) this.setState({ config: data }); })
+      .catch(() => {});
   }
 
   componentDidUpdate(prevProps) {
     // Re-check on navigation so the nav never goes stale.
     if (prevProps.location.pathname !== this.props.location.pathname) {
       this.refreshUser();
+      this.refreshConfig();
     }
   }
 
@@ -66,6 +80,8 @@ class App extends Component {
                     <li>
                       <Link to="/profile">Profile</Link>
                     </li>
+                    { user ? <li><Link to="/settings">Settings</Link></li> : null }
+                    { user && user.role === 'admin' ? <li><Link to="/admin">Admin</Link></li> : null }
                   </ul>
                  
                    
@@ -83,7 +99,9 @@ class App extends Component {
             </nav>
 
             <Switch>
-              <Route exact path='/' component={PostList} />
+              <Route exact path='/' render={(props) => <PostList {...props} user={user} config={this.state.config} />} />
+              <Route path='/admin' render={(props) => <Admin {...props} user={user} onAuthChange={this.refreshUser} onConfigChange={this.refreshConfig} />} />
+              <Route path='/settings' render={(props) => <Settings {...props} user={user} config={this.state.config} onAuthChange={this.refreshUser} />} />
               <Route path='/signup' render={(props) => <SignUp {...props} onAuthChange={this.refreshUser} />} />
               <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
               <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />
