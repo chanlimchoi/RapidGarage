@@ -6,11 +6,11 @@ class NewPost extends Component{
     constructor(props){
       super(props);
       this.state = {
-      title: "Garage Sale in FiDi",
-      text: "We're selling a lot of electronics, clothes, and house decor!",
-      address: "1234 Fulton St. Apt 10",
-      city: "New York",
-      zipCode: "10001",
+      title: '',
+      text: '',
+      address: '',
+      city: '',
+      zipCode: '',
       created: false,
       error: '',
     };
@@ -30,7 +30,6 @@ class NewPost extends Component{
         method: 'POST',
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
-          userId: Number(userId),
           title: this.refs.title.value,
           street: this.refs.address.value,
           city: this.refs.city.value,

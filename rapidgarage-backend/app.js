@@ -1,3 +1,4 @@
+require('dotenv').config();
 const bodyParser = require('body-parser');
 const express = require('express');
 const expressSession = require('express-session');
@@ -8,8 +9,25 @@ const PORT = process.env.PORT || 8000;
 
 const app = express();
 
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET) {
+  throw new Error('Missing SESSION_SECRET environment variable (see .env.example)');
+}
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (isProduction) {
+  // Needed for secure cookies behind a TLS-terminating proxy.
+  app.set('trust proxy', 1);
+}
+
 app.use(function(req, res, next) {
-  res.header('Access-Control-Allow-Origin', "*");
+  // Only the configured frontend may call the API with cookies.
+  if (req.headers.origin === FRONTEND_ORIGIN) {
+    res.header('Access-Control-Allow-Origin', FRONTEND_ORIGIN);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Vary', 'Origin');
+  }
   res.header('Access-Control-Allow-Methods', "GET,POST,PUT,DELETE,OPTIONS");
   res.header('Access-Control-Allow-Headers', "Origin, X-Requested-With, Content-Type, Accept");
   // Answer CORS preflight requests directly; without this, JSON POSTs
@@ -24,7 +42,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Enable sessions & passport
-app.use(expressSession(({ secret: 'keyboard cat', resave: false, saveUninitialized: true })));
+app.use(expressSession({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProduction,
+  },
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 

@@ -4,9 +4,14 @@ const Post = models.Post;
 
 // Mounted at /post, so this handler serves POST /post.
 // (It used to be router.post('/post'), which made the real endpoint /post/post.)
+// Creating a post requires a logged-in user; the owner is always the session
+// user, never a userId supplied in the request body.
 router.post('/', (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ msg: 'login required' });
+  }
   Post.create({
-    userId: req.body.userId,
+    userId: req.user.id,
     title: req.body.title,
     street: req.body.street,
     city: req.body.city,

@@ -8,6 +8,13 @@ module.exports = (sequelize, DataTypes) => {
     email: DataTypes.STRING,
     password: DataTypes.STRING
   }, {
+    // Never load the password hash unless explicitly asked for (login only).
+    defaultScope: {
+      attributes: { exclude: ['password'] },
+    },
+    scopes: {
+      withPassword: {},
+    },
     classMethods: {
       associate: function(models) {
         // associations can be defined here
@@ -24,6 +31,13 @@ module.exports = (sequelize, DataTypes) => {
       user.password = hashedPassword;
     })
   );
+
+  // Belt and braces: strip the hash from any instance that is serialized.
+  User.prototype.toJSON = function() {
+    const values = Object.assign({}, this.get());
+    delete values.password;
+    return values;
+  };
 
   return User;
 };
