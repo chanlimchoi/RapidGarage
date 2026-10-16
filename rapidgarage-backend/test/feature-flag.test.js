@@ -64,7 +64,7 @@ describe('per-user Maps keys flag (ENABLE_USER_MAPS_KEYS default, no saved setti
         assert.strictEqual(res.body.error.code, 'feature_disabled');
         assert.ok(!JSON.stringify(res.body).includes(KEY));
       }
-      const row = await models.User.scope('withMapsKey').findById(aliceId);
+      const row = await models.User.scope('withMapsKey').findByPk(aliceId);
       assert.ok(row.mapsKeyEncrypted && row.mapsKeyEncrypted.startsWith('v1:'), 'stored key kept');
       assert.strictEqual(row.mapsKeyLast4, '9876', 'not replaced by the PUT');
     });

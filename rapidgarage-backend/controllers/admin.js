@@ -30,7 +30,7 @@ router.put('/users/:id/role', (req, res) => {
   const role = req.body && req.body.role;
   if (ROLES.indexOf(role) === -1) return badRequest(res, 'Role must be one of: ' + ROLES.join(', ') + '.');
   return models.sequelize.transaction((t) =>
-    models.User.findById(id, { transaction: t }).then((user) => {
+    models.User.findByPk(id, { transaction: t }).then((user) => {
       if (!user) return { status: 404 };
       if (user.role === role) return { status: 200, user };
       if (user.role === 'admin' && role !== 'admin') {

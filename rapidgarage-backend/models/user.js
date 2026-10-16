@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
 
   User.beforeCreate((user) => {
     if (user.password === null || user.password === undefined) return undefined;
-    return new sequelize.Promise((resolve) => {
+    return new Promise((resolve) => {
       bcrypt.hash(user.password, null, null, (err, hashedPassword) => {
         resolve(hashedPassword);
       });

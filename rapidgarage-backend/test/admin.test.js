@@ -127,7 +127,7 @@ describe('admin role', function () {
       const r = await admin.agent.put('/admin/users/' + admin.id + '/role').send({ role: 'user' });
       assert.strictEqual(r.status, 409);
       assert.strictEqual(r.body.error.code, 'conflict');
-      assert.strictEqual((await models.User.findById(admin.id)).role, 'admin');
+      assert.strictEqual((await models.User.findByPk(admin.id)).role, 'admin');
     });
   });
 
@@ -150,7 +150,7 @@ describe('admin role', function () {
       assert.strictEqual((await request(app).get('/config')).body.userMapsKeys, false);
       assert.strictEqual((await user.agent.get('/me/maps-key')).status, 404);
       assert.strictEqual((await user.agent.get('/maps/key')).status, 404);
-      const row = await models.User.scope('withMapsKey').findById(user.id);
+      const row = await models.User.scope('withMapsKey').findByPk(user.id);
       assert.ok(row.mapsKeyEncrypted, 'stored key untouched while off');
 
       await admin.agent.put('/admin/settings').send({ userMapsKeys: true });
