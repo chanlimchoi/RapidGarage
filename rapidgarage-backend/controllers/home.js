@@ -15,7 +15,8 @@ router.post('/logout', (req, res, next) => {
   if (!req.session) return res.json({ success: true });
   req.session.destroy((err) => {
     if (err) return next(err);
-    res.clearCookie('connect.sid');
+    // Same attributes as the session cookie, or browsers keep it.
+    res.clearCookie('connect.sid', { path: '/', httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
     return res.json({ success: true });
   });
 });

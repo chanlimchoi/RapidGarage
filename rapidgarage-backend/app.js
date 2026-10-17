@@ -4,6 +4,7 @@ const express = require('express');
 const expressSession = require('express-session');
 const passport = require('./middlewares/authentication');
 const models = require('./models');
+const { createSessionStore, sessionMaxAgeMs } = require('./lib/sessionStore');
 
 const PORT = process.env.PORT || 8000;
 
@@ -41,8 +42,12 @@ app.use(function(req, res, next) {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Enable sessions & passport
+// Enable sessions & passport. Sessions live in Postgres (table "session")
+// outside tests, so logins survive restarts; see lib/sessionStore.js.
+const sessionStore = createSessionStore();
+app.locals.sessionStore = sessionStore;
 app.use(expressSession({
+  store: sessionStore.store,
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
@@ -50,6 +55,7 @@ app.use(expressSession({
     httpOnly: true,
     sameSite: 'lax',
     secure: isProduction,
+    maxAge: sessionMaxAgeMs(),
   },
 }));
 app.use(passport.initialize());
@@ -96,10 +102,21 @@ module.exports = app;
 
 // Start the server only when run directly (tests require the app instead).
 if (require.main === module) {
-  models.sequelize.sync({ force: false })
+  sessionStore.check()
+    .then(() => models.sequelize.sync({ force: false }))
     .then(() => {
-      app.listen(PORT, () => {
-        console.log(`Server is up and running on port: ${PORT}`);
+      const server = app.listen(PORT, () => {
+        console.log(`Server is up and running on port: ${PORT} (session store: ${sessionStore.kind})`);
       });
+      // Stop the prune timer and close DB pools on shutdown.
+      const shutdown = () => server.close(() => {
+        Promise.all([sessionStore.close(), models.sequelize.close()]).finally(() => process.exit(0));
+      });
+      process.once('SIGTERM', shutdown);
+      process.once('SIGINT', shutdown);
+    })
+    .catch((err) => {
+      console.error('Startup failed:', err.message);
+      process.exit(1);
     });
 }
