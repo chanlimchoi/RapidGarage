@@ -1,6 +1,6 @@
 // Seller dashboard helpers (pure; see test/dashboard.test.js).
 
-export const METRICS = ['views', 'scans', 'saves', 'messages'];
+export const METRICS = ['views', 'scans', 'saves', 'messages', 'shares'];
 
 // A round axis maximum >= n: 1, 2, 5, 10, 20, 50, ...
 export function niceMax(n) {

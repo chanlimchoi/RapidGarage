@@ -31,6 +31,8 @@ async function sendImage(req, res, target) {
   // (old links, no v) briefly, so a changed sale shows its new card soon.
   res.set('Cache-Control', req.query.v === p.imageKey ? 'public, max-age=604800' : 'public, max-age=300');
   res.set('Vary', 'Accept-Language');
+  // Public preview images: chat apps' web clients may embed them from their own origin.
+  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
   return res.send(buf);
 }
 

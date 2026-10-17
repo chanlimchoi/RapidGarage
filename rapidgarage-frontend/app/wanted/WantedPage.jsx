@@ -9,6 +9,7 @@ import { Alert, EmptyState, SkeletonBlock, Spinner } from '../components/ui';
 import toast from '../components/toast';
 import ReportWantedDialog from './ReportWantedDialog';
 import { STATUS_CHIP, statusLabel, categoryLabel, expiryText } from './WantedCard';
+import ShareButton from '../components/ShareButton';
 import { t } from '../i18n';
 import { holdTime } from '../messages/holdText';
 
@@ -120,6 +121,7 @@ export default class WantedPage extends React.Component {
             {w.matchWords.length ? <div><dt><Sparkles size={16} aria-hidden="true" />{t('want.matchOn')}</dt><dd className="chips">{w.matchWords.map((x) => <span key={x} className="chip">{x}</span>)}</dd></div> : null}
           </dl>
           {w.details ? <p className="wanted-details">{w.details}</p> : null}
+          {open ? <div className="row wanted-share"><ShareButton kind="wanted" item={w} title={t('share.wantedTitle', { title: w.title })} /></div> : null}
 
           {w.mine ? (
             <div className="row wanted-owner-actions">

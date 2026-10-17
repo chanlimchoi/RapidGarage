@@ -124,7 +124,7 @@ export default class Dashboard extends React.Component {
               {shown.length ? <ul className="dash-sale-list">{shown.map((s) => this.renderSale(s))}</ul> : <p className="muted">{t('dash.noneFiltered')}</p>}
               {data.truncated ? <p className="small muted">{t('dash.truncated', { n: data.sales.length })}</p> : null}
             </section>
-            <p className="small muted dash-privacy"><ShieldCheck size={14} aria-hidden="true" /> {t('dash.privacy')}</p>
+            <p className="small muted dash-privacy"><ShieldCheck size={14} aria-hidden="true" /> {t('dash.privacy')} {t('dash.sharesNote')}</p>
           </React.Fragment>
         )}
       </div>

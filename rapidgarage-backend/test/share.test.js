@@ -116,6 +116,7 @@ describe('share link previews', function () {
     assert.strictEqual(img.r.headers['content-type'], 'image/png');
     assert.deepStrictEqual([img.meta.format, img.meta.width, img.meta.height], ['png', 1200, 630]);
     assert.match(img.r.headers['cache-control'], /max-age=604800/);
+    assert.equal(img.r.headers['cross-origin-resource-policy'], 'cross-origin');
     // Cached on disk under its content key; a stale ?v= is served briefly cached.
     assert.ok(fs.readdirSync(cache).some((f) => f.startsWith(new URL(h.one('og:image')).searchParams.get('v'))));
     const stale = await image('https://garage.example/api/share/image/post/' + post.id + '.png?v=old');
