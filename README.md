@@ -180,6 +180,18 @@ From a conversation, a buyer can ask the seller to hold one item of the sale, op
 - **Abuse limits (per buyer).** `HOLD_MAX_ACTIVE` open holds overall (5), 3 per sale, `HOLD_MAX_PER_DAY` requests per 24 h (10), no new request for an item the seller declined within 24 h, and at most 5 pending requests per item. Accepting one request automatically declines the others for that item. Blocking someone, or a messaging ban, ends or prevents holds between the two of you.
 - **Notifications.** Each step is posted into the conversation as an event message (shown as a centred line, worded for each side in the reader's language), so it counts toward the unread badge and appears in the inbox preview. No email is sent.
 
+## Neighborhood sales
+
+Anyone logged in can organize a **neighborhood sale** (`/events/new`): a name, an area (a center typed as a neighborhood, ZIP code or address, or the organizer's location, plus a radius of 0.25–5 mi), up to 7 days with times (same editor and time-zone rules as a sale), a description, and how sellers join: **approval required** (default) or **open**. The area can't change after creating, so sales that joined stay inside it.
+
+- **Joining.** A seller adds one of their own sales from the event page, or from the "Neighborhood sale" panel on their sale page, which lists nearby events and says why a sale can't join. A sale must be visible, not ended, inside the circle and open on at least one of the event's days, and it can be in one event at a time. In approval mode the organizer approves or declines each request; the organizer can remove any sale and a seller can leave at any time (both simply delete the participation). Blocking in either direction prevents joining and approving.
+- **Event page** (`/events/:id`): the participating sales on a map (an SVG area sketch with numbered pins, plus the Google map when a key is configured), schedule, organizer as "First L.", requests for the organizer, report button. Public event data never includes an email address or the short code.
+- **Search.** Sales that belong to an event carry a "Part of ..." chip; a location search returns the nearby events (with at least one sale) as a strip above the results and as **one pin per event** on the map, and **Neighborhood sales only** narrows results to their sales (`neighborhood=true` on `/search`).
+- **Flyer & sign.** The organizer prints a shared flyer (letter or half page, optionally listing the sales) or yard sign in any of the four languages (`/events/:id/print`, PDF from `GET /events/:id/flyer.pdf`). Its QR code is a short link (`/s/<code>`, codes are unique across sales and events) that opens the event map; scans are counted per day exactly like sale scans (separate `EventScanDays` table).
+- **Alerts.** Alerts still match sales, so a sale is never emailed twice to the same person; in a digest, two or more sales of the same event are grouped into one "Neighborhood sale: ..." line with a sale count. Creating an event, joining or leaving sends nothing.
+- **Moderation.** Events can be reported (same reasons, the same hourly report budget as posts, auto-hide at the same threshold). Admins find them under **Admin → Reports → Neighborhood sales** and can dismiss, hide, unhide or delete. Hiding takes the event out of search and lists and stops its short link and printing; its sales stay listed on their own. Ended events stay viewable but leave search.
+- **Limits.** `EVENT_MAX_ACTIVE` upcoming events per organizer (3), `EVENT_MAX_PER_DAY` created per 24 h (5), `EVENT_MAX_SALES` sales per event (200).
+
 ## Languages
 
 RapidGarage speaks **English, Español, 한국어 and 简体中文**. The first visit follows the
