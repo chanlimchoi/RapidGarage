@@ -93,7 +93,28 @@
    "one": "{count} venta",
    "other": "{count} ventas"
   },
-  "mail.partOf": "parte de {name}"
+  "mail.partOf": "parte de {name}",
+  "wmail.subjectOne": "Una venta tiene algo que buscas: {title}",
+  "wmail.subjectMany": {
+   "one": "{count} venta tiene algo que buscas",
+   "other": "{count} ventas tienen algo que buscas"
+  },
+  "wmail.headOne": "Una venta tiene algo que buscas",
+  "wmail.headMany": {
+   "one": "{count} venta tiene algo que buscas",
+   "other": "{count} ventas tienen algo que buscas"
+  },
+  "wmail.introOne": "Una nueva venta cerca de ti coincide con lo que buscas:",
+  "wmail.introMany": {
+   "one": "{count} nueva venta cerca de ti coincide con lo que buscas:",
+   "other": "{count} nuevas ventas cerca de ti coinciden con lo que buscas:"
+  },
+  "wmail.item": "Artículo: {name}",
+  "wmail.for": "Para tu búsqueda «{title}»",
+  "wmail.manage": "Gestionar tus búsquedas",
+  "wmail.manageText": "Gestionar tus búsquedas: {url}",
+  "wmail.turnOff": "Dejar de recibir correos de «{title}»",
+  "wmail.turnOffText": "Dejar de recibir correos de «{title}»: {url}"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -329,6 +350,32 @@
   "You already reported this neighborhood sale. A moderator will review it.": "Ya denunciaste esta venta vecinal. Un moderador la revisará.",
   "Only the organizer can print flyers for this neighborhood sale.": "Solo el organizador puede imprimir volantes de esta venta vecinal.",
   "A moderator has hidden this neighborhood sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.": "Un moderador ocultó esta venta vecinal, así que su código QR muestra «no disponible». La impresión está desactivada hasta que vuelva a ser visible.",
-  "Only the organizer and admins can see scan counts.": "Solo el organizador y los administradores pueden ver los escaneos."
+  "Only the organizer and admins can see scan counts.": "Solo el organizador y los administradores pueden ver los escaneos.",
+  "Max price must be a whole number of cents from 0 to {n}.": "El precio máximo debe ser un número entero de centavos de 0 a {n}.",
+  "Say what you are looking for (at least {n} characters).": "Di qué estás buscando (al menos {n} caracteres).",
+  "Keep the title under {n} characters.": "El título debe tener menos de {n} caracteres.",
+  "Keywords must be text.": "Las palabras clave deben ser texto.",
+  "Keep keywords under {n} characters.": "Las palabras clave deben tener menos de {n} caracteres.",
+  "Choose one of the categories.": "Elige una de las categorías.",
+  "Details must be text.": "Los detalles deben ser texto.",
+  "Keep the details under {n} characters.": "Los detalles deben tener menos de {n} caracteres.",
+  "Name the area, like a neighborhood or a town.": "Nombra la zona, como un barrio o un pueblo.",
+  "emailEnabled must be true or false.": "emailEnabled debe ser true o false.",
+  "Add a keyword we can match sales on.": "Añade una palabra clave para buscar en las ventas.",
+  "Choose how long to keep it up: 1 to {n} days.": "Elige cuánto tiempo mantenerla: de 1 a {n} días.",
+  "Wanted posts are turned off on this site right now.": "Las búsquedas están desactivadas en este sitio por ahora.",
+  "Invalid wanted post.": "Búsqueda no válida.",
+  "You can have up to {n} active wanted posts. Mark one found or delete one first.": "Puedes tener hasta {n} búsquedas activas. Marca una como encontrada o elimina una primero.",
+  "You have posted a lot of wanted posts today. Please try again tomorrow.": "Hoy has publicado muchas búsquedas. Inténtalo de nuevo mañana.",
+  "Wanted post id must be a positive integer.": "El id de la búsqueda debe ser un número entero positivo.",
+  "Wanted post not found.": "No se encontró la búsqueda.",
+  "Only the person who posted it can change this wanted post.": "Solo quien la publicó puede cambiar esta búsqueda.",
+  "Use renew to change how long it stays up.": "Usa renovar para cambiar cuánto tiempo sigue publicada.",
+  "You can't report your own wanted post.": "No puedes denunciar tu propia búsqueda.",
+  "You already reported this wanted post. A moderator will review it.": "Ya denunciaste esta búsqueda. Un moderador la revisará.",
+  "wantedId must be a positive integer.": "wantedId debe ser un número entero positivo.",
+  "Choose a wanted post.": "Elige una búsqueda.",
+  "This wanted post is unavailable, so you can't start a new conversation about it.": "Esta búsqueda no está disponible, así que no puedes iniciar una conversación nueva sobre ella.",
+  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "Esta búsqueda caducó o se marcó como encontrada, así que no puedes iniciar una conversación nueva sobre ella."
  }
 }

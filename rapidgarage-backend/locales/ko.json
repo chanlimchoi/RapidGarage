@@ -85,7 +85,25 @@
   "mail.eventSales": {
    "other": "세일 {count}개"
   },
-  "mail.partOf": "{name} 참여"
+  "mail.partOf": "{name} 참여",
+  "wmail.subjectOne": "원하시는 물건이 세일에 나왔어요: {title}",
+  "wmail.subjectMany": {
+   "other": "원하시는 물건이 세일 {count}곳에 나왔어요"
+  },
+  "wmail.headOne": "원하시는 물건이 세일에 나왔어요",
+  "wmail.headMany": {
+   "other": "원하시는 물건이 세일 {count}곳에 나왔어요"
+  },
+  "wmail.introOne": "내 주변 새 세일이 구해요 글과 일치합니다:",
+  "wmail.introMany": {
+   "other": "내 주변 새 세일 {count}곳이 구해요 글과 일치합니다:"
+  },
+  "wmail.item": "물품: {name}",
+  "wmail.for": "구해요 글 \"{title}\"",
+  "wmail.manage": "구해요 글 관리",
+  "wmail.manageText": "구해요 글 관리: {url}",
+  "wmail.turnOff": "\"{title}\" 이메일 그만 받기",
+  "wmail.turnOffText": "\"{title}\" 이메일 그만 받기: {url}"
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -321,6 +339,32 @@
   "You already reported this neighborhood sale. A moderator will review it.": "이미 이 동네 세일을 신고했습니다. 관리자가 검토할 예정입니다.",
   "Only the organizer can print flyers for this neighborhood sale.": "주최자만 이 동네 세일 전단지를 인쇄할 수 있습니다.",
   "A moderator has hidden this neighborhood sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.": "관리자가 이 동네 세일을 숨겨서 QR 코드에 \"볼 수 없음\"이 표시됩니다. 다시 공개될 때까지 인쇄가 꺼집니다.",
-  "Only the organizer and admins can see scan counts.": "주최자와 관리자만 스캔 수를 볼 수 있습니다."
+  "Only the organizer and admins can see scan counts.": "주최자와 관리자만 스캔 수를 볼 수 있습니다.",
+  "Max price must be a whole number of cents from 0 to {n}.": "최고 가격은 0부터 {n} 사이의 센트 단위 정수여야 합니다.",
+  "Say what you are looking for (at least {n} characters).": "찾고 있는 물건을 적어 주세요 (최소 {n}자).",
+  "Keep the title under {n} characters.": "제목은 {n}자 이내로 입력하세요.",
+  "Keywords must be text.": "키워드는 텍스트여야 합니다.",
+  "Keep keywords under {n} characters.": "키워드는 {n}자 이내로 입력하세요.",
+  "Choose one of the categories.": "카테고리 중 하나를 선택하세요.",
+  "Details must be text.": "상세 설명은 텍스트여야 합니다.",
+  "Keep the details under {n} characters.": "상세 설명은 {n}자 이내로 입력하세요.",
+  "Name the area, like a neighborhood or a town.": "동네나 도시처럼 지역 이름을 적어 주세요.",
+  "emailEnabled must be true or false.": "emailEnabled는 true 또는 false여야 합니다.",
+  "Add a keyword we can match sales on.": "세일과 맞춰 볼 키워드를 추가하세요.",
+  "Choose how long to keep it up: 1 to {n} days.": "게시 기간을 선택하세요: 1일에서 {n}일.",
+  "Wanted posts are turned off on this site right now.": "현재 이 사이트에서는 구해요 글 기능이 꺼져 있습니다.",
+  "Invalid wanted post.": "구해요 글이 올바르지 않습니다.",
+  "You can have up to {n} active wanted posts. Mark one found or delete one first.": "활성 구해요 글은 최대 {n}개까지 올릴 수 있습니다. 먼저 하나를 구함 완료로 표시하거나 삭제하세요.",
+  "You have posted a lot of wanted posts today. Please try again tomorrow.": "오늘 구해요 글을 많이 올렸습니다. 내일 다시 시도하세요.",
+  "Wanted post id must be a positive integer.": "구해요 글 ID는 양의 정수여야 합니다.",
+  "Wanted post not found.": "구해요 글을 찾을 수 없습니다.",
+  "Only the person who posted it can change this wanted post.": "글을 올린 사람만 이 구해요 글을 변경할 수 있습니다.",
+  "Use renew to change how long it stays up.": "게시 기간을 바꾸려면 연장을 사용하세요.",
+  "You can't report your own wanted post.": "내 구해요 글은 신고할 수 없습니다.",
+  "You already reported this wanted post. A moderator will review it.": "이미 이 구해요 글을 신고했습니다. 관리자가 검토할 예정입니다.",
+  "wantedId must be a positive integer.": "wantedId는 양의 정수여야 합니다.",
+  "Choose a wanted post.": "구해요 글을 선택하세요.",
+  "This wanted post is unavailable, so you can't start a new conversation about it.": "이 구해요 글은 볼 수 없어 새 대화를 시작할 수 없습니다.",
+  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "이 구해요 글은 만료되었거나 구함 완료로 표시되어 새 대화를 시작할 수 없습니다."
  }
 }
