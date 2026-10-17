@@ -5,7 +5,10 @@ const { badRequest, notFound, sendError, serverError, requireLogin, parseId } = 
 const { canSee } = require('../lib/moderation');
 const { isLat, isLng } = require('../lib/geo');
 const schedule = require('../lib/schedule');
+const curbside = require('../lib/curbside');
 const route = require('../lib/route');
+const calendar = require('../lib/calendar');
+const i18n = require('../lib/i18n');
 
 const MAX_SAVED = 200;
 const includes = [
@@ -24,46 +27,74 @@ async function savedPosts(user) {
     order: [['createdAt', 'DESC'], ['id', 'DESC']],
   });
   const posts = [];
+  const remind = new Map();
   let unavailable = 0;
   rows.forEach((r) => {
-    if (r.post && canSee(user, r.post)) posts.push(r.post);
-    else unavailable += 1;
+    if (r.post && canSee(user, r.post)) { posts.push(r.post); remind.set(r.post.id, !!r.remind); } else unavailable += 1;
   });
-  return { posts, unavailable };
+  return { posts, unavailable, remind };
 }
 
 // Ids only, for the star buttons. Hidden posts are left out (their stars never show).
 router.get('/ids', async (req, res) => {
   try {
-    const { posts } = await savedPosts(req.user);
-    return res.json({ ids: posts.map((p) => p.id) });
+    const { posts, remind } = await savedPosts(req.user);
+    // reminders: the saved ids with a morning-of reminder on.
+    return res.json({ ids: posts.map((p) => p.id), reminders: posts.filter((p) => remind.get(p.id)).map((p) => p.id) });
   } catch (err) { return serverError(res, err); }
 });
 
 // { results: [post + status], unavailable } where status is open|upcoming|ended|null.
 router.get('/', async (req, res) => {
   try {
-    const { posts, unavailable } = await savedPosts(req.user);
+    const { posts, unavailable, remind } = await savedPosts(req.user);
     const at = schedule.now();
-    const results = posts.map((p) => Object.assign(p.toJSON(), { status: schedule.statusOf(p, at) }));
+    const results = await curbside.annotate(posts.map((p) => Object.assign(p.toJSON(), { status: schedule.statusOf(p, at), remind: remind.get(p.id) })), req.user);
     return res.json({ results, unavailable, limit: MAX_SAVED });
   } catch (err) { return serverError(res, err); }
 });
+
+// Save if needed; res is answered (and null returned) on any refusal.
+// New saves take the user's reminder default (Settings) unless `remind` is given.
+async function ensureSaved(req, res, id, remind) {
+  const post = await models.Post.findByPk(id);
+  if (!post || !canSee(req.user, post)) { notFound(res, 'Sale not found.'); return null; }
+  if (post.userId === req.user.id) { sendError(res, 400, 'own_post', "You can't save your own sale."); return null; }
+  const existing = await models.SavedPost.findOne({ where: { userId: req.user.id, postId: id } });
+  if (existing) return { row: existing, created: false };
+  const count = await models.SavedPost.count({ where: { userId: req.user.id } });
+  if (count >= MAX_SAVED) { sendError(res, 400, 'too_many', 'You can save up to ' + MAX_SAVED + ' sales. Remove some first.'); return null; }
+  const [row, created] = await models.SavedPost.findOrCreate({ where: { userId: req.user.id, postId: id }, defaults: { remind: remind === undefined ? !!req.user.remindSaved : remind } });
+  return { row, created };
+}
 
 // Save (idempotent). Only posts the viewer can see; not their own.
 router.put('/:postId', async (req, res) => {
   const id = parseId(req.params.postId);
   if (!id) return notFound(res, 'Sale not found.');
   try {
-    const post = await models.Post.findByPk(id);
-    if (!post || !canSee(req.user, post)) return notFound(res, 'Sale not found.');
-    if (post.userId === req.user.id) return sendError(res, 400, 'own_post', "You can't save your own sale.");
-    const existing = await models.SavedPost.findOne({ where: { userId: req.user.id, postId: id } });
-    if (existing) return res.json({ saved: true, postId: id });
-    const count = await models.SavedPost.count({ where: { userId: req.user.id } });
-    if (count >= MAX_SAVED) return sendError(res, 400, 'too_many', 'You can save up to ' + MAX_SAVED + ' sales. Remove some first.');
-    await models.SavedPost.findOrCreate({ where: { userId: req.user.id, postId: id } });
-    return res.status(201).json({ saved: true, postId: id });
+    const r = await ensureSaved(req, res, id);
+    if (!r) return undefined;
+    return res.status(r.created ? 201 : 200).json({ saved: true, postId: id, remind: !!r.row.remind });
+  } catch (err) { return serverError(res, err); }
+});
+
+// PUT /saved/:postId/reminder { on } : the morning-of reminder for this sale.
+// Turning it on saves the sale first (same rules as saving); off never saves.
+router.put('/:postId/reminder', async (req, res) => {
+  const id = parseId(req.params.postId);
+  if (!id) return notFound(res, 'Sale not found.');
+  const on = (req.body || {}).on;
+  if (typeof on !== 'boolean') return badRequest(res, 'Invalid reminder.', { on: 'on must be true or false.' });
+  try {
+    if (!on) {
+      const [n] = await models.SavedPost.update({ remind: false }, { where: { userId: req.user.id, postId: id } });
+      return res.json({ saved: n > 0, postId: id, remind: false });
+    }
+    const r = await ensureSaved(req, res, id, true);
+    if (!r) return undefined;
+    if (!r.row.remind) await r.row.update({ remind: true });
+    return res.status(r.created ? 201 : 200).json({ saved: true, postId: id, remind: true });
   } catch (err) { return serverError(res, err); }
 });
 
@@ -74,6 +105,23 @@ router.delete('/:postId', async (req, res) => {
   try {
     await models.SavedPost.destroy({ where: { userId: req.user.id, postId: id } });
     return res.json({ saved: false, postId: id });
+  } catch (err) { return serverError(res, err); }
+});
+
+// GET /saved/calendar.ics?when=all|today|weekend : one file with every saved
+// sale that hasn't ended (the weekend route uses when=weekend). Same UIDs as
+// each sale's own .ics, so importing both never duplicates. Ended days are left out.
+router.get('/calendar.ics', async (req, res) => {
+  const when = req.query.when === undefined || req.query.when === '' ? 'all' : String(req.query.when);
+  if (route.WHEN.indexOf(when) < 0) return badRequest(res, 'Invalid filter.', { when: 'Choose today, this weekend or all upcoming.' });
+  try {
+    const at = schedule.now();
+    const { posts } = await savedPosts(req.user);
+    const live = posts.filter((p) => (p.saleDays || []).length && !schedule.isEnded(p, at) && (when === 'all' || schedule.matchesWhen(p, when, at)));
+    const events = [];
+    live.forEach((p) => calendar.postEvents(p, { cancelled: false }).forEach((e) => { if (new Date(e.end) > at) events.push(e); }));
+    const name = i18n.t(i18n.requestLang(req), when === 'weekend' ? 'cal.savedWeekend' : when === 'today' ? 'cal.savedToday' : 'cal.saved');
+    return calendar.send(res, events, name, 'rapidgarage-saved-' + when + '.ics');
   } catch (err) { return serverError(res, err); }
 });
 

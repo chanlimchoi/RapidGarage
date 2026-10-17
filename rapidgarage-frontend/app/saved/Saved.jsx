@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, LogIn, Route as RouteIcon, ExternalLink, LocateFixed, MapPin, Navigation, Search, EyeOff } from 'lucide-react';
+import { Star, LogIn, Route as RouteIcon, ExternalLink, LocateFixed, MapPin, Navigation, Search, EyeOff, CalendarPlus } from 'lucide-react';
 import { apiFetch, errorMessage } from '../api';
 import PostCard, { BADGE_CLASS } from '../components/PostCard';
 import Map from '../components/Map';
@@ -9,6 +9,8 @@ import { placeLine, formatMiles } from '../lib/format';
 import { saleBadge } from '../lib/schedule';
 import * as saved from '../lib/saved';
 import SaveButton from './SaveButton';
+import RemindToggle from './RemindToggle';
+import { savedIcsPath } from '../lib/calendar';
 import RouteSketch from './RouteSketch';
 import { t } from '../i18n';
 
@@ -17,7 +19,15 @@ const WHEN = [
   { value: 'today', labelKey: 'when.today' },
   { value: 'all', labelKey: 'sv.allUpcoming' },
 ];
+const WHEN_VALUES = WHEN.map((w) => w.value);
+const CAL_LABEL = { weekend: 'cal.routeWeekend', today: 'cal.routeToday', all: 'cal.routeAll' };
 const NONE_OPEN = { weekend: 'sv.noneOpenWeekend', today: 'sv.noneOpenToday', all: 'sv.noneOpenAll' };
+
+// ?when=today (from the reminder email / banner) picks the route's day.
+function initialWhen(location) {
+  const w = location ? new URLSearchParams(location.search).get('when') : null;
+  return WHEN_VALUES.indexOf(w) >= 0 ? w : 'weekend';
+}
 
 // Saved sales plus a suggested route that visits the ones still coming up.
 class Saved extends Component {
@@ -25,7 +35,7 @@ class Saved extends Component {
     super(props);
     this.state = {
       loading: true, error: '', results: [], unavailable: 0,
-      when: 'weekend', start: null, locating: false, locError: '',
+      when: initialWhen(props.location), start: null, locating: false, locError: '',
       route: null, routeLoading: false, routeError: '',
     };
     this.onStore = this.onStore.bind(this);
@@ -72,8 +82,16 @@ class Saved extends Component {
     apiFetch('/saved/route?' + q.join('&')).then(({ ok, data }) => {
       if (this.gone || token !== this.routeToken) return;
       if (!ok) { this.setState({ routeLoading: false, routeError: errorMessage(data, t('sv.routeFailed')) }); return; }
-      this.setState({ routeLoading: false, route: data });
+      this.setState({ routeLoading: false, route: data }, () => this.scrollToRoute());
     }).catch(() => !this.gone && this.setState({ routeLoading: false, routeError: t('common.networkProblem') }));
+  }
+
+  // Deep link: /saved?when=today#route
+  scrollToRoute() {
+    if (this.scrolled || !this.props.location || this.props.location.hash !== '#route') return;
+    this.scrolled = true;
+    const el = document.getElementById('route');
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start' });
   }
 
   changeWhen(when) {
@@ -100,7 +118,7 @@ class Saved extends Component {
     const { route, routeLoading, routeError, when, start, locating, locError, results } = this.state;
     const live = results.filter((p) => p.status !== 'ended');
     return (
-      <section className="panel route-panel" aria-labelledby="route-title">
+      <section className="panel route-panel" id="route" aria-labelledby="route-title">
         <div className="route-head">
           <h2 id="route-title" className="saved-h2"><RouteIcon size={20} aria-hidden="true" />{t('sv.route')}</h2>
           <div className="segmented route-when" role="group" aria-label={t('sv.which')}>
@@ -178,6 +196,9 @@ class Saved extends Component {
           <a className="btn btn-primary open-in-maps" href={route.googleMapsUrl} target="_blank" rel="noopener noreferrer">
             <ExternalLink size={16} aria-hidden="true" />{t('sv.openMaps')}
           </a>
+          <a className="btn btn-secondary route-ics" href={savedIcsPath(route.when)} download>
+            <CalendarPlus size={16} aria-hidden="true" />{t(CAL_LABEL[route.when] || 'cal.routeAll')}
+          </a>
         </div>
       </div>
     );
@@ -197,13 +218,19 @@ class Saved extends Component {
     const { loading, error, results, unavailable } = this.state;
     const upcoming = results.filter((p) => p.status !== 'ended');
     const ended = results.filter((p) => p.status === 'ended');
-    const card = (p) => <PostCard key={p.id} post={p} actions={<SaveButton post={p} />} />;
+    const card = (p) => <PostCard key={p.id} post={p} actions={<React.Fragment><SaveButton post={p} />{p.status !== 'ended' ? <RemindToggle post={p} compact /> : null}</React.Fragment>} />;
     return (
       <div className="container page saved-page">
         <header className="page-header">
           <h1><Star size={26} aria-hidden="true" />{t('nav.savedSales')}</h1>
           {!loading && results.length ? <p className="muted">{t('sv.count', { count: results.length })}</p> : null}
         </header>
+        {!loading && upcoming.length ? (
+          <div className="row saved-cal">
+            <a className="btn btn-secondary btn-sm saved-ics" href={savedIcsPath('all')} download><CalendarPlus size={14} aria-hidden="true" />{t('cal.savedAll')}</a>
+            <Link className="small" to="/settings#reminders">{t('rem.settingsLink')}</Link>
+          </div>
+        ) : null}
         {error ? <Alert tone="danger">{error}</Alert> : null}
         {unavailable ? <Alert tone="info"><EyeOff size={14} aria-hidden="true" /> {t('sv.unavailable', { count: unavailable })}</Alert> : null}
         {loading ? <SkeletonGrid count={3} /> : null}

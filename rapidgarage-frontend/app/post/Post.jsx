@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3 } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3, Gift } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
 import { addressLine, timeAgo, formatMiles } from '../lib/format';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
@@ -10,8 +10,13 @@ import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../com
 import toast from '../components/toast';
 import { RatingBadge } from '../ratings/Stars';
 import ScanStats from '../print/ScanStats';
-import { fetchPrintInfo, recordView } from '../api';
+import { fetchPrintInfo, recordView, markCurbTaken, undoCurbTaken } from '../api';
+import { liveOffer } from '../lib/curbside';
+import { holdTime } from '../messages/holdText';
+import CurbsidePanel from './CurbsidePanel';
 import SaveButton from '../saved/SaveButton';
+import RemindToggle from '../saved/RemindToggle';
+import AddToCalendar from '../components/AddToCalendar';
 import ItemList from './ItemList';
 import JoinEventPanel from '../events/JoinEventPanel';
 import { t } from '../i18n';
@@ -77,6 +82,43 @@ class Post extends Component {
         this.props.history.push('/messages/' + data.id);
       })
       .catch(() => { this.setState({ starting: false }); toast.error(t('common.network')); });
+  }
+
+  // Run a curbside call and merge its { items, curbside } answer into the post.
+  curbAct(promise, okMessage) {
+    return promise.then(({ ok, status, data }) => {
+      if (!ok) {
+        toast.error(status === 429 ? t('curb.tooMany') : errorMessage(data, t('curb.failed')));
+        // The offer may have changed under us (taken, expired, paused): refresh it.
+        if (status === 409 && data && data.error && data.error.code !== 'already_marked') this.refreshCurb();
+        return false;
+      }
+      if (this.state.post && data && data.id === this.state.post.id) this.setState({ post: Object.assign({}, this.state.post, { items: data.items, curbside: data.curbside }) });
+      if (okMessage) toast.success(okMessage);
+      return true;
+    }).catch(() => { toast.error(t('common.network')); return false; });
+  }
+
+  refreshCurb() {
+    const id = this.state.post && this.state.post.id;
+    apiFetch('/post/' + id).then(({ ok, data }) => {
+      if (ok && this.state.post && this.state.post.id === id) this.setState({ post: Object.assign({}, this.state.post, { items: data.items, curbside: data.curbside }) });
+    }).catch(() => null);
+  }
+
+  curbTaken(item) {
+    if (!this.props.user) {
+      toast.info(t('curb.loginToMark'));
+      this.props.history.push('/login');
+      return Promise.resolve(false);
+    }
+    const mine = this.props.user.id === this.state.post.userId;
+    const msg = mine ? (item ? t('curb.markedGoneNamed', { name: item.name }) : t('curb.markedGone')) : t('curb.thanks');
+    return this.curbAct(markCurbTaken(this.state.post.id, item ? item.id : null), msg);
+  }
+
+  curbUndo(item) {
+    return this.curbAct(undoCurbTaken(this.state.post.id, item ? item.id : null), t('curb.putBackDone'));
   }
 
   openReport() {
@@ -209,7 +251,7 @@ class Post extends Component {
         {badge && badge.kind === 'ended' ? (
           <Alert tone="info" className="ended-banner">
             <p><strong>{t('post.endedTitle')}</strong>{' '}
-              {isOwner ? t('post.endedOwner') : t('post.endedOther')}</p>
+              {liveOffer(post) ? (isOwner ? t('curb.endedOwnerFree') : t('curb.endedButFree')) : isOwner ? t('post.endedOwner') : t('post.endedOther')}</p>
           </Alert>
         ) : null}
         {post.hidden ? (
@@ -223,6 +265,7 @@ class Post extends Component {
           <div className="chips">
             {formatPrice(post) ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{formatPrice(post)}</span> : null}
             {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
+            {liveOffer(post) ? <span className="chip chip-free chip-curb" title={t('curb.until', { time: holdTime(post.curbside.until) })}><Gift size={12} aria-hidden="true" />{t('curb.badge')}</span> : null}
             {address ? <span className="chip"><MapPin size={12} aria-hidden="true" />{[post.city, post.state].filter(Boolean).join(', ')}</span> : null}
             <span className="chip"><Clock size={12} aria-hidden="true" />{t('card.posted', { when: timeAgo(post.createdAt) })}</span>
             {post.event ? <Link className="chip chip-event" to={'/events/' + post.event.id}><UsersRound size={12} aria-hidden="true" />{t('ev.partOf', { name: post.event.name })}</Link> : null}
@@ -237,10 +280,11 @@ class Post extends Component {
                 <p className="post-description">{post.description}</p>
               </section>
             ) : <p className="muted">{t('post.noDescription')}</p>}
-            <ItemList post={post} owner={isOwner} onItems={(items) => this.setState({ post: Object.assign({}, post, { items }) })}
+            <ItemList post={post} owner={isOwner} user={this.props.user} onTaken={(i) => this.curbTaken(i)} onUndo={(i) => this.curbUndo(i)} onItems={(items) => this.setState({ post: Object.assign({}, post, { items }) })}
               onPhoto={(i) => { this.setState({ active: i }); const g = document.querySelector('.post-gallery'); if (g && g.scrollIntoView) g.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }} />
           </div>
           <aside className="post-aside">
+            <CurbsidePanel post={post} user={this.props.user} act={(p, m) => this.curbAct(p, m)} taken={(i) => this.curbTaken(i)} undo={(i) => this.curbUndo(i)} />
             <div className="panel">
               <h2>{t('post.details')}</h2>
               <dl className="detail-list">
@@ -262,6 +306,8 @@ class Post extends Component {
                   </button>
                 ) : null}
                 {!isOwner ? <SaveButton post={post} /> : null}
+                <AddToCalendar item={post} kind="post" />
+                {!isOwner ? <RemindToggle post={post} /> : null}
                 {canEditPost(this.props.user, post) ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/edit'}><Pencil size={16} aria-hidden="true" />{t('post.editPost')}</Link> : null}
                 {isOwner ? <Link className="btn btn-secondary print-link" to={'/post/' + post.id + '/print'}><QrCode size={16} aria-hidden="true" />{t('post.printFlyer')}</Link> : null}
                 {isOwner ? <Link className="btn btn-secondary sale-dashboard-link" to={'/dashboard/sales/' + post.id}><BarChart3 size={16} aria-hidden="true" />{t('dash.saleStats')}</Link> : null}

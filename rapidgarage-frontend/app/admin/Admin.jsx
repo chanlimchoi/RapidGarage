@@ -59,6 +59,20 @@ export default class Admin extends React.Component {
       .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
   }
 
+  toggleWanted() {
+    const next = !this.state.settings.wantedPosts;
+    this.setState({ busy: true, error: '' });
+    apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify({ wantedPosts: next }) })
+      .then(({ ok, data }) => {
+        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, t('admin.settingFailed'))); return null; }
+        this.setState({ busy: false, settings: data });
+        toast.success(data.wantedPosts ? t('admin.wantedOn') : t('admin.wantedOff'));
+        if (this.props.onConfigChange) this.props.onConfigChange();
+        return null;
+      })
+      .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
+  }
+
   toggleMapsKeys() {
     const next = !this.state.settings.userMapsKeys;
     this.setState({ busy: true, error: '' });
@@ -141,6 +155,17 @@ export default class Admin extends React.Component {
                     <span>
                       <strong>{t('admin.emailAlerts')}</strong>
                       <span id="toggleSaleAlerts-hint" className="field-hint" style={{ display: 'block' }}>{t('admin.emailAlertsHint')}</span>
+                    </span>
+                  </label>
+                  <label className="checkbox-row" htmlFor="toggleWantedPosts">
+                    <span className="switch">
+                      <input id="toggleWantedPosts" type="checkbox" role="switch" checked={!!s.settings.wantedPosts} disabled={s.busy}
+                        onChange={() => this.toggleWanted()} aria-describedby="toggleWantedPosts-hint" />
+                      <span className="switch-track" aria-hidden="true" />
+                    </span>
+                    <span>
+                      <strong>{t('admin.wantedPosts')}</strong>
+                      <span id="toggleWantedPosts-hint" className="field-hint" style={{ display: 'block' }}>{t('admin.wantedPostsHint')}</span>
                     </span>
                   </label>
                 </div>

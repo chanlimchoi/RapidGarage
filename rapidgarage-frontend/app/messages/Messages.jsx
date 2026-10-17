@@ -32,10 +32,13 @@ function initialsOf(name) {
 
 // Names are "First L.", so "You blocked {name}. ..." can end up with "B.."; collapse it.
 const tidy = (s) => s.replace(/\.\./g, '.');
+// A conversation is about a sale, or about a buyer's wanted post.
+const subjectPath = (post) => (post.wanted ? '/wanted/' : '/post/') + post.id;
 
 function postLabel(post) {
   if (post.status === 'deleted') return t('msg.postDeleted');
   if (post.status === 'hidden') return post.canView ? t('msg.hidden') : t('msg.unavailable');
+  if (post.status === 'closed') return t('msg.wantedClosed');
   return null;
 }
 
@@ -371,8 +374,9 @@ export default class Messages extends React.Component {
             <h2 id="thread-title">{conv.other ? conv.other.name : t('msg.formerUser')}{conv.other ? <RatingBadge summary={conv.otherRating} personId={conv.other.id} compact /> : null}</h2>
             <div className="thread-sub">
               <span className="chip">{conv.role === 'buyer' ? t('post.seller') : t('msg.buyer')}</span>
+              {conv.post.wanted ? <span className="chip chip-brand">{t('want.kicker')}</span> : null}
               {conv.post.canView && conv.post.status !== 'deleted'
-                ? <Link to={'/post/' + conv.post.id}>{conv.post.title}</Link>
+                ? <Link to={subjectPath(conv.post)}>{conv.post.title}</Link>
                 : <span>{conv.post.title}</span>}
               {label ? <span className="chip chip-warning">{label}</span> : null}
             </div>
@@ -394,8 +398,8 @@ export default class Messages extends React.Component {
         </header>
         {conv.other ? <RatePanel conversationId={conv.id} iWrote={messages.some((m) => m.mine)}
           refreshKey={[messages.some((m) => m.mine), messages.some((m) => !m.mine), blocked.byMe, blocked.byThem].join()} /> : null}
-        <HoldPanel conversationId={conv.id} role={conv.role} canAct={conv.canSend}
-          refreshKey={messages.filter((m) => m.kind === 'hold').map((m) => m.id).join()} onChange={() => this.poll()} />
+        {conv.post.wanted ? null : <HoldPanel conversationId={conv.id} role={conv.role} canAct={conv.canSend}
+          refreshKey={messages.filter((m) => m.kind === 'hold').map((m) => m.id).join()} onChange={() => this.poll()} />}
         {label && !conv.post.canView ? <Alert tone="warning">{t('msg.postGone')}</Alert> : null}
         <div className="thread-log" ref={this.logRef} role="log" aria-live="polite" aria-label={t('msg.with', { name: conv.other ? conv.other.name : t('msg.formerUserLower') })} tabIndex="0">
           {hasMore ? (

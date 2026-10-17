@@ -12,6 +12,9 @@ const ratings = require('../lib/ratings');
 const { publicUser } = require('../lib/people');
 const events = require('../lib/events');
 const scans = require('../lib/scans');
+const wanted = require('../lib/wanted');
+const curbside = require('../lib/curbside');
+const calendar = require('../lib/calendar');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -65,8 +68,9 @@ router.post('/', requireLogin, async (req, res) => {
     post = await geocodePost(post, req.user);
     post = await reload(post);
     res.status(201).json(post);
-    // Sale alerts: match in the background; never slows or fails the request.
+    // Sale alerts and wanted posts: match in the background; never slows or fails the request.
     alerts.schedulePostMatch(post);
+    wanted.schedulePost(post.id);
   } catch (err) {
     serverError(res, err);
   }
@@ -75,6 +79,7 @@ router.post('/', requireLogin, async (req, res) => {
 router.use('/:id/photos', requireLogin, loadPost, (req, res, next) => requireOwnerOrAdmin(req, res, next), require('./photos'));
 
 router.use('/:id/items', loadPost, require('./items'));
+router.use('/:id/curbside', loadPost, require('./curbside'));
 // QR code, flyers, sign and scan counts (login first, so logged-out callers get 401).
 router.use('/:id/print', requireLogin, loadPost, require('./print'));
 
@@ -95,12 +100,23 @@ router.post('/:id/view', async (req, res) => {
 });
 
 // The seller is shown as "First L." with their rating summary; never an email.
+// GET /post/:id/calendar.ics : every day of the sale (removed days CANCELLED).
+// Same visibility as the sale page; 404 for a sale without dates.
+router.get('/:id/calendar.ics', loadPost, (req, res) => {
+  try {
+    if (!(req.post.saleDays || []).length) return notFound(res, 'This sale has no dates yet.');
+    return calendar.send(res, calendar.postEvents(req.post), req.post.title, calendar.fileName(req.post.title, 'sale-' + req.post.id));
+  } catch (err) { return serverError(res, err); }
+});
+
 router.get('/:id', loadPost, async (req, res) => {
   try {
     const owner = await models.User.findByPk(req.post.userId, { attributes: ['id', 'firstName', 'lastName'] });
     const seller = owner ? Object.assign(publicUser(owner), { rating: await ratings.summaryOf(owner.id) }) : null;
     const ev = (await events.eventsForPosts([req.post.id], req.user)).get(req.post.id) || null;
-    return res.json(Object.assign(req.post.toJSON(), { seller }, ev ? { event: ev } : {}));
+    const json = Object.assign(req.post.toJSON(), { seller }, ev ? { event: ev } : {});
+    await curbside.annotate([json], req.user, { marks: true });
+    return res.json(json);
   } catch (err) { return serverError(res, err); }
 });
 
@@ -125,6 +141,9 @@ router.put('/:id', requireLogin, loadPost, requireOwner, async (req, res) => {
     // A sale that moved (or only now has coordinates) can match alerts;
     // the (user, post) unique index means nobody is told twice.
     if (moved) alerts.schedulePostMatch(post);
+    // Any change (title, description, price, place, dates) may make it match a
+    // wanted post now; each (wanted post, sale) pair is only ever told once.
+    wanted.schedulePost(post.id);
   } catch (err) {
     serverError(res, err);
   }

@@ -269,6 +269,19 @@ reversed, so restore the pre-upgrade dump if a migration has to be undone.
   `/readyz` checks the database (3 s timeout) and that no migration is pending,
   and returns 503 while shutting down. On SIGTERM the server stops accepting
   connections, finishes in-flight requests, and closes the database pools.
+- **Background worker (alerts, wanted matches, sale reminders):** an in-process
+  timer in the web process (`ALERT_WORKER=on`, every `ALERT_WORKER_SECONDS`, 60 by
+  default). Each tick runs the sale-alert, wanted-match and morning-of reminder
+  passes. Reminders go out at `REMINDER_HOUR` (7) in each **sale's** time zone, or
+  an hour before an earlier start, and no later than `REMINDER_LATE_HOURS` (3)
+  after that or the end of the day. That's why the machine must keep running
+  (`min_machines_running = 1` on Fly; a paid, always-on Render instance). It is
+  safe with several instances or a restart mid-send: a reminder row is unique per
+  (user, sale, day), so two instances can't queue it twice, and a row is sent only
+  after one instance claims it (`UPDATE … SET status='sending', claimToken=… WHERE
+  status='pending'`). Rows stuck in `sending` for 10 minutes are released for retry.
+  To run the worker in only one process, set `ALERT_WORKER=off` on the others.
+  Without SMTP, reminder emails are logged and skipped; the in-app notice still shows.
 - **Photos:** `lib/storage` has only the `local` driver (`UPLOAD_DIR`, the
   `/data/uploads` volume). There is no S3-compatible driver yet. The interface
   (`put`/`remove`/`read`) is small, so adding one is how you would run more

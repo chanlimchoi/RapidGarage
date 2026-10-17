@@ -197,3 +197,39 @@ export const fetchDashboardSale = (id) => apiFetch('/dashboard/sales/' + id);
 // Sale page view beacon. The server decides whether it counts (never the seller,
 // admins, bots, prefetches or hidden sales) and stores no visitor data.
 export const recordView = (postId) => apiFetch('/post/' + postId + '/view', { method: 'POST' }).catch(() => null);
+
+// ---- Wanted posts (controllers/wanted.js) ----------------------------------
+export const fetchWantedBoard = (params) => apiFetch('/wanted' + (params && qs(params) ? '?' + qs(params) : ''));
+export const fetchMyWanted = () => apiFetch('/wanted/mine');
+export const fetchWanted = (id) => apiFetch('/wanted/' + id);
+export const createWanted = (body) => apiFetch('/wanted', jsonBody('POST', body));
+export const updateWanted = (id, body) => apiFetch('/wanted/' + id, jsonBody('PUT', body));
+export const renewWanted = (id, days) => apiFetch('/wanted/' + id + '/renew', jsonBody('POST', { days }));
+export const fulfillWanted = (id) => apiFetch('/wanted/' + id + '/fulfill', jsonBody('POST'));
+export const deleteWanted = (id) => apiFetch('/wanted/' + id, { method: 'DELETE' });
+export const reportWanted = (id, reason, note) => apiFetch('/wanted/' + id + '/report', jsonBody('POST', { reason, note: note || undefined }));
+export const contactWanted = (wantedId) => apiFetch('/conversations', jsonBody('POST', { wantedId }));
+export const unsubscribeWanted = (w, token) => apiFetch('/wanted/unsubscribe', jsonBody('POST', { w, t: token }));
+export const fetchWantedReports = () => apiFetch('/admin/wanted/reports');
+export const moderateWanted = (id, action, note) => apiFetch('/admin/wanted/' + id + '/moderate', jsonBody('POST', { action, note: note || undefined }));
+// { count, wantedMatches } for the nav badges, or null.
+export function fetchBadges() {
+  return apiFetch('/conversations/unread')
+    .then(({ ok, data }) => (ok && data ? { count: data.count, wantedMatches: data.wantedMatches || 0, reminders: data.reminders || 0 } : null))
+    .catch(() => null);
+}
+
+// ---- Free on the curb (controllers/curbside.js) ------------------------------
+// Each answers { id, items, curbside } for the caller, to merge into the post.
+export const startCurbside = (postId, body) => apiFetch('/post/' + postId + '/curbside', jsonBody('PUT', body));
+export const stopCurbside = (postId) => apiFetch('/post/' + postId + '/curbside', { method: 'DELETE' });
+export const markCurbTaken = (postId, itemId) => apiFetch('/post/' + postId + '/curbside/taken', jsonBody('POST', itemId ? { itemId } : {}));
+export const undoCurbTaken = (postId, itemId) => apiFetch('/post/' + postId + '/curbside/undo', jsonBody('POST', itemId ? { itemId } : {}));
+
+// ---- Morning-of reminders (controllers/reminders.js, controllers/saved.js) -----
+export const setSavedReminder = (postId, on) => apiFetch('/saved/' + postId + '/reminder', jsonBody('PUT', { on }));
+export const fetchReminderSettings = () => apiFetch('/reminders/settings');
+export const saveReminderSettings = (body) => apiFetch('/reminders/settings', jsonBody('PUT', body));
+export const fetchTodayReminders = () => apiFetch('/reminders/today');
+export const markReminderSeen = (id) => apiFetch('/reminders/' + id + '/seen', jsonBody('POST', {}));
+export const unsubscribeReminders = (r, token) => apiFetch('/reminders/unsubscribe', jsonBody('POST', { r, t: token }));

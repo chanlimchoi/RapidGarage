@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag, Package, UsersRound } from 'lucide-react';
+import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag, Package, UsersRound, Gift } from 'lucide-react';
 import { formatMiles, placeLine, timeAgo } from '../lib/format';
 import { shortWhen, saleBadge } from '../lib/schedule';
 import { formatPrice } from '../lib/price';
 import SaveButton from '../saved/SaveButton';
+import { liveOffer } from '../lib/curbside';
+import { holdTime } from '../messages/holdText';
 import { t } from '../i18n';
 
 export const BADGE_CLASS = { open: 'chip-success', upcoming: 'chip-info', ended: 'chip-muted' };
@@ -19,6 +21,7 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
   const single = post.schedule && post.schedule.days && post.schedule.days.length === 1;
   const when = badge && badge.kind === 'upcoming' && single ? null : shortWhen(post);
   const price = formatPrice(post);
+  const curb = liveOffer(post);
   const hasPin = typeof post.lat === 'number' && typeof post.lng === 'number';
   return (
     <article className={'post-card post-item' + (selected ? ' post-item-selected' : '')} data-post-id={post.id}>
@@ -35,6 +38,7 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
         <div className="post-card-meta"><MapPin size={14} aria-hidden="true" /><span>{placeLine(post) || t('card.noLocation')}</span></div>
         <div className="chips">
           {post.hidden ? <span className="chip chip-warning">{t('card.hidden')}</span> : null}
+          {curb ? <span className="chip chip-free chip-curb" title={t('curb.until', { time: holdTime(curb.until) })}><Gift size={12} aria-hidden="true" />{t('curb.badge')}</span> : null}
           {price ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{price}</span> : null}
           {when ? <span className="chip chip-brand"><CalendarDays size={12} aria-hidden="true" />{when}</span> : null}
           {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
