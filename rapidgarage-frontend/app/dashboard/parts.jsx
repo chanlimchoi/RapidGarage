@@ -1,15 +1,16 @@
 import React from 'react';
-import { Eye, ScanLine, Bookmark, MessageCircle } from 'lucide-react';
+import { Eye, ScanLine, Bookmark, MessageCircle, Share2 } from 'lucide-react';
 import BarChart from './BarChart';
 import { sum, weekChange } from '../lib/dashboard';
 import { t } from '../i18n';
 
-export const METRIC_ICON = { views: Eye, scans: ScanLine, saves: Bookmark, messages: MessageCircle };
+export const METRIC_ICON = { views: Eye, scans: ScanLine, saves: Bookmark, messages: MessageCircle, shares: Share2 };
 // Literal keys (the i18n test checks every key exists).
-export const METRIC_LABEL = { get views() { return t('dash.m.views'); }, get scans() { return t('dash.m.scans'); }, get saves() { return t('dash.m.saves'); }, get messages() { return t('dash.m.messages'); } };
+export const METRIC_LABEL = { get views() { return t('dash.m.views'); }, get scans() { return t('dash.m.scans'); }, get saves() { return t('dash.m.saves'); }, get messages() { return t('dash.m.messages'); }, get shares() { return t('dash.m.shares'); } };
 export const METRIC_TOTAL = {
   views: (n) => t('dash.total.views', { count: n }), scans: (n) => t('dash.total.scans', { count: n }),
   saves: (n) => t('dash.total.saves', { count: n }), messages: (n) => t('dash.total.messages', { count: n }),
+  shares: (n) => t('dash.total.shares', { count: n }),
 };
 export const STATUS_LABEL = {
   get upcoming() { return t('dash.status.upcoming'); }, get open() { return t('dash.status.open'); }, get ended() { return t('dash.status.ended'); },

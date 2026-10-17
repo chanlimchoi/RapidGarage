@@ -25,6 +25,7 @@ const links = require('../lib/shortlinks');
 const scans = require('../lib/scans');
 const flyer = require('../lib/flyer');
 const i18n = require('../lib/i18n');
+const calendar = require('../lib/calendar');
 
 const organizerInclude = { model: models.User, as: 'organizer', attributes: ['id', 'firstName', 'lastName'] };
 const num = (v) => (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v.trim()) ? Number(v) : typeof v === 'number' ? v : NaN);
@@ -148,6 +149,14 @@ router.post('/', requireLogin, async (req, res) => {
     const e = await models.SaleEvent.create(Object.assign({ organizerId: me, shortCode: await ev.newCode() }, values));
     const full = await models.SaleEvent.findByPk(e.id, { include: [organizerInclude] });
     return res.status(201).json(ev.toJSON(full, req.user, { saleCount: 0 }));
+  } catch (err) { return serverError(res, err); }
+});
+
+// GET /events/:id/calendar.ics : the neighborhood sale's days (public area only).
+router.get('/:id/calendar.ics', loadEvent, (req, res) => {
+  try {
+    if (!(req.event.days || []).length) return notFound(res, 'This neighborhood sale has no dates yet.');
+    return calendar.send(res, calendar.eventEvents(req.event), req.event.name, calendar.fileName(req.event.name, 'neighborhood-sale-' + req.event.id));
   } catch (err) { return serverError(res, err); }
 });
 
@@ -275,11 +284,8 @@ router.post('/:id/report', requireLogin, loadEvent, async (req, res) => {
   try {
     const dupe = 'You already reported this neighborhood sale. A moderator will review it.';
     if (await models.EventReport.count({ where: { eventId: e.id, reporterId: req.user.id, status: 'open' } })) return conflict(res, dupe);
-    const since = new Date(Date.now() - 3600 * 1000);
-    const w = { where: { reporterId: req.user.id, createdAt: { [Op.gte]: since } } };
     // One hourly budget for every kind of report.
-    const recent = (await models.Report.count(w)) + (await models.ConversationReport.count(w)) + (await models.EventReport.count(w));
-    if (recent >= mod.reportsPerHour()) {
+    if ((await mod.recentReportCount(req.user.id)) >= mod.reportsPerHour()) {
       res.set('Retry-After', '3600');
       return sendError(res, 429, 'rate_limited', 'You have sent a lot of reports. Please try again later.');
     }

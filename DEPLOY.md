@@ -194,6 +194,64 @@ Fly's cost is mostly its managed database.
 - Print a flyer and scan its QR code with a phone: it opens `https://<domain>/s/...`.
 - Turn on the Google Cloud budget alert and restrict the browser key to `https://<domain>/*`.
 - Do a test restore (below) once.
+- Paste a sale link into Facebook's Sharing Debugger (developers.facebook.com/tools/debug)
+  or a Slack DM and check the title, dates, area and picture (see *Link previews* below).
+
+## Link previews (Open Graph / Twitter Card)
+
+Links to `/post/<id>`, `/events/<id>` and `/wanted/<id>` unfurl in Facebook,
+iMessage, WhatsApp, KakaoTalk, Slack, X and Discord. These apps fetch the HTML
+without running JavaScript, so the tags have to be in the page itself:
+
+- **Docker / single process (`SERVE_FRONTEND_DIR`):** nothing to set up. The backend
+  replaces the `<!-- rg:head -->` block in `index.html` with the item's title,
+  description, canonical URL, `og:*`, `twitter:*` and locale tags. If building them
+  takes more than 1.5 s, the static site tags are sent instead.
+- **`vite preview` (the setup the live site uses now):** `share/vite-plugin.js`
+  (registered in `vite.config.js`) does the same for preview and dev. It asks the
+  backend at `BACKEND_URL` (`GET /share/head?path=…`) and falls back to the static
+  tags if the backend is down or slow (1.5 s). Restart `vite preview` after
+  pulling this change so it loads the plugin. Nothing else is required.
+- **Either way, set `APP_BASE_URL` on the backend to the public https URL**, such as
+  `https://rapidgarage.example`. Canonical URLs, `og:url` and image URLs are built
+  from it. Crawlers ignore links to `localhost`, and some ignore plain http
+  images (`og:image:secure_url` is only sent for https).
+
+What a preview shows: the title, the next sale day and time (plus "+N more days"),
+the city and state, the price range or "Free on the curb until …", and the start
+of the description. Event previews show the area label and number of sales.
+Wanted previews show the area, radius and maximum price. A preview never shows
+the street address, a last name or an email. Hidden or removed sales, ended
+sales (unless they're still free on the curb and not reported), hidden events,
+and wanted posts that aren't open (or when the board is off) get the generic
+site preview with `noindex`. Their image URL serves the site card, so the
+preview doesn't reveal whether the item exists.
+
+**Images.** The preview image is the sale's first photo (already EXIF-stripped),
+cropped to 1200×630 JPEG. Without a photo it's a branded 1200×630 PNG card,
+drawn with the bundled CJK font (the same one as the flyers), so no system
+fonts are needed. URLs are `/api/share/image/<kind>/<id>.(jpg|png)?v=<hash>`. The
+hash changes when the title, dates, price, photo or language change, so chat
+apps that cache by URL pick up edits. Responses with the current hash are
+cached for a week; others for 5 minutes. They're rendered once and kept in
+memory (40 images) and on disk at `SHARE_CACHE_DIR` (default
+`$TMPDIR/rapidgarage-share`, pruned to 500 files). The disk cache is safe to
+delete at any time.
+
+**Language.** `?lang=es|ko|zh-CN` picks the preview language. The Share button
+adds it outside English, and `og:url` keeps it, so Facebook re-scrapes in that
+language. Without it, the crawler's `Accept-Language` decides, then English.
+
+**Facebook caches previews.** After changing a live sale, use *Scrape Again* in
+the Sharing Debugger. Other apps refresh on their own schedule (WhatsApp and
+KakaoTalk can take a day or more).
+
+**Share counts.** The Share button on a sale records a press
+(`POST /post/<id>/share`), counted at most once per person per day
+(daily-salted hash, the same scheme as QR scans). The seller's own presses count;
+bots don't. Only the daily total per sale is stored (`PostShareDays`); the
+channel is checked but not kept. The total appears as *Shares* on the seller
+dashboard.
 
 ## Backups and restore
 
@@ -269,6 +327,19 @@ reversed, so restore the pre-upgrade dump if a migration has to be undone.
   `/readyz` checks the database (3 s timeout) and that no migration is pending,
   and returns 503 while shutting down. On SIGTERM the server stops accepting
   connections, finishes in-flight requests, and closes the database pools.
+- **Background worker (alerts, wanted matches, sale reminders):** an in-process
+  timer in the web process (`ALERT_WORKER=on`, every `ALERT_WORKER_SECONDS`, 60 by
+  default). Each tick runs the sale-alert, wanted-match and morning-of reminder
+  passes. Reminders go out at `REMINDER_HOUR` (7) in each **sale's** time zone, or
+  an hour before an earlier start, and no later than `REMINDER_LATE_HOURS` (3)
+  after that or the end of the day. That's why the machine must keep running
+  (`min_machines_running = 1` on Fly; a paid, always-on Render instance). It is
+  safe with several instances or a restart mid-send: a reminder row is unique per
+  (user, sale, day), so two instances can't queue it twice, and a row is sent only
+  after one instance claims it (`UPDATE … SET status='sending', claimToken=… WHERE
+  status='pending'`). Rows stuck in `sending` for 10 minutes are released for retry.
+  To run the worker in only one process, set `ALERT_WORKER=off` on the others.
+  Without SMTP, reminder emails are logged and skipped; the in-app notice still shows.
 - **Photos:** `lib/storage` has only the `local` driver (`UPLOAD_DIR`, the
   `/data/uploads` volume). There is no S3-compatible driver yet. The interface
   (`put`/`remove`/`read`) is small, so adding one is how you would run more

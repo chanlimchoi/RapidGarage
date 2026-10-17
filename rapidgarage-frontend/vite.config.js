@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import pwa from './pwa/vite-plugin.js';
+import shareMeta from './share/vite-plugin.js';
 
 // Same dev setup as the old webpack-dev-server: port 3000, and /api/* proxied
 // to the backend on :8000 with the /api prefix stripped.
@@ -27,7 +28,9 @@ export default defineConfig(({ mode }) => {
   // are exposed to the client, so map the legacy name onto the new one.
   const mapsKey = env.VITE_GOOGLE_MAPS_API_KEY || env.GOOGLE_MAPS_API_KEY || '';
   return {
-    plugins: [react(), pwa()],
+    // shareMeta: link-preview tags in the HTML when Vite serves the app
+    // (see share/vite-plugin.js; the backend does it under SERVE_FRONTEND_DIR).
+    plugins: [react(), pwa(), shareMeta({ backend: BACKEND })],
     define: {
       'import.meta.env.VITE_GOOGLE_MAPS_API_KEY': JSON.stringify(mapsKey),
     },

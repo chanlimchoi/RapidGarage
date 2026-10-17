@@ -18,6 +18,8 @@ module.exports = (sequelize, DataTypes) => {
     messagingBanned: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     messagingBannedAt: { type: DataTypes.DATE, allowNull: true },
     // UI, email and flyer language: 'en' | 'es' | 'ko' | 'zh-CN' (lib/i18n.js); null = not chosen.
+    // New saved sales get a morning-of reminder (lib/reminders.js).
+    remindSaved: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     locale: { type: DataTypes.STRING(8), allowNull: true, validate: { isIn: [['en', 'es', 'ko', 'zh-CN']] } },
   }, {
     // Never load the password hash unless explicitly asked for (login only).

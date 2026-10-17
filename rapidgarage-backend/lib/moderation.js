@@ -38,6 +38,14 @@ const reportsPerHour = () => intEnv('REPORT_MAX_PER_HOUR') || 10;
 // Off unless set to a positive integer.
 const autoHideThreshold = () => intEnv('REPORT_AUTO_HIDE_THRESHOLD');
 
+// Reports `userId` sent in the last hour, of every kind (one hourly budget).
+async function recentReportCount(userId) {
+  const m = models();
+  const w = { where: { reporterId: userId, createdAt: { [Op.gte]: new Date(Date.now() - 3600 * 1000) } } };
+  const counts = await Promise.all([m.Report, m.ConversationReport, m.EventReport, m.WantedReport].map((M) => M.count(w)));
+  return counts.reduce((a, b) => a + b, 0);
+}
+
 // Close every open report on a post. fields: { status, action, reviewerId, resolutionNote }.
 function closeOpenReports(postId, fields, transaction) {
   return models().Report.update(
@@ -65,6 +73,6 @@ async function maybeAutoHide(post) {
 }
 
 module.exports = {
-  NOTE_MAX, REASON_LABELS, visibleWhere, canSee, reportsPerHour, autoHideThreshold,
+  NOTE_MAX, REASON_LABELS, visibleWhere, canSee, reportsPerHour, autoHideThreshold, recentReportCount,
   closeOpenReports, hide, unhide, maybeAutoHide,
 };

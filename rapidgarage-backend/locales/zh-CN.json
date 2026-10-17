@@ -85,7 +85,65 @@
   "mail.eventSales": {
    "other": "{count} 场甩卖"
   },
-  "mail.partOf": "属于{name}"
+  "mail.partOf": "属于{name}",
+  "wmail.subjectOne": "有甩卖出现了你想要的东西：{title}",
+  "wmail.subjectMany": {
+   "other": "{count} 场甩卖有你想要的东西"
+  },
+  "wmail.headOne": "有甩卖出现了你想要的东西",
+  "wmail.headMany": {
+   "other": "{count} 场甩卖有你想要的东西"
+  },
+  "wmail.introOne": "你附近的一场新甩卖与你的求购帖匹配：",
+  "wmail.introMany": {
+   "other": "你附近有 {count} 场新甩卖与你的求购帖匹配："
+  },
+  "wmail.item": "物品：{name}",
+  "wmail.for": "对应你的求购帖“{title}”",
+  "wmail.manage": "管理你的求购帖",
+  "wmail.manageText": "管理你的求购帖：{url}",
+  "wmail.turnOff": "停止接收“{title}”的邮件",
+  "wmail.turnOffText": "停止接收“{title}”的邮件：{url}",
+  "wmail.curbside": "路边免费自取，截至 {time}",
+  "cal.saved": "RapidGarage：已收藏的特卖",
+  "cal.savedWeekend": "RapidGarage：本周末已收藏的特卖",
+  "cal.savedToday": "RapidGarage：今天已收藏的特卖",
+  "rmail.subjectOne": "今天：{title} · {time}",
+  "rmail.subjectMany": {
+   "other": "今天有 {count} 场你收藏的特卖"
+  },
+  "rmail.headOne": "你收藏的特卖就在今天",
+  "rmail.headMany": {
+   "other": "今天有 {count} 场收藏的特卖"
+  },
+  "rmail.introOne": "开放时间如下：",
+  "rmail.introMany": {
+   "other": "开放时间如下："
+  },
+  "rmail.when": "{day} · {time}",
+  "rmail.route": "规划今天的路线",
+  "rmail.routeText": "规划今天的路线：{url}",
+  "rmail.manage": "提醒设置",
+  "rmail.manageText": "提醒设置：{url}",
+  "rmail.turnOff": "停止所有特卖提醒",
+  "rmail.turnOffText": "停止所有特卖提醒：{url}",
+  "share.siteTitle": "RapidGarage · 附近的车库特卖",
+  "share.siteHeadline": "附近的车库特卖",
+  "share.siteDescription": "查找和发布附近的车库、庭院和遗产特卖。",
+  "share.kicker.sale": "车库特卖",
+  "share.kicker.event": "社区甩卖",
+  "share.kicker.wanted": "求购",
+  "share.curbUntil": "路边免费，截至 {time}",
+  "share.moreDays": {
+   "other": "（另有 {count} 天）"
+  },
+  "share.saleCount": {
+   "other": "{count} 场特卖"
+  },
+  "share.wantedTitle": "求购：{title}",
+  "share.near": "{area} 附近 · {miles} 英里内",
+  "share.photoAlt": "{title} 的照片",
+  "share.cardAlt": "RapidGarage 预览卡片：{title}"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -321,6 +379,67 @@
   "You already reported this neighborhood sale. A moderator will review it.": "你已经举报过此社区甩卖。管理员会进行审核。",
   "Only the organizer can print flyers for this neighborhood sale.": "只有组织者可以打印此社区甩卖的传单。",
   "A moderator has hidden this neighborhood sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.": "管理员已隐藏此社区甩卖，其二维码会显示“不可用”。在恢复可见之前无法打印。",
-  "Only the organizer and admins can see scan counts.": "只有组织者和管理员可以查看扫描次数。"
+  "Only the organizer and admins can see scan counts.": "只有组织者和管理员可以查看扫描次数。",
+  "Max price must be a whole number of cents from 0 to {n}.": "最高价格必须是 0 到 {n} 之间的整数（美分）。",
+  "Say what you are looking for (at least {n} characters).": "请说明你在找什么（至少 {n} 个字符）。",
+  "Keep the title under {n} characters.": "标题请少于 {n} 个字符。",
+  "Keywords must be text.": "关键词必须是文本。",
+  "Keep keywords under {n} characters.": "关键词请少于 {n} 个字符。",
+  "Choose one of the categories.": "请选择一个类别。",
+  "Details must be text.": "详情必须是文本。",
+  "Keep the details under {n} characters.": "详情请少于 {n} 个字符。",
+  "Name the area, like a neighborhood or a town.": "请填写区域名称，例如社区或城镇。",
+  "emailEnabled must be true or false.": "emailEnabled 必须为 true 或 false。",
+  "Add a keyword we can match sales on.": "请添加一个可用于匹配甩卖的关键词。",
+  "Choose how long to keep it up: 1 to {n} days.": "请选择发布时长：1 到 {n} 天。",
+  "Wanted posts are turned off on this site right now.": "本站目前已关闭求购帖功能。",
+  "Invalid wanted post.": "求购帖无效。",
+  "You can have up to {n} active wanted posts. Mark one found or delete one first.": "你最多可以有 {n} 个有效的求购帖。请先将一个标记为已找到或删除一个。",
+  "You have posted a lot of wanted posts today. Please try again tomorrow.": "你今天发布了很多求购帖。请明天再试。",
+  "Wanted post id must be a positive integer.": "求购帖 ID 必须是正整数。",
+  "Wanted post not found.": "找不到该求购帖。",
+  "Only the person who posted it can change this wanted post.": "只有发布者可以修改此求购帖。",
+  "Use renew to change how long it stays up.": "要更改发布时长，请使用续期。",
+  "You can't report your own wanted post.": "你不能举报自己的求购帖。",
+  "You already reported this wanted post. A moderator will review it.": "你已经举报过此求购帖。管理员会进行审核。",
+  "wantedId must be a positive integer.": "wantedId 必须是正整数。",
+  "Choose a wanted post.": "请选择一个求购帖。",
+  "This wanted post is unavailable, so you can't start a new conversation about it.": "此求购帖不可用，因此无法就它发起新对话。",
+  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "此求购帖已过期或已标记为已找到，因此无法就它发起新对话。",
+  "Invalid curbside offer.": "路边免费信息无效。",
+  "Choose the items that are free, or offer everything that is left.": "请选择免费的物品，或把剩下的全部免费送出。",
+  "itemIds must be a list of item ids.": "itemIds 必须是物品 id 列表。",
+  "all must be true or false.": "all 必须为 true 或 false。",
+  "Pickup time must be a date and time.": "取货时间必须是日期和时间。",
+  "Pickup time must be at least {n} minutes from now.": "取货时间必须至少在 {n} 分钟之后。",
+  "Pickup time can be at most {n} hours from now.": "取货时间最多为 {n} 小时之后。",
+  "Only the seller can change the curbside offer.": "只有卖家可以修改路边免费信息。",
+  "This sale is hidden by a moderator, so it can't offer free leftovers.": "此特卖已被管理员隐藏，无法免费送出剩余物品。",
+  "You can put leftovers on the curb from {n} hours before your sale ends.": "特卖结束前 {n} 小时起可以把剩余物品放到路边。",
+  "Some of those items are not on this sale.": "其中有些物品不属于此特卖。",
+  "Sold items can't go on the curb.": "已售出的物品不能放到路边。",
+  "Reserved items can't go on the curb. Cancel the hold first.": "已预留的物品不能放到路边。请先取消预留。",
+  "Say which item was taken.": "请说明哪件物品被拿走了。",
+  "That item is not free on the curb.": "该物品不在路边免费送。",
+  "This offer is everything that is left; mark the whole offer taken.": "此次送出的是剩下的全部物品，请将整体标记为已被拿走。",
+  "Leave out itemId.": "请不要提供 itemId。",
+  "Nothing here is free on the curb right now.": "这里目前没有路边免费的物品。",
+  "Someone already marked that taken.": "已有人标记为已被拿走。",
+  "You can't do that for this seller.": "你不能对此卖家执行该操作。",
+  "You already marked that taken, and the seller says it is still there.": "你已标记为已被拿走，但卖家说它还在。",
+  "You have marked a lot of things taken. Please try again later.": "你标记了太多“已被拿走”。请稍后再试。",
+  "This curbside offer is over. Start a new one instead.": "此次路边免费已结束。请重新发起。",
+  "curbside must be true or false.": "curbside 必须为 true 或 false。",
+  "This sale has no dates yet.": "此特卖还没有日期。",
+  "This neighborhood sale has no dates yet.": "此社区特卖还没有日期。",
+  "Reminder not found.": "未找到该提醒。",
+  "Invalid reminder settings.": "提醒设置无效。",
+  "defaultOn must be true or false.": "defaultOn 必须为 true 或 false。",
+  "applyToSaved must be true or false.": "applyToSaved 必须为 true 或 false。",
+  "Invalid reminder.": "提醒无效。",
+  "on must be true or false.": "on 必须为 true 或 false。",
+  "path must be a site path.": "路径必须是站内路径。",
+  "Unknown preview image.": "未知的预览图片。",
+  "Unknown share channel.": "未知的分享方式。"
  }
 }

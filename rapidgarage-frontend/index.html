@@ -6,7 +6,6 @@
     <meta name="color-scheme" content="light dark">
     <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
-    <meta name="description" content="Find and post garage, yard and estate sales near you.">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
@@ -18,7 +17,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="application-name" content="RapidGarage">
     <meta name="format-detection" content="telephone=no">
+    <!-- rg:head -->
+    <!-- Static fallback; the server replaces this block with link-preview tags
+         for the page (backend lib/share.js, or share/vite-plugin.js). -->
     <title>RapidGarage · Garage sales near you</title>
+    <meta name="description" content="Find and post garage, yard and estate sales near you.">
+    <meta property="og:site_name" content="RapidGarage">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="RapidGarage · Garage sales near you">
+    <meta property="og:description" content="Find and post garage, yard and estate sales near you.">
+    <meta name="twitter:card" content="summary">
+    <!-- /rg:head -->
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

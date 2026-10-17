@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const models = require('../models');
 const { badRequest, notFound, sendError, serverError, requireLogin, parseId } = require('../lib/http');
-const geo = require('../lib/geo');
+const area = require('../lib/area');
 const { PRICE_CAP } = require('../lib/price');
 const { saleAlertsEnabled } = require('../lib/features');
 const alerts = require('../lib/alerts');
@@ -20,15 +20,7 @@ function validate(body, partial) {
     else if (body.label && body.label.trim().length > LABEL_MAX) errors.label = 'Keep the name under ' + LABEL_MAX + ' characters.';
     else values.label = body.label ? body.label.trim() : null;
   }
-  if (has('lat') || has('lng')) {
-    const lat = Number(body.lat);
-    const lng = Number(body.lng);
-    if (!geo.isLat(lat) || !geo.isLng(lng) || body.lat === null || body.lng === null || body.lat === '' || body.lng === '') errors.location = 'Location must be a valid latitude and longitude.';
-    else { values.lat = lat; values.lng = lng; }
-  } else if (has('address')) {
-    if (typeof body.address !== 'string' || !body.address.trim()) errors.location = 'Enter an address or zip code.';
-    else if (body.address.trim().length > 200) errors.location = 'Address is too long.';
-  } else if (!partial) errors.location = 'Choose a location: an address, your current location or the map.';
+  area.readLocation(body, errors, values, !partial);
   if (has('radiusMiles') || !partial) {
     const r = Number(body.radiusMiles);
     if (!Number.isInteger(r) || r < alerts.RADIUS_MIN || r > alerts.RADIUS_MAX) errors.radiusMiles = 'Radius must be a whole number of miles from ' + alerts.RADIUS_MIN + ' to ' + alerts.RADIUS_MAX + '.';
@@ -52,28 +44,7 @@ function validate(body, partial) {
 }
 
 // Geocode body.address into values (or answer the error). Returns false if it answered.
-async function resolveAddress(req, res, body, values) {
-  if (values.lat !== undefined || body.address === undefined) return true;
-  const key = await geo.resolveGeocodeKey(req.user);
-  if (!key) {
-    sendError(res, 400, 'geocode_unavailable', "Address lookup isn't available on this server. Use your current location or the map instead.", { location: 'Use your current location or the map.' });
-    return false;
-  }
-  if (!geo.allowClientGeocode('user:' + req.user.id, Date.now())) {
-    sendError(res, 429, 'rate_limited', 'Too many address lookups. Please wait a minute.');
-    return false;
-  }
-  const r = await geo.geocodeAddress(body.address, key);
-  if (r.status !== 'ok') {
-    const msg = r.status === 'not_found' ? "We couldn't find that address." : 'Address lookup failed. Please try again.';
-    badRequest(res, msg, { location: msg });
-    return false;
-  }
-  values.lat = r.lat;
-  values.lng = r.lng;
-  if (values.label === undefined || values.label === null) values.label = body.address.trim().slice(0, LABEL_MAX);
-  return true;
-}
+const resolveAddress = (req, res, body, values) => area.resolveAddress(req, res, body, values, 'label', LABEL_MAX);
 
 // ---- public: one-click unsubscribe (no login) ---------------------------
 // POST /alerts/unsubscribe { a, t } from the confirmation page, or ?a=&t= for
