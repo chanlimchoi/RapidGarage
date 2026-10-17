@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag } from 'lucide-react';
-import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX } from '../api';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle } from 'lucide-react';
+import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
 import { addressLine, saleWhen, saleStatus, timeAgo } from '../lib/format';
 import { formatPrice } from '../lib/price';
 import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../components/ui';
@@ -11,7 +11,7 @@ import toast from '../components/toast';
 class Post extends Component {
   constructor(props) {
     super(props);
-    this.state = { post: null, error: '', active: 0, reportOpen: false, reason: '', note: '', reportError: '', reporting: false, reported: false };
+    this.state = { post: null, error: '', active: 0, reportOpen: false, reason: '', note: '', reportError: '', reporting: false, reported: false, starting: false };
     this.onKey = this.onKey.bind(this);
   }
 
@@ -40,6 +40,22 @@ class Post extends Component {
   onKey(e) {
     if (e.key === 'ArrowLeft') { e.preventDefault(); this.step(-1); }
     if (e.key === 'ArrowRight') { e.preventDefault(); this.step(1); }
+  }
+
+  messageSeller() {
+    if (!this.props.user) {
+      toast.info('Log in to message the seller.');
+      this.props.history.push('/login');
+      return;
+    }
+    this.setState({ starting: true });
+    startConversation(this.state.post.id)
+      .then(({ ok, data }) => {
+        this.setState({ starting: false });
+        if (!ok) { toast.error(errorMessage(data, 'Could not start a conversation.')); return; }
+        this.props.history.push('/messages/' + data.id);
+      })
+      .catch(() => { this.setState({ starting: false }); toast.error('Unable to reach the server. Please try again.'); });
   }
 
   openReport() {
@@ -205,6 +221,11 @@ class Post extends Component {
               </dl>
               <div className="form-actions">
                 {mapsHref ? <a className="btn btn-primary" href={mapsHref} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" />Get directions</a> : null}
+                {!isOwner && !post.hidden ? (
+                  <button type="button" className="btn btn-secondary message-seller" disabled={this.state.starting} onClick={() => this.messageSeller()}>
+                    {this.state.starting ? <Spinner /> : <MessageCircle size={16} aria-hidden="true" />}Message seller
+                  </button>
+                ) : null}
                 {canEditPost(this.props.user, post) ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/edit'}><Pencil size={16} aria-hidden="true" />Edit post &amp; photos</Link> : null}
               </div>
             </div>

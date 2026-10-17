@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Route, Switch, withRouter } from 'react-router-dom';
-import { fetchMe, apiFetch } from './api';
+import { fetchMe, apiFetch, fetchUnreadCount } from './api';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import Toaster from './components/Toaster';
@@ -16,6 +16,9 @@ import NewPost from './post/NewPost';
 import EditPost from './post/EditPost';
 import Settings from './user/Settings';
 import Admin from './admin/Admin';
+import Messages from './messages/Messages';
+
+const UNREAD_POLL_MS = 15000;
 
 class App extends Component {
   constructor(props) {
@@ -27,7 +30,11 @@ class App extends Component {
       ready: false,
       // Public server config: { googleLogin, userMapsKeys }.
       config: { googleLogin: false, userMapsKeys: true },
+      // Unread messages, for the nav badge (polled while logged in).
+      unread: 0,
     };
+    this.refreshUnread = this.refreshUnread.bind(this);
+    this.onVisible = this.onVisible.bind(this);
     this.refreshUser = this.refreshUser.bind(this);
     this.refreshConfig = this.refreshConfig.bind(this);
   }
@@ -35,6 +42,25 @@ class App extends Component {
   componentDidMount() {
     this.refreshUser();
     this.refreshConfig();
+    this.unreadTimer = setInterval(() => { if (!document.hidden) this.refreshUnread(); }, UNREAD_POLL_MS);
+    document.addEventListener('visibilitychange', this.onVisible);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.unreadTimer);
+    document.removeEventListener('visibilitychange', this.onVisible);
+  }
+
+  onVisible() {
+    if (!document.hidden) this.refreshUnread();
+  }
+
+  refreshUnread() {
+    if (!this.state.user) {
+      if (this.state.unread) this.setState({ unread: 0 });
+      return Promise.resolve();
+    }
+    return fetchUnreadCount().then((n) => { if (n !== null && n !== this.state.unread) this.setState({ unread: n }); });
   }
 
   componentDidUpdate(prevProps) {
@@ -53,7 +79,7 @@ class App extends Component {
   }
 
   refreshUser() {
-    return fetchMe().then((user) => this.setState({ user, ready: true }));
+    return fetchMe().then((user) => this.setState({ user, ready: true }, this.refreshUnread));
   }
 
   render() {
@@ -61,7 +87,7 @@ class App extends Component {
     const common = { user, ready };
     return (
       <div className="app">
-        <NavBar user={user} ready={ready} location={this.props.location} />
+        <NavBar user={user} ready={ready} unread={this.state.unread} location={this.props.location} />
         <main id="main" className="app-main" tabIndex="-1">
           <Switch>
             <Route exact path='/' render={(props) => <PostList {...props} {...common} config={config} />} />
@@ -74,6 +100,7 @@ class App extends Component {
             <Route path='/newpost' render={(props) => <NewPost {...props} {...common} />} />
             <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} />} />
             <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
+            <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
             <Route path='/profile' render={(props) => <Profile {...props} {...common} />} />
             <Route component={NotFound} />
           </Switch>

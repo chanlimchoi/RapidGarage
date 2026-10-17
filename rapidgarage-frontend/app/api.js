@@ -92,3 +92,19 @@ export function fetchReportHistory(page) { return apiFetch('/admin/reports/histo
 export function moderatePost(postId, action, note) {
   return apiFetch('/admin/posts/' + postId + '/moderate', { method: 'POST', body: JSON.stringify({ action, note: note || undefined }) });
 }
+
+// ---- Messaging -----------------------------------------------------------
+export const MESSAGE_MAX = 2000;
+export const fetchConversations = () => apiFetch('/conversations');
+export const fetchConversation = (id) => apiFetch('/conversations/' + id);
+export const fetchMessagesAfter = (id, afterId) => apiFetch('/conversations/' + id + '/messages?after=' + (afterId || 0));
+export const fetchMessagesBefore = (id, beforeId) => apiFetch('/conversations/' + id + '/messages?before=' + beforeId);
+export const startConversation = (postId) => apiFetch('/conversations', { method: 'POST', body: JSON.stringify({ postId }) });
+export const sendMessage = (id, body) => apiFetch('/conversations/' + id + '/messages', { method: 'POST', body: JSON.stringify({ body }) });
+export const setBlocked = (id, blocked) => apiFetch('/conversations/' + id + '/block', { method: blocked ? 'POST' : 'DELETE' });
+// Resolves to the unread count, or null if it couldn't be fetched.
+export function fetchUnreadCount() {
+  return apiFetch('/conversations/unread')
+    .then(({ ok, data }) => (ok && data ? data.count : null))
+    .catch(() => null);
+}

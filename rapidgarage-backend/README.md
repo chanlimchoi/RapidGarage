@@ -218,6 +218,33 @@ Reports are kept when a post is deleted (by an admin or its owner), so history s
   automatically (`hiddenSource: auto`) once N different users have open reports on it. It
   still shows in the admin queue to dismiss or unhide. Unset (the default) means off.
 
+## Messaging
+
+Migration `20261017050000-messaging` adds `Conversations` (one per post + buyer + seller,
+unique index; `postId` has no FK so threads survive a deleted post, `postTitle` keeps a
+snapshot; per-participant `buyerLastReadAt` / `sellerLastReadAt`), `Messages` and
+`UserBlocks`. Back up and run `npm run db:precheck` and `npx sequelize-cli db:migrate` as above.
+
+All routes need login. A conversation is visible only to its two participants: anyone else
+(admins included) gets 404, so ids can't be probed. Responses identify people as
+`{ id, name }` where `name` is first name + last initial ("Bea B."); emails are never included.
+
+| Route | |
+|---|---|
+| `POST /conversations { postId }` | Start (201) or reuse (200) your conversation with the post's seller. 403 for your own post, `post_unavailable` for a hidden post (unless you already have a conversation about it), `blocked` if either of you blocked the other; 404 for a missing post; 429 over `CONVERSATION_MAX_PER_HOUR`. |
+| `GET /conversations` | Your conversations, newest activity first: `post { id, title, status: available\|hidden\|deleted, canView, thumbUrl }`, `other`, `role` (buyer/seller), `lastMessage`, `unreadCount`, `blocked { byMe, byThem }`, plus `unreadTotal`. A seller sees a conversation once the buyer has written. |
+| `GET /conversations/unread` | `{ count, conversations }` for the nav badge. |
+| `GET /conversations/:id` | The conversation plus the newest 30 messages (oldest first), `hasMore` and `canSend`. Marks them read. |
+| `GET /conversations/:id/messages?before=<id>` | Older page. `?after=<id>` returns newer messages (for polling) and marks them read. |
+| `POST /conversations/:id/messages { body }` | Send. `body` is plain text, 1-2000 characters after trimming (stored as-is; the client renders it as text, never HTML). 403 `blocked`, 429 over `MESSAGE_MAX_PER_MINUTE`. Sending works in existing conversations even if the post is hidden. |
+| `POST` / `DELETE /conversations/:id/block` | Block or unblock the other participant. Blocking applies to all conversations between the two of you, stops messages in both directions, and only the blocker can lift it. |
+
+Settings (optional): `MESSAGE_MAX_PER_MINUTE` (messages per user per minute, default 20) and
+`CONVERSATION_MAX_PER_HOUR` (new conversations per user per hour, default 20).
+
+`GET /profile/:id` now returns the full profile (including email) only to that user and to
+admins; everyone else gets `{ id, name, createdAt }`.
+
 ## Optional
 
 - If you want to add views and handlebars to your server side
