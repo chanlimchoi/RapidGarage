@@ -44,8 +44,45 @@ Keep new colors in `tokens.css` and check text pairs for WCAG AA (4.5:1) in both
 If `NODE_ENV=development` is exported in your shell, `vite build` produces a development React
 bundle. Build with it unset (or `NODE_ENV=production`).
 
+## Install on phone (PWA)
+
+The production build is an installable web app:
+
+- `public/manifest.webmanifest`: name, `start_url` `/?source=pwa`, `display: standalone`,
+  theme/background colors, icons (192/512 PNG, maskable 192/512, SVG) and shortcuts (Browse,
+  Post a sale, Saved, Messages). Icons are generated from `public/icons/icon.svg` and
+  `scripts/maskable.svg` by `scripts/make-icons.cjs` (needs `sharp`; the PNGs are committed).
+- **Service worker** (`build/sw.js`, written by `pwa/vite-plugin.js` after `vite build`; dev has
+  none). It **caches the app shell only**: `index.html`, the hashed JS/CSS/font bundles, icons and
+  the manifest, listed at build time and versioned by their content. Page loads are network-first
+  with the cached shell as the offline fallback; shell files are served cache-first. It never
+  intercepts `/api/*` (which includes photos at `/api/uploads`), `/uploads`, `/auth`,
+  cross-origin or non-GET requests, and it never stores anything at runtime, so no API
+  responses, messages or other private data ever land in Cache Storage. Rules: `pwa/sw-core.js`.
+- When a new build is deployed, the new worker waits and the app shows **"A new version of
+  RapidGarage is ready · Reload"**; old caches are deleted when it takes over.
+- **Install prompt**: Chrome/Edge/Android get an **Install** card (and an **Install app** menu
+  item) from `beforeinstallprompt`; iPhone/iPad Safari get "Tap Share, then Add to Home Screen".
+  "Not now" hides it for 30 days (`localStorage`). Never shown when already installed or on
+  login/sign-up/settings/admin pages.
+- **Offline**: the app still opens and shows "You're offline…"; data loads show their normal
+  "Unable to reach the server" errors.
+- Mobile polish: safe-area insets (notches), 16px form fields (no iOS zoom), 40–44px touch
+  targets, one-line scrollable filter pills, standalone-mode tweaks.
+
+`npm run check:pwa` audits `build/` like Lighthouse's installability checks (manifest
+fields, icon files and real PNG sizes, viewport/theme-color/apple-touch-icon, worker with a
+fetch handler, every precached file present, no `/api`/upload/auth paths precached, no runtime
+`cache.put`, `/sw.js` registered). `npm test` runs the Node tests in `test/` (routing rules, the
+generated worker in a sandbox, the check itself).
+
 ## Deploying
 
 `build/` is static: serve it from any static host and route `/api/*` to the backend
 (stripping `/api`), with a fallback to `index.html` for client-side routes. The backend does not
 serve the frontend.
+
+For the installable app: serve over **HTTPS** (localhost is fine for testing), serve `/sw.js`
+and `/manifest.webmanifest` from the site root with `Cache-Control: no-cache` (so updates are
+noticed; the hashed `/assets/*` can be cached for a year), and serve the manifest as
+`application/manifest+json`. Run `npm run check:pwa` after building.
