@@ -1,7 +1,8 @@
 import React from 'react';
 import { Field, Alert, Spinner } from '../components/ui';
 import { rules, validateAll, serverFieldErrors, focusFirstError } from '../lib/validate';
-import { toLocalInput, fromLocalInput } from '../lib/format';
+import { browserTimeZone, formDays, validateDays } from '../lib/schedule';
+import ScheduleEditor from './ScheduleEditor';
 import { priceErrors, toPriceNumber, formatPrice } from '../lib/price';
 
 const SCHEMA = {
@@ -9,30 +10,30 @@ const SCHEMA = {
   street: rules.required('Street address'),
   city: rules.required('City'),
   zipCode: rules.zip,
-  endDate: (v, all) => (v && all.startDate && new Date(v) < new Date(all.startDate) ? 'End must be after the start.' : ''),
 };
 
 // Price rules span three fields, so they run together (lib/price.js mirrors the server).
 function validateForm(values) {
-  return Object.assign(validateAll(values, SCHEMA), priceErrors(values));
+  return Object.assign(validateAll(values, SCHEMA), priceErrors(values), validateDays(values.days));
 }
 
 export function initialValues(post) {
   const p = post || {};
   return {
     title: p.title || '', street: p.street || '', city: p.city || '', state: p.state || '', zipCode: p.zipCode || '',
-    startDate: toLocalInput(p.startDate), endDate: toLocalInput(p.endDate), description: p.description || '',
+    days: formDays(p), timeZone: (p.schedule && p.schedule.timeZone) || browserTimeZone(), description: p.description || '',
     isFree: !!p.isFree,
     priceMin: p.priceMin === null || p.priceMin === undefined ? '' : String(p.priceMin),
     priceMax: p.priceMax === null || p.priceMax === undefined ? '' : String(p.priceMax),
   };
 }
 
-// Body for POST/PUT /post. Empty dates are sent as null to clear them.
+// Body for POST/PUT /post. No days clears the schedule (schedule: null).
 export function toBody(v) {
   return {
     title: v.title.trim(), street: v.street.trim(), city: v.city.trim(), state: v.state.trim(), zipCode: v.zipCode.trim(),
-    startDate: fromLocalInput(v.startDate), endDate: fromLocalInput(v.endDate), description: v.description,
+    schedule: v.days.length ? { timeZone: v.timeZone, days: v.days.map((d) => ({ date: d.date, start: d.start, end: d.end })) } : null,
+    description: v.description,
     isFree: !!v.isFree,
     priceMin: v.isFree ? null : toPriceNumber(v.priceMin),
     priceMax: v.isFree ? null : toPriceNumber(v.priceMax),
@@ -80,6 +81,12 @@ export default class PostForm extends React.Component {
     // Ticking Free clears the prices (a sale can't be both).
     const values = Object.assign({}, this.state.values, isFree ? { isFree, priceMin: '', priceMax: '' } : { isFree });
     this.setState({ values, serverErrors });
+  }
+
+  changeDays(days) {
+    const serverErrors = Object.assign({}, this.state.serverErrors);
+    Object.keys(serverErrors).forEach((k) => { if (k === 'schedule' || k === 'timeZone' || k.indexOf('days.') === 0) delete serverErrors[k]; });
+    this.setState({ values: Object.assign({}, this.state.values, { days }), serverErrors });
   }
 
   blur(name) {
@@ -134,14 +141,9 @@ export default class PostForm extends React.Component {
                 {this.input('zipCode', 'zipcode', { inputMode: 'numeric', autoComplete: 'postal-code', maxLength: 10, placeholder: '10001', required: true })}
               </Field>
             </div>
-            <div className="form-grid form-grid-2">
-              <Field id="startDate" label="Starts" optional error={this.shown('startDate', errors)}>
-                <input className="input" type="datetime-local" name="startDate" value={v.startDate} onChange={this.change('startDate')} onBlur={this.blur('startDate')} />
-              </Field>
-              <Field id="endDate" label="Ends" optional error={this.shown('endDate', errors)}>
-                <input className="input" type="datetime-local" name="endDate" value={v.endDate} min={v.startDate || undefined} onChange={this.change('endDate')} onBlur={this.blur('endDate')} />
-              </Field>
-            </div>
+            <ScheduleEditor days={v.days} timeZone={v.timeZone} errors={errors} disabled={textDisabled}
+              shownFor={(k) => this.state.submitted || this.state.touched[k] || !!this.state.serverErrors[k]}
+              onChange={(days) => this.changeDays(days)} onBlurRow={(i) => this.blur('days.' + i)()} />
             <fieldset className="price-fieldset" aria-describedby="price-hint">
               <legend className="field-label">Prices <span className="optional"> (optional)</span></legend>
               <label className="checkbox-row" htmlFor="isFree">

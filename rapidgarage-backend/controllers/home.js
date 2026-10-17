@@ -6,13 +6,15 @@ const { Op } = require('sequelize');
 const { visibleWhere } = require('../lib/moderation');
 const { isAdmin } = require('../lib/roles');
 const { publicUser } = require('../lib/people');
+const schedule = require('../lib/schedule');
 
 // AND a listing filter with the viewer's visibility rule (hidden posts).
-const visible = (req, where) => ({ [Op.and]: [where || {}, visibleWhere(req.user) || {}] });
+// Ended sales drop out of listings, except the owner's and admins' views of a seller's sales.
+const visible = (req, where, keepEnded) => ({ [Op.and]: [where || {}, visibleWhere(req.user) || {}, keepEnded ? {} : schedule.notEndedWhere()] });
 
 const router = express.Router();
 const newestFirst = {
-  include: [{ model: models.PostPhoto, as: 'photos' }],
+  include: [{ model: models.PostPhoto, as: 'photos' }, { model: models.SaleDay, as: 'saleDays' }],
   order: [['createdAt', 'DESC'], [{ model: models.PostPhoto, as: 'photos' }, 'position', 'ASC']],
 };
 
@@ -28,9 +30,12 @@ router.post('/logout', (req, res, next) => {
   });
 });
 
+// ?when=today|weekend|now narrows to sales open in that window (sale's local time).
 router.get('/allPosts', (req, res) => {
+  const w = schedule.parseWhen(req.query.when);
+  if (w.error) return badRequest(res, 'Invalid filter.', { when: w.error });
   models.Post.findAll(Object.assign({ where: visible(req) }, newestFirst))
-    .then((posts) => res.json(posts))
+    .then((posts) => res.json(w.when ? posts.filter((p) => schedule.matchesWhen(p, w.when)) : posts))
     .catch((err) => serverError(res, err));
 });
 
@@ -59,7 +64,8 @@ router.get('/all/:zipCode', (req, res) => {
 router.get('/allbyuserId/:userId', (req, res) => {
   const userId = parseId(req.params.userId);
   if (!userId) return badRequest(res, 'User id must be a positive integer.');
-  models.Post.findAll(Object.assign({ where: visible(req, { userId }) }, newestFirst))
+  const own = !!req.user && (req.user.id === userId || isAdmin(req.user));
+  models.Post.findAll(Object.assign({ where: visible(req, { userId }, own) }, newestFirst))
     .then((posts) => res.json(posts))
     .catch((err) => serverError(res, err));
 });

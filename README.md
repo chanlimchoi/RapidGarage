@@ -94,3 +94,19 @@ for each alert that works without logging in. Admins can switch alert emails off
 whole site in **Admin → Settings**. Email needs SMTP settings; without them the app works
 normally and alerts are just logged and skipped. See the backend README.
 
+## Sale dates & times
+
+Sellers add one or more **days** to a sale, each with a start and end time (**When** on the
+new/edit sale form). Times are saved in the seller's time zone (the browser's zone when the
+sale is created) and shown exactly as entered; buyers in another zone see a note. Cards, the
+map popup and the sale page show a badge: **Open now · until 2 PM**, **Starts Sat 8 AM**
+(or "today"/"tomorrow") or **Ended**, and the sale page lists every day. The home page has a
+**When** filter (**Any time · Today · This weekend · Open now**) that works on the recent list
+and on map search. "Today" and "This weekend" use the sale's own local dates; on a Saturday
+"this weekend" means today and tomorrow, on a Sunday just today.
+
+After its last day ends, a sale drops out of the recent list, search, the map and email
+alerts. Its owner and admins still see it in the seller's list, and the direct link keeps
+working (with a "This sale has ended" note), so shared links and conversations don't break.
+Sales without dates never end on their own.
+

@@ -2,7 +2,9 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
-import { addressLine, saleWhen, saleStatus, timeAgo } from '../lib/format';
+import { addressLine, timeAgo } from '../lib/format';
+import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
+import { BADGE_CLASS } from '../components/PostCard';
 import { formatPrice } from '../lib/price';
 import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../components/ui';
 import toast from '../components/toast';
@@ -176,14 +178,21 @@ class Post extends Component {
         </div>
       );
     }
-    const when = saleWhen(post);
-    const status = saleStatus(post);
+    const lines = dayLines(post);
+    const badge = saleBadge(post);
+    const zone = lines.length ? zoneNote(post) : null;
     const address = addressLine(post);
     const isOwner = !!(this.props.user && this.props.user.id === post.userId);
     const mapsHref = address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address) : null;
     return (
       <div className="container">
         <Link to="/" className="back-link"><ArrowLeft size={16} aria-hidden="true" />All sales</Link>
+        {badge && badge.kind === 'ended' ? (
+          <Alert tone="info" className="ended-banner">
+            <p><strong>This sale has ended.</strong>{' '}
+              {isOwner ? "It no longer shows up in search, on the map or in alerts. Add new dates to list it again." : "It no longer shows up in search or on the map."}</p>
+          </Alert>
+        ) : null}
         {post.hidden ? (
           <Alert tone="warning" className="hidden-banner">
             <p><strong>Hidden by moderator.</strong>{' '}
@@ -194,9 +203,7 @@ class Post extends Component {
           <h1>{post.title}</h1>
           <div className="chips">
             {formatPrice(post) ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{formatPrice(post)}</span> : null}
-            {status === 'live' ? <span className="chip chip-success">Happening now</span> : null}
-            {status === 'upcoming' ? <span className="chip chip-brand">Upcoming</span> : null}
-            {status === 'ended' ? <span className="chip">Ended</span> : null}
+            {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
             {address ? <span className="chip"><MapPin size={12} aria-hidden="true" />{[post.city, post.state].filter(Boolean).join(', ')}</span> : null}
             <span className="chip"><Clock size={12} aria-hidden="true" />Posted {timeAgo(post.createdAt)}</span>
           </div>
@@ -216,7 +223,12 @@ class Post extends Component {
               <h2>Sale details</h2>
               <dl className="detail-list">
                 <div><dt><MapPin size={18} aria-hidden="true" /><span>Where</span></dt><dd>{address || 'Not given'}</dd></div>
-                <div><dt><CalendarDays size={18} aria-hidden="true" /><span>When</span></dt><dd>{when || 'Dates not set'}</dd></div>
+                <div><dt><CalendarDays size={18} aria-hidden="true" /><span>When</span></dt><dd>
+                  {lines.length ? (
+                    <ul className="schedule-list">{lines.map((l, i) => <li key={i}>{l}</li>)}</ul>
+                  ) : 'Dates not set'}
+                  {zone ? <span className="small muted schedule-zone">{zone}</span> : null}
+                </dd></div>
                 {typeof post.lat === 'number' && typeof post.distanceMiles === 'number' ? <div><dt><Navigation size={18} aria-hidden="true" /><span>Distance</span></dt><dd>{post.distanceMiles} mi</dd></div> : null}
               </dl>
               <div className="form-actions">
