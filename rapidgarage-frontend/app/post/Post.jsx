@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
 import { addressLine, timeAgo } from '../lib/format';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
@@ -8,6 +8,7 @@ import { BADGE_CLASS } from '../components/PostCard';
 import { formatPrice } from '../lib/price';
 import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../components/ui';
 import toast from '../components/toast';
+import { RatingBadge } from '../ratings/Stars';
 import SaveButton from '../saved/SaveButton';
 import ItemList from './ItemList';
 
@@ -226,6 +227,7 @@ class Post extends Component {
             <div className="panel">
               <h2>Sale details</h2>
               <dl className="detail-list">
+                {post.seller ? <div><dt><UserRound size={18} aria-hidden="true" /><span>Seller</span></dt><dd className="seller-line">{post.seller.name} <RatingBadge summary={post.seller.rating} personId={post.seller.id} /></dd></div> : null}
                 <div><dt><MapPin size={18} aria-hidden="true" /><span>Where</span></dt><dd>{address || 'Not given'}</dd></div>
                 <div><dt><CalendarDays size={18} aria-hidden="true" /><span>When</span></dt><dd>
                   {lines.length ? (

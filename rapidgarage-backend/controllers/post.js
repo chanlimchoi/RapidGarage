@@ -8,6 +8,8 @@ const { geocodePost } = require('../lib/geo');
 const mod = require('../lib/moderation');
 const alerts = require('../lib/alerts');
 const schedule = require('../lib/schedule');
+const ratings = require('../lib/ratings');
+const { publicUser } = require('../lib/people');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -74,7 +76,14 @@ router.use('/:id/items', loadPost, require('./items'));
 
 router.use('/:id/report', requireLogin, loadPost, require('./report'));
 
-router.get('/:id', loadPost, (req, res) => res.json(req.post));
+// The seller is shown as "First L." with their rating summary; never an email.
+router.get('/:id', loadPost, async (req, res) => {
+  try {
+    const owner = await models.User.findByPk(req.post.userId, { attributes: ['id', 'firstName', 'lastName'] });
+    const seller = owner ? Object.assign(publicUser(owner), { rating: await ratings.summaryOf(owner.id) }) : null;
+    return res.json(Object.assign(req.post.toJSON(), { seller }));
+  } catch (err) { return serverError(res, err); }
+});
 
 router.put('/:id', requireLogin, loadPost, requireOwner, async (req, res) => {
   const body = req.body || {};

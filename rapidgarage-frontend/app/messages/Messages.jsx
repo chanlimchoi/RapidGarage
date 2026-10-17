@@ -9,6 +9,8 @@ import { Alert, EmptyState, SkeletonBlock, Spinner, Dialog, Field } from '../com
 import { timeAgo } from '../lib/format';
 import toast from '../components/toast';
 import linkify from './linkify';
+import RatePanel from '../ratings/RatePanel';
+import { RatingBadge } from '../ratings/Stars';
 
 const POLL_MS = 10000;
 
@@ -361,7 +363,7 @@ export default class Messages extends React.Component {
         <header className="thread-header">
           {this.renderThumb(conv.post, 'lg')}
           <div className="thread-heading">
-            <h2 id="thread-title">{conv.other ? conv.other.name : 'Former user'}</h2>
+            <h2 id="thread-title">{conv.other ? conv.other.name : 'Former user'}{conv.other ? <RatingBadge summary={conv.otherRating} personId={conv.other.id} compact /> : null}</h2>
             <div className="thread-sub">
               <span className="chip">{conv.role === 'buyer' ? 'Seller' : 'Buyer'}</span>
               {conv.post.canView && conv.post.status !== 'deleted'
@@ -385,6 +387,8 @@ export default class Messages extends React.Component {
             ) : null}
           </div>
         </header>
+        {conv.other ? <RatePanel conversationId={conv.id} iWrote={messages.some((m) => m.mine)}
+          refreshKey={[messages.some((m) => m.mine), messages.some((m) => !m.mine), blocked.byMe, blocked.byThem].join()} /> : null}
         {label && !conv.post.canView ? <Alert tone="warning">This post is no longer available. You can still read this conversation.</Alert> : null}
         <div className="thread-log" ref={this.logRef} role="log" aria-live="polite" aria-label={'Messages with ' + (conv.other ? conv.other.name : 'former user')} tabIndex="0">
           {hasMore ? (
