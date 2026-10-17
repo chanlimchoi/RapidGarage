@@ -10,7 +10,13 @@ module.exports = (sequelize, DataTypes) => {
     userId: { type: DataTypes.INTEGER, allowNull: false },
     imagesUrl: DataTypes.STRING,
     startDate: DataTypes.DATE,
-    endDate: DataTypes.DATE
+    endDate: DataTypes.DATE,
+    // Filled by server-side geocoding (lib/geo.js); null = not geocoded.
+    lat: { type: DataTypes.DOUBLE, allowNull: true },
+    lng: { type: DataTypes.DOUBLE, allowNull: true },
+    // ok | no_key | not_found | error | null (never tried)
+    geocodeStatus: { type: DataTypes.STRING(16), allowNull: true },
+    geocodedAt: { type: DataTypes.DATE, allowNull: true },
   });
 
   // Sequelize 4 ignores classMethods; associations must be set like this.

@@ -56,3 +56,14 @@ export function deletePhoto(postId, photoId) {
 export function canEditPost(user, post) {
   return !!user && !!post && (user.id === post.userId || user.role === 'admin');
 }
+
+export const SEARCH_RADII = [5, 10, 25, 50];
+
+// GET /search. params: { lat, lng } or { q }, plus radius, page, pageSize.
+export function searchPosts(params) {
+  const qs = Object.keys(params)
+    .filter((k) => params[k] !== undefined && params[k] !== null && params[k] !== '')
+    .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+    .join('&');
+  return apiFetch('/search?' + qs);
+}

@@ -1,6 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { resolveMapsKey, loadGoogleMaps, onAuthFailure, geocode, addressOf } from './googleMaps';
+
+const MILE_M = 1609.344;
+const hasCoords = (p) => typeof p.lat === 'number' && typeof p.lng === 'number';
 
 const NYC = { lat: 40.73061, lng: -73.935242 };
 const MAX_GEOCODE = 25; // cap geocoding calls per render of the list
@@ -25,6 +29,7 @@ class Map extends React.Component {
     this.container = null;
     this.map = null;
     this.markers = [];
+    this.markerById = {};
     this.renderToken = 0;
   }
 
@@ -60,7 +65,8 @@ class Map extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.posts !== this.props.posts) this.renderMarkers();
+    if (prevProps.posts !== this.props.posts || prevProps.center !== this.props.center || prevProps.radius !== this.props.radius) this.renderMarkers();
+    else if (prevProps.selectedId !== this.props.selectedId) this.showSelected();
     // Logging in/out or saving a key in Settings can change which key applies.
     const sig = (u) => (u ? u.id + ':' + (u.mapsKeyLast4 || '') : '');
     const cfg = (c) => (c && c.userMapsKeys === false ? 'off' : 'on');
@@ -73,8 +79,58 @@ class Map extends React.Component {
   }
 
   clearMarkers() {
+    if (this.clusterer) this.clusterer.clearMarkers();
     this.markers.forEach((m) => m.setMap(null));
     this.markers = [];
+    this.markerById = {};
+    if (this.circle) { this.circle.setMap(null); this.circle = null; }
+  }
+
+  openInfo(post, marker) {
+    const el = document.createElement('div');
+    const strong = document.createElement('strong');
+    strong.textContent = post.title || 'Garage sale'; // textContent: no HTML injection
+    const addr = document.createElement('div');
+    addr.textContent = addressOf(post);
+    el.appendChild(strong);
+    el.appendChild(addr);
+    if (typeof post.distanceMiles === 'number') {
+      const d = document.createElement('div');
+      d.textContent = post.distanceMiles + ' mi away';
+      el.appendChild(d);
+    }
+    this.info.setContent(el);
+    this.info.open(this.map, marker);
+  }
+
+  // List -> map: pan to the selected post and open its info window.
+  showSelected() {
+    const marker = this.markerById[this.props.selectedId];
+    if (!marker || !this.map) return;
+    const post = (this.props.posts || []).find((p) => p.id === this.props.selectedId);
+    this.map.panTo(marker.getPosition());
+    if (this.map.getZoom() < 14) this.map.setZoom(14);
+    if (post) this.openInfo(post, marker);
+  }
+
+  addMarker(post, loc, bounds) {
+    const maps = this.maps;
+    const marker = new maps.Marker({ position: loc, title: post.title || '' });
+    // Map -> list: tell the parent which post was clicked.
+    marker.addListener('click', () => {
+      this.openInfo(post, marker);
+      if (this.props.onSelect) this.props.onSelect(post.id);
+    });
+    this.markers.push(marker);
+    this.markerById[post.id] = marker;
+    this.clusterer.addMarker(marker);
+    bounds.extend(loc);
+  }
+
+  fit(bounds) {
+    if (this.circle) this.map.fitBounds(this.circle.getBounds());
+    else if (this.markers.length === 1) { this.map.setCenter(bounds.getCenter()); this.map.setZoom(13); }
+    else if (this.markers.length > 1) this.map.fitBounds(bounds);
   }
 
   renderMarkers() {
@@ -82,34 +138,29 @@ class Map extends React.Component {
     const token = ++this.renderToken;
     const maps = this.maps;
     this.clearMarkers();
-    const posts = (this.props.posts || []).filter((p) => addressOf(p)).slice(0, MAX_GEOCODE);
+    // Official clusterer: groups nearby pins at low zoom levels.
+    if (!this.clusterer) this.clusterer = new MarkerClusterer({ map: this.map, markers: [] });
     const bounds = new maps.LatLngBounds();
-
-    // Sequential geocoding stays well under the per-second rate limit.
-    posts.reduce((chain, post) => chain.then(() => {
+    const { center, radius } = this.props;
+    if (center && radius) {
+      this.circle = new maps.Circle({
+        map: this.map, center, radius: radius * MILE_M,
+        strokeColor: '#31b0d5', strokeWeight: 1, fillColor: '#31b0d5', fillOpacity: 0.06, clickable: false,
+      });
+    }
+    const all = this.props.posts || [];
+    // Posts with stored coordinates need no geocoding.
+    all.filter(hasCoords).forEach((p) => this.addMarker(p, { lat: p.lat, lng: p.lng }, bounds));
+    this.fit(bounds);
+    this.showSelected();
+    // Older posts without coordinates: geocode in the browser (capped, sequential).
+    const rest = all.filter((p) => !hasCoords(p) && addressOf(p)).slice(0, MAX_GEOCODE);
+    rest.reduce((chain, post) => chain.then(() => {
       if (token !== this.renderToken || !this.mounted) return null;
       return geocode(maps, this.geocoder, addressOf(post)).then((loc) => {
         if (!loc || token !== this.renderToken || !this.mounted) return;
-        const marker = new maps.Marker({ position: loc, map: this.map, title: post.title || '' });
-        marker.addListener('click', () => {
-          const el = document.createElement('div');
-          const strong = document.createElement('strong');
-          strong.textContent = post.title || 'Garage sale'; // textContent: no HTML injection
-          const addr = document.createElement('div');
-          addr.textContent = addressOf(post);
-          el.appendChild(strong);
-          el.appendChild(addr);
-          this.info.setContent(el);
-          this.info.open(this.map, marker);
-        });
-        this.markers.push(marker);
-        bounds.extend(loc);
-        if (this.markers.length === 1) {
-          this.map.setCenter(loc);
-          this.map.setZoom(13);
-        } else {
-          this.map.fitBounds(bounds);
-        }
+        this.addMarker(post, loc, bounds);
+        this.fit(bounds);
       });
     }), Promise.resolve());
   }
