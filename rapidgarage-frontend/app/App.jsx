@@ -19,6 +19,7 @@ import Settings from './user/Settings';
 import Admin from './admin/Admin';
 import Messages from './messages/Messages';
 import Unsubscribe from './user/Unsubscribe';
+import PersonRatings from './ratings/PersonRatings';
 import Saved from './saved/Saved';
 import ItemsEditor from './post/ItemsEditor';
 import * as savedStore from './lib/saved';
@@ -112,6 +113,7 @@ class App extends Component {
             <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
             <Route path='/alerts/unsubscribe' component={Unsubscribe} />
             <Route path='/saved' render={(props) => <Saved {...props} {...common} config={config} />} />
+            <Route path='/people/:id' render={(props) => <PersonRatings {...props} {...common} />} />
             <Route path='/profile' render={(props) => <Profile {...props} {...common} />} />
             <Route component={NotFound} />
           </Switch>

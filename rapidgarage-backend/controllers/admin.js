@@ -205,5 +205,8 @@ router.post('/posts/:id/moderate', async (req, res) => {
 // Conversation reports (reported conversations only; see the file header).
 router.use(require('./adminConversations'));
 
+// Rating reports.
+router.use(require('./adminRatings'));
+
 module.exports = router;
 module.exports.requireAdmin = requireAdmin;

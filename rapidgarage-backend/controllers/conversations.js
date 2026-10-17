@@ -7,6 +7,7 @@ const { badRequest, forbidden, notFound, sendError, serverError, requireLogin, p
 const mod = require('../lib/moderation');
 const msg = require('../lib/messaging');
 const { publicUser } = require('../lib/people');
+const ratings = require('../lib/ratings');
 
 const PERSON = ['id', 'firstName', 'lastName'];
 
@@ -49,6 +50,7 @@ async function summarize(conv, user, post, unread, blocks, last) {
     role: me === conv.buyerId ? 'buyer' : 'seller',
     post: postSummary(conv, post, user),
     other: publicUser(other),
+    otherRating: other ? (await ratings.summaries([other.id])).get(other.id) : null,
     lastMessage: last ? messageJSON(last, me) : null,
     lastMessageAt: conv.lastMessageAt,
     unreadCount: unread || 0,

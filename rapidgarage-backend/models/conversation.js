@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
     Conversation.belongsTo(models.User, { as: 'buyer', foreignKey: 'buyerId', onDelete: 'CASCADE' });
     Conversation.belongsTo(models.User, { as: 'seller', foreignKey: 'sellerId', onDelete: 'CASCADE' });
     Conversation.hasMany(models.Message, { as: 'messages', foreignKey: 'conversationId', onDelete: 'CASCADE' });
+    Conversation.hasMany(models.Rating, { as: 'ratings', foreignKey: 'conversationId', onDelete: 'CASCADE' });
   };
   Conversation.prototype.isParticipant = function(userId) {
     return userId === this.buyerId || userId === this.sellerId;

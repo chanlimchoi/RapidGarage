@@ -7,6 +7,8 @@ import { displayName, timeAgo } from '../lib/format';
 import { formatPrice } from '../lib/price';
 import toast from '../components/toast';
 import ConversationReports from './ConversationReports';
+import RatingReports from './RatingReports';
+import { fetchRatingReportQueue } from '../api';
 
 const ACTION_TEXT = {
   dismiss: { done: 'Reports dismissed.', verb: 'Dismiss reports' },
@@ -32,10 +34,19 @@ export default class Reports extends React.Component {
         if (!ok) return this.setState({ loading: false, error: errorMessage(data, 'Could not load reports.') });
         const postCount = data.groups.reduce((n, g) => n + g.openCount, 0);
         this.setState({ loading: false, groups: data.groups, hidden: data.hidden, threshold: data.autoHideThreshold, postCount, convCount: data.conversationOpenCount || 0 });
-        if (this.props.onCount) this.props.onCount(postCount + (data.conversationOpenCount || 0));
+        this.reportCount();
         return null;
       })
       .catch(() => this.setState({ loading: false, error: 'Unable to reach the server.' }));
+  }
+
+  // Badge total = posts + conversations + ratings.
+  reportCount() {
+    return fetchRatingReportQueue().then(({ ok, data }) => {
+      const ratingCount = ok ? data.openCount : 0;
+      this.setState({ ratingCount });
+      if (this.props.onCount) this.props.onCount((this.state.postCount || 0) + (this.state.convCount || 0) + ratingCount);
+    }).catch(() => null);
   }
 
   loadHistory(page) {
@@ -195,7 +206,7 @@ export default class Reports extends React.Component {
   }
 
   render() {
-    const { view, loading, error, kind, postCount, convCount } = this.state;
+    const { view, loading, error, kind, postCount, convCount, ratingCount } = this.state;
     const count = (n) => (n ? <span className="count" aria-label={n + ' open'}>{n}</span> : null);
     return (
       <section className="rg-admin-reports stack" aria-labelledby="admin-reports-heading">
@@ -204,10 +215,13 @@ export default class Reports extends React.Component {
           <div className="segmented admin-tabs report-kind" role="group" aria-label="Report type" style={{ margin: 0 }}>
             <button type="button" aria-pressed={kind === 'posts'} onClick={() => this.setState({ kind: 'posts' })}>Posts{count(postCount)}</button>
             <button type="button" aria-pressed={kind === 'conversations'} onClick={() => this.setState({ kind: 'conversations' })}>Conversations{count(convCount)}</button>
+            <button type="button" aria-pressed={kind === 'ratings'} onClick={() => this.setState({ kind: 'ratings' })}>Ratings{count(ratingCount)}</button>
           </div>
         </div>
-        {kind === 'conversations' ? (
-          <ConversationReports onCount={(n) => { this.setState({ convCount: n }); if (this.props.onCount) this.props.onCount((this.state.postCount || 0) + n); }}
+        {kind === 'ratings' ? (
+          <RatingReports onCount={(n) => { this.setState({ ratingCount: n }); if (this.props.onCount) this.props.onCount((this.state.postCount || 0) + (this.state.convCount || 0) + n); }} />
+        ) : kind === 'conversations' ? (
+          <ConversationReports onCount={(n) => { this.setState({ convCount: n }); if (this.props.onCount) this.props.onCount((this.state.postCount || 0) + n + (this.state.ratingCount || 0)); }}
             onChanged={() => this.loadQueue()} />
         ) : (
         <React.Fragment>

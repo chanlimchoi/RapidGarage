@@ -135,3 +135,21 @@ export const createAlert = (body) => apiFetch('/alerts', { method: 'POST', body:
 export const updateAlert = (id, body) => apiFetch('/alerts/' + id, { method: 'PUT', body: JSON.stringify(body) });
 export const deleteAlert = (id) => apiFetch('/alerts/' + id, { method: 'DELETE' });
 export const unsubscribeAlert = (a, t) => apiFetch('/alerts/unsubscribe', { method: 'POST', body: JSON.stringify({ a, t }) });
+
+// ---- Ratings ------------------------------------------------------------
+export const RATING_COMMENT_MAX = 280;
+export const RATING_REPORT_REASONS = [
+  { value: 'harassment', label: 'Harassment or insults' },
+  { value: 'offensive', label: 'Offensive language' },
+  { value: 'spam', label: 'Spam or advertising' },
+  { value: 'fake', label: "Fake: we didn't really deal" },
+  { value: 'other', label: 'Something else' },
+];
+export const ratingReasonLabel = (v) => (RATING_REPORT_REASONS.find((r) => r.value === v) || { label: v }).label;
+export const fetchConversationRating = (id) => apiFetch('/ratings/conversations/' + id);
+export const saveRating = (id, stars, comment) => apiFetch('/ratings/conversations/' + id, { method: 'PUT', body: JSON.stringify({ stars, comment }) });
+export const deleteRating = (id) => apiFetch('/ratings/conversations/' + id, { method: 'DELETE' });
+export const fetchPersonRatings = (id, page) => apiFetch('/ratings/users/' + id + '?page=' + (page || 1));
+export const reportRating = (id, reason, note) => apiFetch('/ratings/' + id + '/report', { method: 'POST', body: JSON.stringify({ reason, note: note || undefined }) });
+export const fetchRatingReportQueue = () => apiFetch('/admin/ratings/reports');
+export const moderateRating = (id, action, note) => apiFetch('/admin/ratings/' + id + '/moderate', { method: 'POST', body: JSON.stringify({ action, note: note || undefined }) });
