@@ -1,10 +1,9 @@
-// Loads the Google Maps JavaScript API once, using the key injected at build
-// time (GOOGLE_MAPS_API_KEY, see .env.example). Never hard-code a key here.
-/* global GOOGLE_MAPS_API_KEY */
+// Loads the Google Maps JavaScript API once. The optional build-time fallback
+// key comes from VITE_GOOGLE_MAPS_API_KEY (see .env.example). Never hard-code a key here.
 import { apiFetch } from '../api';
 
 // Build-time key: last-resort fallback for static deployments.
-export const BUILD_MAPS_API_KEY = (typeof GOOGLE_MAPS_API_KEY === 'string' ? GOOGLE_MAPS_API_KEY : '').trim();
+export const BUILD_MAPS_API_KEY = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '').trim();
 
 // Ask the server which key to use: the logged-in user's own key, else the
 // server-wide key. Resolves to { key, source } or rejects with 'no_key'.
