@@ -95,8 +95,8 @@ export default class DashboardSale extends React.Component {
               <ul className="dash-list">
                 {s.conversationList.map((c) => (
                   <li key={c.id}>
-                    <Link to={'/messages/' + c.id}><strong>{c.buyer || t('msg.formerUser')}</strong></Link>
-                    {c.unread ? <span className="chip chip-danger dash-unread">{t('dash.unread', { count: c.unread })}</span> : null}
+                    <div><Link to={'/messages/' + c.id}><strong>{c.buyer || t('msg.formerUser')}</strong></Link>
+                    {c.unread ? <span className="chip chip-danger dash-unread">{t('dash.unread', { count: c.unread })}</span> : null}</div>
                     {c.lastMessageAt ? <div className="small muted">{t('dash.lastMessage', { when: timeAgo(c.lastMessageAt) })}</div> : null}
                   </li>
                 ))}

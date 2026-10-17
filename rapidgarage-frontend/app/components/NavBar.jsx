@@ -116,7 +116,7 @@ export default class NavBar extends React.Component {
             <span className="brand-mark" aria-hidden="true"><Store size={18} /></span>
             RapidGarage
           </Link>
-          <nav className="nav-links" aria-label={t('nav.main')}>
+          <nav className={'nav-links' + (user ? ' nav-has-user' : '')} aria-label={t('nav.main')}>
             <NavLink exact to="/" className="nav-link" activeClassName="active"><Search size={16} aria-hidden="true" />{t('nav.browse')}</NavLink>
             {user ? (
               <NavLink to="/messages" className="nav-link nav-messages" activeClassName="active">
@@ -127,7 +127,7 @@ export default class NavBar extends React.Component {
             {user ? <NavLink to="/saved" className="nav-link nav-saved" activeClassName="active"><Star size={16} aria-hidden="true" />{t('nav.saved')}</NavLink> : null}
             {user ? <NavLink to="/dashboard" className="nav-link nav-dashboard" activeClassName="active"><LayoutDashboard size={16} aria-hidden="true" />{t('nav.dashboard')}</NavLink> : null}
             <NavLink to="/events" className="nav-link nav-events" activeClassName="active"><UsersRound size={16} aria-hidden="true" />{t('nav.events')}</NavLink>
-            <NavLink to="/about" className="nav-link" activeClassName="active">{t('nav.about')}</NavLink>
+            <NavLink to="/about" className="nav-link nav-about" activeClassName="active">{t('nav.about')}</NavLink>
           </nav>
           <div className="nav-spacer" />
           <div className="nav-actions">

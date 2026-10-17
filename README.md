@@ -192,6 +192,14 @@ Anyone logged in can organize a **neighborhood sale** (`/events/new`): a name, a
 - **Moderation.** Events can be reported (same reasons, the same hourly report budget as posts, auto-hide at the same threshold). Admins find them under **Admin → Reports → Neighborhood sales** and can dismiss, hide, unhide or delete. Hiding takes the event out of search and lists and stops its short link and printing; its sales stay listed on their own. Ended events stay viewable but leave search.
 - **Limits.** `EVENT_MAX_ACTIVE` upcoming events per organizer (3), `EVENT_MAX_PER_DAY` created per 24 h (5), `EVENT_MAX_SALES` sales per event (200).
 
+## Seller dashboard
+
+Logged-in sellers get **Dashboard** in the nav (`/dashboard`): totals and 14-day charts for page views, QR scans, saves and buyer messages across all their sales, a "right now" snapshot (active/ended sales, conversations and unread, holds waiting/reserved, items sold vs total, sales in neighborhood sales), and every sale, ended ones included (filter: all / active / ended), each with its own numbers. `/dashboard/sales/:id` shows one sale: four daily charts, items sold, open holds (item, buyer as "First L.", until when, link to the thread), its conversations and its neighborhood sale. Charts are plain SVG with a screen-reader table; no chart library.
+
+- **Only your own.** The API (`GET /dashboard`, `GET /dashboard/sales/:id`) has no user parameter; another seller's sale is a 404 for everyone, admins included. Admins keep what they already had (e.g. scan counts on a sale's print page).
+- **Views are counted like QR scans.** The sale page sends `POST /post/:id/view`; the server counts each visitor once per day per sale with an HMAC of (sale, IP, user agent) under a random salt that lives only in memory and changes every UTC day, and stores only a number per sale per local day (`PostViewDays`). Not counted: the seller, admins, bots and link previews (user-agent list), prefetch/prerender requests, hidden sales, and plain GETs (crawlers that don't run the page never count). A QR scan that opens the page is one scan and, if the page loads, one view.
+- **What else is counted.** Saves are current saves (and when they were made); who saved is never shown. Messages are buyers' text messages (not hold events, not the seller's, not removed). Holds count open requests and reservations that haven't expired. Days are each sale's local dates.
+
 ## Languages
 
 RapidGarage speaks **English, Español, 한국어 and 简体中文**. The first visit follows the

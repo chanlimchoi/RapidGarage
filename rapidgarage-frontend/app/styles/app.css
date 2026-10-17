@@ -1000,3 +1000,6 @@ html:lang(ko) body { word-break: keep-all; overflow-wrap: anywhere; }
 .dash-list li { display: grid; gap: 2px; padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
 .dash-list li:first-child { border-top: 0; padding-top: 0; }
 @media (max-width: 600px) { .dash-stat-items { grid-column: auto; } .metric-total { font-size: var(--text-2xl); } }
+/* Nav: keep labels on one line; About (also in the footer) gives way first when logged in. */
+.nav-link { white-space: nowrap; }
+@media (max-width: 1360px) { .nav-has-user .nav-about { display: none; } }
