@@ -26,12 +26,16 @@ module.exports = (sequelize, DataTypes) => {
     hiddenAt: { type: DataTypes.DATE, allowNull: true },
     hiddenBy: { type: DataTypes.INTEGER, allowNull: true },
     hiddenSource: { type: DataTypes.STRING(16), allowNull: true }, // moderator | auto
+    // IANA time zone of the sale days (lib/schedule.js); startDate/endDate are
+    // then the first start and last end of those days.
+    timeZone: { type: DataTypes.STRING(64), allowNull: true },
   });
 
   // Sequelize 4 ignores classMethods; associations must be set like this.
   Post.associate = (models) => {
     Post.belongsTo(models.User, { foreignKey: 'userId', onDelete: 'CASCADE' });
     Post.hasMany(models.PostPhoto, { as: 'photos', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
+    Post.hasMany(models.SaleDay, { as: 'saleDays', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
   };
   // Nested includes are serialized with get({ plain: true }), which skips
   // PostPhoto#toJSON; serialize photos explicitly so clients get URLs only.
@@ -39,6 +43,8 @@ module.exports = (sequelize, DataTypes) => {
     const out = Object.assign({}, this.get({ plain: true }));
     if (Array.isArray(this.photos)) out.photos = this.photos.map((p) => p.toJSON());
     delete out.hiddenBy; // which admin hid it is only shown in the admin API
+    if (Array.isArray(this.saleDays)) out.schedule = require('../lib/schedule').toJSON(this);
+    delete out.saleDays;
     return out;
   };
   return Post;

@@ -7,6 +7,7 @@ import { Alert, EmptyState, SkeletonGrid, Spinner } from './ui';
 import { apiFetch, searchPosts, errorMessage, SEARCH_RADII, createAlert } from '../api';
 import toast from './toast';
 import { priceFieldError, formatUSD } from '../lib/price';
+import { WHEN_FILTERS } from '../lib/schedule';
 
 const PAGE_SIZE = 10;
 
@@ -17,7 +18,7 @@ class PostList extends React.Component {
       results: [], mode: 'recent', notice: '', error: '', loading: true,
       q: '', radius: 10, coords: null, center: null, page: 1, totalPages: 1, total: 0,
       selectedId: null, locating: false, view: 'list',
-      maxPrice: '', freeOnly: false, alertBusy: false, alertSavedFor: null,
+      maxPrice: '', freeOnly: false, when: '', alertBusy: false, alertSavedFor: null,
     };
     this.handleSubmit = this.handleSubmit.bind(this);
     this.useMyLocation = this.useMyLocation.bind(this);
@@ -32,7 +33,7 @@ class PostList extends React.Component {
   }
 
   loadRecent() {
-    apiFetch('/allPosts')
+    apiFetch('/allPosts' + (this.state.when ? '?when=' + encodeURIComponent(this.state.when) : ''))
       .then(({ ok, data }) => this.mounted && this.setState({ loading: false, results: ok && Array.isArray(data) ? data : [],
         error: ok ? '' : errorMessage(data, 'Could not load recent sales.') }))
       .catch(() => this.mounted && this.setState({ loading: false, results: [], error: 'Unable to reach the server. Please try again.' }));
@@ -46,6 +47,7 @@ class PostList extends React.Component {
     const params = Object.assign({ radius: this.state.radius, page: page || 1, pageSize: PAGE_SIZE },
       where.coords ? { lat: where.coords.lat, lng: where.coords.lng } : { q: where.q },
       this.state.freeOnly ? { free: 'true' } : {},
+      this.state.when ? { when: this.state.when } : {},
       !this.state.freeOnly && this.state.maxPrice.trim() ? { maxPrice: this.state.maxPrice.trim() } : {});
     this.setState({ loading: true, error: '', notice: '' });
     return searchPosts(params).then(({ ok, data }) => {
@@ -88,6 +90,15 @@ class PostList extends React.Component {
   // Price filters re-run the current search (they need a center or text).
   changeFilter(patch) {
     this.setState(patch, () => { if (this.state.lastWhere && !priceFieldError(this.state.maxPrice, 'Max price')) this.runSearch(this.state.lastWhere, 1); });
+  }
+
+  // When filter works on the recent list too (server-side ?when=).
+  changeWhen(when) {
+    this.setState({ when }, () => {
+      if (this.state.lastWhere) return this.runSearch(this.state.lastWhere, 1);
+      this.setState({ loading: true });
+      return this.loadRecent();
+    });
   }
 
   changeRadius(radius) {
@@ -159,6 +170,15 @@ class PostList extends React.Component {
     const s = this.state;
     if (s.loading) return <SkeletonGrid count={4} />;
     if (!s.results.length) {
+      if (s.mode === 'recent' && !s.error && s.when) {
+        const label = WHEN_FILTERS.filter((w) => w.value === s.when)[0].label.toLowerCase();
+        return (
+          <EmptyState icon={SearchX} title={'No sales ' + (s.when === 'now' ? 'open right now' : label)}
+            action={<button type="button" className="btn btn-secondary" onClick={() => this.changeWhen('')}>Show all dates</button>}>
+            Try another day, or search near you.
+          </EmptyState>
+        );
+      }
       if (s.mode === 'recent' && !s.error) {
         return (
           <EmptyState icon={Store} title="No sales posted yet"
@@ -200,7 +220,9 @@ class PostList extends React.Component {
       ? s.total + ' sale' + (s.total === 1 ? '' : 's') + ' within ' + s.resultRadius + ' mi'
       : s.mode === 'text' ? s.total + ' matching sale' + (s.total === 1 ? '' : 's') : 'Recent sales';
     const f = s.mode !== 'recent' ? s.resultFilter : null;
-    const filterNote = f && f.freeOnly ? ' · free only' : f && f.maxPrice !== null && f.maxPrice !== undefined ? ' · items ' + formatUSD(f.maxPrice) + ' or less' : '';
+    const priceNote = f && f.freeOnly ? ' · free only' : f && f.maxPrice !== null && f.maxPrice !== undefined ? ' · items ' + formatUSD(f.maxPrice) + ' or less' : '';
+    const whenItem = WHEN_FILTERS.filter((w) => w.value && w.value === s.when)[0];
+    const filterNote = priceNote + (whenItem ? ' · ' + whenItem.label.toLowerCase() : '');
     const maxPriceError = priceFieldError(s.maxPrice, 'Max price');
     return (
       <div className="container">
@@ -245,6 +267,11 @@ class PostList extends React.Component {
               <input id="search-free" name="free" type="checkbox" checked={s.freeOnly} onChange={(e) => this.changeFilter({ freeOnly: e.target.checked })} />
               Free only
             </label>
+            <div className="segmented when-filter" role="group" aria-label="When">
+              {WHEN_FILTERS.map((w) => (
+                <button key={w.value || 'any'} type="button" aria-pressed={s.when === w.value} onClick={() => this.changeWhen(w.value)}>{w.label}</button>
+              ))}
+            </div>
             {maxPriceError
               ? <span className="field-error" id="search-max-price-error">{maxPriceError}</span>
               : <span className="field-hint" id="search-max-price-hint">Sales with something at or under this price.</span>}

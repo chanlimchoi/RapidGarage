@@ -7,6 +7,7 @@ const { matchesPrice, formatPrice } = require('./price');
 const { publicName } = require('./people');
 const { saleAlertsEnabled } = require('./features');
 const mailer = require('./mailer');
+const schedule = require('./schedule');
 
 function models() { return require('../models'); }
 
@@ -78,6 +79,8 @@ function oneClickUrl(alert) {
 async function enqueueForPost(post) {
   const m = models();
   if (!post || post.hidden || typeof post.lat !== 'number' || typeof post.lng !== 'number') return 0;
+  // Only sales that haven't ended (upcoming or open now).
+  if (schedule.isEnded(post)) return 0;
   if (!(await saleAlertsEnabled())) return 0;
   const dLat = RADIUS_MAX / 69.0;
   const candidates = await m.SaleAlert.findAll({
@@ -236,6 +239,7 @@ async function processQueue(now) {
       let why = null;
       if (!post) why = 'post_deleted';
       else if (post.hidden) why = 'post_hidden';
+      else if (schedule.isEnded(post)) why = 'post_ended';
       else if (!alert || !alert.enabled) why = 'alert_disabled';
       else if (blockedWith.has(post.userId)) why = 'blocked';
       if (why) drop.push({ r, why });

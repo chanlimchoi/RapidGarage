@@ -355,6 +355,43 @@ marks queued rows `skipped`, and everything else works as normal.
   `ALERT_DAILY_MAX_EMAILS` (6), `ALERT_MAX_POSTS_PER_EMAIL` (20), `ALERT_WORKER_SECONDS` (60),
   `ALERT_WORKER` (`off` to disable the worker).
 
+## Sale dates & times
+
+`POST /post` and `PUT /post/:id` accept `schedule`:
+
+```json
+{ "timeZone": "America/New_York",
+  "days": [{ "date": "2026-10-24", "start": "08:00", "end": "14:00" }] }
+```
+
+- Up to 14 days, each a real calendar date within the next year, `HH:MM` times, `end` after
+  `start` on the same day (overnight sales: add the next day), no duplicate dates. Errors come
+  back as `details["days.<i>"]`, `details.schedule` or `details.timeZone`.
+- `timeZone` is an IANA zone (validated with `Intl`); missing means `DEFAULT_TIME_ZONE`
+  (default `America/New_York`).
+- A new sale can't be entirely in the past; edits may keep days that already happened.
+- `schedule: null` (or `days: []`) clears the dates. `schedule` replaces all days at once.
+- The server stores each day as local date + times **and** UTC instants (`SaleDays`,
+  computed with DST handled: a time in the spring-forward gap moves forward; an ambiguous
+  fall-back time uses the first occurrence) and sets `Posts.timeZone`, `startDate` (first
+  start) and `endDate` (last end).
+- Responses include `schedule: { timeZone, days: [{ date, start, end, startsAt, endsAt }] }`
+  (or `null`). The legacy `startDate`/`endDate` fields are still accepted when there is no
+  `schedule` (they replace any day schedule) and are treated as one window
+  `[startDate, endDate or startDate + 12h]`.
+
+**Ended sales** (last `endDate` in the past) are excluded from `/allPosts`, `/all/:zip`,
+`/search` (distance and text) and other people's `/allbyuserId/:id`; the owner and admins
+still get them there, and `GET /post/:id` keeps working for everyone. Sale alerts only match
+sales that haven't ended, and the outbox drops a notification if the sale ended before the
+email went out (`lastError: post_ended`).
+
+**Filters**: `/search` and `/allPosts` take `when=today|weekend|now` (400 for anything else).
+`now` = a day window contains the current time; `today` = a remaining window on the sale's
+local today; `weekend` = a remaining window on the coming Saturday/Sunday (on Saturday:
+today + tomorrow; on Sunday: today). Sales without dates don't match these filters. The search
+response echoes it as `filter.when`.
+
 ## Optional
 
 - If you want to add views and handlebars to your server side

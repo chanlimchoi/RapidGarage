@@ -531,3 +531,30 @@ fieldset.report-reasons { border: 0; padding: 0; margin: 0; }
 .rg-sale-alerts { scroll-margin-top: 76px; }
 .alert-form .segmented { justify-self: start; align-self: start; width: fit-content; max-width: 100%; flex-wrap: wrap; }
 .stack > * + .alert-list { margin-top: var(--space-4); }
+
+/* ---- Sale dates & times --------------------------------------------------- */
+.chip-muted { background: var(--color-surface-2); color: var(--color-text-muted); }
+.schedule-fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--space-3); min-width: 0; }
+.schedule-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.schedule-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: var(--space-3); align-items: end; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-2); }
+.schedule-row .field-label { font-size: var(--text-xs); }
+.schedule-row-error { grid-column: 1 / -1; }
+.schedule-remove { align-self: end; }
+@media (max-width: 560px) {
+  .schedule-row { position: relative; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: 'date date' 'start end' 'err err'; }
+  .schedule-row > .field:nth-child(1) { grid-area: date; }
+  .schedule-row > .field:nth-child(2) { grid-area: start; }
+  .schedule-row > .field:nth-child(3) { grid-area: end; }
+  .schedule-row > .schedule-remove { position: absolute; top: 4px; right: 4px; }
+  .schedule-row > .schedule-row-error { grid-area: err; }
+}
+.schedule-empty { margin: 0; }
+.schedule-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.schedule-zone { display: block; margin-top: var(--space-1); }
+.when-filter { flex-wrap: wrap; }
+.sale-badge { font-variant-numeric: tabular-nums; }
+.ended-banner { margin-bottom: var(--space-4); }
+.map-info-badge { font-size: 12px; font-weight: 600; margin-top: 2px; color: #4b5563; }
+.map-info-badge-open { color: #15803d; }
+.schedule-row .input { width: 100%; min-width: 0; }
+.schedule-row .field { min-width: 0; }

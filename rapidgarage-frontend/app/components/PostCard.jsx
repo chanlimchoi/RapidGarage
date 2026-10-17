@@ -1,18 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag } from 'lucide-react';
-import { formatMiles, placeLine, saleWhen, saleStatus, timeAgo } from '../lib/format';
+import { formatMiles, placeLine, timeAgo } from '../lib/format';
+import { shortWhen, saleBadge } from '../lib/schedule';
 import { formatPrice } from '../lib/price';
 
-const STATUS = { live: ['Happening now', 'chip-success'], upcoming: null, ended: ['Ended', ''] };
+export const BADGE_CLASS = { open: 'chip-success', upcoming: 'chip-info', ended: 'chip-muted' };
 
 // Card for one sale. The title link covers the whole card; "Show on map"
 // (when the post has a pin) selects it on the map instead.
 export default function PostCard({ post, selected, onShowOnMap, actions }) {
   const photos = post.photos || [];
   const distance = formatMiles(post.distanceMiles);
-  const when = saleWhen(post);
-  const status = STATUS[saleStatus(post)];
+  const badge = saleBadge(post);
+  // A single upcoming day is already fully described by its "Starts …" badge.
+  const single = post.schedule && post.schedule.days && post.schedule.days.length === 1;
+  const when = badge && badge.kind === 'upcoming' && single ? null : shortWhen(post);
   const price = formatPrice(post);
   const hasPin = typeof post.lat === 'number' && typeof post.lng === 'number';
   return (
@@ -31,8 +34,8 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
           {post.hidden ? <span className="chip chip-warning">Hidden</span> : null}
           {price ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{price}</span> : null}
           {when ? <span className="chip chip-brand"><CalendarDays size={12} aria-hidden="true" />{when}</span> : null}
-          {status ? <span className={'chip ' + status[1]}>{status[0]}</span> : null}
-          {!when ? <span className="chip"><Clock size={12} aria-hidden="true" />Posted {timeAgo(post.createdAt)}</span> : null}
+          {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
+          {!when && !badge ? <span className="chip"><Clock size={12} aria-hidden="true" />Posted {timeAgo(post.createdAt)}</span> : null}
         </div>
         {onShowOnMap && hasPin ? (
           <div className="post-card-foot">

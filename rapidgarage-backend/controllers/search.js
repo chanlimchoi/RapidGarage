@@ -4,6 +4,8 @@
 //   page (default 1), pageSize (default 20, max 50)
 //   maxPrice: whole dollars; sales with something at or under it (see lib/price.js)
 //   free=true: free sales only (wins over maxPrice)
+//   when=today|weekend|now: sales open in that window (sale's local time)
+// Ended sales never show up.
 // Without a usable geocoding key, q falls back to a plain text/zip match
 // (no distances) and the response says so in `notice`.
 const router = require('express').Router();
@@ -14,11 +16,13 @@ const { ZIP_RE } = require('../lib/validate');
 const geo = require('../lib/geo');
 const { PRICE_CAP, priceWhere } = require('../lib/price');
 const { visibleWhere } = require('../lib/moderation');
+const schedule = require('../lib/schedule');
 
 const MAX_PAGE_SIZE = 50;
 const MAX_CANDIDATES = 5000; // hard cap on rows pulled by the bounding box
 const photoInclude = { model: models.PostPhoto, as: 'photos' };
 const photoOrder = [{ model: models.PostPhoto, as: 'photos' }, 'position', 'ASC'];
+const daysInclude = { model: models.SaleDay, as: 'saleDays' };
 
 function parseQuery(query) {
   const errors = {};
@@ -60,6 +64,9 @@ function parseQuery(query) {
     if (!Number.isInteger(mp) || mp < 0 || mp > PRICE_CAP) errors.maxPrice = 'maxPrice must be whole dollars from 0 to ' + PRICE_CAP + '.';
     else out.maxPrice = mp;
   }
+  const w = schedule.parseWhen(query.when);
+  if (w.error) errors.when = w.error;
+  else out.when = w.when;
   return { errors, values: out };
 }
 
@@ -79,17 +86,18 @@ const and = (...parts) => ({ [Op.and]: parts.filter(Boolean) });
 async function nearbyRanked(center, radius, filter, user) {
   const box = geo.boundingBox(center, radius);
   const rows = await models.Post.findAll({
-    attributes: ['id', 'lat', 'lng', 'createdAt'],
+    attributes: ['id', 'lat', 'lng', 'createdAt', 'startDate', 'endDate', 'timeZone'],
     where: and(
       { lat: { [Op.between]: [box.minLat, box.maxLat] } },
       { [Op.or]: box.lngRanges.map(([a, b]) => ({ lng: { [Op.between]: [a, b] } })) },
       priceWhere(Op, filter),
-      visibleWhere(user)
+      visibleWhere(user),
+      schedule.notEndedWhere()
     ),
     limit: MAX_CANDIDATES,
     raw: true,
   });
-  return rows
+  return (await schedule.filterWhen(models, rows, filter.when))
     .map((p) => ({ id: p.id, createdAt: new Date(p.createdAt), distance: geo.haversineMiles(center, { lat: p.lat, lng: p.lng }) }))
     .filter((r) => r.distance <= radius)
     .sort((a, b) => a.distance - b.distance || b.createdAt - a.createdAt || a.id - b.id);
@@ -98,7 +106,7 @@ async function nearbyRanked(center, radius, filter, user) {
 // Load full posts (with photos) for one page of ranked ids, keeping the order.
 async function loadPage(ranked) {
   if (!ranked.length) return [];
-  const posts = await models.Post.findAll({ where: { id: ranked.map((r) => r.id) }, include: [photoInclude], order: [photoOrder] });
+  const posts = await models.Post.findAll({ where: { id: ranked.map((r) => r.id) }, include: [photoInclude, daysInclude], order: [photoOrder] });
   const byId = new Map(posts.map((p) => [p.id, p]));
   return ranked.filter((r) => byId.has(r.id))
     .map((r) => Object.assign(byId.get(r.id).toJSON(), { distanceMiles: Math.round(r.distance * 10) / 10 }));
@@ -113,12 +121,15 @@ async function textMatch(q, filter, user) {
   const where = ZIP_RE.test(q)
     ? { zipCode: q.slice(0, 5) }
     : { [Op.or]: ['street', 'city', 'state', 'zipCode', 'title'].map((f) => ({ [f]: { [op]: like } })) };
-  const posts = await models.Post.findAll({ where: and(where, priceWhere(Op, filter), visibleWhere(user)), include: [photoInclude], order: [['createdAt', 'DESC'], photoOrder] });
+  const found = await models.Post.findAll({ where: and(where, priceWhere(Op, filter), visibleWhere(user), schedule.notEndedWhere()), include: [photoInclude, daysInclude], order: [['createdAt', 'DESC'], photoOrder] });
+  const posts = filter.when ? found.filter((p) => schedule.matchesWhen(p, filter.when)) : found;
   return posts.map((p) => Object.assign(p.toJSON(), { distanceMiles: null }));
 }
 
 function filterOf(v) {
-  return { maxPrice: v.maxPrice !== undefined ? v.maxPrice : null, freeOnly: !!v.freeOnly };
+  const out = { maxPrice: v.maxPrice !== undefined ? v.maxPrice : null, freeOnly: !!v.freeOnly };
+  if (v.when) out.when = v.when;
+  return out;
 }
 
 const NOTICES = {

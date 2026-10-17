@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { MapPinOff as MapOff, KeyRound, RefreshCw } from 'lucide-react';
 import { resolveMapsKey, loadGoogleMaps, onAuthFailure, geocode, addressOf } from './googleMaps';
+import { saleBadge } from '../lib/schedule';
 
 const MILE_M = 1609.344;
 const hasCoords = (p) => typeof p.lat === 'number' && typeof p.lng === 'number';
@@ -110,6 +111,13 @@ class Map extends React.Component {
     addr.textContent = addressOf(post);
     el.appendChild(strong);
     el.appendChild(addr);
+    const badge = saleBadge(post);
+    if (badge) {
+      const b = document.createElement('div');
+      b.className = 'map-info-badge map-info-badge-' + badge.kind;
+      b.textContent = badge.label;
+      el.appendChild(b);
+    }
     if (typeof post.distanceMiles === 'number') {
       const d = document.createElement('div');
       d.textContent = post.distanceMiles + ' mi away';
