@@ -1352,4 +1352,5 @@ export default {
   "curb.none": "Ahora no hay nada gratis en la acera",
   "curb.noneText": "Los vendedores dejan los sobrantes al terminar sus ventas. Vuelve más tarde.",
   "curb.showAllSales": "Ver todas las ventas",
+  "curb.pickupUntil": "Recoger hasta {time}",
 };

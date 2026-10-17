@@ -1352,4 +1352,5 @@ export default {
   "curb.none": "지금은 집 앞 무료 나눔이 없어요",
   "curb.noneText": "판매자들이 세일을 마칠 때 남은 물건을 내놓아요. 나중에 다시 확인하세요.",
   "curb.showAllSales": "모든 세일 보기",
+  "curb.pickupUntil": "{time}까지 가져가세요",
 };

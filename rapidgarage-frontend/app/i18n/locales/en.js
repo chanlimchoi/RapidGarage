@@ -1352,4 +1352,5 @@ export default {
   "curb.none": "Nothing free on the curb right now",
   "curb.noneText": "Sellers put leftovers out as their sales wrap up. Check back later.",
   "curb.showAllSales": "Show all sales",
+  "curb.pickupUntil": "Pickup until {time}",
 };

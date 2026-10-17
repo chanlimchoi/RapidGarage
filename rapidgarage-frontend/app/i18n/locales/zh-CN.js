@@ -1352,4 +1352,5 @@ export default {
   "curb.none": "目前没有路边免费的物品",
   "curb.noneText": "卖家通常在特卖结束时放出剩余物品。稍后再来看看吧。",
   "curb.showAllSales": "显示全部特卖",
+  "curb.pickupUntil": "请在 {time} 前取走",
 };

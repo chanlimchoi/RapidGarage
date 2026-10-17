@@ -162,10 +162,10 @@ export default class CurbsidePanel extends React.Component {
     }
     const left = cs.all ? null : cs.itemsLeft;
     return (
-      <section className="panel curb-panel curb-owner curb-live" aria-labelledby="curb-title">
+      <section className={'panel curb-panel curb-owner' + (cs.state === 'active' ? ' curb-live' : ' curb-paused')} aria-labelledby="curb-title">
         <h2 id="curb-title" className="h4"><Gift size={18} aria-hidden="true" />{t('curb.ownerTitle')}</h2>
         {cs.state === 'paused' ? <Alert tone="warning">{cs.pausedReason === 'hidden' ? t('curb.pausedHidden') : t('curb.paused')}</Alert> : null}
-        <p className="curb-until"><Clock size={14} aria-hidden="true" />{t('curb.until', { time: holdTime(cs.until) })}</p>
+        <p className="curb-until"><Clock size={14} aria-hidden="true" />{t('curb.pickupUntil', { time: holdTime(cs.until) })}</p>
         <p className="small">{cs.all ? t('curb.everything') : t('curb.itemsLeft', { count: left })}</p>
         {cs.note ? <p className="small curb-note">“{cs.note}”</p> : null}
         <div className="form-actions">
@@ -186,7 +186,7 @@ export default class CurbsidePanel extends React.Component {
     return (
       <section className="panel curb-panel curb-public" aria-labelledby="curb-title">
         <h2 id="curb-title" className="h4"><Gift size={18} aria-hidden="true" />{t('curb.kicker')}</h2>
-        <p className="curb-until"><Clock size={14} aria-hidden="true" />{t('curb.until', { time: holdTime(cs.until) })}</p>
+        <p className="curb-until"><Clock size={14} aria-hidden="true" />{t('curb.pickupUntil', { time: holdTime(cs.until) })}</p>
         <p className="small">{cs.all ? t('curb.everything') : t('curb.itemsLeft', { count: left })}</p>
         {cs.note ? <p className="small curb-note">“{cs.note}”</p> : null}
         <p className="small muted curb-safety"><ShieldCheck size={14} aria-hidden="true" />{t('curb.safety')}</p>
