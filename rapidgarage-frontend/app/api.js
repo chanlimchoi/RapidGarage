@@ -190,3 +190,10 @@ export function eventAssetUrl(eventId, file, params) {
   const q = qs(params);
   return '/api/events/' + eventId + '/' + file + (q ? '?' + q : '');
 }
+
+// ---- Seller dashboard ----------------------------------------------------
+export const fetchDashboard = (tz) => apiFetch('/dashboard' + (tz ? '?tz=' + encodeURIComponent(tz) : ''));
+export const fetchDashboardSale = (id) => apiFetch('/dashboard/sales/' + id);
+// Sale page view beacon. The server decides whether it counts (never the seller,
+// admins, bots, prefetches or hidden sales) and stores no visitor data.
+export const recordView = (postId) => apiFetch('/post/' + postId + '/view', { method: 'POST' }).catch(() => null);

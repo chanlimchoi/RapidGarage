@@ -27,6 +27,8 @@ import EventsIndex from './events/EventsIndex';
 import EventForm from './events/EventForm';
 import EventPage from './events/EventPage';
 import EventPrint from './events/EventPrint';
+import Dashboard from './dashboard/Dashboard';
+import DashboardSale from './dashboard/DashboardSale';
 import * as savedStore from './lib/saved';
 import * as i18n from './i18n';
 
@@ -135,6 +137,8 @@ class App extends Component {
             <Route path='/post/:id/items' render={(props) => <ItemsEditor {...props} {...common} />} />
             <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} />} />
             <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
+            <Route exact path='/dashboard' render={(props) => <Dashboard {...props} {...common} />} />
+            <Route path='/dashboard/sales/:id' render={(props) => <DashboardSale {...props} {...common} />} />
             <Route exact path='/events' render={(props) => <EventsIndex {...props} {...common} />} />
             <Route path='/events/new' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
             <Route path='/events/:id/edit' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
