@@ -70,4 +70,27 @@ function priceWhere(Op, filter) {
   };
 }
 
-module.exports = { PRICE_CAP, parsePrice, validatePrice, priceWhere };
+// The same rule as priceWhere, for one post in memory (sale alerts).
+function matchesPrice(post, filter) {
+  if (!filter) return true;
+  if (filter.freeOnly) return !!post.isFree;
+  if (filter.maxPrice === undefined || filter.maxPrice === null) return true;
+  if (post.isFree) return true;
+  if (post.priceMin !== null && post.priceMin !== undefined) return post.priceMin <= filter.maxPrice;
+  return post.priceMax !== null && post.priceMax !== undefined;
+}
+
+// "Free", "$5", "$5–$50", "Up to $50", "From $5" or null (no price info).
+function formatPrice(post) {
+  if (post.isFree) return 'Free';
+  const lo = post.priceMin;
+  const hi = post.priceMax;
+  const has = (v) => v !== null && v !== undefined;
+  const usd = (n) => '$' + Number(n).toLocaleString('en-US');
+  if (has(lo) && has(hi)) return lo === hi ? usd(lo) : usd(lo) + '–' + usd(hi);
+  if (has(hi)) return 'Up to ' + usd(hi);
+  if (has(lo)) return 'From ' + usd(lo);
+  return null;
+}
+
+module.exports = { PRICE_CAP, parsePrice, validatePrice, priceWhere, matchesPrice, formatPrice };

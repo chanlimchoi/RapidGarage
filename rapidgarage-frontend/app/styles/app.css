@@ -510,3 +510,24 @@ fieldset.report-reasons { border: 0; padding: 0; margin: 0; }
 .report-marker { text-align: center; font-size: var(--text-xs); font-weight: var(--weight-semibold); color: var(--color-danger); border-top: 1px dashed var(--color-danger); padding-top: var(--space-1); }
 .audit-list { list-style: none; margin: 0; padding: 0; font-size: var(--text-sm); }
 .audit-list li { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+
+/* ---- Sale alerts ---------------------------------------------------------- */
+.stack-lg > * + * { margin-top: var(--space-6); }
+.alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.alert-item { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.alert-item.is-paused .alert-item-text strong { color: var(--color-text-muted); }
+.alert-item-text { display: grid; gap: 4px; min-width: 0; }
+.alert-item-text strong { overflow-wrap: anywhere; }
+.alert-item-actions { gap: var(--space-2); }
+.alert-form { background: var(--color-surface-2); box-shadow: none; }
+.alert-form h3 { font-size: var(--text-md); }
+.alert-form .segmented button:disabled { opacity: 0.6; cursor: default; }
+.alert-form-row { display: grid; gap: var(--space-4); }
+@media (min-width: 560px) { .alert-form-row { grid-template-columns: 1fr 1fr; } .alert-form-row > .field + .field { margin-top: 0; } }
+.alert-form-row > * + * { margin-top: 0; }
+.search-alert-cta { display: inline-flex; align-items: center; gap: var(--space-2); }
+.rg-unsubscribe { padding-top: var(--space-8); }
+.browse-toolbar .search-alert-cta { margin-right: auto; }
+.rg-sale-alerts { scroll-margin-top: 76px; }
+.alert-form .segmented { justify-self: start; align-self: start; width: fit-content; max-width: 100%; flex-wrap: wrap; }
+.stack > * + .alert-list { margin-top: var(--space-4); }

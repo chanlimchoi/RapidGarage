@@ -12,6 +12,8 @@ function envFlag(name, defaultValue) {
 // Known settings: name -> { type, default() }
 const SETTINGS = {
   userMapsKeys: { type: 'boolean', default: () => envFlag('ENABLE_USER_MAPS_KEYS', true) },
+  // Email alerts for new nearby sales (admin kill switch).
+  saleAlerts: { type: 'boolean', default: () => envFlag('ENABLE_SALE_ALERTS', true) },
 };
 
 function models() {
@@ -41,5 +43,6 @@ function setSetting(name, value) {
 }
 
 const userMapsKeysEnabled = () => getSetting('userMapsKeys');
+const saleAlertsEnabled = () => getSetting('saleAlerts');
 
-module.exports = { envFlag, SETTINGS, getSetting, getAllSettings, setSetting, userMapsKeysEnabled };
+module.exports = { envFlag, SETTINGS, getSetting, getAllSettings, setSetting, userMapsKeysEnabled, saleAlertsEnabled };

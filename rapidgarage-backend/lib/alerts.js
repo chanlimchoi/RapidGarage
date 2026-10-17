@@ -1,0 +1,279 @@
+// Sale alerts: matching new posts against saved alerts, the email outbox
+// worker (digest + daily cap + retries) and signed unsubscribe tokens.
+const crypto = require('crypto');
+const { Op } = require('sequelize');
+const geo = require('./geo');
+const { matchesPrice, formatPrice } = require('./price');
+const { publicName } = require('./people');
+const { saleAlertsEnabled } = require('./features');
+const mailer = require('./mailer');
+
+function models() { return require('../models'); }
+
+function intEnv(name, dflt, min) {
+  const raw = process.env[name];
+  if (raw === undefined || String(raw).trim() === '') return dflt;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= (min === undefined ? 1 : min) ? n : dflt;
+}
+
+const RADIUS_MIN = 1;
+const RADIUS_MAX = 50;
+const maxPerUser = () => intEnv('ALERTS_MAX_PER_USER', 5);
+const digestMinutes = () => intEnv('ALERT_DIGEST_MINUTES', 15, 0);
+const dailyCap = () => intEnv('ALERT_DAILY_MAX_EMAILS', 6);
+const postsPerEmail = () => intEnv('ALERT_MAX_POSTS_PER_EMAIL', 20);
+const workerSeconds = () => intEnv('ALERT_WORKER_SECONDS', 60);
+const MAX_ATTEMPTS = 5;
+const EXPIRE_DAYS = 7;
+
+function baseUrl() {
+  return String(process.env.APP_BASE_URL || process.env.FRONTEND_ORIGIN || 'http://localhost:3000').trim().replace(/\/+$/, '');
+}
+
+// ---- unsubscribe tokens -------------------------------------------------
+// HMAC over (alertId, userId) with a key derived from ALERT_TOKEN_SECRET (or
+// SESSION_SECRET). No expiry: the link only ever turns one alert off.
+function tokenKey() {
+  const secret = process.env.ALERT_TOKEN_SECRET || process.env.SESSION_SECRET || '';
+  if (!secret) throw new Error('ALERT_TOKEN_SECRET or SESSION_SECRET must be set');
+  return crypto.createHash('sha256').update('rapidgarage-sale-alerts:' + secret).digest();
+}
+
+function unsubscribeToken(alert) {
+  return crypto.createHmac('sha256', tokenKey()).update('unsub.' + alert.id + '.' + alert.userId).digest('base64url');
+}
+
+function verifyToken(alert, token) {
+  if (typeof token !== 'string' || !token) return false;
+  const want = Buffer.from(unsubscribeToken(alert));
+  const got = Buffer.from(token);
+  return want.length === got.length && crypto.timingSafeEqual(want, got);
+}
+
+function unsubscribeUrl(alert) {
+  return baseUrl() + '/alerts/unsubscribe?a=' + alert.id + '&t=' + encodeURIComponent(unsubscribeToken(alert));
+}
+
+function oneClickUrl(alert) {
+  return baseUrl() + '/api/alerts/unsubscribe?a=' + alert.id + '&t=' + encodeURIComponent(unsubscribeToken(alert));
+}
+
+// ---- matching -----------------------------------------------------------
+// Queue a notification for every user with an enabled alert that matches the
+// post. One row per (user, post); the nearest matching alert wins.
+async function enqueueForPost(post) {
+  const m = models();
+  if (!post || post.hidden || typeof post.lat !== 'number' || typeof post.lng !== 'number') return 0;
+  if (!(await saleAlertsEnabled())) return 0;
+  const dLat = RADIUS_MAX / 69.0;
+  const candidates = await m.SaleAlert.findAll({
+    where: { enabled: true, userId: { [Op.ne]: post.userId }, lat: { [Op.between]: [post.lat - dLat, post.lat + dLat] } },
+  });
+  const byUser = new Map();
+  candidates.forEach((a) => {
+    const d = geo.haversineMiles({ lat: a.lat, lng: a.lng }, { lat: post.lat, lng: post.lng });
+    if (d > a.radiusMiles) return;
+    if (!matchesPrice(post, { maxPrice: a.maxPrice, freeOnly: a.freeOnly })) return;
+    const prev = byUser.get(a.userId);
+    if (!prev || d < prev.d) byUser.set(a.userId, { alert: a, d });
+  });
+  if (!byUser.size) return 0;
+  const userIds = Array.from(byUser.keys());
+  const blocks = await m.UserBlock.findAll({
+    where: { [Op.or]: [{ blockerId: post.userId, blockedId: userIds }, { blockedId: post.userId, blockerId: userIds }] },
+    raw: true,
+  });
+  blocks.forEach((b) => { byUser.delete(b.blockerId === post.userId ? b.blockedId : b.blockerId); });
+  const rows = Array.from(byUser.entries()).map(([userId, v]) => ({
+    userId, alertId: v.alert.id, postId: post.id, distanceMiles: Math.round(v.d * 10) / 10, status: 'pending',
+  }));
+  if (!rows.length) return 0;
+  await m.AlertNotification.bulkCreate(rows, { ignoreDuplicates: true });
+  return rows.length;
+}
+
+// Fire-and-forget from request handlers; tests can await idle().
+const inflight = new Set();
+function schedulePostMatch(post) {
+  const p = Promise.resolve()
+    .then(() => enqueueForPost(post))
+    .catch((err) => console.error('Sale alert matching failed for post', post && post.id, err && err.message))
+    .finally(() => inflight.delete(p));
+  inflight.add(p);
+  return p;
+}
+const idle = () => Promise.all(Array.from(inflight));
+
+// ---- email --------------------------------------------------------------
+const esc = (s) => String(s === null || s === undefined ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+function alertName(alert) {
+  if (alert.label) return alert.label;
+  return 'within ' + alert.radiusMiles + ' mi';
+}
+
+// items: [{ post, seller, alert, distanceMiles }]. Returns { subject, text, html, headers }.
+function renderEmail(user, items) {
+  const base = baseUrl();
+  const manage = base + '/settings#alerts';
+  const alerts = Array.from(new Map(items.map((i) => [i.alert.id, i.alert])).values());
+  const first = items[0];
+  const subject = items.length === 1
+    ? 'New garage sale near you: ' + first.post.title
+    : items.length + ' new garage sales near you';
+  const lines = items.map((i) => {
+    const price = formatPrice(i.post);
+    const where = [i.post.city, i.post.state].filter(Boolean).join(', ');
+    return {
+      title: i.post.title,
+      url: base + '/post/' + i.post.id,
+      meta: [price, i.distanceMiles !== null && i.distanceMiles !== undefined ? i.distanceMiles + ' mi away' : null, where, 'by ' + publicName(i.seller)].filter(Boolean).join(' · '),
+      alert: alertName(i.alert),
+    };
+  });
+  const hello = user.firstName ? 'Hi ' + user.firstName + ',' : 'Hi,';
+  const text = [
+    hello, '',
+    (items.length === 1 ? 'A new sale matches' : items.length + ' new sales match') + ' your RapidGarage alerts:', '',
+    ...lines.map((l) => '* ' + l.title + '\n  ' + l.meta + '\n  ' + l.url + '\n'),
+    'Manage your alerts: ' + manage,
+    ...alerts.map((a) => 'Turn off the alert "' + alertName(a) + '": ' + unsubscribeUrl(a)),
+  ].join('\n');
+  const html = `<!doctype html><html><body style="margin:0;padding:24px;background:#f6f5f2;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1c1b19">
+<div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e7e4dd;border-radius:16px;padding:24px">
+<p style="margin:0 0 4px;font-weight:700;color:#c2410c;font-size:14px">RapidGarage</p>
+<h1 style="margin:0 0 16px;font-size:20px">${esc(items.length === 1 ? 'A new sale near you' : items.length + ' new sales near you')}</h1>
+<p style="margin:0 0 16px">${esc(hello)}</p>
+${lines.map((l) => `<div style="border:1px solid #e7e4dd;border-radius:12px;padding:12px 14px;margin:0 0 10px">
+<a href="${esc(l.url)}" style="color:#c2410c;font-weight:600;font-size:16px;text-decoration:none">${esc(l.title)}</a>
+<div style="color:#5f5b53;font-size:13px;margin-top:4px">${esc(l.meta)}</div>
+<div style="color:#8a857b;font-size:12px;margin-top:2px">Alert: ${esc(l.alert)}</div></div>`).join('\n')}
+<p style="margin:16px 0 0;font-size:13px"><a href="${esc(manage)}" style="color:#c2410c">Manage your alerts</a></p>
+<p style="margin:8px 0 0;font-size:12px;color:#8a857b">${alerts.map((a) => `<a href="${esc(unsubscribeUrl(a))}" style="color:#8a857b">Turn off “${esc(alertName(a))}”</a>`).join(' · ')}</p>
+</div></body></html>`;
+  // RFC 8058 one-click unsubscribe (mail clients POST to this URL).
+  const headers = {
+    'List-Unsubscribe': '<' + oneClickUrl(alerts[0]) + '>',
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  };
+  return { subject, text, html, headers };
+}
+
+// ---- outbox worker -----------------------------------------------------
+async function skipPending(where, reason) {
+  const [n] = await models().AlertNotification.update({ status: 'skipped', lastError: reason, claimToken: null }, { where: Object.assign({ status: 'pending' }, where) });
+  return n;
+}
+
+async function finish(rows, values) {
+  if (!rows.length) return;
+  await models().AlertNotification.update(values, { where: { id: rows.map((r) => r.id) } });
+}
+
+// One pass over the outbox. Returns a summary (for logs and tests).
+async function processQueue(now) {
+  const m = models();
+  now = now || new Date();
+  const summary = { sent: 0, emails: 0, skipped: 0, failed: 0, deferred: 0, reason: null };
+  // Recover rows a crashed run left in "sending".
+  await m.AlertNotification.update({ status: 'pending', claimToken: null },
+    { where: { status: 'sending', updatedAt: { [Op.lt]: new Date(now.getTime() - 10 * 60000) } } });
+  summary.skipped += await skipPending({ createdAt: { [Op.lt]: new Date(now.getTime() - EXPIRE_DAYS * 86400000) } }, 'expired');
+  if (!(await saleAlertsEnabled())) {
+    summary.skipped += await skipPending({}, 'alerts_disabled');
+    summary.reason = 'alerts_disabled';
+    return summary;
+  }
+  if (!mailer.isConfigured()) {
+    const n = await skipPending({}, 'smtp_not_configured');
+    if (n) console.log('Sale alerts: SMTP is not configured (SMTP_HOST); skipped ' + n + ' notification(s).');
+    summary.skipped += n;
+    summary.reason = 'smtp_not_configured';
+    return summary;
+  }
+  const due = { status: 'pending', [Op.or]: [{ nextAttemptAt: null }, { nextAttemptAt: { [Op.lte]: now } }] };
+  const users = (await m.AlertNotification.findAll({ where: due, attributes: ['userId'], group: ['userId'], raw: true })).map((r) => r.userId);
+  for (const userId of users) {
+    const last = await m.AlertDigest.max('sentAt', { where: { userId } });
+    if (last && now - new Date(last) < digestMinutes() * 60000) { summary.deferred++; continue; }
+    const today = await m.AlertDigest.count({ where: { userId, sentAt: { [Op.gt]: new Date(now.getTime() - 86400000) } } });
+    if (today >= dailyCap()) { summary.deferred++; continue; }
+    // Claim this user's due rows so a second worker can't send them too.
+    const claim = crypto.randomBytes(12).toString('hex');
+    const ids = (await m.AlertNotification.findAll({ where: Object.assign({ userId }, due), attributes: ['id'], order: [['createdAt', 'ASC']], limit: postsPerEmail(), raw: true })).map((r) => r.id);
+    await m.AlertNotification.update({ status: 'sending', claimToken: claim }, { where: { id: ids, status: 'pending' } });
+    const rows = await m.AlertNotification.findAll({ where: { claimToken: claim, status: 'sending' } });
+    if (!rows.length) continue;
+    const [user, alerts, posts] = await Promise.all([
+      m.User.findByPk(userId),
+      m.SaleAlert.findAll({ where: { id: rows.map((r) => r.alertId) } }),
+      m.Post.findAll({ where: { id: rows.map((r) => r.postId) }, include: [{ model: m.User, attributes: ['id', 'firstName', 'lastName'] }] }),
+    ]);
+    const alertById = new Map(alerts.map((a) => [a.id, a]));
+    const postById = new Map(posts.map((p) => [p.id, p]));
+    const blocks = await m.UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedId: userId }] }, raw: true });
+    const blockedWith = new Set(blocks.map((b) => (b.blockerId === userId ? b.blockedId : b.blockerId)));
+    const items = [];
+    const drop = [];
+    rows.forEach((r) => {
+      const post = postById.get(r.postId);
+      const alert = alertById.get(r.alertId);
+      let why = null;
+      if (!post) why = 'post_deleted';
+      else if (post.hidden) why = 'post_hidden';
+      else if (!alert || !alert.enabled) why = 'alert_disabled';
+      else if (blockedWith.has(post.userId)) why = 'blocked';
+      if (why) drop.push({ r, why });
+      else items.push({ row: r, post, alert, seller: post.User, distanceMiles: r.distanceMiles });
+    });
+    for (const d of drop) await finish([d.r], { status: 'skipped', lastError: d.why, claimToken: null });
+    summary.skipped += drop.length;
+    if (!user || !items.length) { await finish(items.map((i) => i.row), { status: 'skipped', lastError: 'no_user', claimToken: null }); continue; }
+    items.sort((a, b) => (a.distanceMiles || 0) - (b.distanceMiles || 0));
+    const email = renderEmail(user, items);
+    try {
+      await mailer.send({ to: user.email, subject: email.subject, text: email.text, html: email.html, headers: email.headers });
+      const digest = await m.AlertDigest.create({ userId, postCount: items.length, sentAt: new Date() });
+      await finish(items.map((i) => i.row), { status: 'sent', sentAt: new Date(), digestId: digest.id, claimToken: null, lastError: null });
+      summary.sent += items.length;
+      summary.emails++;
+    } catch (err) {
+      const reason = String((err && (err.code || err.responseCode || err.name)) || 'send_failed').slice(0, 200);
+      console.error('Sale alerts: sending to user ' + userId + ' failed (' + reason + ')');
+      for (const i of items) {
+        const attempts = i.row.attempts + 1;
+        if (attempts >= MAX_ATTEMPTS) {
+          await finish([i.row], { status: 'failed', attempts, lastError: reason, claimToken: null });
+          summary.failed++;
+        } else {
+          await finish([i.row], { status: 'pending', attempts, lastError: reason, claimToken: null, nextAttemptAt: new Date(now.getTime() + Math.pow(2, attempts) * 60000) });
+          summary.deferred++;
+        }
+      }
+    }
+  }
+  return summary;
+}
+
+let timer = null;
+let running = false;
+function startWorker() {
+  if (timer) return;
+  const tick = () => {
+    if (running) return;
+    running = true;
+    processQueue().catch((err) => console.error('Sale alert worker error:', err && err.message)).finally(() => { running = false; });
+  };
+  timer = setInterval(tick, workerSeconds() * 1000);
+  if (timer.unref) timer.unref();
+  console.log('Sale alert worker every ' + workerSeconds() + 's (SMTP ' + (mailer.isConfigured() ? 'configured' : 'not configured: alerts are logged and skipped') + ')');
+}
+function stopWorker() { if (timer) clearInterval(timer); timer = null; }
+
+module.exports = {
+  RADIUS_MIN, RADIUS_MAX, maxPerUser, digestMinutes, dailyCap, baseUrl,
+  unsubscribeToken, verifyToken, unsubscribeUrl, enqueueForPost, schedulePostMatch, idle,
+  renderEmail, processQueue, startWorker, stopWorker,
+};

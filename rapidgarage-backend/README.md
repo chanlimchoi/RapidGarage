@@ -294,6 +294,66 @@ keep their text for admins, flagged `removed`) and the audit trail (`events`).
 Every action is logged as an event with its note. Banned users get 403 `messaging_banned` on
 send and start, and `/me` reports `messagingBanned: true`.
 
+## Sale alerts (email)
+
+Saved alerts live in `SaleAlerts` (center `lat`/`lng`, `radiusMiles` 1–50, `maxPrice`,
+`freeOnly`, `enabled`, `label`). Emails go through a database outbox (`AlertNotifications`,
+one row per user and post) and each email sent is recorded in `AlertDigests`. Run the
+migration (`npx sequelize-cli db:migrate`, back up first) before deploying.
+
+**API** (login required unless noted; errors use the usual `{ error: { code, message, details } }`)
+
+| method | path | notes |
+|---|---|---|
+| GET | `/alerts` | `{ results, limit, globallyEnabled, radius: { min, max } }` |
+| POST | `/alerts` | `{ label?, lat, lng \| address, radiusMiles, maxPrice?, freeOnly?, enabled? }` → 201. 409 `limit_reached`, 403 `feature_disabled`, 400 `geocode_unavailable` (address without a geocoding key) |
+| PUT | `/alerts/:id` | any of the fields above (owner only, else 404). `freeOnly: true` clears `maxPrice` |
+| DELETE | `/alerts/:id` | 204 |
+| POST | `/alerts/unsubscribe` | **public.** `{ a, t }` in the body, or `?a=&t=` (RFC 8058 one-click). Turns that one alert off. 400 `invalid_token`; `{ ok: true, gone: true }` if the alert was deleted |
+
+`GET /config` includes `saleAlerts`, and `PUT /admin/settings { saleAlerts }` is the admin toggle
+(its default comes from `ENABLE_SALE_ALERTS`, then the saved value wins).
+
+**Matching.** After `POST /post` (and `PUT /post/:id` when the address changes) the response is
+sent first; matching runs in the background, so mail or matching errors never slow or fail
+the request. A post matches an enabled alert when it is not hidden, has coordinates, is within
+the radius (haversine) and passes the price filter. The seller, and users who blocked or were
+blocked by the seller, are skipped. Each user gets at most one notification per post (the
+nearest alert wins), enforced by a unique index. Posts without coordinates (no geocoding key)
+can't match.
+
+**Delivery.** A worker in the API process (every `ALERT_WORKER_SECONDS`, default 60; set
+`ALERT_WORKER=off` to disable it in one process when running several) sends one email per user with
+everything due, up to `ALERT_MAX_POSTS_PER_EMAIL` (default 20), but not more often than
+`ALERT_DIGEST_MINUTES` (default 15, 0 = no bundling delay) and not more than
+`ALERT_DAILY_MAX_EMAILS` (default 6) per rolling 24 hours. Leftovers wait for the next window.
+At send time it re-checks that the post still exists and isn't hidden, the alert is still on,
+and nobody blocked anyone. Failures retry with exponential backoff (2, 4, 8, 16 min) and stop
+after 5 attempts. Notifications older than 7 days are dropped. Rows are claimed before sending,
+so two workers won't send the same row. Error logs record only the SMTP error code, never addresses
+or credentials.
+
+**Privacy.** An email only ever contains the recipient's own address (in `To`). Sellers are
+shown as "First L.". Unsubscribe links carry an HMAC-SHA256 token over the alert id and owner,
+keyed by `ALERT_TOKEN_SECRET` (falls back to `SESSION_SECRET`; changing it invalidates links
+already sent). The email link opens `/alerts/unsubscribe` in the frontend, and that page POSTs
+the token, so mail scanners that prefetch links don't unsubscribe anyone. The
+`List-Unsubscribe` / `List-Unsubscribe-Post` headers give mail clients a one-click POST
+endpoint at `/api/alerts/unsubscribe`.
+
+**Without SMTP** (`SMTP_HOST` unset) nothing is sent: the worker logs that SMTP isn't configured,
+marks queued rows `skipped`, and everything else works as normal.
+
+**Environment**
+
+- `SMTP_HOST`, `SMTP_PORT` (default 587), `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` (e.g.
+  `RapidGarage <alerts@example.com>`), `SMTP_SECURE` (optional; default true only for port 465).
+- `APP_BASE_URL`: public frontend URL used for links in emails (falls back to `FRONTEND_ORIGIN`).
+- `ALERT_TOKEN_SECRET`: optional, signs unsubscribe links.
+- `ENABLE_SALE_ALERTS` (default true), `ALERTS_MAX_PER_USER` (5), `ALERT_DIGEST_MINUTES` (15),
+  `ALERT_DAILY_MAX_EMAILS` (6), `ALERT_MAX_POSTS_PER_EMAIL` (20), `ALERT_WORKER_SECONDS` (60),
+  `ALERT_WORKER` (`off` to disable the worker).
+
 ## Optional
 
 - If you want to add views and handlebars to your server side

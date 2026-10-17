@@ -127,3 +127,11 @@ export const fetchConversationReportQueue = () => apiFetch('/admin/conversation-
 export const fetchConversationReportHistory = (page) => apiFetch('/admin/conversation-reports/history?page=' + (page || 1));
 export const fetchReportedConversation = (id) => apiFetch('/admin/conversations/' + id);
 export const moderateConversation = (id, body) => apiFetch('/admin/conversations/' + id + '/moderate', { method: 'POST', body: JSON.stringify(body) });
+
+// ---- Sale alerts -----------------------------------------------------------
+export const ALERT_RADIUS = { min: 1, max: 50 };
+export const fetchAlerts = () => apiFetch('/alerts');
+export const createAlert = (body) => apiFetch('/alerts', { method: 'POST', body: JSON.stringify(body) });
+export const updateAlert = (id, body) => apiFetch('/alerts/' + id, { method: 'PUT', body: JSON.stringify(body) });
+export const deleteAlert = (id) => apiFetch('/alerts/' + id, { method: 'DELETE' });
+export const unsubscribeAlert = (a, t) => apiFetch('/alerts/unsubscribe', { method: 'POST', body: JSON.stringify({ a, t }) });
