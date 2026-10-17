@@ -13,6 +13,7 @@ const { publicUser } = require('../lib/people');
 const events = require('../lib/events');
 const scans = require('../lib/scans');
 const wanted = require('../lib/wanted');
+const curbside = require('../lib/curbside');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -77,6 +78,7 @@ router.post('/', requireLogin, async (req, res) => {
 router.use('/:id/photos', requireLogin, loadPost, (req, res, next) => requireOwnerOrAdmin(req, res, next), require('./photos'));
 
 router.use('/:id/items', loadPost, require('./items'));
+router.use('/:id/curbside', loadPost, require('./curbside'));
 // QR code, flyers, sign and scan counts (login first, so logged-out callers get 401).
 router.use('/:id/print', requireLogin, loadPost, require('./print'));
 
@@ -102,7 +104,9 @@ router.get('/:id', loadPost, async (req, res) => {
     const owner = await models.User.findByPk(req.post.userId, { attributes: ['id', 'firstName', 'lastName'] });
     const seller = owner ? Object.assign(publicUser(owner), { rating: await ratings.summaryOf(owner.id) }) : null;
     const ev = (await events.eventsForPosts([req.post.id], req.user)).get(req.post.id) || null;
-    return res.json(Object.assign(req.post.toJSON(), { seller }, ev ? { event: ev } : {}));
+    const json = Object.assign(req.post.toJSON(), { seller }, ev ? { event: ev } : {});
+    await curbside.annotate([json], req.user, { marks: true });
+    return res.json(json);
   } catch (err) { return serverError(res, err); }
 });
 

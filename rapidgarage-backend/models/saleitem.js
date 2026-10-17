@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
     position: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     // Until when an accepted hold sets it aside (lib/holds.js); "Reserved" while in the future.
     reservedUntil: { type: DataTypes.DATE, allowNull: true },
+    // Part of a "free on the curb" offer (lib/curbside.js), and when it was taken.
+    curbside: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    curbsideGoneAt: { type: DataTypes.DATE, allowNull: true },
+    curbsideGoneSource: { type: DataTypes.STRING(16), allowNull: true },
   }, {
     indexes: [
       { name: 'sale_items_post_position_idx', fields: ['postId', 'position'] },
@@ -25,7 +29,9 @@ module.exports = (sequelize, DataTypes) => {
     const v = this.get({ plain: true });
     // Public: only that it is reserved (and until when), never by whom.
     const reserved = !v.sold && !!v.reservedUntil && new Date(v.reservedUntil) > require('../lib/schedule').now();
-    return { id: v.id, name: v.name, priceCents: v.priceCents, photoId: v.photoId, sold: !!v.sold, soldAt: v.soldAt, position: v.position, reserved, reservedUntil: reserved ? v.reservedUntil : null };
+    return { id: v.id, name: v.name, priceCents: v.priceCents, photoId: v.photoId, sold: !!v.sold, soldAt: v.soldAt, position: v.position, reserved, reservedUntil: reserved ? v.reservedUntil : null,
+      // Only meaningful while the post's curbside offer is active (post.curbside).
+      curbside: !!v.curbside, curbsideGone: !!v.curbsideGoneAt };
   };
   return SaleItem;
 };

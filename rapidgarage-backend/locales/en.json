@@ -114,7 +114,8 @@
   "wmail.manage": "Manage your wanted posts",
   "wmail.manageText": "Manage your wanted posts: {url}",
   "wmail.turnOff": "Stop emails for \"{title}\"",
-  "wmail.turnOffText": "Stop emails for \"{title}\": {url}"
+  "wmail.turnOffText": "Stop emails for \"{title}\": {url}",
+  "wmail.curbside": "Free on the curb until {time}"
  },
  "messages": {
   "Login required.": "Login required.",
@@ -376,6 +377,30 @@
   "wantedId must be a positive integer.": "wantedId must be a positive integer.",
   "Choose a wanted post.": "Choose a wanted post.",
   "This wanted post is unavailable, so you can't start a new conversation about it.": "This wanted post is unavailable, so you can't start a new conversation about it.",
-  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "This wanted post has expired or was marked found, so you can't start a new conversation about it."
+  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "This wanted post has expired or was marked found, so you can't start a new conversation about it.",
+  "Invalid curbside offer.": "Invalid curbside offer.",
+  "Choose the items that are free, or offer everything that is left.": "Choose the items that are free, or offer everything that is left.",
+  "itemIds must be a list of item ids.": "itemIds must be a list of item ids.",
+  "all must be true or false.": "all must be true or false.",
+  "Pickup time must be a date and time.": "Pickup time must be a date and time.",
+  "Pickup time must be at least {n} minutes from now.": "Pickup time must be at least {n} minutes from now.",
+  "Pickup time can be at most {n} hours from now.": "Pickup time can be at most {n} hours from now.",
+  "Only the seller can change the curbside offer.": "Only the seller can change the curbside offer.",
+  "This sale is hidden by a moderator, so it can't offer free leftovers.": "This sale is hidden by a moderator, so it can't offer free leftovers.",
+  "You can put leftovers on the curb from {n} hours before your sale ends.": "You can put leftovers on the curb from {n} hours before your sale ends.",
+  "Some of those items are not on this sale.": "Some of those items are not on this sale.",
+  "Sold items can't go on the curb.": "Sold items can't go on the curb.",
+  "Reserved items can't go on the curb. Cancel the hold first.": "Reserved items can't go on the curb. Cancel the hold first.",
+  "Say which item was taken.": "Say which item was taken.",
+  "That item is not free on the curb.": "That item is not free on the curb.",
+  "This offer is everything that is left; mark the whole offer taken.": "This offer is everything that is left; mark the whole offer taken.",
+  "Leave out itemId.": "Leave out itemId.",
+  "Nothing here is free on the curb right now.": "Nothing here is free on the curb right now.",
+  "Someone already marked that taken.": "Someone already marked that taken.",
+  "You can't do that for this seller.": "You can't do that for this seller.",
+  "You already marked that taken, and the seller says it is still there.": "You already marked that taken, and the seller says it is still there.",
+  "You have marked a lot of things taken. Please try again later.": "You have marked a lot of things taken. Please try again later.",
+  "This curbside offer is over. Start a new one instead.": "This curbside offer is over. Start a new one instead.",
+  "curbside must be true or false.": "curbside must be true or false."
  }
 }

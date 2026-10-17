@@ -103,7 +103,8 @@
   "wmail.manage": "구해요 글 관리",
   "wmail.manageText": "구해요 글 관리: {url}",
   "wmail.turnOff": "\"{title}\" 이메일 그만 받기",
-  "wmail.turnOffText": "\"{title}\" 이메일 그만 받기: {url}"
+  "wmail.turnOffText": "\"{title}\" 이메일 그만 받기: {url}",
+  "wmail.curbside": "{time}까지 집 앞에 무료로 내놓음"
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -365,6 +366,30 @@
   "wantedId must be a positive integer.": "wantedId는 양의 정수여야 합니다.",
   "Choose a wanted post.": "구해요 글을 선택하세요.",
   "This wanted post is unavailable, so you can't start a new conversation about it.": "이 구해요 글은 볼 수 없어 새 대화를 시작할 수 없습니다.",
-  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "이 구해요 글은 만료되었거나 구함 완료로 표시되어 새 대화를 시작할 수 없습니다."
+  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "이 구해요 글은 만료되었거나 구함 완료로 표시되어 새 대화를 시작할 수 없습니다.",
+  "Invalid curbside offer.": "무료 나눔 정보가 올바르지 않아요.",
+  "Choose the items that are free, or offer everything that is left.": "무료로 내놓을 물건을 고르거나 남은 물건 전부를 내놓으세요.",
+  "itemIds must be a list of item ids.": "itemIds는 물건 id 목록이어야 합니다.",
+  "all must be true or false.": "all은 true 또는 false여야 합니다.",
+  "Pickup time must be a date and time.": "픽업 시간은 날짜와 시간이어야 해요.",
+  "Pickup time must be at least {n} minutes from now.": "픽업 시간은 지금부터 최소 {n}분 뒤여야 해요.",
+  "Pickup time can be at most {n} hours from now.": "픽업 시간은 지금부터 최대 {n}시간까지예요.",
+  "Only the seller can change the curbside offer.": "판매자만 무료 나눔을 변경할 수 있어요.",
+  "This sale is hidden by a moderator, so it can't offer free leftovers.": "운영자가 이 세일을 숨겨서 남은 물건을 무료로 내놓을 수 없어요.",
+  "You can put leftovers on the curb from {n} hours before your sale ends.": "세일 종료 {n}시간 전부터 남은 물건을 집 앞에 내놓을 수 있어요.",
+  "Some of those items are not on this sale.": "일부 물건은 이 세일의 물건이 아니에요.",
+  "Sold items can't go on the curb.": "팔린 물건은 무료로 내놓을 수 없어요.",
+  "Reserved items can't go on the curb. Cancel the hold first.": "예약된 물건은 무료로 내놓을 수 없어요. 먼저 예약을 취소하세요.",
+  "Say which item was taken.": "어떤 물건이 가져가졌는지 알려 주세요.",
+  "That item is not free on the curb.": "그 물건은 무료 나눔 중이 아니에요.",
+  "This offer is everything that is left; mark the whole offer taken.": "남은 물건 전부를 내놓은 나눔이에요. 전체를 가져감으로 표시하세요.",
+  "Leave out itemId.": "itemId를 빼세요.",
+  "Nothing here is free on the curb right now.": "지금은 여기에 무료로 내놓은 물건이 없어요.",
+  "Someone already marked that taken.": "이미 누군가 가져갔다고 표시했어요.",
+  "You can't do that for this seller.": "이 판매자에게는 그렇게 할 수 없어요.",
+  "You already marked that taken, and the seller says it is still there.": "이미 가져갔다고 표시했는데 판매자가 아직 있다고 했어요.",
+  "You have marked a lot of things taken. Please try again later.": "가져감 표시를 너무 많이 했어요. 나중에 다시 시도하세요.",
+  "This curbside offer is over. Start a new one instead.": "이 무료 나눔은 끝났어요. 새로 시작하세요.",
+  "curbside must be true or false.": "curbside는 true 또는 false여야 합니다."
  }
 }

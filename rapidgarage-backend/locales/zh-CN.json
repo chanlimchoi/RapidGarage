@@ -103,7 +103,8 @@
   "wmail.manage": "管理你的求购帖",
   "wmail.manageText": "管理你的求购帖：{url}",
   "wmail.turnOff": "停止接收“{title}”的邮件",
-  "wmail.turnOffText": "停止接收“{title}”的邮件：{url}"
+  "wmail.turnOffText": "停止接收“{title}”的邮件：{url}",
+  "wmail.curbside": "路边免费自取，截至 {time}"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -365,6 +366,30 @@
   "wantedId must be a positive integer.": "wantedId 必须是正整数。",
   "Choose a wanted post.": "请选择一个求购帖。",
   "This wanted post is unavailable, so you can't start a new conversation about it.": "此求购帖不可用，因此无法就它发起新对话。",
-  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "此求购帖已过期或已标记为已找到，因此无法就它发起新对话。"
+  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "此求购帖已过期或已标记为已找到，因此无法就它发起新对话。",
+  "Invalid curbside offer.": "路边免费信息无效。",
+  "Choose the items that are free, or offer everything that is left.": "请选择免费的物品，或把剩下的全部免费送出。",
+  "itemIds must be a list of item ids.": "itemIds 必须是物品 id 列表。",
+  "all must be true or false.": "all 必须为 true 或 false。",
+  "Pickup time must be a date and time.": "取货时间必须是日期和时间。",
+  "Pickup time must be at least {n} minutes from now.": "取货时间必须至少在 {n} 分钟之后。",
+  "Pickup time can be at most {n} hours from now.": "取货时间最多为 {n} 小时之后。",
+  "Only the seller can change the curbside offer.": "只有卖家可以修改路边免费信息。",
+  "This sale is hidden by a moderator, so it can't offer free leftovers.": "此特卖已被管理员隐藏，无法免费送出剩余物品。",
+  "You can put leftovers on the curb from {n} hours before your sale ends.": "特卖结束前 {n} 小时起可以把剩余物品放到路边。",
+  "Some of those items are not on this sale.": "其中有些物品不属于此特卖。",
+  "Sold items can't go on the curb.": "已售出的物品不能放到路边。",
+  "Reserved items can't go on the curb. Cancel the hold first.": "已预留的物品不能放到路边。请先取消预留。",
+  "Say which item was taken.": "请说明哪件物品被拿走了。",
+  "That item is not free on the curb.": "该物品不在路边免费送。",
+  "This offer is everything that is left; mark the whole offer taken.": "此次送出的是剩下的全部物品，请将整体标记为已被拿走。",
+  "Leave out itemId.": "请不要提供 itemId。",
+  "Nothing here is free on the curb right now.": "这里目前没有路边免费的物品。",
+  "Someone already marked that taken.": "已有人标记为已被拿走。",
+  "You can't do that for this seller.": "你不能对此卖家执行该操作。",
+  "You already marked that taken, and the seller says it is still there.": "你已标记为已被拿走，但卖家说它还在。",
+  "You have marked a lot of things taken. Please try again later.": "你标记了太多“已被拿走”。请稍后再试。",
+  "This curbside offer is over. Start a new one instead.": "此次路边免费已结束。请重新发起。",
+  "curbside must be true or false.": "curbside 必须为 true 或 false。"
  }
 }

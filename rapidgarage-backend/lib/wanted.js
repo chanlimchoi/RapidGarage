@@ -23,6 +23,7 @@ const { isAdmin } = require('./roles');
 const { publicUser, publicName } = require('./people');
 const { wantedEnabled } = require('./features');
 
+function curbside() { return require('./curbside'); }
 function models() { return require('../models'); }
 function alerts() { return require('./alerts'); }
 
@@ -114,17 +115,25 @@ const itemPriceFits = (item, maxCents) => maxCents === null || maxCents === unde
 
 // Does sale `post` (with its unsold `items`) match wanted post `w`?
 // Returns null or { itemId } (the first matching item, null = the sale itself).
-function matchSale(w, post, items) {
+// opts.curbside: the post has a live "free on the curb" offer, so its free
+// items cost 0; opts.onlyCurbside: the sale ended, so only what's on the
+// curb is still there.
+function matchSale(w, post, items, opts) {
   const words = matchWords(w);
   if (!words.length) return null;
+  const o = opts || {};
   const max = w.maxPriceCents;
   for (const item of items || []) {
     if (item.sold) continue;
+    const free = o.curbside && curbside().itemFree(post, item);
+    if (o.onlyCurbside && !free) continue;
     const text = normalize(item.name);
-    if (hasAll(text, words) && inCategory(text, w.category) && itemPriceFits(item, max)) return { itemId: item.id };
+    if (hasAll(text, words) && inCategory(text, w.category) && (free || itemPriceFits(item, max))) return { itemId: item.id };
   }
+  const freeAll = o.curbside && !!post.curbsideAll;
+  if (o.onlyCurbside && !freeAll) return null;
   const text = normalize([post.title, post.description].filter(Boolean).join(' '));
-  if (hasAll(text, words) && inCategory(text, w.category) && salePriceFits(post, max)) return { itemId: null };
+  if (hasAll(text, words) && inCategory(text, w.category) && (freeAll || salePriceFits(post, max))) return { itemId: null };
   return null;
 }
 
@@ -244,7 +253,14 @@ async function blockedWith(me) {
 }
 
 // ---- matching -------------------------------------------------------------
-const saleVisible = (post, at) => post && !post.hidden && typeof post.lat === 'number' && typeof post.lng === 'number' && !schedule.isEnded(post, at);
+// A sale can match while it's visible, placed, and either not ended or
+// offering leftovers free on the curb (offer: live and not reported).
+const saleVisible = (post, at, offer) => post && !post.hidden && typeof post.lat === 'number' && typeof post.lng === 'number' && (!schedule.isEnded(post, at) || !!offer);
+// { curbside, onlyCurbside } for matchSale; offer = live offer and no open report.
+async function offerOf(post, at) {
+  const live = curbside().isLive(post, at) && !(await curbside().isReported(post.id));
+  return { curbside: live, onlyCurbside: live && schedule.isEnded(post, at) };
+}
 
 // Record matches of one sale against every open wanted post nearby. New rows
 // are email-pending (or skipped when the buyer turned email off); the unique
@@ -254,14 +270,16 @@ async function enqueueForPost(postId) {
   if (!(await wantedEnabled())) return 0;
   const post = await m.Post.findByPk(postId, { include: [{ model: m.SaleDay, as: 'saleDays' }, { model: m.SaleItem, as: 'items' }] });
   const now = schedule.now();
-  if (!saleVisible(post, now)) return 0;
+  if (!post) return 0;
+  const offer = await offerOf(post, now);
+  if (!saleVisible(post, now, offer.curbside)) return 0;
   const dLat = RADIUS_MAX / 69.0;
   const candidates = await m.WantedPost.findAll({ where: Object.assign({ hidden: false, userId: { [Op.ne]: post.userId }, lat: { [Op.between]: [post.lat - dLat, post.lat + dLat] } }, activeWhere(now)) });
   const hits = [];
   candidates.forEach((w) => {
     const d = geo.haversineMiles({ lat: w.lat, lng: w.lng }, { lat: post.lat, lng: post.lng });
     if (d > w.radiusMiles) return;
-    const hit = matchSale(w, post, post.items || []);
+    const hit = matchSale(w, post, post.items || [], offer);
     if (hit) hits.push({ w, d, itemId: hit.itemId });
   });
   if (!hits.length) return 0;
@@ -290,16 +308,19 @@ async function backfill(w) {
   const box = geo.boundingBox({ lat: w.lat, lng: w.lng }, w.radiusMiles);
   const posts = await m.Post.findAll({
     where: { [Op.and]: [{ hidden: false, userId: { [Op.ne]: w.userId }, lat: { [Op.between]: [box.minLat, box.maxLat] } },
-      { [Op.or]: box.lngRanges.map(([a, b]) => ({ lng: { [Op.between]: [a, b] } })) }, schedule.notEndedWhere(now)] },
-    include: [{ model: m.SaleItem, as: 'items' }], limit: BACKFILL_LIMIT,
+      { [Op.or]: box.lngRanges.map(([a, b]) => ({ lng: { [Op.between]: [a, b] } })) }, curbside().listableWhere(now)] },
+    include: [{ model: m.SaleItem, as: 'items' }, { model: m.SaleDay, as: 'saleDays' }], limit: BACKFILL_LIMIT,
   });
   const blocked = await blockedWith(w.userId);
+  const reported = await curbside().reportedIds(posts.filter((p) => curbside().isLive(p, now)).map((p) => p.id));
   const rows = [];
   posts.forEach((post) => {
-    if (blocked.has(post.userId) || !saleVisible(post, now)) return;
+    const live = curbside().isLive(post, now) && !reported.has(post.id);
+    const offer = { curbside: live, onlyCurbside: live && schedule.isEnded(post, now) };
+    if (blocked.has(post.userId) || !saleVisible(post, now, live)) return;
     const d = geo.haversineMiles({ lat: w.lat, lng: w.lng }, { lat: post.lat, lng: post.lng });
     if (d > w.radiusMiles) return;
-    const hit = matchSale(w, post, post.items || []);
+    const hit = matchSale(w, post, post.items || [], offer);
     if (hit) rows.push({ wantedId: w.id, userId: w.userId, postId: post.id, itemId: hit.itemId, distanceMiles: Math.round(d * 10) / 10, status: 'skipped', lastError: 'existing' });
   });
   if (rows.length) await m.WantedMatch.bulkCreate(rows, { ignoreDuplicates: true });
@@ -316,16 +337,23 @@ async function matchesOf(w, viewer) {
   const byPost = new Map(posts.map((p) => [p.id, p]));
   const byItem = new Map(items.map((i) => [i.id, i]));
   const blocked = await blockedWith(viewer ? viewer.id : null);
+  const now = schedule.now();
+  const reported = await curbside().reportedIds(posts.filter((p) => curbside().isLive(p, now)).map((p) => p.id));
   const out = [];
   rows.forEach((r) => {
     const p = byPost.get(r.postId);
-    if (!p || p.hidden || schedule.isEnded(p) || blocked.has(p.userId)) return;
+    const live = !!p && curbside().isLive(p, now) && !reported.has(p.id);
+    if (!p || p.hidden || (schedule.isEnded(p) && !live) || blocked.has(p.userId)) return;
     const photos = (p.photos || []).slice().sort((a, b) => a.position - b.position);
     const item = r.itemId ? byItem.get(r.itemId) : null;
+    const free = live && (!item || curbside().itemFree(p, item));
+    // After the sale, only what's on the curb is still there.
+    if (schedule.isEnded(p) && !free) return;
     out.push({
       id: r.id, matchedAt: r.createdAt, isNew: !r.seenAt, distanceMiles: r.distanceMiles,
-      post: { id: p.id, title: p.title, city: p.city, state: p.state, isFree: p.isFree, priceMin: p.priceMin, priceMax: p.priceMax, status: schedule.statusOf(p), startDate: p.startDate, thumbUrl: photos.length ? photos[0].toJSON().thumbUrl : null, seller: publicUser(p.User) },
-      item: item && !item.sold ? { id: item.id, name: item.name, priceCents: item.priceCents } : null,
+      post: { id: p.id, title: p.title, city: p.city, state: p.state, isFree: p.isFree, priceMin: p.priceMin, priceMax: p.priceMax, status: schedule.statusOf(p), startDate: p.startDate, thumbUrl: photos.length ? photos[0].toJSON().thumbUrl : null, seller: publicUser(p.User),
+        curbsideUntil: free ? p.curbsideUntil : null },
+      item: item && !item.sold ? { id: item.id, name: item.name, priceCents: item.priceCents, free } : null,
     });
   });
   return out;
@@ -347,6 +375,11 @@ const unsubscribeUrl = (w) => alerts().baseUrl() + '/alerts/unsubscribe?w=' + w.
 const oneClickUrl = (w) => alerts().baseUrl() + '/api/wanted/unsubscribe?w=' + w.id + '&t=' + encodeURIComponent(unsubscribeToken(w));
 
 // items: [{ wanted, post, item, seller, distanceMiles }] -> { subject, text, html, headers }.
+// "Sat 11:59 PM" in the sale's time zone, in the reader's language.
+function curbTime(lang, at, tz) {
+  try { return new Intl.DateTimeFormat(i18n.intlLocale(lang), { timeZone: tz || schedule.defaultTimeZone(), weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(at)); } catch (e) { return new Date(at).toISOString(); }
+}
+
 function renderEmail(user, items) {
   const lang = i18n.normalize(user.locale) || 'en';
   const L = (key, vars) => i18n.t(lang, key, vars);
@@ -357,10 +390,11 @@ function renderEmail(user, items) {
   const lines = items.map((i) => {
     const where = [i.post.city, i.post.state].filter(Boolean).join(', ');
     const away = i.distanceMiles !== null && i.distanceMiles !== undefined ? L('mail.away', { distance: i18n.formatNumber(lang, i.distanceMiles) }) : null;
-    const what = i.item ? [L('wmail.item', { name: i.item.name }), centsIn(lang, i.item.priceCents)].filter(Boolean).join(' ') : priceIn(lang, i.post);
+    const curb = i.curbsideUntil ? L('wmail.curbside', { time: curbTime(lang, i.curbsideUntil, i.post.timeZone) }) : null;
+    const what = i.item ? [L('wmail.item', { name: i.item.name }), curb ? null : centsIn(lang, i.item.priceCents)].filter(Boolean).join(' ') : (curb ? null : priceIn(lang, i.post));
     return {
       title: i.post.title, url: base + '/post/' + i.post.id,
-      meta: [what, away, where, L('mail.by', { name: publicName(i.seller) })].filter(Boolean).join(' · '),
+      meta: [curb, what, away, where, L('mail.by', { name: publicName(i.seller) })].filter(Boolean).join(' · '),
       wanted: L('wmail.for', { title: i.wanted.title }),
     };
   });
@@ -434,6 +468,13 @@ async function processQueue(now) {
     const W = new Map(wanteds.map((w) => [w.id, w]));
     const P = new Map(posts.map((p) => [p.id, p]));
     const I = new Map(itemRows.map((i) => [i.id, i]));
+    // Live curbside offers (not reported): what they offer is free, even after the sale.
+    const offered = await curbside().reportedIds(posts.filter((p) => curbside().isLive(p, now)).map((p) => p.id));
+    const freeNow = (post, r) => {
+      if (!curbside().isLive(post, now) || offered.has(post.id)) return false;
+      const it = r.itemId ? I.get(r.itemId) : null;
+      return it ? curbside().itemFree(post, it) : !!post.curbsideAll;
+    };
     const items = [];
     const drop = [];
     rows.forEach((r) => {
@@ -442,12 +483,12 @@ async function processQueue(now) {
       let why = null;
       if (!post) why = 'post_deleted';
       else if (post.hidden) why = 'post_hidden';
-      else if (schedule.isEnded(post, now)) why = 'post_ended';
+      else if (schedule.isEnded(post, now) && !freeNow(post, r)) why = 'post_ended';
       else if (!w || !isOpen(w, now)) why = 'wanted_closed';
       else if (!w.emailEnabled) why = 'email_off';
       else if (blocked.has(post.userId)) why = 'blocked';
       if (why) drop.push({ r, why });
-      else { const it = r.itemId ? I.get(r.itemId) : null; items.push({ row: r, post, wanted: w, item: it && !it.sold ? it : null, seller: post.User, distanceMiles: r.distanceMiles }); }
+      else { const it = r.itemId ? I.get(r.itemId) : null; items.push({ row: r, post, wanted: w, item: it && !it.sold ? it : null, seller: post.User, distanceMiles: r.distanceMiles, curbsideUntil: freeNow(post, r) ? post.curbsideUntil : null }); }
     });
     for (const d of drop) await finish([d.r], { status: 'skipped', lastError: d.why, claimToken: null });
     summary.skipped += drop.length;
