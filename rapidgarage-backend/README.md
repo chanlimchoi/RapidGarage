@@ -58,6 +58,22 @@ Cleanup rules (conservative; users are never deleted):
 - `Subscribers.zipCode` INTEGER→VARCHAR and the new `googleId` / `role` columns cannot fail on
   existing data, so they need no cleanup.
 
+## Login sessions
+
+Sessions are stored in Postgres with `connect-pg-simple`, in the `session` table, so logins
+survive restarts and work across several backend processes. The table is created by the
+migration `20261017020000-create-session-table`, not at runtime, so the app's database role
+needs no DDL rights. If the table is missing, the server refuses to start and tells you to run
+`npm run migrate`. The store uses its own small pg pool (max 5 connections) on the same
+`DATABASE_URL` as Sequelize.
+
+- Cookie: `httpOnly`, `SameSite=Lax`, `Secure` in production (unchanged), and now a
+  `maxAge` of `SESSION_MAX_AGE_DAYS` (default 14). Before this change it was a browser-session cookie.
+- Expired rows are deleted every `SESSION_PRUNE_INTERVAL_MINUTES` (default 15).
+- `POST /logout` deletes the session row and clears the cookie.
+- `SESSION_STORE=memory` switches back to the in-memory store (the default under `NODE_ENV=test`).
+- Deploying this logs everyone out once, since the old sessions only existed in memory.
+
 ## Post photos
 
 Run `npm run migrate` to create the `PostPhotos` table. Endpoints (owner or admin only):
