@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3 } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
 import { addressLine, timeAgo, formatMiles } from '../lib/format';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
@@ -10,7 +10,7 @@ import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../com
 import toast from '../components/toast';
 import { RatingBadge } from '../ratings/Stars';
 import ScanStats from '../print/ScanStats';
-import { fetchPrintInfo } from '../api';
+import { fetchPrintInfo, recordView } from '../api';
 import SaveButton from '../saved/SaveButton';
 import ItemList from './ItemList';
 import JoinEventPanel from '../events/JoinEventPanel';
@@ -46,6 +46,8 @@ class Post extends Component {
         if (!ok) return this.setState({ post: null, error: errorMessage(data, t('post.notFound')) });
         this.setState({ post: data, error: '', active: 0, reported: false });
         this.loadScans(data);
+        // Seller dashboard view count (the server skips the seller, admins, bots and hidden sales).
+        if (!data.hidden && !(this.props.user && this.props.user.id === data.userId)) recordView(data.id);
       })
       .catch(() => this.setState({ error: t('common.network') }));
   }
@@ -262,6 +264,7 @@ class Post extends Component {
                 {!isOwner ? <SaveButton post={post} /> : null}
                 {canEditPost(this.props.user, post) ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/edit'}><Pencil size={16} aria-hidden="true" />{t('post.editPost')}</Link> : null}
                 {isOwner ? <Link className="btn btn-secondary print-link" to={'/post/' + post.id + '/print'}><QrCode size={16} aria-hidden="true" />{t('post.printFlyer')}</Link> : null}
+                {isOwner ? <Link className="btn btn-secondary sale-dashboard-link" to={'/dashboard/sales/' + post.id}><BarChart3 size={16} aria-hidden="true" />{t('dash.saleStats')}</Link> : null}
                 {isOwner ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/items'}><Package size={16} aria-hidden="true" />{(post.items || []).length ? t('post.editItems') : t('post.addItems')}</Link> : null}
               </div>
             </div>
