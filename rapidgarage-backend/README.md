@@ -309,7 +309,7 @@ migration (`npx sequelize-cli db:migrate`, back up first) before deploying.
 | POST | `/alerts` | `{ label?, lat, lng \| address, radiusMiles, maxPrice?, freeOnly?, enabled? }` → 201. 409 `limit_reached`, 403 `feature_disabled`, 400 `geocode_unavailable` (address without a geocoding key) |
 | PUT | `/alerts/:id` | any of the fields above (owner only, else 404). `freeOnly: true` clears `maxPrice` |
 | DELETE | `/alerts/:id` | 204 |
-| POST | `/alerts/unsubscribe` | **public.** `{ a, t }` in the body, or `?a=&t=` (RFC 8058 one-click). Turns that one alert off. 400 `invalid_token`; `{ ok: true, gone: true }` if the alert was deleted |
+| POST | `/alerts/unsubscribe` | **public.** `{ a, t }` in the body, or `?a=&t=` (RFC 8058 one-click). Turns that one alert off. Any invalid request (missing/wrong token, bad id) gets the same 400 `invalid_token`, whether or not the alert exists; a valid token for a deleted alert gets `{ ok: true, gone: true }` |
 
 `GET /config` includes `saleAlerts`, and `PUT /admin/settings { saleAlerts }` is the admin toggle
 (its default comes from `ENABLE_SALE_ALERTS`, then the saved value wins).
@@ -334,9 +334,10 @@ so two workers won't send the same row. Error logs record only the SMTP error co
 or credentials.
 
 **Privacy.** An email only ever contains the recipient's own address (in `To`). Sellers are
-shown as "First L.". Unsubscribe links carry an HMAC-SHA256 token over the alert id and owner,
-keyed by `ALERT_TOKEN_SECRET` (falls back to `SESSION_SECRET`; changing it invalidates links
-already sent). The email link opens `/alerts/unsubscribe` in the frontend, and that page POSTs
+shown as "First L.". Unsubscribe links carry an HMAC-SHA256 token over the alert id, keyed by
+`ALERT_TOKEN_SECRET` (falls back to `SESSION_SECRET`; changing it invalidates links already
+sent). The token is checked in constant time before any database lookup, so the endpoint
+never reveals whether an alert id exists. The email link opens `/alerts/unsubscribe` in the frontend, and that page POSTs
 the token, so mail scanners that prefetch links don't unsubscribe anyone. The
 `List-Unsubscribe` / `List-Unsubscribe-Post` headers give mail clients a one-click POST
 endpoint at `/api/alerts/unsubscribe`.
