@@ -23,6 +23,9 @@ describe('hold event text', () => {
     const s = holdEventText(ev('released', false, { itemName: null }), 'Sam K.');
     assert.ok(!s.includes('null') && !s.includes('{item}'));
   });
+  test('no double period after an initial', () => {
+    assert.ok(holdEventText(ev('accepted', true), 'Alex R.').endsWith('Alex R.'));
+  });
   test('unknown events fall back to the server summary', () => {
     assert.equal(holdEventText(ev('weird', false), 'Sam K.'), 'English summary');
   });

@@ -348,7 +348,9 @@ router.get('/:id/holds', loadConversation, async (req, res) => {
       const mineOpen = new Set(rows.filter((h) => models.ItemHold.ACTIVE.includes(h.status)).map((h) => h.itemId));
       const items = await models.SaleItem.findAll({ where: { postId: post.id, sold: false }, order: [['position', 'ASC'], ['id', 'ASC']] });
       holdable = items.filter((i) => !(i.reservedUntil && new Date(i.reservedUntil) > t) && !mineOpen.has(i.id)).map((i) => i.toJSON());
-      canRequest = holdable.length > 0;
+      // The sale still has unsold items; holdable may be empty when they are all
+      // reserved or already requested (the UI says so).
+      canRequest = items.length > 0;
     }
     const end = post ? holds.saleEnd(post) : null;
     return res.json({

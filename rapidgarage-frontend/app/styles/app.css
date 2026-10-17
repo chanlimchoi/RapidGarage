@@ -871,7 +871,11 @@ html:lang(ko) body { word-break: keep-all; overflow-wrap: anywhere; }
 .hold-form-actions { display: flex; gap: var(--space-2); }
 .hold-past > .btn-link { font-size: var(--text-sm); }
 .hold-note { margin: 0; }
-.thread-event { align-self: center; display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; max-width: 90%; padding: 4px 12px; border-radius: 999px; background: var(--color-surface-muted, var(--color-brand-soft)); color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; }
-.thread-event .bubble-time { display: inline; margin: 0; }
+.thread-event { align-self: center; display: inline-flex; flex-wrap: nowrap; align-items: baseline; gap: 6px; max-width: 90%; padding: 5px 12px; border-radius: 14px; background: var(--color-surface-muted, var(--color-brand-soft)); color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; }
+.thread-event > svg { flex: none; align-self: center; }
+.thread-event > span { min-width: 0; }
+.thread-event .bubble-time { display: inline; margin: 0; flex: none; white-space: nowrap; }
+.hold-form-row .select { min-height: 44px; }
+.hold-form-row .input { min-height: 44px; }
 .hold-event-accepted { color: var(--color-success); background: var(--color-success-soft); }
 .item-reserved-chip { white-space: nowrap; }

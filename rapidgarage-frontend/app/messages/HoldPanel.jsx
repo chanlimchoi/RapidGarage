@@ -175,10 +175,11 @@ export default class HoldPanel extends React.Component {
       <section className="hold-panel" aria-labelledby="hold-title">
         <div className="hold-head">
           <h3 id="hold-title"><Bookmark size={16} aria-hidden="true" />{t('hold.title')}</h3>
-          {buyer && this.props.canAct && data.canRequest && !formOpen ? (
+          {buyer && this.props.canAct && data.canRequest && !formOpen && data.holdable.length ? (
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => this.setState({ formOpen: true })}>{t('hold.ask')}</button>
           ) : null}
         </div>
+        {buyer && this.props.canAct && data.canRequest && !data.holdable.length ? <p className="small muted hold-note">{t('hold.noneHoldable')}</p> : null}
         {formOpen ? this.renderForm() : null}
         {open.length ? <ul className="hold-list">{open.map((h) => this.renderHold(h))}</ul> : null}
         {past.length ? (

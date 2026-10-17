@@ -22,5 +22,6 @@ export function holdEventText(m, other) {
   // An automatic decline because the item went to someone else.
   if (h.event === 'declined' && h.endedReason === 'taken') return t('hold.ev.taken', vars);
   const key = (m.mine ? MINE : OTHER)[h.event];
-  return key ? t(key, vars) : m.body;
+  // Names are "First L.", so a sentence ending in one would read "Alex R..".
+  return key ? t(key, vars).replace(/\.\.$/, '.') : m.body;
 }
