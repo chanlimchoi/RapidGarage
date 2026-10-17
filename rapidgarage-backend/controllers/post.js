@@ -3,14 +3,17 @@ const models = require('../models');
 const { badRequest, forbidden, notFound, serverError, requireLogin, parseId } = require('../lib/http');
 const { validatePost } = require('../lib/validate');
 const { isAdmin } = require('../lib/roles');
+const { removePhotoFiles } = require('./photos');
 
 const Post = models.Post;
+const photoInclude = { model: models.PostPhoto, as: 'photos' };
+const photoOrder = [[{ model: models.PostPhoto, as: 'photos' }, 'position', 'ASC']];
 
 // Load the post named by :id (400 if the id is malformed, 404 if missing).
 function loadPost(req, res, next) {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'Post id must be a positive integer.');
-  Post.findByPk(id)
+  Post.findByPk(id, { include: [photoInclude], order: photoOrder })
     .then((post) => {
       if (!post) return notFound(res, 'Post not found.');
       req.post = post;
@@ -33,6 +36,8 @@ router.post('/', requireLogin, (req, res) => {
     .catch((err) => serverError(res, err));
 });
 
+router.use('/:id/photos', requireLogin, loadPost, (req, res, next) => requireOwnerOrAdmin(req, res, next), require('./photos'));
+
 router.get('/:id', loadPost, (req, res) => res.json(req.post));
 
 router.put('/:id', requireLogin, loadPost, requireOwner, (req, res) => {
@@ -51,7 +56,11 @@ function requireOwnerOrAdmin(req, res, next) {
 }
 
 router.delete('/:id', requireLogin, loadPost, requireOwnerOrAdmin, (req, res) => {
-  req.post.destroy()
+  // Remove stored files, then the rows (the FK also cascades in Postgres).
+  const photos = req.post.photos || [];
+  removePhotoFiles(photos)
+    .then(() => models.PostPhoto.destroy({ where: { postId: req.post.id } }))
+    .then(() => req.post.destroy())
     .then(() => res.status(204).end())
     .catch((err) => serverError(res, err));
 });

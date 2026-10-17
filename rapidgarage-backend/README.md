@@ -58,6 +58,29 @@ Cleanup rules (conservative; users are never deleted):
 - `Subscribers.zipCode` INTEGER→VARCHAR and the new `googleId` / `role` columns cannot fail on
   existing data, so they need no cleanup.
 
+## Post photos
+
+Run `npm run migrate` to create the `PostPhotos` table. Endpoints (owner or admin only):
+
+- `POST /post/:id/photos` - multipart/form-data, field `photos` (1-5 files, max 5 per post).
+  JPEG/PNG/WebP up to 8 MB each, detected from file contents. Errors: `415 unsupported_type`,
+  `413 file_too_large`, `400 bad_request` (too many photos, unreadable image).
+- `DELETE /post/:id/photos/:photoId` - removes the row and both stored files.
+- Deleting a post deletes its photos. `GET /post/:id`, `/allPosts` and the other list
+  endpoints include `photos: [{ id, url, thumbUrl, width, height, position }]`.
+- `GET /uploads/<key>` serves stored files read-only (`GET`/`HEAD`, `nosniff`).
+
+Processing (sharp): EXIF orientation applied, max 1600px (no upscaling) + 400px thumbnail,
+re-encoded as WebP with all metadata (EXIF, GPS, XMP, ICC) dropped.
+
+Settings (`.env`):
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `UPLOAD_DIR` | `./uploads` | Where the local driver writes files. Back it up with the database. |
+| `PHOTO_STORAGE` | `local` | Storage driver. `lib/storage/` has a small `put/remove/read` interface so an S3 driver can be added. |
+| `PHOTO_PUBLIC_BASE` | `/api/uploads` | URL prefix returned to browsers (matches the Vite `/api` proxy). Use e.g. `https://api.example.com/uploads` or a CDN in production. |
+
 ## Optional
 
 - If you want to add views and handlebars to your server side

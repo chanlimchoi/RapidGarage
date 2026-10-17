@@ -75,6 +75,9 @@ app.set('views', `${__dirname}/views/`);
 
 
 
+// Uploaded photos: read-only (GET/HEAD), served through the storage layer.
+app.use('/uploads', require('./controllers/uploads'));
+
 // Load up all of the controllers
 const controllers = require('./controllers');
 app.use(controllers);

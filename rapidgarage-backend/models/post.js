@@ -16,6 +16,14 @@ module.exports = (sequelize, DataTypes) => {
   // Sequelize 4 ignores classMethods; associations must be set like this.
   Post.associate = (models) => {
     Post.belongsTo(models.User, { foreignKey: 'userId', onDelete: 'CASCADE' });
+    Post.hasMany(models.PostPhoto, { as: 'photos', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
+  };
+  // Nested includes are serialized with get({ plain: true }), which skips
+  // PostPhoto#toJSON; serialize photos explicitly so clients get URLs only.
+  Post.prototype.toJSON = function toJSON() {
+    const out = Object.assign({}, this.get({ plain: true }));
+    if (Array.isArray(this.photos)) out.photos = this.photos.map((p) => p.toJSON());
+    return out;
   };
   return Post;
 };

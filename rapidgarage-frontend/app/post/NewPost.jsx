@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
-import Taggle from 'taggle'
 import { Redirect } from 'react-router';
-import { errorMessage } from '../api';
+import { errorMessage, uploadPhotos, MAX_PHOTOS } from '../api';
+import PhotoPicker from '../components/PhotoPicker';
 
 class NewPost extends Component{
     constructor(props){
@@ -13,6 +13,9 @@ class NewPost extends Component{
       city: '',
       zipCode: '',
       created: false,
+      createdId: null,
+      photos: [],
+      saving: false,
       error: '',
     };
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -27,6 +30,7 @@ class NewPost extends Component{
         return;
       }
 
+      this.setState({ saving: true });
       fetch('/api/post', {
         method: 'POST',
         headers: {"Content-Type": "application/json"},
@@ -44,17 +48,28 @@ class NewPost extends Component{
           this.setState({ error: errorMessage(data, 'Could not create the post.') });
           return;
         }
-        this.setState({ created: true, error: '' });
+        if (!this.state.photos.length) {
+          this.setState({ created: true, createdId: data.id, error: '' });
+          return;
+        }
+        return uploadPhotos(data.id, this.state.photos).then((up) => {
+          if (!up.ok) {
+            // The post exists; send the user to edit it and retry the photos.
+            this.setState({ error: errorMessage(up.data, 'The post was created, but the photos could not be uploaded.'), createdId: data.id });
+            return;
+          }
+          this.setState({ created: true, createdId: data.id, error: '' });
+        });
       })
       .catch(() => {
         this.setState({ error: 'Unable to reach the server. Please try again.' });
-      });
+      })
+      .then(() => this.setState({ saving: false }));
     }
 
     render(){
-      console.log(Taggle)
       if (this.state.created) {
-        return <Redirect to="/" />;
+        return <Redirect to={this.state.createdId ? '/post/' + this.state.createdId : '/'} />;
       }
       return (
           <div className="col-sm-9" >
@@ -81,10 +96,12 @@ class NewPost extends Component{
                 <span className="input-group-addon">Description:</span>
                 <textarea className="form-control" rows="8" id="description" ref="description" defaultValue={this.state.text}></textarea>
               </div>
-              <div id="example1"></div>
+              <br />
+              <PhotoPicker max={MAX_PHOTOS} onChange={(photos) => this.setState({ photos })} />
               <p id="log"></p>
               { this.state.error ? <p className="text-danger">{this.state.error}</p> : null }
-              <button type="submit" className="btn btn-info">Post</button>
+              { this.state.createdId && !this.state.created ? <p><a href={'/post/' + this.state.createdId + '/edit'}>Edit the post to retry the photos</a></p> : null }
+              <button type="submit" className="btn btn-info" disabled={this.state.saving}>{this.state.saving ? 'Saving…' : 'Post'}</button>
             </form>
           </div>
       )
