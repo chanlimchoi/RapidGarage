@@ -121,6 +121,13 @@ The **What?** box on the home page (e.g. "bike") finds sales whose title, descri
 unsold items match every word, on the recent list or together with a location search, and
 the cards show the matching items.
 
+## Install on phone
+
+RapidGarage can be installed like an app (Android/desktop Chrome and Edge: **Install**; iPhone:
+Share → **Add to Home Screen**). The installed app opens full screen from the home screen and
+still opens without a connection; the service worker caches only the app's own files, never
+sales data, messages or anything from the API. See `rapidgarage-frontend/README.md`.
+
 ## Saved sales & weekend route
 
 Logged-in buyers tap the **star** on a sale card (or **Save** on the sale page) to keep it in

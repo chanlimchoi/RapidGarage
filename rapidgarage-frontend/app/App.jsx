@@ -4,6 +4,7 @@ import { fetchMe, apiFetch, fetchUnreadCount } from './api';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import Toaster from './components/Toaster';
+import PwaBanners from './pwa/PwaBanners';
 import Profile from './components/Profile';
 import PostList from './components/PostList';
 import About from './components/About';
@@ -116,6 +117,7 @@ class App extends Component {
           </Switch>
         </main>
         <Footer />
+        <PwaBanners offerInstall={!/^\/(login|signup|logout|alerts|admin|settings)/.test(this.props.location.pathname)} />
         <Toaster />
       </div>
     );

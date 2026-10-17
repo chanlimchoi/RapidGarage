@@ -649,3 +649,51 @@ fieldset.report-reasons { border: 0; padding: 0; margin: 0; }
 .photo-choice img { width: 100%; height: 100%; object-fit: cover; }
 .photo-choice label:has(input:checked) { border-color: var(--color-brand); box-shadow: 0 0 0 2px var(--color-brand-soft); }
 .photo-choice label:has(input:focus-visible) { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+
+/* ---------- Install on phone (PWA) & mobile polish ---------- */
+.pwa-banners { position: fixed; z-index: 70; left: var(--space-3); right: var(--space-3); bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px)); display: grid; gap: var(--space-2); pointer-events: none; }
+@media (min-width: 768px) { .pwa-banners { left: var(--space-6); right: auto; bottom: var(--space-6); width: 400px; } }
+.pwa-card { pointer-events: auto; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); animation: pwa-in 220ms var(--ease); }
+.pwa-card > svg { flex: none; color: var(--color-text-muted); }
+@keyframes pwa-in { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pwa-card { animation: none; } }
+.offline-card { background: var(--color-warning-soft); border-color: var(--color-warning); }
+.offline-card > svg { color: var(--color-warning); }
+.update-card .btn { margin-left: auto; flex: none; }
+.install-icon { flex: none; border-radius: 10px; }
+.install-text { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.install-text svg { vertical-align: -2px; }
+.install-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+/* Toasts sit above a visible PWA card on phones. */
+@media (max-width: 767px) { body:has(.pwa-card) .toaster { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); } }
+
+/* Notches and home indicators (viewport-fit=cover). */
+.nav { padding-top: env(safe-area-inset-top, 0px); }
+.nav-inner, .footer-inner, .container { padding-left: max(var(--space-4), env(safe-area-inset-left, 0px)); padding-right: max(var(--space-4), env(safe-area-inset-right, 0px)); }
+.footer-inner { padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); }
+.toaster { margin-bottom: env(safe-area-inset-bottom, 0px); }
+@media (min-width: 768px) { .nav-inner, .container { padding-left: max(var(--space-6), env(safe-area-inset-left, 0px)); padding-right: max(var(--space-6), env(safe-area-inset-right, 0px)); } }
+
+@media (max-width: 767px) {
+  /* 16px+ text in fields: iOS Safari zooms into anything smaller. */
+  input, select, textarea { font-size: max(16px, 1em); }
+  /* Comfortable touch targets. */
+  .btn-sm { min-height: 40px; }
+  .btn-icon.btn-sm { min-width: 40px; }
+  .menu-item { min-height: 44px; }
+  .hero h1 { font-size: var(--text-2xl); }
+  .hero { padding-top: var(--space-2); }
+}
+a, button, label, summary { -webkit-tap-highlight-color: transparent; }
+
+/* Installed (standalone) app: no browser chrome, so a bit more breathing room up top. */
+@media (display-mode: standalone) {
+  body { overscroll-behavior-y: none; }
+  .footer { margin-top: var(--space-8); }
+}
+@media (max-width: 767px) {
+  /* Segmented filters stay on one line and scroll sideways instead of wrapping. */
+  .search-filters .segmented { max-width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .search-filters .segmented::-webkit-scrollbar { display: none; }
+  .search-filters .segmented button { flex: none; white-space: nowrap; }
+}

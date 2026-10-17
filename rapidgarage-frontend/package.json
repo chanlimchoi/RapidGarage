@@ -16,7 +16,9 @@
     "dev": "vite",
     "start": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:pwa": "node scripts/check-pwa.js build",
+    "test": "node --test \"test/**/*.test.js\""
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.1.2",

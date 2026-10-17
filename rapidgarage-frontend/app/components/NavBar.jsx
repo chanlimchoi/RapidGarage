@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, Star } from 'lucide-react';
 import { initials, displayName } from '../lib/format';
+import InstallMenuItem from '../pwa/InstallMenuItem';
 
 const badgeText = (n) => (n > 99 ? '99+' : String(n));
 const unreadLabel = (n) => n + ' unread message' + (n === 1 ? '' : 's');
@@ -91,6 +92,7 @@ export default class NavBar extends React.Component {
             <Link role="menuitem" className="menu-item" to="/profile" onClick={close}><User size={18} aria-hidden="true" />Profile &amp; listings</Link>
             <Link role="menuitem" className="menu-item" to="/settings" onClick={close}><SettingsIcon size={18} aria-hidden="true" />Settings</Link>
             {isAdmin ? <Link role="menuitem" className="menu-item" to="/admin" onClick={close}><ShieldCheck size={18} aria-hidden="true" />Admin</Link> : null}
+            <InstallMenuItem role="menuitem" onClick={close} />
             <div className="menu-sep" role="separator" />
             <Link role="menuitem" className="menu-item" to="/logout" onClick={close}><LogOut size={18} aria-hidden="true" />Log out</Link>
           </div>
@@ -143,6 +145,7 @@ export default class NavBar extends React.Component {
             <Link className="menu-item" to="/"><Search size={18} aria-hidden="true" />Browse sales</Link>
             <Link className="menu-item" to="/newpost"><Plus size={18} aria-hidden="true" />Post a sale</Link>
             <Link className="menu-item" to="/about"><Info size={18} aria-hidden="true" />About</Link>
+            <InstallMenuItem />
             <div className="menu-sep" role="separator" />
             {user ? (
               <React.Fragment>
