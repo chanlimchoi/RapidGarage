@@ -15,6 +15,8 @@ import { liveOffer } from '../lib/curbside';
 import { holdTime } from '../messages/holdText';
 import CurbsidePanel from './CurbsidePanel';
 import SaveButton from '../saved/SaveButton';
+import RemindToggle from '../saved/RemindToggle';
+import AddToCalendar from '../components/AddToCalendar';
 import ItemList from './ItemList';
 import JoinEventPanel from '../events/JoinEventPanel';
 import { t } from '../i18n';
@@ -304,6 +306,8 @@ class Post extends Component {
                   </button>
                 ) : null}
                 {!isOwner ? <SaveButton post={post} /> : null}
+                <AddToCalendar item={post} kind="post" />
+                {!isOwner ? <RemindToggle post={post} /> : null}
                 {canEditPost(this.props.user, post) ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/edit'}><Pencil size={16} aria-hidden="true" />{t('post.editPost')}</Link> : null}
                 {isOwner ? <Link className="btn btn-secondary print-link" to={'/post/' + post.id + '/print'}><QrCode size={16} aria-hidden="true" />{t('post.printFlyer')}</Link> : null}
                 {isOwner ? <Link className="btn btn-secondary sale-dashboard-link" to={'/dashboard/sales/' + post.id}><BarChart3 size={16} aria-hidden="true" />{t('dash.saleStats')}</Link> : null}

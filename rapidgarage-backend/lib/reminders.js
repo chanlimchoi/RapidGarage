@@ -79,7 +79,12 @@ async function enqueueDue(now) {
     if (t < w.sendAt || t >= w.until) continue;
     const saves = await m.SavedPost.findAll({ where: { postId: d.postId, remind: true, userId: { [Op.ne]: d.Post.userId } }, attributes: ['userId'], raw: true });
     if (!saves.length) continue;
-    const rows = saves.map((s) => ({ userId: s.userId, postId: d.postId, date: d.date, startsAt: d.startsAt, endsAt: d.endsAt, status: 'pending', noticeAt: now }));
+    // Skip the ones already queued for this sale-day. The unique (user, post,
+    // date) index + ignoreDuplicates still settles a race between instances.
+    const have = new Set((await m.SaleReminder.findAll({ where: { postId: d.postId, date: d.date }, attributes: ['userId'], raw: true })).map((r) => r.userId));
+    const rows = saves.filter((s) => !have.has(s.userId))
+      .map((s) => ({ userId: s.userId, postId: d.postId, date: d.date, startsAt: d.startsAt, endsAt: d.endsAt, status: 'pending', noticeAt: now }));
+    if (!rows.length) continue;
     await m.SaleReminder.bulkCreate(rows, { ignoreDuplicates: true });
     created += rows.length;
   }
@@ -153,7 +158,8 @@ function renderEmail(user, items) {
 <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e7e4dd;border-radius:16px;padding:24px">
 <p style="margin:0 0 4px;font-weight:700;color:#c2410c;font-size:14px">RapidGarage</p>
 <h1 style="margin:0 0 16px;font-size:20px">${esc(items.length === 1 ? L('rmail.headOne') : L('rmail.headMany', { count: items.length }))}</h1>
-<p style="margin:0 0 16px">${esc(hello)} ${esc(intro)}</p>
+<p style="margin:0 0 8px">${esc(hello)}</p>
+<p style="margin:0 0 16px">${esc(intro)}</p>
 ${lines.map((l) => `<div style="border:1px solid #e7e4dd;border-radius:12px;padding:12px 14px;margin:0 0 10px">
 <a href="${esc(l.url)}" style="color:#c2410c;font-weight:600;font-size:16px;text-decoration:none">${esc(l.title)}</a>
 <div style="color:#1c1b19;font-size:14px;margin-top:4px;font-weight:600">${esc(l.when)}</div>
