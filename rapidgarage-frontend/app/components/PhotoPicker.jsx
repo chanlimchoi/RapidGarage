@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
+import { ImagePlus, X } from 'lucide-react';
 import { MAX_PHOTO_BYTES, PHOTO_TYPES } from '../api';
 
-// Pick up to `max` photos and preview them before upload.
+// Pick (or drop) up to `max` photos and preview them before upload.
 // Calls onChange(files) with the current File list.
 class PhotoPicker extends Component {
   constructor(props) {
     super(props);
-    this.state = { items: [], error: '' };
+    this.state = { items: [], error: '', dragging: false };
     this.handleFiles = this.handleFiles.bind(this);
   }
 
@@ -14,10 +15,9 @@ class PhotoPicker extends Component {
     this.state.items.forEach((i) => URL.revokeObjectURL(i.preview));
   }
 
-  handleFiles(e) {
+  addFiles(list) {
     const max = this.props.max;
-    const picked = Array.prototype.slice.call(e.target.files || []);
-    e.target.value = '';
+    const picked = Array.prototype.slice.call(list || []);
     let error = '';
     const ok = picked.filter((f) => {
       if (PHOTO_TYPES.indexOf(f.type) === -1) { error = f.name + ' is not a JPEG, PNG or WebP image.'; return false; }
@@ -34,6 +34,19 @@ class PhotoPicker extends Component {
     this.props.onChange(items.map((i) => i.file));
   }
 
+  handleFiles(e) {
+    const files = e.target.files;
+    this.addFiles(files);
+    e.target.value = '';
+  }
+
+  onDrop(e) {
+    e.preventDefault();
+    this.setState({ dragging: false });
+    if (this.state.items.length >= this.props.max) return;
+    this.addFiles(e.dataTransfer && e.dataTransfer.files);
+  }
+
   remove(index) {
     const items = this.state.items.slice();
     URL.revokeObjectURL(items[index].preview);
@@ -44,25 +57,31 @@ class PhotoPicker extends Component {
 
   render() {
     const { max } = this.props;
-    const full = this.state.items.length >= max;
+    const left = Math.max(0, max - this.state.items.length);
+    const full = left === 0;
     return (
       <div className="photo-picker">
-        <label className="btn btn-default" style={full ? { opacity: 0.5 } : null}>
-          Add photos
+        <label className={'dropzone' + (this.state.dragging ? ' dragging' : '')} aria-disabled={full ? 'true' : undefined}
+          onDragOver={(e) => { e.preventDefault(); if (!this.state.dragging) this.setState({ dragging: true }); }}
+          onDragLeave={() => this.setState({ dragging: false })}
+          onDrop={(e) => this.onDrop(e)}>
+          <ImagePlus size={28} aria-hidden="true" />
+          <strong>{full ? 'Photo limit reached' : 'Add photos'}</strong>
+          <span className="small">Drag and drop or click to choose. JPEG, PNG or WebP, up to 8 MB each. {left} left.</span>
           <input type="file" name="photos" accept={PHOTO_TYPES.join(',')} multiple disabled={full}
-            onChange={this.handleFiles} style={{ display: 'none' }} data-testid="photo-input" />
+            onChange={this.handleFiles} className="sr-only" data-testid="photo-input" />
         </label>
-        <small className="text-muted"> JPEG, PNG or WebP, up to 8 MB each. {Math.max(0, max - this.state.items.length)} left.</small>
-        <div className="photo-previews" style={{ display: 'flex', flexWrap: 'wrap', marginTop: 8 }}>
-          {this.state.items.map((item, i) => (
-            <div key={item.preview} style={{ position: 'relative', marginRight: 8, marginBottom: 8 }}>
-              <img src={item.preview} alt={'Preview ' + (i + 1)} className="photo-preview" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }} />
-              <button type="button" className="btn btn-xs btn-danger" aria-label={'Remove ' + item.file.name}
-                style={{ position: 'absolute', top: 2, right: 2 }} onClick={() => this.remove(i)}>×</button>
-            </div>
-          ))}
-        </div>
-        {this.state.error ? <p className="text-danger">{this.state.error}</p> : null}
+        {this.state.items.length ? (
+          <div className="photo-grid photo-previews">
+            {this.state.items.map((item, i) => (
+              <div key={item.preview} className="photo-tile">
+                <img src={item.preview} alt={'Preview ' + (i + 1)} className="photo-preview" />
+                <button type="button" className="btn photo-remove" aria-label={'Remove ' + item.file.name} onClick={() => this.remove(i)}><X size={16} aria-hidden="true" /></button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {this.state.error ? <p className="field-error" role="alert" style={{ marginTop: 8 }}>{this.state.error}</p> : null}
       </div>
     );
   }

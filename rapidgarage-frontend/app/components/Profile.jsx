@@ -1,46 +1,20 @@
-import React, {Component} from 'react'
-import styled from "styled-components";
+import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
+import { Plus, Pencil, Trash2, Eye, Store, LogIn, Settings as SettingsIcon } from 'lucide-react';
 import { apiFetch, errorMessage } from '../api';
+import PostCard from './PostCard';
+import { EmptyState, SkeletonGrid } from './ui';
+import { initials, displayName } from '../lib/format';
+import toast from './toast';
 
-function resultList(props){
-      return (
-        <div>
-    <div className="panel-info">
-      <div className="panel-heading">
-      <span><h4>{props.title} </h4><span className="glyphicon glyphicon-time"></span> Post by {props.usr}, post on {props.postDate} </span>
-      </div>
-      <div className="panel-body">
-        <h5><span className="label label-danger">Devices</span> <span className="label label-primary">Furniture</span></h5>
-        Location: {props.address}, {props.city}, {props.states} <br/>
-        <h5>start on {props.startDate} end on {props.endDate}</h5>
-      </div>
-    </div>
-    </div>
-  );
-}
-
-const Title = styled.h1`
-  font-size: 1.5em;
-  text-align: center;
-  color: black;
-`;
-
-const Wrapper = styled.section`
-  padding: 4em;
-  background:#ADD8E6;
-`;
-
-class Profile extends Component{
-    constructor(props){
-      super(props);
-      this.state = {
-        userResult: '',
-        listResult: [],
-        error: '',
-      };
-     
+// The signed-in user's profile and listings; the user comes from GET /me (via App).
+class Profile extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { listResult: [], loading: true };
   }
- componentDidMount() {
+
+  componentDidMount() {
     this.load();
   }
 
@@ -50,83 +24,75 @@ class Profile extends Component{
     if (prev !== cur) this.load();
   }
 
-  // Show the signed-in user's profile; the user comes from GET /me (via App).
   load() {
     const user = this.props.user;
     if (!user) {
-      this.setState({ userResult: '', listResult: [] });
+      this.setState({ listResult: [], loading: !this.props.ready });
       return;
     }
-    this.setState({ userResult: user });
+    this.setState({ loading: true });
     apiFetch('/allbyuserId/' + user.id)
-      .then(({ ok, data }) => this.setState({ listResult: ok && Array.isArray(data) ? data : [] }))
-      .catch(() => this.setState({ listResult: [] }));
+      .then(({ ok, data }) => this.setState({ loading: false, listResult: ok && Array.isArray(data) ? data : [] }))
+      .catch(() => { this.setState({ loading: false, listResult: [] }); toast.error('Could not load your listings.'); });
   }
 
   deletePost(post) {
-    if (!window.confirm('Delete "' + post.title + '"?')) return;
+    if (!window.confirm('Delete "' + post.title + '"? This removes its photos too.')) return;
     apiFetch('/post/' + post.id, { method: 'DELETE' })
       .then(({ ok, data }) => {
-        if (!ok) {
-          this.setState({ error: errorMessage(data, 'Could not delete the post.') });
-          return;
-        }
-        this.setState({ error: '', listResult: this.state.listResult.filter((p) => p.id !== post.id) });
+        if (!ok) { toast.error(errorMessage(data, 'Could not delete the post.')); return; }
+        toast.success('Deleted “' + post.title + '”.');
+        this.setState({ listResult: this.state.listResult.filter((p) => p.id !== post.id) });
       })
-      .catch(() => this.setState({ error: 'Unable to reach the server. Please try again.' }));
+      .catch(() => toast.error('Unable to reach the server. Please try again.'));
   }
 
-  editTitle(post) {
-    const title = window.prompt('New title', post.title);
-    if (title === null) return;
-    apiFetch('/post/' + post.id, { method: 'PUT', body: JSON.stringify({ title }) })
-      .then(({ ok, data }) => {
-        if (!ok) {
-          this.setState({ error: errorMessage(data, 'Could not update the post.') });
-          return;
-        }
-        this.setState({ error: '', listResult: this.state.listResult.map((p) => (p.id === post.id ? data : p)) });
-      })
-      .catch(() => this.setState({ error: 'Unable to reach the server. Please try again.' }));
-  }
-
-	render(){
-		return(
-      <div>
-      <Wrapper>
-        <Title>
-          
-          {this.state.userResult.firstName} {this.state.userResult.lastName}
-         
-        </Title>
-        
-      </Wrapper>
-      { !this.props.user ? <p>Please log in to see your profile.</p> : null }
-      { this.state.error ? <p className="text-danger">{this.state.error}</p> : null }
-      <h3> Recent Listings </h3>
-      <div>
-          <div className="panel-group">
-            
-               {
-          (this.state.listResult && this.state.listResult.length) ?
-          (this.state.listResult.map((post,key)=>{
-            return (
-              <li key={key}>
-                
-  { (resultList(post))} 
-                <button type="button" className="btn btn-default btn-xs" onClick={() => this.editTitle(post)}>Edit title</button>{' '}
-                <button type="button" className="btn btn-danger btn-xs" onClick={() => this.deletePost(post)}>Delete</button>
-              </li>
-
-            )
-          })
-          ): <h1>No data</h1>
-        }
+  render() {
+    const user = this.props.user;
+    if (!user) {
+      if (!this.props.ready) return <div className="container"><SkeletonGrid count={3} className="card-grid-wide" /></div>;
+      return (
+        <div className="container container-narrow">
+          <EmptyState icon={LogIn} title="Please log in to see your profile" action={<Link className="btn btn-primary" to="/login">Log in</Link>} />
+        </div>
+      );
+    }
+    const list = this.state.listResult;
+    return (
+      <div className="container">
+        <section className="profile-hero">
+          <span className="avatar" aria-hidden="true">{initials(user)}</span>
+          <div>
+            <h1>{displayName(user)}</h1>
+            <p>{user.email}{user.role === 'admin' ? ' · Admin' : ''}</p>
           </div>
+          <div className="row">
+            <Link className="btn btn-secondary" to="/settings"><SettingsIcon size={16} aria-hidden="true" />Settings</Link>
+            <Link className="btn btn-primary" to="/newpost"><Plus size={16} aria-hidden="true" />Post a sale</Link>
+          </div>
+        </section>
+        <div className="browse-toolbar"><h2>Your listings{!this.state.loading ? ' (' + list.length + ')' : ''}</h2></div>
+        {this.state.loading ? <SkeletonGrid count={3} className="card-grid-wide" /> : list.length ? (
+          <div className="card-grid card-grid-wide">
+            {list.map((post) => (
+              <PostCard key={post.id} post={post} actions={(
+                <React.Fragment>
+                  <Link className="btn btn-secondary btn-sm" to={'/post/' + post.id}><Eye size={14} aria-hidden="true" />View</Link>
+                  <Link className="btn btn-secondary btn-sm" to={'/post/' + post.id + '/edit'}><Pencil size={14} aria-hidden="true" />Edit</Link>
+                  <button type="button" className="btn btn-danger btn-sm" onClick={() => this.deletePost(post)} aria-label={'Delete ' + post.title}><Trash2 size={14} aria-hidden="true" />Delete</button>
+                </React.Fragment>
+              )} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Store} title="You haven't posted any sales yet"
+            action={<Link className="btn btn-primary" to="/newpost"><Plus size={16} aria-hidden="true" />Post your first sale</Link>}>
+            List a garage, yard or moving sale and it will show up here.
+          </EmptyState>
+        )}
       </div>
-      </div>
-
-         )
-	}
+    );
+  }
 }
+
 export default Profile;

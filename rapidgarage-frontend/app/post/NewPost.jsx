@@ -1,112 +1,93 @@
-import React, {Component} from 'react'
+import React, { Component } from 'react';
 import { Redirect } from 'react-router';
-import { errorMessage, uploadPhotos, MAX_PHOTOS } from '../api';
+import { Link } from 'react-router-dom';
+import { LogIn, Images } from 'lucide-react';
+import { apiFetch, errorMessage, uploadPhotos, MAX_PHOTOS } from '../api';
 import PhotoPicker from '../components/PhotoPicker';
+import PostForm from './PostForm';
+import { EmptyState } from '../components/ui';
+import toast from '../components/toast';
 
-class NewPost extends Component{
-    constructor(props){
-      super(props);
-      this.state = {
-      title: '',
-      text: '',
-      address: '',
-      city: '',
-      zipCode: '',
-      created: false,
-      createdId: null,
-      photos: [],
-      saving: false,
-      error: '',
-    };
+class NewPost extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { created: false, createdId: null, photos: [], saving: false, error: '' };
+    this.form = React.createRef();
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-    handleSubmit(e) {
-      e.preventDefault();
+  componentDidMount() { this.mounted = true; }
+  componentWillUnmount() { this.mounted = false; }
 
-      // The server enforces login; this is just a friendlier early message.
-      if (!this.props.user) {
-        this.setState({ error: 'Please log in before creating a post.' });
-        return;
-      }
-
-      this.setState({ saving: true });
-      fetch('/api/post', {
-        method: 'POST',
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          title: this.refs.title.value,
-          street: this.refs.address.value,
-          city: this.refs.city.value,
-          zipCode: this.refs.zipcode.value,
-          description: this.refs.description.value,
-        })
-      })
-      .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
+  handleSubmit(body) {
+    // The server enforces login; this is just a friendlier early message.
+    if (!this.props.user) {
+      this.setState({ error: 'Please log in before creating a post.' });
+      return;
+    }
+    this.setState({ saving: true, error: '' });
+    apiFetch('/post', { method: 'POST', body: JSON.stringify(body) })
       .then(({ ok, data }) => {
         if (!ok) {
+          if (this.form.current) this.form.current.setServerErrors(data);
           this.setState({ error: errorMessage(data, 'Could not create the post.') });
-          return;
+          return null;
         }
         if (!this.state.photos.length) {
+          toast.success('Your sale is live.');
           this.setState({ created: true, createdId: data.id, error: '' });
-          return;
+          return null;
         }
         return uploadPhotos(data.id, this.state.photos).then((up) => {
           if (!up.ok) {
             // The post exists; send the user to edit it and retry the photos.
+            toast.error('The post was created, but the photos could not be uploaded.');
             this.setState({ error: errorMessage(up.data, 'The post was created, but the photos could not be uploaded.'), createdId: data.id });
             return;
           }
+          toast.success('Your sale is live with ' + this.state.photos.length + ' photo' + (this.state.photos.length === 1 ? '' : 's') + '.');
           this.setState({ created: true, createdId: data.id, error: '' });
         });
       })
-      .catch(() => {
-        this.setState({ error: 'Unable to reach the server. Please try again.' });
-      })
-      .then(() => this.setState({ saving: false }));
-    }
+      .catch(() => this.setState({ error: 'Unable to reach the server. Please try again.' }))
+      .then(() => { if (this.mounted) this.setState({ saving: false }); });
+  }
 
-    render(){
-      if (this.state.created) {
-        return <Redirect to={this.state.createdId ? '/post/' + this.state.createdId : '/'} />;
-      }
+  render() {
+    if (this.state.created) {
+      return <Redirect to={this.state.createdId ? '/post/' + this.state.createdId : '/'} />;
+    }
+    if (this.props.ready && !this.props.user) {
       return (
-          <div className="col-sm-9" >
-            <form onSubmit={this.handleSubmit}>
-              <div className="input-group">
-                <span className="input-group-addon">Title:</span>
-                <input className="form-control" id="title" type="text" name="title" ref="title" defaultValue={this.state.title} required autoFocus/>
-              </div>
-              <br />
-              <div className="input-group">
-                <span className="input-group-addon">Address:</span>
-                <input className="form-control" id="address" type="text" name="address" ref="address" defaultValue={this.state.address} required />
-              </div>
-              <div className="input-group">
-                <span className="input-group-addon">City:</span>
-                <input className="form-control" id="city" type="text" name="city" ref="city" defaultValue={this.state.city} required />
-              </div>
-              <div className="input-group">
-                <span className="input-group-addon">ZipCode:</span>
-                <input className="form-control" id="zipcode" type="text" name="zipcode" ref="zipcode" defaultValue={this.state.zipCode} required />
-              </div>
-              <br />
-              <div className="input-group">
-                <span className="input-group-addon">Description:</span>
-                <textarea className="form-control" rows="8" id="description" ref="description" defaultValue={this.state.text}></textarea>
-              </div>
-              <br />
-              <PhotoPicker max={MAX_PHOTOS} onChange={(photos) => this.setState({ photos })} />
-              <p id="log"></p>
-              { this.state.error ? <p className="text-danger">{this.state.error}</p> : null }
-              { this.state.createdId && !this.state.created ? <p><a href={'/post/' + this.state.createdId + '/edit'}>Edit the post to retry the photos</a></p> : null }
-              <button type="submit" className="btn btn-info" disabled={this.state.saving}>{this.state.saving ? 'Saving…' : 'Post'}</button>
-            </form>
-          </div>
-      )
+        <div className="container container-narrow">
+          <EmptyState icon={LogIn} title="Log in to post a sale"
+            action={<div className="row" style={{ justifyContent: 'center' }}><Link className="btn btn-primary" to="/login">Log in</Link><Link className="btn btn-secondary" to="/signup">Create an account</Link></div>}>
+            You need an account so buyers know who's selling and you can edit your listing later.
+          </EmptyState>
+        </div>
+      );
     }
-
+    return (
+      <div className="container container-narrow">
+        <header className="page-header">
+          <div>
+            <h1>Post a sale</h1>
+            <p>Tell neighbors what you're selling, where and when.</p>
+          </div>
+        </header>
+        <PostForm ref={this.form} autoFocus saving={this.state.saving} submitLabel="Publish sale" error={this.state.error}
+          onSubmit={this.handleSubmit}
+          footer={this.state.createdId && !this.state.created
+            ? <p><Link to={'/post/' + this.state.createdId + '/edit'}>Edit the post to retry the photos</Link></p> : null}>
+          <section className="card-form">
+            <h2 className="h4"><Images size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />Photos</h2>
+            <p className="muted small">Listings with photos get far more visitors. The first photo is the cover.</p>
+            <PhotoPicker max={MAX_PHOTOS} onChange={(photos) => this.setState({ photos })} />
+          </section>
+        </PostForm>
+      </div>
+    );
+  }
 }
 
 export default NewPost;

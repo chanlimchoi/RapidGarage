@@ -1,20 +1,19 @@
 import React from 'react';
 import { Redirect } from 'react-router';
-import { Link, withRouter } from "react-router-dom";
+import { Link } from 'react-router-dom';
 import { errorMessage } from '../api';
+import { Field, Alert, Spinner } from '../components/ui';
+import { rules, validateAll, focusFirstError } from '../lib/validate';
+import PasswordInput from './PasswordInput';
+import toast from '../components/toast';
 
+const SCHEMA = { email: rules.email, password: (v) => (!v ? 'Enter your password.' : '') };
 
-
-export default class Login extends React.Component{
+export default class Login extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      redirectToNewPage: false,
-      currentUser: '',
-      error: '',
-      google: false,
-    };
-
+    this.state = { redirectToNewPage: false, error: '', google: false, values: { email: '', password: '' }, touched: {}, submitted: false, busy: false };
+    this.formRef = React.createRef();
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
@@ -35,65 +34,77 @@ export default class Login extends React.Component{
     }
   }
 
+  set(name) {
+    return (e) => this.setState({ values: Object.assign({}, this.state.values, { [name]: e.target.value }) });
+  }
+
+  touch(name) {
+    return () => this.setState({ touched: Object.assign({}, this.state.touched, { [name]: true }) });
+  }
+
   handleSubmit(e) {
     e.preventDefault();
-    var self = this;
+    const errors = validateAll(this.state.values, SCHEMA);
+    this.setState({ submitted: true });
+    if (Object.keys(errors).length) return focusFirstError(this.formRef.current, errors);
+    this.setState({ busy: true, error: '' });
     fetch('/api/login', {
       method: 'POST',
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        email: self.refs.email.value,
-        password: self.refs.password.value
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ email: this.state.values.email.trim(), password: this.state.values.password }),
+    })
+      // Always read the JSON body, even on 401, to show the server's message.
+      .then((response) => response.json().catch(() => null).then((data) => ({ ok: response.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok || !data || !data.success) {
+          this.setState({ busy: false, error: errorMessage(data, 'Incorrect email or password.') });
+          return;
+        }
+        if (this.props.onAuthChange) this.props.onAuthChange();
+        toast.success('Welcome back' + (data.user && data.user.firstName ? ', ' + data.user.firstName : '') + '!');
+        this.setState({ redirectToNewPage: true, error: '' });
       })
-    })
-    .then((response) => {
-      // Always try to read the JSON body, even on 401, so we can show the
-      // server's error message instead of throwing on a non-JSON response.
-      return response.json().then((data) => ({ ok: response.ok, data }));
-    })
-    .then(({ ok, data }) => {
-      console.log('login response:', ok, data);
-      if (!ok || !data.success) {
-        this.setState({ error: errorMessage(data, 'Incorrect email or password.') });
-        return;
-      }
-      if (this.props.onAuthChange) this.props.onAuthChange();
-      this.setState({ currentUser: data, redirectToNewPage: true, error: '' });
-    })
-    .catch(() => {
-      this.setState({ error: 'Unable to reach the server. Please try again.' });
-    });
+      .catch(() => this.setState({ busy: false, error: 'Unable to reach the server. Please try again.' }));
   }
-
 
   render() {
-    if(this.state.redirectToNewPage) {
-      return <Redirect to="/" />;
-    }
+    if (this.state.redirectToNewPage) return <Redirect to="/" />;
+    const errors = validateAll(this.state.values, SCHEMA);
+    const shown = (n) => ((this.state.submitted || this.state.touched[n]) ? errors[n] : '');
+    const v = this.state.values;
     return (
-      <div className="col-lg-4 col-lg-offset-4">
-        <form onSubmit={this.handleSubmit}>
-        <div className="input-group">
-          <label htmlFor="email" className="input-group-addon"><i className="glyphicon glyphicon-user" aria-hidden="true"></i><span className="sr-only">Email</span></label>
-          <input id="email" name="email" type="email" autoComplete="username" className="form-control" ref="email" placeholder="Email address" required/>
+      <div className="container container-auth">
+        <div className="card-form auth-card">
+          <h1>Log in</h1>
+          <p className="lead">Welcome back to RapidGarage.</p>
+          <form ref={this.formRef} onSubmit={this.handleSubmit} noValidate className="form-grid">
+            <Field id="email" label="Email" error={shown('email')}>
+              <input name="email" type="email" autoComplete="username" className="input" value={v.email}
+                onChange={this.set('email')} onBlur={this.touch('email')} placeholder="you@example.com" required autoFocus />
+            </Field>
+            <Field id="password" label="Password" error={shown('password')}>
+              <PasswordInput name="password" autoComplete="current-password" value={v.password}
+                onChange={this.set('password')} onBlur={this.touch('password')} required />
+            </Field>
+            {this.state.error ? <Alert tone="danger">{this.state.error}</Alert> : null}
+            <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={this.state.busy}>
+              {this.state.busy ? <Spinner /> : null}Log in
+            </button>
+          </form>
+          {this.state.google ? (
+            <React.Fragment>
+              <div className="divider">or</div>
+              {/* Full-page navigation: the OAuth redirect flow can't run over fetch. */}
+              <a className="btn btn-secondary btn-lg btn-block google-btn" href="/api/auth/google">
+                <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.2-13.5-10l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>
+                Sign in with Google
+              </a>
+            </React.Fragment>
+          ) : null}
+          <p className="auth-switch">New to RapidGarage? <Link to="/signup">Create an account</Link></p>
         </div>
-        <div className="input-group">
-          <label htmlFor="password" className="input-group-addon"><i className="glyphicon glyphicon-lock" aria-hidden="true"></i><span className="sr-only">Password</span></label>
-          <input id="password" name="password" type="password" autoComplete="current-password" className="form-control" ref="password" placeholder="Password" required/>
-        </div>
-        { this.state.error ? <p className="text-danger">{this.state.error}</p> : null }
-        <br />
-        <button type="submit" className="btn btn-success">Login</button>
-      </form>
-      { this.state.google ? (
-        <div style={{ marginTop: '1em' }}>
-          <p>or</p>
-          {/* Full-page navigation: the OAuth redirect flow can't run over fetch. */}
-          <a className="btn btn-default" href="/api/auth/google">Sign in with Google</a>
-        </div>
-      ) : null }
-    </div>
+      </div>
     );
   }
-
 }

@@ -28,6 +28,21 @@ Copy `.env.example` to `.env` (never commit it). Only `VITE_*` variables reach t
 - `index.html`: Vite entry; loads `app/index.jsx`.
 - `app/`: source. Components with JSX use `.jsx`.
 - `public/`: copied as-is to the build root (`manifest.json`, `favicon.ico`).
+- `app/styles/tokens.css`: design tokens (CSS variables for color, spacing, radius, shadows, type).
+  Dark mode is `prefers-color-scheme: dark` and only swaps the color tokens.
+- `app/styles/app.css`: base styles and components (nav, buttons, forms, cards, chips, skeletons, toasts).
+- `app/components/ui.jsx`: `Field` (label + inline error + hint), `Alert`, `EmptyState`, skeletons.
+- `app/components/toast.js`: `toast.success(msg)` / `toast.error(msg)`; `<Toaster />` is mounted once in `App`.
+- `app/lib/validate.js`: client copies of the server's form rules for inline validation (the server still decides).
+
+## UI
+
+No CSS framework and no jQuery. The font is Inter, self-hosted through `@fontsource-variable/inter`
+(bundled, no external font request). Icons come from `lucide-react` (tree-shaken).
+Keep new colors in `tokens.css` and check text pairs for WCAG AA (4.5:1) in both light and dark.
+
+If `NODE_ENV=development` is exported in your shell, `vite build` produces a development React
+bundle. Build with it unset (or `NODE_ENV=production`).
 
 ## Deploying
 
