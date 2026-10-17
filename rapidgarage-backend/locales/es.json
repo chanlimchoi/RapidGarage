@@ -1,5 +1,5 @@
 {
- "_note": "Generated from the translation table; do not edit by hand. \"messages\" are keyed by the English text the API sends ({x} = slot).",
+ "_note": "Server strings. Edit all four locale files together (test/i18n.test.js checks them). \"messages\" are keyed by the exact English text the API sends; {x} marks a slot.",
  "strings": {
   "price.free": "Gratis",
   "price.range": "{min}–{max}",
@@ -155,7 +155,6 @@
   "{label} can't be negative.": "{label} no puede ser negativo.",
   "{label} must be whole dollars (no cents).": "{label} debe ser en dólares enteros (sin centavos).",
   "{label} must be ${n} or less.": "{label} debe ser de ${n} o menos.",
-  "isFree must be true or false.": "isFree debe ser true o false.",
   "A free sale can't also have a price. Clear the prices or untick Free.": "Una venta gratis no puede tener precio. Borra los precios o desmarca Gratis.",
   "Highest price must be at least the lowest price.": "El precio máximo debe ser al menos el precio mínimo.",
   "Schedule must be an object with timeZone and days.": "El horario debe ser un objeto con timeZone y days.",
@@ -224,7 +223,6 @@
   "Give the item a name.": "Ponle un nombre al artículo.",
   "Keep the name to {n} characters.": "El nombre debe tener como máximo {n} caracteres.",
   "Choose one of this sale's photos.": "Elige una de las fotos de esta venta.",
-  "sold must be true or false.": "sold debe ser true o false.",
   "Only the seller can print flyers for this sale.": "Solo el vendedor puede imprimir volantes de esta venta.",
   "A moderator has hidden this sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.": "Un moderador ocultó esta venta, así que su código QR muestra \"no disponible\". La impresión está desactivada hasta que vuelva a estar visible.",
   "Only the seller and admins can see scan counts.": "Solo el vendedor y los administradores pueden ver los escaneos.",
@@ -245,10 +243,17 @@
   "Sale not found.": "No se encontró la venta.",
   "You can't save your own sale.": "No puedes guardar tu propia venta.",
   "You can save up to {n} sales. Remove some first.": "Puedes guardar hasta {n} ventas. Quita algunas primero.",
-  "layout must be one of: {list}.": "layout debe ser uno de: {list}.",
-  "arrow must be one of: {list}.": "arrow debe ser uno de: {list}.",
-  "headline must be one of: {list}.": "headline debe ser uno de: {list}.",
-  "lang must be one of: {list}.": "lang debe ser uno de: {list}.",
-  "{field} must be 0 or 1.": "{field} debe ser 0 o 1."
+  "{field} must be 0 or 1.": "{field} debe ser 0 o 1.",
+  "{field} must be one of: {list}.": "{field} debe ser uno de: {list}.",
+  "{field} must be true or false.": "{field} debe ser true o false.",
+  "{field} must be a positive integer.": "{field} debe ser un entero positivo.",
+  "{field} must be a number between {min} and {max}.": "{field} debe ser un número entre {min} y {max}.",
+  "{field} must be an integer from {min} to {max}.": "{field} debe ser un entero de {min} a {max}.",
+  "{field} must be a whole number from {min} to {max}.": "{field} debe ser un número entero de {min} a {max}.",
+  "{field} must be whole dollars from {min} to {max}.": "{field} debe ser en dólares enteros de {min} a {max}.",
+  "radius must be one of {list} (miles).": "radius debe ser uno de {list} (millas).",
+  "before/after must be message ids.": "before/after deben ser ids de mensajes.",
+  "Enter a valid location.": "Indica una ubicación válida.",
+  "Location must be a valid latitude and longitude.": "La ubicación debe ser una latitud y longitud válidas."
  }
 }

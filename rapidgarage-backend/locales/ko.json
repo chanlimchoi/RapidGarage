@@ -1,5 +1,5 @@
 {
- "_note": "Generated from the translation table; do not edit by hand. \"messages\" are keyed by the English text the API sends ({x} = slot).",
+ "_note": "Server strings. Edit all four locale files together (test/i18n.test.js checks them). \"messages\" are keyed by the exact English text the API sends; {x} marks a slot.",
  "strings": {
   "price.free": "무료",
   "price.range": "{min}~{max}",
@@ -149,7 +149,6 @@
   "{label} can't be negative.": "{label}은(는) 음수일 수 없습니다.",
   "{label} must be whole dollars (no cents).": "{label}은(는) 센트 없이 달러 단위여야 합니다.",
   "{label} must be ${n} or less.": "{label}은(는) ${n} 이하여야 합니다.",
-  "isFree must be true or false.": "isFree는 true 또는 false여야 합니다.",
   "A free sale can't also have a price. Clear the prices or untick Free.": "무료 세일에는 가격을 넣을 수 없습니다. 가격을 지우거나 무료 선택을 해제하세요.",
   "Highest price must be at least the lowest price.": "최고 가격은 최저 가격 이상이어야 합니다.",
   "Schedule must be an object with timeZone and days.": "일정은 timeZone과 days를 포함한 객체여야 합니다.",
@@ -218,7 +217,6 @@
   "Give the item a name.": "물품 이름을 입력하세요.",
   "Keep the name to {n} characters.": "이름은 {n}자 이내로 입력하세요.",
   "Choose one of this sale's photos.": "이 세일의 사진 중 하나를 선택하세요.",
-  "sold must be true or false.": "sold는 true 또는 false여야 합니다.",
   "Only the seller can print flyers for this sale.": "판매자만 이 세일의 전단지를 인쇄할 수 있습니다.",
   "A moderator has hidden this sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.": "관리자가 이 세일을 숨겨서 QR 코드에 \"볼 수 없음\"이 표시됩니다. 다시 공개될 때까지 인쇄할 수 없습니다.",
   "Only the seller and admins can see scan counts.": "판매자와 관리자만 스캔 수를 볼 수 있습니다.",
@@ -239,10 +237,17 @@
   "Sale not found.": "세일을 찾을 수 없습니다.",
   "You can't save your own sale.": "내 세일은 저장할 수 없습니다.",
   "You can save up to {n} sales. Remove some first.": "세일은 최대 {n}개까지 저장할 수 있습니다. 먼저 일부를 삭제하세요.",
-  "layout must be one of: {list}.": "layout은 다음 중 하나여야 합니다: {list}.",
-  "arrow must be one of: {list}.": "arrow는 다음 중 하나여야 합니다: {list}.",
-  "headline must be one of: {list}.": "headline은 다음 중 하나여야 합니다: {list}.",
-  "lang must be one of: {list}.": "lang은 다음 중 하나여야 합니다: {list}.",
-  "{field} must be 0 or 1.": "{field}는 0 또는 1이어야 합니다."
+  "{field} must be 0 or 1.": "{field}는 0 또는 1이어야 합니다.",
+  "{field} must be one of: {list}.": "{field}은(는) 다음 중 하나여야 합니다: {list}.",
+  "{field} must be true or false.": "{field}은(는) true 또는 false여야 합니다.",
+  "{field} must be a positive integer.": "{field}은(는) 양의 정수여야 합니다.",
+  "{field} must be a number between {min} and {max}.": "{field}은(는) {min}~{max} 사이의 숫자여야 합니다.",
+  "{field} must be an integer from {min} to {max}.": "{field}은(는) {min}~{max} 사이의 정수여야 합니다.",
+  "{field} must be a whole number from {min} to {max}.": "{field}은(는) {min}~{max} 사이의 정수여야 합니다.",
+  "{field} must be whole dollars from {min} to {max}.": "{field}은(는) {min}~{max}달러 사이의 정수여야 합니다.",
+  "radius must be one of {list} (miles).": "radius는 {list} 중 하나여야 합니다(마일).",
+  "before/after must be message ids.": "before/after는 메시지 ID여야 합니다.",
+  "Enter a valid location.": "올바른 위치를 입력하세요.",
+  "Location must be a valid latitude and longitude.": "위치는 올바른 위도와 경도여야 합니다."
  }
 }

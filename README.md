@@ -171,3 +171,29 @@ shows as numbered stops with straight-line distances, a sketch, the Google Map (
 key is available) and an **Open in Google Maps** link with the stops as waypoints (up to 10
 stops, Google's limit). Your saved list is private to you.
 
+
+## Languages
+
+RapidGarage speaks **English, Español, 한국어 and 简体中文**. The first visit follows the
+browser's languages; the switcher in the nav bar (and **Settings → Language**) changes it
+instantly, remembers it on the device and, when logged in, on the account. The account
+language follows you to new devices and is used for sale-alert emails. Dates, times,
+numbers and prices are formatted with `Intl` for the chosen language (prices stay US
+dollars). Flyers and yard signs can be printed in any of the four languages, whatever
+language the site is in; Korean and Chinese PDFs embed a 4 MB subset of Noto Sans CJK SC
+(`rapidgarage-backend/assets/fonts`, SIL Open Font License), and pdfkit embeds only the
+glyphs a flyer uses (a Korean flyer is about 35 KB).
+
+**Adding or changing text:**
+- Web app: `rapidgarage-frontend/app/i18n/locales/{en,es,ko,zh-CN}.js`, flat keys with
+  `{name}` slots and `{ one, other }` plurals; use `t('key', vars)` in components.
+  `npm test` fails if any language lacks a key, drops a placeholder or misses a plural
+  form, or if the code uses a key that doesn't exist. Keys must be literal strings.
+- Server: API messages are still written in plain English in the code, and translated in
+  `lib/http.js` from `rapidgarage-backend/locales/*.json` (`messages`, keyed by the
+  English text; `{x}` marks a slot for numbers or labels). The server picks the language
+  from `Accept-Language` (the web app sends its current language), else the account's.
+  A test fails if a message literal in the code, or any message the test run produced,
+  has no translation. Emails, short-link pages and PDFs use the `strings` keys.
+- The flyer wording (`flyer.*`, `price.*`) exists in both catalogs; a test checks that
+  they match, so the print preview always shows what the PDF will print.

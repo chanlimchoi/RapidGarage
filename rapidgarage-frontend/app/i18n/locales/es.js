@@ -1,4 +1,4 @@
-// Generated from the translation table; keep keys in sync across locales (test/i18n.test.js checks).
+// UI strings. Edit all four locale files together: test/i18n.test.js fails on missing keys or placeholders.
 export default {
   "nav.unreadMessages": {"one": "{count} mensaje sin leer", "other": "{count} mensajes sin leer"},
   "nav.accountMenuFor": "Menú de la cuenta de {name}",

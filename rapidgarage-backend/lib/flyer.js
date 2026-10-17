@@ -69,6 +69,7 @@ function put(doc, text, x, y, o) {
   const opts = Object.assign({}, o);
   const extra = face(doc, text, opts.bold, opts.size, opts.color);
   ['bold', 'size', 'color'].forEach((k) => delete opts[k]);
+  if (!isWinAnsi(text)) delete opts.characterSpacing; // letter-spacing reads badly in Hangul/Chinese
   doc.fillColor(o.color || INK);
   doc.text(text, x, y, Object.assign(opts, extra));
 }
@@ -150,11 +151,15 @@ function drawQr(doc, url, x, y, size) {
 function fit(doc, text, bold, max, min, width, lines) {
   for (let s = max; s > min; s -= 1) {
     face(doc, text, bold, s);
-    if (doc.heightOfString(text, { width, lineGap: 0 }) <= s * 1.2 * (lines || 1) + 0.5) return s;
+    // Measured in the face's own line height (CJK lines are taller than Helvetica's).
+    if (doc.heightOfString(text, { width, lineGap: 0 }) <= Math.max(s * 1.2, doc.currentLineHeight(true)) * (lines || 1) + 0.5) return s;
   }
   return min;
 }
 const widthOf = (doc, text, bold, size) => { face(doc, text, bold, size); return doc.widthOfString(text); };
+// Line box height per point of font size: ~1.15 for Helvetica (the layout's
+// original numbers), ~1.45 for the CJK face.
+const lineRatio = (doc, text) => { if (isWinAnsi(text)) return 1.15; face(doc, text, false, 100); return doc.currentLineHeight(true) / 100; };
 
 function coverImage(doc, buf, x, y, w, h) {
   doc.save();
@@ -260,7 +265,7 @@ function drawSign(doc, d, arrow) {
   const head = T.upper(d.headline);
   const hs = fit(doc, head, true, 120, 40, inner, 1);
   put(doc, head, x0, y, { bold: true, size: hs, width: inner, align: 'center', lineBreak: false });
-  y += hs * 1.05;
+  y += hs * (isWinAnsi(head) ? 1.05 : lineRatio(doc, head) * 0.92);
   // Arrow + when.
   const rowH = 150;
   const qrSize = 150;
@@ -276,8 +281,9 @@ function drawSign(doc, d, arrow) {
   const lines = when.slice(0, 3);
   const per = (rowH - 6) / lines.length;
   lines.forEach((l, i) => {
-    const sz = Math.min(fit(doc, l, true, 96, 22, ww, 1), per / 1.15);
-    put(doc, l, wx, y + i * per + (per - sz) / 2, { bold: true, size: sz, color: BRAND, width: ww, align: 'center', lineBreak: false });
+    const r = lineRatio(doc, l);
+    const sz = Math.min(fit(doc, l, true, 96, 22, ww, 1), per / r);
+    put(doc, l, wx, y + i * per + (per - sz * (r === 1.15 ? 1 : r)) / 2, { bold: true, size: sz, color: BRAND, width: ww, align: 'center', lineBreak: false });
   });
   y += rowH + 14;
   // Address (left) + QR (right).

@@ -70,6 +70,30 @@ describe('i18n', function () {
       assert.strictEqual(i18n.translate('zh-CN', 'Highest price can\'t be negative.'), '最高价格不能为负数。');
       assert.strictEqual(i18n.translate('ko', '"cat.gif" is not a JPEG, PNG or WebP image.'), '"cat.gif"은(는) JPEG, PNG 또는 WebP 이미지가 아닙니다.');
     });
+    it('every literal message in the code has a translation (static check)', () => {
+      // Complete literals passed to the error helpers or set as field errors.
+      // Messages built with + or ${} are covered by templates and the run-time
+      // check in zz-i18n-coverage.test.js.
+      const STR = String.raw`'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"`;
+      const res = [
+        new RegExp(String.raw`\b(?:badRequest|notFound|forbidden|conflict|unauthorized)\(res,\s*(?:${STR})\s*[,)]`, 'g'),
+        new RegExp(String.raw`\bsendError\(res,\s*\d+,\s*'[a-z_]+',\s*(?:${STR})\s*[,)]`, 'g'),
+        new RegExp(String.raw`\berrors(?:\.\w+|\[\w+\])\s*=\s*(?:${STR})\s*;`, 'g'),
+        new RegExp(String.raw`\{\s*error:\s*(?:${STR})\s*\}`, 'g'),
+      ];
+      const dirs = ['controllers', 'lib', 'middlewares'].map((d) => path.join(__dirname, '..', d));
+      const files = dirs.flatMap((d) => fs.readdirSync(d).filter((f) => f.endsWith('.js')).map((f) => path.join(d, f)));
+      const found = new Set();
+      for (const f of files) {
+        const src = fs.readFileSync(f, 'utf8');
+        for (const re of res) for (const m of src.matchAll(re)) found.add((m[1] !== undefined ? m[1] : m[2]).replace(/\\'/g, "'"));
+      }
+      assert.ok(found.size > 100, 'scanner found ' + found.size);
+      const missing = [...found].filter((msg) => i18n.translate('ko', msg) === msg && i18n.translate('es', msg) === msg);
+      missing.forEach((msg) => i18n._misses.delete(msg));
+      assert.deepStrictEqual(missing, []);
+    });
+
     it('unknown text passes through unchanged', () => {
       assert.strictEqual(i18n.translate('ko', 'Some brand-new message.'), 'Some brand-new message.');
       i18n._misses.delete('Some brand-new message.');

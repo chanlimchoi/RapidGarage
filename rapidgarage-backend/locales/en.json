@@ -1,5 +1,5 @@
 {
- "_note": "Generated from the translation table; do not edit by hand. \"messages\" are keyed by the English text the API sends ({x} = slot).",
+ "_note": "Server strings. Edit all four locale files together (test/i18n.test.js checks them). \"messages\" are keyed by the exact English text the API sends; {x} marks a slot.",
  "strings": {
   "price.free": "Free",
   "price.range": "{min}–{max}",
@@ -155,7 +155,6 @@
   "{label} can't be negative.": "{label} can't be negative.",
   "{label} must be whole dollars (no cents).": "{label} must be whole dollars (no cents).",
   "{label} must be ${n} or less.": "{label} must be ${n} or less.",
-  "isFree must be true or false.": "isFree must be true or false.",
   "A free sale can't also have a price. Clear the prices or untick Free.": "A free sale can't also have a price. Clear the prices or untick Free.",
   "Highest price must be at least the lowest price.": "Highest price must be at least the lowest price.",
   "Schedule must be an object with timeZone and days.": "Schedule must be an object with timeZone and days.",
@@ -224,7 +223,6 @@
   "Give the item a name.": "Give the item a name.",
   "Keep the name to {n} characters.": "Keep the name to {n} characters.",
   "Choose one of this sale's photos.": "Choose one of this sale's photos.",
-  "sold must be true or false.": "sold must be true or false.",
   "Only the seller can print flyers for this sale.": "Only the seller can print flyers for this sale.",
   "A moderator has hidden this sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.": "A moderator has hidden this sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.",
   "Only the seller and admins can see scan counts.": "Only the seller and admins can see scan counts.",
@@ -245,10 +243,17 @@
   "Sale not found.": "Sale not found.",
   "You can't save your own sale.": "You can't save your own sale.",
   "You can save up to {n} sales. Remove some first.": "You can save up to {n} sales. Remove some first.",
-  "layout must be one of: {list}.": "layout must be one of: {list}.",
-  "arrow must be one of: {list}.": "arrow must be one of: {list}.",
-  "headline must be one of: {list}.": "headline must be one of: {list}.",
-  "lang must be one of: {list}.": "lang must be one of: {list}.",
-  "{field} must be 0 or 1.": "{field} must be 0 or 1."
+  "{field} must be 0 or 1.": "{field} must be 0 or 1.",
+  "{field} must be one of: {list}.": "{field} must be one of: {list}.",
+  "{field} must be true or false.": "{field} must be true or false.",
+  "{field} must be a positive integer.": "{field} must be a positive integer.",
+  "{field} must be a number between {min} and {max}.": "{field} must be a number between {min} and {max}.",
+  "{field} must be an integer from {min} to {max}.": "{field} must be an integer from {min} to {max}.",
+  "{field} must be a whole number from {min} to {max}.": "{field} must be a whole number from {min} to {max}.",
+  "{field} must be whole dollars from {min} to {max}.": "{field} must be whole dollars from {min} to {max}.",
+  "radius must be one of {list} (miles).": "radius must be one of {list} (miles).",
+  "before/after must be message ids.": "before/after must be message ids.",
+  "Enter a valid location.": "Enter a valid location.",
+  "Location must be a valid latitude and longitude.": "Location must be a valid latitude and longitude."
  }
 }

@@ -1,4 +1,4 @@
-// Generated from the translation table; keep keys in sync across locales (test/i18n.test.js checks).
+// UI strings. Edit all four locale files together: test/i18n.test.js fails on missing keys or placeholders.
 export default {
   "nav.unreadMessages": {"other": "{count} 条未读消息"},
   "nav.accountMenuFor": "{name} 的账户菜单",

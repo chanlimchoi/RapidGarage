@@ -1,5 +1,5 @@
 {
- "_note": "Generated from the translation table; do not edit by hand. \"messages\" are keyed by the English text the API sends ({x} = slot).",
+ "_note": "Server strings. Edit all four locale files together (test/i18n.test.js checks them). \"messages\" are keyed by the exact English text the API sends; {x} marks a slot.",
  "strings": {
   "price.free": "免费",
   "price.range": "{min}–{max}",
@@ -149,7 +149,6 @@
   "{label} can't be negative.": "{label}不能为负数。",
   "{label} must be whole dollars (no cents).": "{label}必须是整美元（不含美分）。",
   "{label} must be ${n} or less.": "{label}不能超过 ${n}。",
-  "isFree must be true or false.": "isFree 必须为 true 或 false。",
   "A free sale can't also have a price. Clear the prices or untick Free.": "免费甩卖不能同时设置价格。请清除价格或取消勾选“免费”。",
   "Highest price must be at least the lowest price.": "最高价格不能低于最低价格。",
   "Schedule must be an object with timeZone and days.": "日程必须是包含 timeZone 和 days 的对象。",
@@ -218,7 +217,6 @@
   "Give the item a name.": "请填写物品名称。",
   "Keep the name to {n} characters.": "名称请不超过 {n} 个字符。",
   "Choose one of this sale's photos.": "请选择此甩卖的一张照片。",
-  "sold must be true or false.": "sold 必须为 true 或 false。",
   "Only the seller can print flyers for this sale.": "只有卖家可以打印此甩卖的传单。",
   "A moderator has hidden this sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.": "管理员已隐藏此甩卖，因此其二维码显示“不可用”。在重新公开之前无法打印。",
   "Only the seller and admins can see scan counts.": "只有卖家和管理员可以查看扫码次数。",
@@ -239,10 +237,17 @@
   "Sale not found.": "未找到该甩卖。",
   "You can't save your own sale.": "不能收藏自己的甩卖。",
   "You can save up to {n} sales. Remove some first.": "最多可收藏 {n} 场甩卖。请先移除一些。",
-  "layout must be one of: {list}.": "layout 必须是以下之一：{list}。",
-  "arrow must be one of: {list}.": "arrow 必须是以下之一：{list}。",
-  "headline must be one of: {list}.": "headline 必须是以下之一：{list}。",
-  "lang must be one of: {list}.": "lang 必须是以下之一：{list}。",
-  "{field} must be 0 or 1.": "{field} 必须是 0 或 1。"
+  "{field} must be 0 or 1.": "{field} 必须是 0 或 1。",
+  "{field} must be one of: {list}.": "{field} 必须是以下之一：{list}。",
+  "{field} must be true or false.": "{field} 必须为 true 或 false。",
+  "{field} must be a positive integer.": "{field} 必须是正整数。",
+  "{field} must be a number between {min} and {max}.": "{field} 必须是 {min} 到 {max} 之间的数字。",
+  "{field} must be an integer from {min} to {max}.": "{field} 必须是 {min} 到 {max} 之间的整数。",
+  "{field} must be a whole number from {min} to {max}.": "{field} 必须是 {min} 到 {max} 之间的整数。",
+  "{field} must be whole dollars from {min} to {max}.": "{field} 必须是 {min} 到 {max} 之间的整美元。",
+  "radius must be one of {list} (miles).": "radius 必须是 {list} 之一（英里）。",
+  "before/after must be message ids.": "before/after 必须是消息 ID。",
+  "Enter a valid location.": "请输入有效的位置。",
+  "Location must be a valid latitude and longitude.": "位置必须是有效的纬度和经度。"
  }
 }

@@ -101,8 +101,12 @@ class App extends Component {
   // Choosing a language always saves it to the account, so when logged in the
   // account's language wins (it follows you to new devices). Accounts from
   // before languages existed get this device's language.
+  // Only once per login, so a language picked a moment ago is never undone by
+  // a /me answer that raced the save.
   syncLocale(user) {
-    if (!user) return;
+    if (!user) { this.localeSyncedFor = null; return; }
+    if (this.localeSyncedFor === user.id) return;
+    this.localeSyncedFor = user.id;
     if (user.locale && user.locale !== i18n.locale()) i18n.setLocale(user.locale).catch(() => null);
     else if (!user.locale) apiFetch('/me/locale', { method: 'PUT', body: JSON.stringify({ locale: i18n.locale() }) }).catch(() => null);
   }
