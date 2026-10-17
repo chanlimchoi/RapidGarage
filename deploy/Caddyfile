@@ -1,0 +1,8 @@
+# Caddy in front of the app: automatic HTTPS (Let's Encrypt) for $DOMAIN,
+# HTTP -> HTTPS redirect, compression. Caddy sets X-Forwarded-For/-Proto from
+# the real connection (it ignores client-sent ones), so the app runs with
+# TRUST_PROXY=1.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:8080
+}

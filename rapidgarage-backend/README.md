@@ -7,14 +7,14 @@
     + Add your project name, version, description, authors
     + Add any other packages you may need
 
-- Edit `config/config.json`
-    + Add your username, password, and database names
+- Copy `.env.example` to `.env` and set `DATABASE_URL` (and `DATABASE_SSL` if
+  your Postgres needs TLS). `config/config.js` reads them.
 
 
 ## Explanations
 
-- `/config/config.json`
-    + This file contains the credentials for connecting to your postgres database. You need to make sure these details match your DB setup.
+- `/config/config.js`
+    + Database settings for Sequelize and `sequelize-cli` (via `.sequelizerc`), built from `DATABASE_URL`, `DATABASE_SSL`, `DB_POOL_MAX` and `DB_LOG_SQL`. Tests use in-memory SQLite.
 - `/controllers`
     + This is where you should store all the logic handling URL routes and business logic for your app.
     + `index.js` is where you load up the different files

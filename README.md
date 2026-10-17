@@ -11,6 +11,19 @@ npm run migrate && npm start
 cd ../rapidgarage-frontend && npm install && npm run dev        # http://localhost:3000
 ```
 
+## Production
+
+One Docker image runs the whole app on one port (frontend, API under `/api`,
+QR links, `/healthz` and `/readyz`). `docker-compose.yml` adds Postgres 17,
+daily backups and optional Caddy for automatic HTTPS. **[DEPLOY.md](DEPLOY.md)**
+has the settings (`.env.production.example`), step-by-step guides for a VPS,
+Render and Fly.io, cost estimates, and backup/restore.
+
+```sh
+cp .env.production.example .env.production   # fill in (DEPLOY.md)
+docker compose --env-file .env.production up -d --build   # http://localhost:8080
+```
+
 ## Photos on posts
 
 Each post can have up to 5 photos (JPEG, PNG or WebP, 8 MB max each). The server checks the

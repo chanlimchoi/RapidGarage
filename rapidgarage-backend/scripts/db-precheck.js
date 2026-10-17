@@ -86,7 +86,8 @@ function report(a) {
 }
 
 async function main() {
-  const c = new Client({ connectionString: process.env.DATABASE_URL });
+  const ssl = require('../lib/dbSsl').sslOption();
+  const c = new Client({ connectionString: process.env.DATABASE_URL, ...(ssl ? { ssl } : {}) });
   await c.connect();
   try {
     for (const t of ['Users', 'Posts']) {
