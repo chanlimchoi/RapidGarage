@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, AlertTriangle, Info, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Info, CheckCircle2, Loader2, X } from 'lucide-react';
 
 // Labeled form field with hint and inline error, wired up for screen readers.
 export function Field({ id, label, optional, hint, error, children }) {
@@ -81,4 +81,55 @@ export function SkeletonBlock({ lines, height }) {
       <span className="sr-only">Loading…</span>
     </div>
   );
+}
+
+// Modal dialog: closes on Escape / backdrop click, keeps Tab inside, and
+// returns focus to whatever opened it.
+export class Dialog extends React.Component {
+  constructor(props) {
+    super(props);
+    this.ref = React.createRef();
+    this.onKey = this.onKey.bind(this);
+  }
+
+  componentDidMount() {
+    this.opener = document.activeElement;
+    document.addEventListener('keydown', this.onKey);
+    const el = this.ref.current;
+    const first = el && el.querySelector('[autofocus], input, select, textarea, button:not(.dialog-close)');
+    if (first) first.focus();
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this.onKey);
+    if (this.opener && this.opener.focus) this.opener.focus();
+  }
+
+  onKey(e) {
+    if (e.key === 'Escape') { e.preventDefault(); if (this.props.onClose) this.props.onClose(); return; }
+    if (e.key !== 'Tab' || !this.ref.current) return;
+    const items = this.ref.current.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]');
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+
+  render() {
+    const { id, title, description, children, footer, onClose } = this.props;
+    return (
+      <div className="dialog-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && onClose) onClose(); }}>
+        <div className="dialog" role="dialog" aria-modal="true" aria-labelledby={id + '-title'} aria-describedby={description ? id + '-desc' : undefined} ref={this.ref}>
+          <header className="dialog-header">
+            <h2 id={id + '-title'}>{title}</h2>
+            <button type="button" className="btn btn-ghost btn-icon btn-sm dialog-close" aria-label="Close" onClick={onClose}><X size={18} aria-hidden="true" /></button>
+          </header>
+          {description ? <p id={id + '-desc'} className="dialog-desc">{description}</p> : null}
+          <div className="dialog-body">{children}</div>
+          {footer ? <footer className="dialog-footer">{footer}</footer> : null}
+        </div>
+      </div>
+    );
+  }
 }

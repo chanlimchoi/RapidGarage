@@ -167,6 +167,57 @@ npm run geocode:backfill -- --retry        # also retry addresses that were not_
 npm run geocode:backfill -- --limit 500
 ```
 
+## Reporting and moderation
+
+Migration `20261017040000-moderation` adds `Posts.hidden` (plus `hiddenAt`, `hiddenBy`,
+`hiddenSource` = `moderator` or `auto`) and a `Reports` table. Run `npm run db:precheck` and
+`npx sequelize-cli db:migrate` after taking a backup, as above.
+
+**Reporting** — `POST /post/:id/report` (login required) with `{ reason, note? }`:
+
+| | |
+|---|---|
+| `reason` | one of `spam`, `scam`, `prohibited`, `offensive`, `wrong_info`, `other` |
+| `note` | optional, up to 500 characters |
+| 201 | `{ id, postId, reason, status: "open", createdAt }` |
+| 400 / 401 / 404 | bad input / not logged in / no such (visible) post |
+| 403 | it's your own post |
+| 409 | you already have an open report on this post (also enforced by a unique partial index) |
+| 429 | `rate_limited`: more than `REPORT_MAX_PER_HOUR` reports in the last hour (default 10) |
+
+**Visibility** — a hidden post is left out of `/allPosts`, `/all/:zipCode`,
+`/allbyuserId/:userId` and `/search` (map and text), and `GET /post/:id` answers 404, for
+everyone except its owner and admins. The owner gets it with `hidden: true` and
+`hiddenSource`; who hid it is only shown to admins. Photo files themselves are still served by
+URL (their keys are random).
+
+**Admin** (all 401/403 for anyone who isn't an admin, like the other `/admin` routes):
+
+- `GET /admin/reports` — open reports grouped by post, most reported first: post preview,
+  owner, `openCount`, `reporterCount`, a `reasons` tally, first/last report times and each
+  report with its reporter. Also `hidden`: hidden posts with no open reports, and the current
+  `autoHideThreshold`.
+- `GET /admin/reports/history?page=&pageSize=` — resolved reports, newest first, with the
+  reviewer, the outcome (`action`), resolution note, a `postTitle` snapshot and `postExists`.
+- `POST /admin/posts/:id/moderate` with `{ action, note? }` resolves every open report on the
+  post:
+
+| action | post | reports become |
+|---|---|---|
+| `dismiss` | unchanged | `dismissed` |
+| `hide` | hidden (`hiddenSource: moderator`) | `actioned` / hidden |
+| `unhide` | visible again | `dismissed` / unhidden |
+| `delete` | deleted with its photos | `actioned` / deleted |
+
+Reports are kept when a post is deleted (by an admin or its owner), so history stays readable.
+
+**Settings** (optional):
+
+- `REPORT_MAX_PER_HOUR` — reports one user can file per rolling hour. Default 10.
+- `REPORT_AUTO_HIDE_THRESHOLD` — when set to a positive integer N, a post is hidden
+  automatically (`hiddenSource: auto`) once N different users have open reports on it. It
+  still shows in the admin queue to dismiss or unhide. Unset (the default) means off.
+
 ## Optional
 
 - If you want to add views and handlebars to your server side

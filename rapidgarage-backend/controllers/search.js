@@ -13,6 +13,7 @@ const { badRequest, sendError, serverError } = require('../lib/http');
 const { ZIP_RE } = require('../lib/validate');
 const geo = require('../lib/geo');
 const { PRICE_CAP, priceWhere } = require('../lib/price');
+const { visibleWhere } = require('../lib/moderation');
 
 const MAX_PAGE_SIZE = 50;
 const MAX_CANDIDATES = 5000; // hard cap on rows pulled by the bounding box
@@ -75,14 +76,15 @@ function paginate(items, page, pageSize) {
 // Combine where clauses with AND (each may contain its own Op.or).
 const and = (...parts) => ({ [Op.and]: parts.filter(Boolean) });
 
-async function nearbyRanked(center, radius, filter) {
+async function nearbyRanked(center, radius, filter, user) {
   const box = geo.boundingBox(center, radius);
   const rows = await models.Post.findAll({
     attributes: ['id', 'lat', 'lng', 'createdAt'],
     where: and(
       { lat: { [Op.between]: [box.minLat, box.maxLat] } },
       { [Op.or]: box.lngRanges.map(([a, b]) => ({ lng: { [Op.between]: [a, b] } })) },
-      priceWhere(Op, filter)
+      priceWhere(Op, filter),
+      visibleWhere(user)
     ),
     limit: MAX_CANDIDATES,
     raw: true,
@@ -103,7 +105,7 @@ async function loadPage(ranked) {
 }
 
 // No geocoder: match zip exactly (if q is a zip) or the text against address fields.
-async function textMatch(q, filter) {
+async function textMatch(q, filter, user) {
   // Postgres: case-insensitive ILIKE (backslash is its default escape). SQLite's LIKE is already case-insensitive.
   const pg = models.sequelize.getDialect() === 'postgres';
   const like = '%' + (pg ? q.replace(/[\\%_]/g, (c) => '\\' + c) : q) + '%';
@@ -111,7 +113,7 @@ async function textMatch(q, filter) {
   const where = ZIP_RE.test(q)
     ? { zipCode: q.slice(0, 5) }
     : { [Op.or]: ['street', 'city', 'state', 'zipCode', 'title'].map((f) => ({ [f]: { [op]: like } })) };
-  const posts = await models.Post.findAll({ where: and(where, priceWhere(Op, filter)), include: [photoInclude], order: [['createdAt', 'DESC'], photoOrder] });
+  const posts = await models.Post.findAll({ where: and(where, priceWhere(Op, filter), visibleWhere(user)), include: [photoInclude], order: [['createdAt', 'DESC'], photoOrder] });
   return posts.map((p) => Object.assign(p.toJSON(), { distanceMiles: null }));
 }
 
@@ -140,12 +142,12 @@ router.get('/', async (req, res) => {
       } else if (r.status === 'not_found') {
         return sendError(res, 404, 'location_not_found', 'Could not find that address or zip code.');
       } else {
-        const items = await textMatch(values.q, values);
+        const items = await textMatch(values.q, values, req.user);
         return res.json(Object.assign({ mode: 'text', center: null, radius: values.radius, filter: filterOf(values), notice: { code: r.status, message: NOTICES[r.status] || NOTICES.error } },
           paginate(items, values.page, values.pageSize)));
       }
     }
-    const ranked = await nearbyRanked(center, values.radius, values);
+    const ranked = await nearbyRanked(center, values.radius, values, req.user);
     const pageInfo = paginate(ranked, values.page, values.pageSize);
     pageInfo.results = await loadPage(pageInfo.results);
     return res.json(Object.assign({ mode: 'distance', center, radius: values.radius, filter: filterOf(values), notice: null }, pageInfo));

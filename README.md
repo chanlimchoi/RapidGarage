@@ -37,3 +37,15 @@ on the New and Edit post forms, with inline checks that match the server's. Card
 page show a price chip ("Free", "$5", "$5–$50", "Up to $50"). The search bar has a "Max price"
 box and a "Free only" toggle, which apply on top of the radius and distance sorting. See the
 backend README for the exact rules and API.
+
+## Reporting and moderation
+
+Logged-in users can report someone else's sale from the post page ("Report this sale"): pick a
+reason (spam, scam or fraud, prohibited item, offensive, wrong information, other) and add an
+optional note of up to 500 characters. Each person can have one open report per post, and
+reports are rate-limited per user. Admins review reports in **Admin → Reports**, next to Users
+and Settings: open reports are grouped by post with counts, reasons, notes and a preview, and
+each post can be dismissed, hidden, unhidden or deleted with an optional resolution note. A
+History view lists resolved reports. Hidden posts disappear from home, lists, search and the
+map for everyone except the owner (who sees a "Hidden by moderator" notice) and admins.
+Optional auto-hide is controlled by `REPORT_AUTO_HIDE_THRESHOLD`; see the backend README.

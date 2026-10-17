@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Users, SlidersHorizontal, Lock, LogIn } from 'lucide-react';
+import { ShieldCheck, Users, SlidersHorizontal, Lock, LogIn, Flag } from 'lucide-react';
+import Reports from './Reports';
 import { apiFetch, errorMessage } from '../api';
 import { Alert, EmptyState, SkeletonBlock } from '../components/ui';
 import { initials, displayName } from '../lib/format';
@@ -11,7 +12,7 @@ import toast from '../components/toast';
 export default class Admin extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { loading: true, settings: null, users: [], error: '', busy: false };
+    this.state = { loading: true, settings: null, users: [], error: '', busy: false, tab: 'reports', openReports: null };
   }
 
   componentDidMount() {
@@ -89,7 +90,14 @@ export default class Admin extends React.Component {
           </div>
         </header>
         {s.error ? <Alert tone="danger">{s.error}</Alert> : null}
-        {s.loading ? <SkeletonBlock height={120} lines={4} /> : (
+        <div className="segmented admin-tabs" role="group" aria-label="Admin sections">
+          <button type="button" aria-pressed={s.tab === 'reports'} onClick={() => this.setState({ tab: 'reports' })}><Flag size={14} aria-hidden="true" />Reports{s.openReports ? <span className="count" aria-label={s.openReports + ' open'}>{s.openReports}</span> : null}</button>
+          <button type="button" aria-pressed={s.tab === 'users'} onClick={() => this.setState({ tab: 'users' })}><Users size={14} aria-hidden="true" />Users</button>
+          <button type="button" aria-pressed={s.tab === 'settings'} onClick={() => this.setState({ tab: 'settings' })}><SlidersHorizontal size={14} aria-hidden="true" />Settings</button>
+        </div>
+        {s.tab === 'reports' ? <Reports onCount={(n) => this.setState({ openReports: n })} /> : null}
+        {s.tab !== 'reports' && s.loading ? <SkeletonBlock height={120} lines={4} /> : null}
+        {s.tab === 'settings' && !s.loading ? (
           <div className="stack">
             {s.settings ? (
               <section className="settings-section card-form rg-admin-settings" aria-labelledby="admin-settings-heading">
@@ -110,6 +118,10 @@ export default class Admin extends React.Component {
                 </label>
               </section>
             ) : null}
+          </div>
+        ) : null}
+        {s.tab === 'users' && !s.loading ? (
+          <div className="stack">
             <section className="rg-admin-users" aria-labelledby="admin-users-heading">
               <h2 id="admin-users-heading" className="h4" style={{ margin: '8px 0 12px' }}><Users size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />Users</h2>
               {s.users.length ? (
@@ -139,7 +151,7 @@ export default class Admin extends React.Component {
               ) : <EmptyState icon={Users} title="No users yet" />}
             </section>
           </div>
-        )}
+        ) : null}
       </div>
     );
   }

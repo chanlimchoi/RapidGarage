@@ -21,6 +21,11 @@ module.exports = (sequelize, DataTypes) => {
     priceMin: { type: DataTypes.INTEGER, allowNull: true },
     priceMax: { type: DataTypes.INTEGER, allowNull: true },
     isFree: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    // Moderation (lib/moderation.js). Hidden posts are visible only to the owner and admins.
+    hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    hiddenAt: { type: DataTypes.DATE, allowNull: true },
+    hiddenBy: { type: DataTypes.INTEGER, allowNull: true },
+    hiddenSource: { type: DataTypes.STRING(16), allowNull: true }, // moderator | auto
   });
 
   // Sequelize 4 ignores classMethods; associations must be set like this.
@@ -33,6 +38,7 @@ module.exports = (sequelize, DataTypes) => {
   Post.prototype.toJSON = function toJSON() {
     const out = Object.assign({}, this.get({ plain: true }));
     if (Array.isArray(this.photos)) out.photos = this.photos.map((p) => p.toJSON());
+    delete out.hiddenBy; // which admin hid it is only shown in the admin API
     return out;
   };
   return Post;

@@ -67,3 +67,28 @@ export function searchPosts(params) {
     .join('&');
   return apiFetch('/search?' + qs);
 }
+
+// ---- Reports & moderation ----------------------------------------------
+export const REPORT_REASONS = [
+  { value: 'spam', label: 'Spam' },
+  { value: 'scam', label: 'Scam or fraud' },
+  { value: 'prohibited', label: 'Prohibited item' },
+  { value: 'offensive', label: 'Offensive content' },
+  { value: 'wrong_info', label: 'Wrong information' },
+  { value: 'other', label: 'Something else' },
+];
+export const REPORT_NOTE_MAX = 500;
+export function reasonLabel(value) {
+  const r = REPORT_REASONS.filter((x) => x.value === value)[0];
+  return r ? r.label : value;
+}
+
+export function reportPost(postId, reason, note) {
+  return apiFetch('/post/' + postId + '/report', { method: 'POST', body: JSON.stringify({ reason, note: note || undefined }) });
+}
+
+export function fetchReportQueue() { return apiFetch('/admin/reports'); }
+export function fetchReportHistory(page) { return apiFetch('/admin/reports/history?page=' + (page || 1)); }
+export function moderatePost(postId, action, note) {
+  return apiFetch('/admin/posts/' + postId + '/moderate', { method: 'POST', body: JSON.stringify({ action, note: note || undefined }) });
+}
