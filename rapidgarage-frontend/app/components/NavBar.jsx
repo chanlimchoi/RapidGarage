@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, Star, UsersRound, LayoutDashboard } from 'lucide-react';
+import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, Star, UsersRound, LayoutDashboard, PackageSearch } from 'lucide-react';
 import { initials, displayName } from '../lib/format';
 import InstallMenuItem from '../pwa/InstallMenuItem';
 import LanguagePicker from './LanguagePicker';
@@ -8,6 +8,7 @@ import { t } from '../i18n';
 
 const badgeText = (n) => (n > 99 ? '99+' : String(n));
 const unreadLabel = (n) => t('nav.unreadMessages', { count: n });
+const wantedLabel = (n) => t('nav.wantedMatches', { count: n });
 
 // Sticky top bar. Signed out: Log in / Sign up. Signed in: a user menu with
 // Profile, Settings, Admin (admins only) and Log out.
@@ -127,6 +128,9 @@ export default class NavBar extends React.Component {
             {user ? <NavLink to="/saved" className="nav-link nav-saved" activeClassName="active"><Star size={16} aria-hidden="true" />{t('nav.saved')}</NavLink> : null}
             {user ? <NavLink to="/dashboard" className="nav-link nav-dashboard" activeClassName="active"><LayoutDashboard size={16} aria-hidden="true" />{t('nav.dashboard')}</NavLink> : null}
             <NavLink to="/events" className="nav-link nav-events" activeClassName="active"><UsersRound size={16} aria-hidden="true" />{t('nav.events')}</NavLink>
+            <NavLink to="/wanted" className="nav-link nav-wanted" activeClassName="active"><PackageSearch size={16} aria-hidden="true" />{t('nav.wanted')}
+              {this.props.wantedNew ? <span className="nav-badge" aria-label={wantedLabel(this.props.wantedNew)}>{badgeText(this.props.wantedNew)}</span> : null}
+            </NavLink>
             <NavLink to="/about" className="nav-link nav-about" activeClassName="active">{t('nav.about')}</NavLink>
           </nav>
           <div className="nav-spacer" />
@@ -151,6 +155,8 @@ export default class NavBar extends React.Component {
             <Link className="menu-item" to="/"><Search size={18} aria-hidden="true" />{t('nav.browseSales')}</Link>
             <Link className="menu-item" to="/newpost"><Plus size={18} aria-hidden="true" />{t('nav.postSale')}</Link>
             <Link className="menu-item" to="/events"><UsersRound size={18} aria-hidden="true" />{t('nav.events')}</Link>
+            <Link className="menu-item" to="/wanted"><PackageSearch size={18} aria-hidden="true" />{t('nav.wanted')}
+              {this.props.wantedNew ? <span className="nav-badge menu-badge" aria-label={wantedLabel(this.props.wantedNew)}>{badgeText(this.props.wantedNew)}</span> : null}</Link>
             <Link className="menu-item" to="/about"><Info size={18} aria-hidden="true" />{t('nav.about')}</Link>
             <InstallMenuItem />
             <div className="menu-item menu-language"><LanguagePicker id="mobile-language" user={user} /></div>
