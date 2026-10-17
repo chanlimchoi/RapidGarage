@@ -32,23 +32,36 @@ function baseUrl() {
 }
 
 // ---- unsubscribe tokens -------------------------------------------------
-// HMAC over (alertId, userId) with a key derived from ALERT_TOKEN_SECRET (or
-// SESSION_SECRET). No expiry: the link only ever turns one alert off.
+// HMAC-SHA256 over the alert id with a key derived from ALERT_TOKEN_SECRET (or
+// SESSION_SECRET). The token depends only on the id, so it is verified before
+// any database lookup: an invalid token gets the same answer whether or not
+// the alert exists. Alert ids are never reused and an alert never changes
+// owner. No expiry: the link only ever turns one alert off.
+const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/; // base64url of a 32-byte digest, unpadded
+
 function tokenKey() {
   const secret = process.env.ALERT_TOKEN_SECRET || process.env.SESSION_SECRET || '';
   if (!secret) throw new Error('ALERT_TOKEN_SECRET or SESSION_SECRET must be set');
   return crypto.createHash('sha256').update('rapidgarage-sale-alerts:' + secret).digest();
 }
 
-function unsubscribeToken(alert) {
-  return crypto.createHmac('sha256', tokenKey()).update('unsub.' + alert.id + '.' + alert.userId).digest('base64url');
+function tokenDigest(alertId) {
+  return crypto.createHmac('sha256', tokenKey()).update('unsub.v2.' + alertId).digest();
 }
 
-function verifyToken(alert, token) {
-  if (typeof token !== 'string' || !token) return false;
-  const want = Buffer.from(unsubscribeToken(alert));
-  const got = Buffer.from(token);
-  return want.length === got.length && crypto.timingSafeEqual(want, got);
+// alertOrId: a SaleAlert (or { id }) or a positive integer id.
+function unsubscribeToken(alertOrId) {
+  const id = typeof alertOrId === 'object' && alertOrId ? alertOrId.id : alertOrId;
+  return tokenDigest(id).toString('base64url');
+}
+
+// Constant-time check of `token` for alert `alertId`; no database access.
+function verifyToken(alertId, token) {
+  const want = tokenDigest(alertId);
+  const wellFormed = typeof token === 'string' && TOKEN_RE.test(token);
+  const got = wellFormed ? Buffer.from(token, 'base64url') : Buffer.alloc(want.length);
+  const same = got.length === want.length && crypto.timingSafeEqual(got, want);
+  return wellFormed && same;
 }
 
 function unsubscribeUrl(alert) {

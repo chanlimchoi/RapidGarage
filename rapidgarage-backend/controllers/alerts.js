@@ -76,17 +76,24 @@ async function resolveAddress(req, res, body, values) {
 }
 
 // ---- public: one-click unsubscribe (no login) ---------------------------
-// POST /alerts/unsubscribe { a, t } (or ?a=&t= for RFC 8058 List-Unsubscribe-Post)
+// POST /alerts/unsubscribe { a, t } from the confirmation page, or ?a=&t= for
+// the RFC 8058 List-Unsubscribe-Post one-click request. The signed token is
+// checked before any lookup, and every invalid request (missing, malformed or
+// wrong token, bad id) gets the same 400, so responses never reveal whether
+// an alert id exists.
+const invalidUnsubscribe = (res) => sendError(res, 400, 'invalid_token', 'This unsubscribe link is invalid.');
+
 router.post('/unsubscribe', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const body = req.body || {};
-  const id = parseId(body.a !== undefined ? body.a : req.query.a);
+  const rawId = body.a !== undefined ? body.a : req.query.a;
   const token = body.t !== undefined ? body.t : req.query.t;
-  if (!id || typeof token !== 'string' || !token) return sendError(res, 400, 'invalid_token', 'This unsubscribe link is invalid.');
+  const id = parseId(rawId);
+  if (!alerts.verifyToken(id || 0, token) || !id) return invalidUnsubscribe(res);
   try {
     const alert = await models.SaleAlert.findByPk(id);
+    // Valid link, but the owner already deleted the alert.
     if (!alert) return res.json({ ok: true, gone: true });
-    if (!alerts.verifyToken(alert, token)) return sendError(res, 400, 'invalid_token', 'This unsubscribe link is invalid.');
     if (alert.enabled) await alert.update({ enabled: false });
     await models.AlertNotification.update({ status: 'skipped', lastError: 'unsubscribed' }, { where: { alertId: alert.id, status: 'pending' } });
     return res.json({ ok: true, alert: { id: alert.id, label: alert.label, radiusMiles: alert.radiusMiles, enabled: false } });

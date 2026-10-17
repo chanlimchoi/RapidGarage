@@ -485,6 +485,100 @@ describe('sale alerts', function () {
     });
   });
 
+  describe('unsubscribe responses are uniform', () => {
+    const MISSING = 987654;
+    const post = (body, query) => request(app).post('/alerts/unsubscribe' + (query || '')).send(body || {});
+    const oneClick = (a, t) => request(app).post('/alerts/unsubscribe?a=' + encodeURIComponent(a) + '&t=' + encodeURIComponent(t))
+      .type('form').send('List-Unsubscribe=One-Click');
+    const shape = (r) => ({ status: r.status, body: r.body, cache: r.headers['cache-control'], type: r.headers['content-type'] });
+    function tamper(t) { return (t[0] === 'A' ? 'B' : 'A') + t.slice(1); }
+
+    let existing, valid, reference;
+    beforeEach(async () => {
+      existing = (await createAlert(alice, { label: 'Home' })).body;
+      valid = alerts.unsubscribeToken(existing.id);
+      reference = shape(await post({ a: MISSING, t: 'x' }));
+      assert.strictEqual(reference.status, 400);
+      assert.deepStrictEqual(reference.body, { error: { code: 'invalid_token', message: 'This unsubscribe link is invalid.' } });
+      assert.strictEqual(reference.cache, 'no-store');
+    });
+
+    it('an invalid token gets the identical response for existing and nonexistent alerts (page and one-click)', async () => {
+      const otherAlertToken = alerts.unsubscribeToken(existing.id + 1);
+      const cases = [
+        ['wrong token', 'x'],
+        ['tampered', tamper(valid)],
+        ['another alert\'s token', otherAlertToken],
+        ['empty', ''],
+        ['too long', valid + 'A'],
+        ['padded', valid + '='],
+        ['non-base64url', valid.slice(0, -1) + '+'],
+      ];
+      for (const [name, t] of cases) {
+        for (const id of [existing.id, MISSING]) {
+          assert.deepStrictEqual(shape(await post({ a: id, t })), reference, 'page: ' + name + ' id ' + id);
+          assert.deepStrictEqual(shape(await oneClick(id, t)), reference, 'one-click: ' + name + ' id ' + id);
+        }
+      }
+      // Missing pieces and malformed ids look the same too.
+      for (const body of [{}, { a: existing.id }, { a: MISSING }, { t: valid }, { a: 'abc', t: valid }, { a: 0, t: valid }, { a: -1, t: valid }, { a: existing.id, t: 42 }]) {
+        assert.deepStrictEqual(shape(await post(body)), reference, JSON.stringify(body));
+      }
+      assert.deepStrictEqual(shape(await request(app).post('/alerts/unsubscribe').type('form').send('List-Unsubscribe=One-Click')), reference);
+      assert.strictEqual((await models.SaleAlert.findByPk(existing.id)).enabled, true, 'nothing was turned off');
+    });
+
+    it('checks the token before touching the database', async () => {
+      const orig = models.SaleAlert.findByPk;
+      let lookups = 0;
+      models.SaleAlert.findByPk = function () { lookups++; return orig.apply(this, arguments); };
+      try {
+        await post({ a: existing.id, t: tamper(valid) });
+        await oneClick(MISSING, 'x');
+        assert.strictEqual(lookups, 0);
+        await post({ a: existing.id, t: valid });
+        assert.strictEqual(lookups, 1);
+      } finally {
+        models.SaleAlert.findByPk = orig;
+      }
+    });
+
+    it('a valid token still works on both endpoints, and is "gone" for deleted or never-created alerts', async () => {
+      const r = await post({ a: existing.id, t: valid });
+      assert.strictEqual(r.status, 200);
+      assert.deepStrictEqual(r.body, { ok: true, alert: { id: existing.id, label: 'Home', radiusMiles: 10, enabled: false } });
+      assert.strictEqual((await models.SaleAlert.findByPk(existing.id)).enabled, false);
+
+      const second = (await createAlert(alice, { label: 'Work' })).body;
+      const r2 = await oneClick(second.id, alerts.unsubscribeToken(second.id));
+      assert.strictEqual(r2.status, 200);
+      assert.strictEqual(r2.body.alert.enabled, false);
+
+      await alice.delete('/alerts/' + existing.id);
+      for (const res of [await post({ a: existing.id, t: valid }), await oneClick(existing.id, valid), await post({ a: MISSING, t: alerts.unsubscribeToken(MISSING) })]) {
+        assert.strictEqual(res.status, 200);
+        assert.deepStrictEqual(res.body, { ok: true, gone: true });
+      }
+    });
+
+    it('tokens come from the alert id and the secret only', async () => {
+      const row = await models.SaleAlert.findByPk(existing.id);
+      assert.strictEqual(alerts.unsubscribeToken(row), valid);
+      assert.ok(alerts.verifyToken(existing.id, valid));
+      assert.ok(!alerts.verifyToken(existing.id, tamper(valid)));
+      assert.ok(!alerts.verifyToken(existing.id + 1, valid));
+      assert.ok(!alerts.verifyToken(existing.id, undefined));
+      assert.ok(alerts.unsubscribeUrl(row).endsWith('?a=' + existing.id + '&t=' + valid));
+      process.env.ALERT_TOKEN_SECRET = 'rotated';
+      try {
+        assert.ok(!alerts.verifyToken(existing.id, valid), 'rotating the secret invalidates links');
+        assert.deepStrictEqual(shape(await post({ a: existing.id, t: valid })), reference);
+      } finally {
+        delete process.env.ALERT_TOKEN_SECRET;
+      }
+    });
+  });
+
   describe('admin + config', () => {
     it('exposes saleAlerts in /config and lets admins toggle it', async () => {
       assert.strictEqual((await request(app).get('/config')).body.saleAlerts, true);
