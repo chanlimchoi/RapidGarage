@@ -14,6 +14,7 @@ router.use('/conversations', require('./conversations'));
 router.use('/alerts', require('./alerts'));
 router.use('/saved', require('./saved'));
 router.use('/ratings', require('./ratings'));
+router.use('/s', require('./shortlinks'));
 router.use('/', require('./home'));
 
 module.exports = router;

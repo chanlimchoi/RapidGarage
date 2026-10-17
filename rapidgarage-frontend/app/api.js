@@ -153,3 +153,10 @@ export const fetchPersonRatings = (id, page) => apiFetch('/ratings/users/' + id 
 export const reportRating = (id, reason, note) => apiFetch('/ratings/' + id + '/report', { method: 'POST', body: JSON.stringify({ reason, note: note || undefined }) });
 export const fetchRatingReportQueue = () => apiFetch('/admin/ratings/reports');
 export const moderateRating = (id, action, note) => apiFetch('/admin/ratings/' + id + '/moderate', { method: 'POST', body: JSON.stringify({ action, note: note || undefined }) });
+
+// ---- QR flyers & scan counts ---------------------------------------------
+export const fetchPrintInfo = (postId) => apiFetch('/post/' + postId + '/print');
+export function printAssetUrl(postId, file, params) {
+  const q = Object.keys(params || {}).filter((k) => params[k] !== undefined && params[k] !== null).map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&');
+  return '/api/post/' + postId + '/print/' + file + (q ? '?' + q : '');
+}

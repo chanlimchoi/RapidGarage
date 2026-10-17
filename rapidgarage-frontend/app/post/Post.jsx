@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
 import { addressLine, timeAgo } from '../lib/format';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
@@ -9,6 +9,8 @@ import { formatPrice } from '../lib/price';
 import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../components/ui';
 import toast from '../components/toast';
 import { RatingBadge } from '../ratings/Stars';
+import ScanStats from '../print/ScanStats';
+import { fetchPrintInfo } from '../api';
 import SaveButton from '../saved/SaveButton';
 import ItemList from './ItemList';
 
@@ -24,14 +26,24 @@ class Post extends Component {
 
   componentDidUpdate(prev) {
     if (prev.match.params.id !== this.props.match.params.id) this.load();
+    else if (prev.user !== this.props.user && this.state.post) this.loadScans(this.state.post);
+  }
+
+  // Seller and admins see how often the post's QR code was scanned.
+  loadScans(post) {
+    if (!canEditPost(this.props.user, post)) { if (this.state.scans) this.setState({ scans: null }); return; }
+    fetchPrintInfo(post.id).then(({ ok, data }) => {
+      if (ok && this.state.post && this.state.post.id === post.id) this.setState({ scans: data.scans });
+    }).catch(() => null);
   }
 
   load() {
-    this.setState({ post: null, error: '' });
+    this.setState({ post: null, error: '', scans: null });
     apiFetch('/post/' + encodeURIComponent(this.props.match.params.id))
       .then(({ ok, data }) => {
         if (!ok) return this.setState({ post: null, error: errorMessage(data, 'Post not found.') });
         this.setState({ post: data, error: '', active: 0, reported: false });
+        this.loadScans(data);
       })
       .catch(() => this.setState({ error: 'Unable to reach the server. Please try again.' }));
   }
@@ -246,9 +258,17 @@ class Post extends Component {
                 ) : null}
                 {!isOwner ? <SaveButton post={post} /> : null}
                 {canEditPost(this.props.user, post) ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/edit'}><Pencil size={16} aria-hidden="true" />Edit post &amp; photos</Link> : null}
+                {isOwner ? <Link className="btn btn-secondary print-link" to={'/post/' + post.id + '/print'}><QrCode size={16} aria-hidden="true" />Print flyer &amp; sign</Link> : null}
                 {isOwner ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/items'}><Package size={16} aria-hidden="true" />{(post.items || []).length ? 'Edit items' : 'Add items'}</Link> : null}
               </div>
             </div>
+            {this.state.scans ? (
+              <div className="panel scan-panel">
+                <h2 className="h4">Flyer &amp; QR scans</h2>
+                <ScanStats scans={this.state.scans} compact />
+                <Link className="small" to={'/post/' + post.id + '/print'}>{isOwner ? 'Print flyers & see daily scans' : 'See daily scans'}</Link>
+              </div>
+            ) : null}
             {!isOwner ? (
               <div className="report-row">
                 {this.state.reported

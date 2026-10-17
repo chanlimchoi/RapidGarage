@@ -73,6 +73,8 @@ router.post('/', requireLogin, async (req, res) => {
 router.use('/:id/photos', requireLogin, loadPost, (req, res, next) => requireOwnerOrAdmin(req, res, next), require('./photos'));
 
 router.use('/:id/items', loadPost, require('./items'));
+// QR code, flyers, sign and scan counts (login first, so logged-out callers get 401).
+router.use('/:id/print', requireLogin, loadPost, require('./print'));
 
 router.use('/:id/report', requireLogin, loadPost, require('./report'));
 
