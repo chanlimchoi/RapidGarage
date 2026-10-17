@@ -14,6 +14,7 @@ const events = require('../lib/events');
 const scans = require('../lib/scans');
 const wanted = require('../lib/wanted');
 const curbside = require('../lib/curbside');
+const calendar = require('../lib/calendar');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -99,6 +100,15 @@ router.post('/:id/view', async (req, res) => {
 });
 
 // The seller is shown as "First L." with their rating summary; never an email.
+// GET /post/:id/calendar.ics : every day of the sale (removed days CANCELLED).
+// Same visibility as the sale page; 404 for a sale without dates.
+router.get('/:id/calendar.ics', loadPost, (req, res) => {
+  try {
+    if (!(req.post.saleDays || []).length) return notFound(res, 'This sale has no dates yet.');
+    return calendar.send(res, calendar.postEvents(req.post), req.post.title, calendar.fileName(req.post.title, 'sale-' + req.post.id));
+  } catch (err) { return serverError(res, err); }
+});
+
 router.get('/:id', loadPost, async (req, res) => {
   try {
     const owner = await models.User.findByPk(req.post.userId, { attributes: ['id', 'firstName', 'lastName'] });

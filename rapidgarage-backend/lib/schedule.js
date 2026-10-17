@@ -218,16 +218,19 @@ function toJSON(post) {
 // Replace a post's days in one transaction (value from validateSchedule).
 async function saveSchedule(models, post, value) {
   await models.sequelize.transaction(async (transaction) => {
+    const old = await models.SaleDay.findAll({ where: { postId: post.id }, transaction });
     await models.SaleDay.destroy({ where: { postId: post.id }, transaction });
     if (value.days.length) {
       await models.SaleDay.bulkCreate(value.days.map((d) => Object.assign({ postId: post.id }, d)), { transaction });
     }
-    await post.update({ timeZone: value.timeZone, startDate: value.startDate, endDate: value.endDate }, { transaction });
+    // .ics: remember every day (removed ones become CANCELLED) and bump SEQUENCE on change.
+    const cal = require('./calendar').scheduleUpdate(post, old, value.days, value.timeZone);
+    await post.update(Object.assign({ timeZone: value.timeZone, startDate: value.startDate, endDate: value.endDate }, cal), { transaction });
   });
 }
 
 module.exports = {
-  MAX_DAYS, WHEN, setClock, now, defaultTimeZone, isValidTimeZone, zonedToUtc, localDate, localTime, addDays, weekdayOf,
+  MAX_DAYS, WHEN, setClock, now, defaultTimeZone, isValidTimeZone, zonedToUtc, localDate, localTime, addDays, weekdayOf, offsetMs,
   validateSchedule, notEndedWhere, windowsOf, isEnded, statusOf, matchesWhen, toJSON, saveSchedule,
 };
 

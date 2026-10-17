@@ -163,7 +163,9 @@ router.get('/unread', async (req, res) => {
     let count = 0;
     counts.forEach((n) => { count += n; });
     // New wanted-post matches ride along for the "Wanted" nav badge.
-    return res.json({ count, conversations: counts.size, wantedMatches: await wanted.newMatchCount(req.user.id) });
+    // Today's morning-of reminders ride along too (the in-app notice).
+    const reminders = (await require('../lib/reminders').notices(req.user)).length;
+    return res.json({ count, conversations: counts.size, wantedMatches: await wanted.newMatchCount(req.user.id), reminders });
   } catch (err) {
     return serverError(res, err);
   }

@@ -115,7 +115,32 @@
   "wmail.manageText": "Manage your wanted posts: {url}",
   "wmail.turnOff": "Stop emails for \"{title}\"",
   "wmail.turnOffText": "Stop emails for \"{title}\": {url}",
-  "wmail.curbside": "Free on the curb until {time}"
+  "wmail.curbside": "Free on the curb until {time}",
+  "cal.saved": "RapidGarage: saved sales",
+  "cal.savedWeekend": "RapidGarage: saved sales this weekend",
+  "cal.savedToday": "RapidGarage: saved sales today",
+  "rmail.subjectOne": "Today: {title} · {time}",
+  "rmail.subjectMany": {
+   "one": "{count} of your saved sales is today",
+   "other": "{count} of your saved sales are today"
+  },
+  "rmail.headOne": "Your saved sale is today",
+  "rmail.headMany": {
+   "one": "{count} saved sale today",
+   "other": "{count} saved sales today"
+  },
+  "rmail.introOne": "Here's when it's open:",
+  "rmail.introMany": {
+   "one": "Here's when it's open:",
+   "other": "Here's when they're open:"
+  },
+  "rmail.when": "{day} · {time}",
+  "rmail.route": "Plan today's route",
+  "rmail.routeText": "Plan today's route: {url}",
+  "rmail.manage": "Reminder settings",
+  "rmail.manageText": "Reminder settings: {url}",
+  "rmail.turnOff": "Stop all sale reminders",
+  "rmail.turnOffText": "Stop all sale reminders: {url}"
  },
  "messages": {
   "Login required.": "Login required.",
@@ -401,6 +426,14 @@
   "You already marked that taken, and the seller says it is still there.": "You already marked that taken, and the seller says it is still there.",
   "You have marked a lot of things taken. Please try again later.": "You have marked a lot of things taken. Please try again later.",
   "This curbside offer is over. Start a new one instead.": "This curbside offer is over. Start a new one instead.",
-  "curbside must be true or false.": "curbside must be true or false."
+  "curbside must be true or false.": "curbside must be true or false.",
+  "This sale has no dates yet.": "This sale has no dates yet.",
+  "This neighborhood sale has no dates yet.": "This neighborhood sale has no dates yet.",
+  "Reminder not found.": "Reminder not found.",
+  "Invalid reminder settings.": "Invalid reminder settings.",
+  "defaultOn must be true or false.": "defaultOn must be true or false.",
+  "applyToSaved must be true or false.": "applyToSaved must be true or false.",
+  "Invalid reminder.": "Invalid reminder.",
+  "on must be true or false.": "on must be true or false."
  }
 }

@@ -219,13 +219,19 @@ async function finish(rows, values) {
   await models().AlertNotification.update(values, { where: { id: rows.map((r) => r.id) } });
 }
 
-// One pass over both outboxes (sale alerts, then wanted-post matches; they
-// share the per-user digest interval and daily cap). Returns the sale-alert
-// summary with the wanted one under .wanted (for logs and tests).
+// One pass over the outboxes: sale alerts, then wanted-post matches (they
+// share the per-user digest interval and daily cap), then morning-of sale
+// reminders (lib/reminders.js; their own once-per-sale-day dedupe, no digest
+// cap since the buyer asked for each one). Returns the sale-alert summary with
+// the others under .wanted and .reminders (for logs and tests).
 async function processQueue(now) {
   now = now || new Date();
   const summary = await processAlertQueue(now);
   summary.wanted = await require('./wanted').processQueue(now);
+  try { summary.reminders = await require('./reminders').processDue(now); } catch (err) {
+    console.error('Sale reminder pass failed:', err && err.message);
+    summary.reminders = { error: true };
+  }
   return summary;
 }
 
