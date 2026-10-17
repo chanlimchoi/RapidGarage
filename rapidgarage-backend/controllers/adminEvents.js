@@ -11,8 +11,9 @@ const mod = require('../lib/moderation');
 const events = require('../lib/events');
 const { publicName } = require('../lib/people');
 
-const PERSON = ['id', 'email', 'firstName', 'lastName'];
-const person = (u) => (u ? { id: u.id, name: publicName(u), email: u.email } : null);
+const PERSON = ['id', 'firstName', 'lastName'];
+// Names only ("First L."); the event queue never needs an email address.
+const person = (u) => (u ? { id: u.id, name: publicName(u) } : null);
 const ACTIONS = ['dismiss', 'hide', 'unhide', 'delete'];
 
 function preview(e, counts) {

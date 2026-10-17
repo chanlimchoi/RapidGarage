@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag, Package } from 'lucide-react';
+import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag, Package, UsersRound } from 'lucide-react';
 import { formatMiles, placeLine, timeAgo } from '../lib/format';
 import { shortWhen, saleBadge } from '../lib/schedule';
 import { formatPrice } from '../lib/price';
@@ -38,6 +38,7 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
           {price ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{price}</span> : null}
           {when ? <span className="chip chip-brand"><CalendarDays size={12} aria-hidden="true" />{when}</span> : null}
           {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
+          {post.event ? <Link className="chip chip-event" to={'/events/' + post.event.id}><UsersRound size={12} aria-hidden="true" />{t('ev.partOf', { name: post.event.name })}</Link> : null}
           {!when && !badge ? <span className="chip"><Clock size={12} aria-hidden="true" />{t('card.posted', { when: timeAgo(post.createdAt) })}</span> : null}
         </div>
         {post.matchedItems && post.matchedItems.length ? (

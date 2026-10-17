@@ -8,7 +8,8 @@ import { formatPrice } from '../lib/price';
 import toast from '../components/toast';
 import ConversationReports from './ConversationReports';
 import RatingReports from './RatingReports';
-import { fetchRatingReportQueue } from '../api';
+import EventReports from './EventReports';
+import { fetchRatingReportQueue, fetchEventReports } from '../api';
 import { t } from '../i18n';
 
 const ACTION_TEXT = {
@@ -44,12 +45,20 @@ export default class Reports extends React.Component {
       .catch(() => this.setState({ loading: false, error: t('common.networkShort') }));
   }
 
-  // Badge total = posts + conversations + ratings.
+  // Badge total = posts + conversations + ratings + neighborhood sales.
+  setCounts(patch) {
+    this.setState(patch, () => {
+      const s = this.state;
+      if (this.props.onCount) this.props.onCount((s.postCount || 0) + (s.convCount || 0) + (s.ratingCount || 0) + (s.eventCount || 0));
+    });
+  }
+
   reportCount() {
-    return fetchRatingReportQueue().then(({ ok, data }) => {
-      const ratingCount = ok ? data.openCount : 0;
-      this.setState({ ratingCount });
-      if (this.props.onCount) this.props.onCount((this.state.postCount || 0) + (this.state.convCount || 0) + ratingCount);
+    return Promise.all([fetchRatingReportQueue(), fetchEventReports()]).then(([r, e]) => {
+      this.setCounts({
+        ratingCount: r.ok ? r.data.openCount : 0,
+        eventCount: e.ok ? e.data.groups.reduce((n, g) => n + g.openCount, 0) : 0,
+      });
     }).catch(() => null);
   }
 
@@ -210,7 +219,7 @@ export default class Reports extends React.Component {
   }
 
   render() {
-    const { view, loading, error, kind, postCount, convCount, ratingCount } = this.state;
+    const { view, loading, error, kind, postCount, convCount, ratingCount, eventCount } = this.state;
     const count = (n) => (n ? <span className="count" aria-label={t('admin.open', { count: n })}>{n}</span> : null);
     return (
       <section className="rg-admin-reports stack" aria-labelledby="admin-reports-heading">
@@ -220,12 +229,15 @@ export default class Reports extends React.Component {
             <button type="button" aria-pressed={kind === 'posts'} onClick={() => this.setState({ kind: 'posts' })}>{t('rep.posts')}{count(postCount)}</button>
             <button type="button" aria-pressed={kind === 'conversations'} onClick={() => this.setState({ kind: 'conversations' })}>{t('msg.conversations')}{count(convCount)}</button>
             <button type="button" aria-pressed={kind === 'ratings'} onClick={() => this.setState({ kind: 'ratings' })}>{t('rep.ratings')}{count(ratingCount)}</button>
+            <button type="button" aria-pressed={kind === 'events'} onClick={() => this.setState({ kind: 'events' })}>{t('ev.reportsTab')}{count(eventCount)}</button>
           </div>
         </div>
-        {kind === 'ratings' ? (
-          <RatingReports onCount={(n) => { this.setState({ ratingCount: n }); if (this.props.onCount) this.props.onCount((this.state.postCount || 0) + (this.state.convCount || 0) + n); }} />
+        {kind === 'events' ? (
+          <EventReports onCount={(n) => this.setCounts({ eventCount: n })} />
+        ) : kind === 'ratings' ? (
+          <RatingReports onCount={(n) => this.setCounts({ ratingCount: n })} />
         ) : kind === 'conversations' ? (
-          <ConversationReports onCount={(n) => { this.setState({ convCount: n }); if (this.props.onCount) this.props.onCount((this.state.postCount || 0) + n + (this.state.ratingCount || 0)); }}
+          <ConversationReports onCount={(n) => this.setCounts({ convCount: n })}
             onChanged={() => this.loadQueue()} />
         ) : (
         <React.Fragment>
