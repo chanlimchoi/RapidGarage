@@ -29,6 +29,8 @@ module.exports = (sequelize, DataTypes) => {
     // IANA time zone of the sale days (lib/schedule.js); startDate/endDate are
     // then the first start and last end of those days.
     timeZone: { type: DataTypes.STRING(64), allowNull: true },
+    // Random code for the QR short link /s/<code> (see lib/shortlinks.js).
+    shortCode: { type: DataTypes.STRING(12), allowNull: true, unique: 'posts_short_code_uniq' },
   });
 
   // Sequelize 4 ignores classMethods; associations must be set like this.
@@ -37,6 +39,7 @@ module.exports = (sequelize, DataTypes) => {
     Post.hasMany(models.PostPhoto, { as: 'photos', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.SaleDay, { as: 'saleDays', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.SaleItem, { as: 'items', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
+    Post.hasMany(models.PostScanDay, { as: 'scanDays', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.SavedPost, { as: 'saves', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
   };
   // Nested includes are serialized with get({ plain: true }), which skips
@@ -45,10 +48,12 @@ module.exports = (sequelize, DataTypes) => {
     const out = Object.assign({}, this.get({ plain: true }));
     if (Array.isArray(this.photos)) out.photos = this.photos.map((p) => p.toJSON());
     if (Array.isArray(this.items)) out.items = this.items.slice().sort((a, b) => a.position - b.position || a.id - b.id).map((i) => i.toJSON());
+    delete out.shortCode; // only the owner's print/scan API returns it
     delete out.hiddenBy; // which admin hid it is only shown in the admin API
     if (Array.isArray(this.saleDays)) out.schedule = require('../lib/schedule').toJSON(this);
     delete out.saleDays;
     return out;
   };
+  Post.beforeCreate((post) => { if (!post.shortCode) post.shortCode = require('../lib/shortlinks').newCode(); });
   return Post;
 };

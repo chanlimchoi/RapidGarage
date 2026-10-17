@@ -11,6 +11,14 @@ const proxy = {
     changeOrigin: false,
     rewrite: (p) => p.replace(/^\/api/, ''),
   },
+  // QR short links (/s/<code>, not /saved, /settings, /signup...) go to the
+  // backend unchanged; it counts the scan and redirects to the post. xfwd adds
+  // X-Forwarded-For so repeat scans can be told apart (the IP is only hashed).
+  '^/s/[A-Za-z0-9]+/?(\\?.*)?$': {
+    target: BACKEND,
+    changeOrigin: false,
+    xfwd: true,
+  },
 };
 
 export default defineConfig(({ mode }) => {

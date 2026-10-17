@@ -16,11 +16,15 @@ const req = (p, extra) => Object.assign({ method: 'GET', url: ORIGIN + p, mode: 
 
 describe('service worker routing', () => {
   test('never touches API, uploads, auth or the worker itself', () => {
-    for (const p of ['/api/me', '/api/saved', '/api/conversations/1/messages', '/api/uploads/posts/1/a.webp', '/api', '/uploads/x.jpg', '/auth/google', '/sw.js']) {
+    for (const p of ['/api/me', '/api/saved', '/api/conversations/1/messages', '/api/uploads/posts/1/a.webp', '/api', '/uploads/x.jpg', '/auth/google', '/sw.js', '/s/k7m3pq9x']) {
       assert.equal(strategyFor(req(p), ctx), 'bypass', p);
       assert.equal(strategyFor(req(p, { mode: 'navigate' }), ctx), 'bypass', p + ' (navigate)');
     }
   });
+  test('only /s/<code> short links bypass, not app routes starting with /s', () => {
+    for (const p of ['/saved', '/settings', '/signup', '/s']) assert.equal(strategyFor(req(p, { mode: 'navigate' }), ctx), 'navigate', p);
+  });
+
   test('non-GET and cross-origin requests bypass', () => {
     assert.equal(strategyFor(req('/assets/index-abc.js', { method: 'POST' }), ctx), 'bypass');
     assert.equal(strategyFor({ method: 'GET', url: 'https://maps.googleapis.com/maps/api/js', mode: 'no-cors' }, ctx), 'bypass');

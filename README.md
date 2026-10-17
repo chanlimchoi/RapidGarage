@@ -128,6 +128,24 @@ Share → **Add to Home Screen**). The installed app opens full screen from the 
 still opens without a connection; the service worker caches only the app's own files, never
 sales data, messages or anything from the API. See `rapidgarage-frontend/README.md`.
 
+## Flyers, yard signs & QR scans
+
+On their sale page, sellers tap **Print flyer & sign** for print-ready PDFs: a Letter flyer,
+a half-page flyer and a big-text yard sign with an optional arrow. There are also a QR code
+PNG/SVG and a browser-printable preview. Each QR code opens a short link
+`APP_BASE_URL/s/<code>` (8 random characters, unrelated to the post id) that redirects to
+the sale. The seller and admins see how many people scanned it, in total and per day.
+Repeat scans by the same phone on the same day, bots, link previews and the seller's own
+scans don't count. No IP address or device detail is stored: repeats are recognised with
+a keyed hash whose key is random, kept in memory only and replaced every UTC day (see
+`rapidgarage-backend/lib/scans.js`). Links to hidden sales show a "not available" page;
+ended sales still open (marked ended).
+
+**Deploying:** `/s/<code>` is served by the backend. The Vite dev and preview servers
+proxy it (see `vite.config.js`); any other front proxy must forward `/s/*` to the backend
+too, with `X-Forwarded-For`, and set `trust proxy` (on when `NODE_ENV=production`).
+Set `APP_BASE_URL` to the public address before printing.
+
 ## Saved sales & weekend route
 
 Logged-in buyers tap the **star** on a sale card (or **Save** on the sale page) to keep it in

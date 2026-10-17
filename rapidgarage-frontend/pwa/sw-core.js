@@ -6,7 +6,9 @@
 // responses, uploaded photos or anything else at runtime.
 
 // Paths the worker must never answer from (or put in) a cache.
-const NEVER_CACHE = [/^\/api(\/|$)/, /^\/uploads(\/|$)/, /^\/auth(\/|$)/, /^\/sw\.js$/];
+// /s/<code> is the QR short link: the server counts the scan and redirects,
+// so it must always reach the network (never the offline shell).
+const NEVER_CACHE = [/^\/api(\/|$)/, /^\/uploads(\/|$)/, /^\/auth(\/|$)/, /^\/sw\.js$/, /^\/s\/[^/]+\/?$/];
 
 // req: { method, url, mode, headers? }  ctx: { origin, precache: Set<path> }
 // -> 'bypass'      let the browser handle it (no cache involved)

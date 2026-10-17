@@ -19,6 +19,7 @@ import Settings from './user/Settings';
 import Admin from './admin/Admin';
 import Messages from './messages/Messages';
 import Unsubscribe from './user/Unsubscribe';
+import PrintFlyer from './print/PrintFlyer';
 import PersonRatings from './ratings/PersonRatings';
 import Saved from './saved/Saved';
 import ItemsEditor from './post/ItemsEditor';
@@ -107,6 +108,7 @@ class App extends Component {
             <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/newpost' render={(props) => <NewPost {...props} {...common} />} />
+            <Route path='/post/:id/print' render={(props) => <PrintFlyer {...props} {...common} />} />
             <Route path='/post/:id/items' render={(props) => <ItemsEditor {...props} {...common} />} />
             <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} />} />
             <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
