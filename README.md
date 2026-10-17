@@ -29,3 +29,11 @@ stays in sync with the list: clicking a sale pans to its pin, and clicking a pin
 sale. Without any Maps key, "Use my location" still gives distance results, and a typed zip or
 address falls back to text matching with a message explaining why. See the backend README for
 the API, keys and the `geocode:backfill` script.
+
+## Prices
+
+Sellers can mark a sale as free or give a price range in whole dollars (lowest and/or highest)
+on the New and Edit post forms, with inline checks that match the server's. Cards and the post
+page show a price chip ("Free", "$5", "$5–$50", "Up to $50"). The search bar has a "Max price"
+box and a "Free only" toggle, which apply on top of the radius and distance sorting. See the
+backend README for the exact rules and API.

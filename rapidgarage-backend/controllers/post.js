@@ -34,7 +34,8 @@ function requireOwner(req, res, next) {
 router.post('/', requireLogin, (req, res) => {
   const { errors, values } = validatePost(req.body || {}, false);
   if (Object.keys(errors).length) return badRequest(res, 'Invalid post.', errors);
-  Post.create(Object.assign({}, values, { userId: req.user.id }))
+  // Explicit price defaults so the 201 body always has all three price fields.
+  Post.create(Object.assign({ priceMin: null, priceMax: null, isFree: false }, values, { userId: req.user.id }))
     // Geocoding never fails the request; without a key the post just has no coordinates.
     .then((post) => geocodePost(post, req.user))
     .then((post) => res.status(201).json(post))
@@ -46,7 +47,7 @@ router.use('/:id/photos', requireLogin, loadPost, (req, res, next) => requireOwn
 router.get('/:id', loadPost, (req, res) => res.json(req.post));
 
 router.put('/:id', requireLogin, loadPost, requireOwner, (req, res) => {
-  const { errors, values } = validatePost(req.body || {}, true);
+  const { errors, values } = validatePost(req.body || {}, true, req.post);
   if (Object.keys(errors).length) return badRequest(res, 'Invalid post.', errors);
   if (!Object.keys(values).length) return badRequest(res, 'Nothing to update.');
   const moved = ADDRESS_FIELDS.some((f) => values[f] !== undefined && values[f] !== req.post[f]);

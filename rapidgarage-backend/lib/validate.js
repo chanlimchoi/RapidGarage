@@ -1,3 +1,4 @@
+const { validatePrice } = require('./price');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ZIP_RE = /^\d{5}(-\d{4})?$/;
 
@@ -16,7 +17,8 @@ function validateSignup(body) {
 const POST_FIELDS = ['title', 'street', 'city', 'state', 'zipCode', 'description', 'imagesUrl', 'startDate', 'endDate'];
 
 // partial=true for updates: only validate fields that are present.
-function validatePost(body, partial) {
+// existing: the stored post (updates), so price rules see the final values.
+function validatePost(body, partial, existing) {
   const errors = {};
   const out = {};
   for (const f of POST_FIELDS) {
@@ -39,6 +41,9 @@ function validatePost(body, partial) {
     if (!isStr(out.zipCode) || !ZIP_RE.test(out.zipCode)) errors.zipCode = 'A 5-digit zip code is required.';
   }
   if (out.startDate && out.endDate && out.endDate < out.startDate) errors.endDate = 'End date must be after start date.';
+  const price = validatePrice(body, existing);
+  Object.assign(errors, price.errors);
+  Object.assign(out, price.values);
   return { errors, values: out };
 }
 
