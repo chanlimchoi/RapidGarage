@@ -17,6 +17,7 @@ router.use('/alerts', require('./alerts'));
 router.use('/wanted', require('./wanted'));
 router.use('/saved', require('./saved'));
 router.use('/reminders', require('./reminders'));
+router.use('/share', require('./share'));
 router.use('/ratings', require('./ratings'));
 router.use('/dashboard', require('./dashboard'));
 router.use('/s', require('./shortlinks'));

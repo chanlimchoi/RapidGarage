@@ -99,6 +99,24 @@ router.post('/:id/view', async (req, res) => {
   } catch (err) { return serverError(res, err); }
 });
 
+// Share button beacon (seller dashboard "Shares"). Always 204; counted like
+// views (once per person per day, never bots or hidden sales), but the
+// seller's own shares count. Only the number per day is stored; which
+// channel was used is checked but not kept.
+const SHARE_CHANNELS = ['native', 'copy', 'facebook', 'whatsapp', 'x', 'kakao'];
+router.post('/:id/share', async (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return badRequest(res, 'Post id must be a positive integer.');
+  const channel = (req.body || {}).channel;
+  if (channel !== undefined && SHARE_CHANNELS.indexOf(channel) === -1) return badRequest(res, 'Unknown share channel.');
+  try {
+    const post = await Post.findByPk(id, { attributes: ['id', 'userId', 'timeZone', 'hidden'] });
+    if (!post) return notFound(res, 'Post not found.');
+    if (!post.hidden) await scans.record(req, post, 'share');
+    return res.status(204).end();
+  } catch (err) { return serverError(res, err); }
+});
+
 // The seller is shown as "First L." with their rating summary; never an email.
 // GET /post/:id/calendar.ics : every day of the sale (removed days CANCELLED).
 // Same visibility as the sale page; 404 for a sale without dates.
