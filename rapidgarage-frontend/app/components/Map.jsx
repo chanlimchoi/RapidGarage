@@ -8,6 +8,8 @@ import { formatMiles } from '../lib/format';
 import { t } from '../i18n';
 import { tx } from '../i18n/rich';
 import { groupForMap, pinCount } from '../lib/events';
+import { liveOffer } from '../lib/curbside';
+import { holdTime } from '../messages/holdText';
 
 const MILE_M = 1609.344;
 const hasCoords = (p) => typeof p.lat === 'number' && typeof p.lng === 'number';
@@ -123,6 +125,13 @@ class Map extends React.Component {
       b.textContent = badge.label;
       el.appendChild(b);
     }
+    const curb = liveOffer(post);
+    if (curb) {
+      const c = document.createElement('div');
+      c.className = 'map-info-badge map-info-badge-curb';
+      c.textContent = t('curb.until', { time: holdTime(curb.until) });
+      el.appendChild(c);
+    }
     if (typeof post.distanceMiles === 'number') {
       const d = document.createElement('div');
       d.textContent = t('map.away', { distance: formatMiles(post.distanceMiles) });
@@ -186,6 +195,14 @@ class Map extends React.Component {
   addMarker(post, loc, bounds, label) {
     const maps = this.maps;
     const opts = { position: loc, title: post.title || '' };
+    // Free on the curb: a green pin with a "$0" glyph, and "(Free)" in its tooltip.
+    if (liveOffer(post) && !label) {
+      Object.assign(opts, {
+        title: (post.title || '') + ' (' + t('curb.badge') + ')',
+        label: { text: '$0', color: '#fff', fontWeight: '700', fontSize: '11px' },
+        icon: { path: maps.SymbolPath.CIRCLE, scale: 13, fillColor: '#15803d', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 },
+      });
+    }
     if (label) Object.assign(opts, { label: { text: label, color: '#fff', fontWeight: '700' }, map: this.map });
     const marker = new maps.Marker(opts);
     // Map -> list: tell the parent which post was clicked.

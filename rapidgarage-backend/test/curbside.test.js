@@ -221,6 +221,20 @@ describe('free on the curb', function () {
     assert.strictEqual((await sam.put('/post/' + post.id + '/curbside').send({ all: true })).status, 409);
   });
 
+  it('item flags leak nothing while the offer is paused or over', async () => {
+    const post = await sale();
+    const lamp = await item(post, { name: 'Desk lamp', price: '8' });
+    at('12:30');
+    await sam.put('/post/' + post.id + '/curbside').send({ itemIds: [lamp.id] });
+    const flag = (body) => body.items.find((i) => i.id === lamp.id).curbside;
+    assert.strictEqual(flag((await get(bea, post)).body), true);
+    assert.strictEqual(flag((await bea.get('/post/' + post.id + '/items')).body), true);
+    await tom.post('/post/' + post.id + '/report').send({ reason: 'spam' });
+    assert.strictEqual(flag((await get(bea, post)).body), false);
+    assert.strictEqual(flag((await bea.get('/post/' + post.id + '/items')).body), false);
+    assert.strictEqual(flag((await get(sam, post)).body), true, 'the seller still sees which items are out');
+  });
+
   it('"Taken": signed in, not blocked, once per person, rate limited; seller sees who and can undo', async () => {
     process.env.CURBSIDE_TAKEN_PER_HOUR = '3';
     const post = await sale();

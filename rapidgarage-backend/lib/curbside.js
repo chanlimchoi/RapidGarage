@@ -139,16 +139,21 @@ async function annotate(list, viewer, opts) {
     items.forEach((i) => left.set(i.postId, (left.get(i.postId) || 0) + 1));
   }
   const marks = opts && opts.marks ? await marksFor(posts.map((p) => p.id), viewer) : null;
+  // Item flags only mean something while the viewer can see the offer.
+  const clearItems = (p) => {
+    if (!Array.isArray(p.items)) return;
+    p.items.forEach((i) => { if (i && typeof i === 'object') { i.curbside = false; i.curbsideGone = false; } });
+  };
   posts.forEach((p) => {
     const r = byId.get(p.id);
-    if (!r) { p.curbside = null; return; }
+    if (!r) { p.curbside = null; clearItems(p); return; }
     const mine = !!viewer && viewer.id === r.userId;
     const staff = mine || isAdmin(viewer);
     let state = rawState(r, now);
     const paused = state === 'active' && (r.hidden || rep.has(r.id));
     if (paused) state = 'paused';
-    if (state !== 'active' && !staff) { p.curbside = null; return; }
-    if (state === 'off') { p.curbside = mine ? { state, canStart: canStart(r, now), defaultUntil: defaultUntil(r, now), maxUntil: new Date(now.getTime() + MAX_HOURS * HOUR) } : null; return; }
+    if (state !== 'active' && !staff) { p.curbside = null; clearItems(p); return; }
+    if (state === 'off') { clearItems(p); p.curbside = mine ? { state, canStart: canStart(r, now), defaultUntil: defaultUntil(r, now), maxUntil: new Date(now.getTime() + MAX_HOURS * HOUR) } : null; return; }
     const out = {
       state, all: !!r.curbsideAll, until: r.curbsideUntil, note: r.curbsideNote || null, startedAt: r.curbsideStartedAt,
       itemsLeft: r.curbsideAll ? null : (left.get(r.id) || 0),

@@ -556,6 +556,7 @@ fieldset.report-reasons { border: 0; padding: 0; margin: 0; }
 .ended-banner { margin-bottom: var(--space-4); }
 .map-info-badge { font-size: 12px; font-weight: 600; margin-top: 2px; color: #4b5563; }
 .map-info-badge-open { color: #15803d; }
+.map-info-badge-curb { color: #15803d; }
 .schedule-row .input { width: 100%; min-width: 0; }
 .schedule-row .field { min-width: 0; }
 
@@ -1050,3 +1051,25 @@ html:lang(ko) body { word-break: keep-all; overflow-wrap: anywhere; }
 .wanted-match-body { display: grid; gap: 2px; min-width: 0; flex: 1; }
 .wanted-match-title { font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
 @media (max-width: 600px) { .wanted-facts > div { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ---- Free on the curb ---------------------------------------------------- */
+.chip-curb { font-weight: var(--weight-semibold); }
+.chip-toggle-curb:has(input:checked) { background: var(--color-success-soft); color: var(--color-success); }
+.curb-panel { display: flex; flex-direction: column; gap: var(--space-2); }
+.curb-panel h2 { display: flex; align-items: center; gap: var(--space-2); margin: 0; }
+.curb-public, .curb-live { border-color: var(--color-success); box-shadow: inset 4px 0 0 var(--color-success); }
+.curb-public h2, .curb-live h2 { color: var(--color-success); }
+.curb-until { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-weight: var(--weight-semibold); }
+.curb-panel p { margin: 0; }
+.curb-note { font-style: italic; overflow-wrap: anywhere; }
+.curb-safety { display: flex; gap: var(--space-2); align-items: flex-start; }
+.curb-safety svg { flex: none; margin-top: 2px; }
+.curb-panel .stack-sm { display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-start; }
+.curb-panel .form-actions { margin-top: var(--space-1); }
+.curb-item-picks { list-style: none; margin: var(--space-2) 0 0; padding: 0 0 0 var(--space-3); display: grid; gap: var(--space-2); }
+.curb-marks h3 { display: flex; align-items: center; gap: var(--space-1); margin: var(--space-2) 0 var(--space-1); font-size: var(--text-sm); }
+.curb-marks ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.curb-mark-undone { text-decoration: line-through; }
+.item-row.is-curb { background: var(--color-success-soft); }
+.item-curb-chip, .item-curb-gone { white-space: nowrap; }
+.wanted-match-curb { align-self: flex-start; margin-top: var(--space-1); }

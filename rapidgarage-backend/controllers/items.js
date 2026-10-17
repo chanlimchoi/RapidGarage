@@ -34,7 +34,12 @@ async function loadItem(req, res, next) {
 const soldFields = (sold, item) => (sold === undefined || (item && !!item.sold === sold) ? {} : { sold, soldAt: sold ? schedule.now() : null });
 
 router.get('/', async (req, res) => {
-  try { return res.json({ items: await listOf(req.post), max: items.MAX_ITEMS }); } catch (err) { return serverError(res, err); }
+  try {
+    // annotate() clears the curbside item flags unless this viewer can see the offer.
+    const json = { id: req.post.id, items: (await listOf(req.post)).map((i) => i.toJSON()) };
+    await curbside.annotate([json], req.user);
+    return res.json({ items: json.items, max: items.MAX_ITEMS });
+  } catch (err) { return serverError(res, err); }
 });
 
 router.post('/', requireLogin, owner, async (req, res) => {
