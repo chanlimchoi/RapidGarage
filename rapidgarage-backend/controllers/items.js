@@ -7,6 +7,7 @@ const { badRequest, forbidden, notFound, sendError, serverError, requireLogin, p
 const { isAdmin } = require('../lib/roles');
 const items = require('../lib/items');
 const schedule = require('../lib/schedule');
+const holds = require('../lib/holds');
 
 const sorted = (list) => list.slice().sort((a, b) => a.position - b.position || a.id - b.id);
 const listOf = async (post) => sorted(await models.SaleItem.findAll({ where: { postId: post.id } }));
@@ -74,7 +75,11 @@ router.put('/:itemId', requireLogin, owner, loadItem, async (req, res) => {
   const sold = value.sold;
   delete value.sold;
   try {
-    return res.json(await req.item.update(Object.assign(value, soldFields(sold, req.item))));
+    const becameSold = sold === true && !req.item.sold;
+    const updated = await req.item.update(Object.assign(value, soldFields(sold, req.item)));
+    // Sold: an accepted hold is done; people waiting are told it's gone.
+    if (becameSold) await holds.itemSold(updated);
+    return res.json(updated);
   } catch (err) { return serverError(res, err); }
 });
 
