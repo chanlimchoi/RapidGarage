@@ -1,0 +1,45 @@
+# Fly.io config for RapidGarage. Copy to the repo root as fly.toml, set "app"
+# to the name `fly apps create` gave you, then `fly deploy` (see DEPLOY.md).
+app = "rapidgarage-CHANGE-ME"
+primary_region = "ewr"            # pick one near your users: fly platform regions
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  # Runs in a one-off machine before the new version starts; a failure
+  # aborts the deploy and the old version keeps running.
+  release_command = "node scripts/release.js"
+  strategy = "immediate"          # one machine + a volume: no rolling overlap
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+  TRUST_PROXY = "1"               # Fly's edge proxy
+  RUN_MIGRATIONS = "false"        # release_command does it
+  UPLOAD_DIR = "/data/uploads"
+  PHOTO_STORAGE = "local"
+  DATABASE_SSL = "off"            # Managed Postgres over the private network
+
+[[mounts]]
+  source = "rapidgarage_uploads"  # fly volumes create rapidgarage_uploads --size 1
+  destination = "/data/uploads"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Keep one machine running: the sale-alert email worker lives in it.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    path = "/readyz"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

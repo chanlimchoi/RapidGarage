@@ -31,6 +31,12 @@ export default defineConfig(({ mode }) => {
     define: {
       'import.meta.env.VITE_GOOGLE_MAPS_API_KEY': JSON.stringify(mapsKey),
     },
+    // Marks every <script>/<link> in index.html (and adds the
+    // <meta property="csp-nonce"> Vite's preload helper reads) with a
+    // placeholder. When the backend serves the build (SERVE_FRONTEND_DIR,
+    // Docker), it swaps in a fresh nonce per response to match its strict CSP;
+    // see rapidgarage-backend/lib/frontend.js. Elsewhere it is inert.
+    html: { cspNonce: '__RG_CSP_NONCE__' },
     server: { port: 3000, strictPort: true, proxy },
     preview: { port: 3000, strictPort: true, proxy },
     build: { outDir: 'build', sourcemap: true },

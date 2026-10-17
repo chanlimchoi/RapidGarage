@@ -1,0 +1,12 @@
+.git
+**/node_modules
+**/.env
+**/.env.*
+!.env.production.example
+**/*.log
+backups
+rapidgarage-backend/uploads
+rapidgarage-backend/test
+rapidgarage-frontend/build
+rapidgarage-frontend/test
+**/.DS_Store

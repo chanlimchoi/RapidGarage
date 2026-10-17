@@ -1,1 +1,4 @@
 .DS_Store
+# deployment secrets and local backups (see DEPLOY.md)
+.env.production
+backups/

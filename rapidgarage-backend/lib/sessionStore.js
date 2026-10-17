@@ -38,10 +38,10 @@ function storeKind(env) {
   return (e.NODE_ENV || 'development') === 'test' ? 'memory' : 'postgres';
 }
 
-// Connection string from the same config Sequelize uses (config/config.json).
+// Connection string from the same config Sequelize uses (config/config.js).
 function connectionString(env) {
   const e = env || process.env;
-  const config = require('../config/config.json')[e.NODE_ENV || 'development'] || {};
+  const config = require('../config/config.js')[e.NODE_ENV || 'development'] || {};
   if (config.dialect !== 'postgres') throw new Error('SESSION_STORE=postgres needs a postgres database config');
   const url = config.use_env_variable ? e[config.use_env_variable] : null;
   if (!url) throw new Error('Missing ' + (config.use_env_variable || 'DATABASE_URL') + ' for the session store');
@@ -65,7 +65,8 @@ function createSessionStore(options) {
     // A small dedicated pg pool (same database/credentials as Sequelize) so
     // session reads never wait behind model queries in Sequelize's pool.
     const { Pool } = require('pg');
-    pool = new Pool({ connectionString: connectionString(env), max: 5 });
+    const ssl = require('./dbSsl').sslOption(env);
+    pool = new Pool({ connectionString: connectionString(env), max: 5, ...(ssl ? { ssl } : {}) });
     ownPool = true;
   }
   const store = new PgStore({

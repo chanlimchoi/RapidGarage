@@ -1,0 +1,92 @@
+# Production-like stack on one machine: app (frontend + API), Postgres 17,
+# daily backups, and (profile "https") Caddy with automatic HTTPS.
+#
+#   cp .env.production.example .env.production   # fill it in (DEPLOY.md)
+#   docker compose --env-file .env.production up -d --build
+#   docker compose --env-file .env.production --profile https up -d   # + Caddy
+#
+# --env-file feeds ${...} below; env_file passes the same file to the app.
+name: rapidgarage
+
+x-db-url: &db-url postgres://rapidgarage:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.production}@db:5432/rapidgarage
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rapidgarage
+      POSTGRES_USER: rapidgarage
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.production}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rapidgarage -d rapidgarage"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    # Not published: only the app and backup containers can reach it.
+
+  app:
+    build: .
+    image: rapidgarage:local
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: *db-url
+      DATABASE_SSL: "off"
+      UPLOAD_DIR: /data/uploads
+      PORT: "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # Loopback only. Expose it through Caddy (profile "https") or another
+      # reverse proxy, never directly.
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    volumes:
+      - uploads:/data/uploads
+    stop_grace_period: 15s
+
+  backup:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/usr/local/bin/backup-db.sh", "--loop"]
+    environment:
+      DATABASE_URL: *db-url
+      BACKUP_DIR: /backups
+      BACKUP_UPLOADS_DIR: /uploads
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+    volumes:
+      - ./rapidgarage-backend/scripts/backup-db.sh:/usr/local/bin/backup-db.sh:ro
+      - uploads:/uploads:ro
+      # Host directory: copy it off the machine (DEPLOY.md "Backups").
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["https"]
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
+  caddy_config:
