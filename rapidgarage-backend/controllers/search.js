@@ -5,6 +5,7 @@
 //   maxPrice: whole dollars; sales with something at or under it (see lib/price.js)
 //   free=true: free sales only (wins over maxPrice)
 //   when=today|weekend|now: sales open in that window (sale's local time)
+//   keyword: words that must each match the title, description or an unsold item
 // Ended sales never show up.
 // Without a usable geocoding key, q falls back to a plain text/zip match
 // (no distances) and the response says so in `notice`.
@@ -17,6 +18,7 @@ const geo = require('../lib/geo');
 const { PRICE_CAP, priceWhere } = require('../lib/price');
 const { visibleWhere } = require('../lib/moderation');
 const schedule = require('../lib/schedule');
+const itemsLib = require('../lib/items');
 
 const MAX_PAGE_SIZE = 50;
 const MAX_CANDIDATES = 5000; // hard cap on rows pulled by the bounding box
@@ -67,6 +69,9 @@ function parseQuery(query) {
   const w = schedule.parseWhen(query.when);
   if (w.error) errors.when = w.error;
   else out.when = w.when;
+  const k = itemsLib.parseKeyword(query.keyword);
+  if (k.error) errors.keyword = k.error;
+  else if (k.words) { out.words = k.words; out.keyword = k.keyword; }
   return { errors, values: out };
 }
 
@@ -97,19 +102,25 @@ async function nearbyRanked(center, radius, filter, user) {
     limit: MAX_CANDIDATES,
     raw: true,
   });
-  return (await schedule.filterWhen(models, rows, filter.when))
+  let kept = await schedule.filterWhen(models, rows, filter.when);
+  if (filter.words) {
+    const ids = await itemsLib.keywordPostIds(models, filter.words, kept.map((r) => r.id));
+    kept = kept.filter((r) => ids.has(r.id));
+  }
+  return kept
     .map((p) => ({ id: p.id, createdAt: new Date(p.createdAt), distance: geo.haversineMiles(center, { lat: p.lat, lng: p.lng }) }))
     .filter((r) => r.distance <= radius)
     .sort((a, b) => a.distance - b.distance || b.createdAt - a.createdAt || a.id - b.id);
 }
 
 // Load full posts (with photos) for one page of ranked ids, keeping the order.
-async function loadPage(ranked) {
+async function loadPage(ranked, words) {
   if (!ranked.length) return [];
+  const matched = await itemsLib.matchedItems(models, words, ranked.map((r) => r.id));
   const posts = await models.Post.findAll({ where: { id: ranked.map((r) => r.id) }, include: [photoInclude, daysInclude], order: [photoOrder] });
   const byId = new Map(posts.map((p) => [p.id, p]));
   return ranked.filter((r) => byId.has(r.id))
-    .map((r) => Object.assign(byId.get(r.id).toJSON(), { distanceMiles: Math.round(r.distance * 10) / 10 }));
+    .map((r) => Object.assign(byId.get(r.id).toJSON(), { distanceMiles: Math.round(r.distance * 10) / 10 }, words ? { matchedItems: matched[r.id] || [] } : {}));
 }
 
 // No geocoder: match zip exactly (if q is a zip) or the text against address fields.
@@ -122,13 +133,20 @@ async function textMatch(q, filter, user) {
     ? { zipCode: q.slice(0, 5) }
     : { [Op.or]: ['street', 'city', 'state', 'zipCode', 'title'].map((f) => ({ [f]: { [op]: like } })) };
   const found = await models.Post.findAll({ where: and(where, priceWhere(Op, filter), visibleWhere(user), schedule.notEndedWhere()), include: [photoInclude, daysInclude], order: [['createdAt', 'DESC'], photoOrder] });
-  const posts = filter.when ? found.filter((p) => schedule.matchesWhen(p, filter.when)) : found;
-  return posts.map((p) => Object.assign(p.toJSON(), { distanceMiles: null }));
+  let posts = filter.when ? found.filter((p) => schedule.matchesWhen(p, filter.when)) : found;
+  let matched = {};
+  if (filter.words) {
+    const ids = await itemsLib.keywordPostIds(models, filter.words, posts.map((p) => p.id));
+    posts = posts.filter((p) => ids.has(p.id));
+    matched = await itemsLib.matchedItems(models, filter.words, posts.map((p) => p.id));
+  }
+  return posts.map((p) => Object.assign(p.toJSON(), { distanceMiles: null }, filter.words ? { matchedItems: matched[p.id] || [] } : {}));
 }
 
 function filterOf(v) {
   const out = { maxPrice: v.maxPrice !== undefined ? v.maxPrice : null, freeOnly: !!v.freeOnly };
   if (v.when) out.when = v.when;
+  if (v.keyword) out.keyword = v.keyword;
   return out;
 }
 
@@ -160,7 +178,7 @@ router.get('/', async (req, res) => {
     }
     const ranked = await nearbyRanked(center, values.radius, values, req.user);
     const pageInfo = paginate(ranked, values.page, values.pageSize);
-    pageInfo.results = await loadPage(pageInfo.results);
+    pageInfo.results = await loadPage(pageInfo.results, values.words);
     return res.json(Object.assign({ mode: 'distance', center, radius: values.radius, filter: filterOf(values), notice: null }, pageInfo));
   } catch (err) {
     return serverError(res, err);

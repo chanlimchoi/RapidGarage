@@ -110,6 +110,17 @@ alerts. Its owner and admins still see it in the seller's list, and the direct l
 working (with a "This sale has ended" note), so shared links and conversations don't break.
 Sales without dates never end on their own.
 
+## Item lists
+
+Sellers can list what they're selling: on the sale page tap **Add items** (or **Edit items**),
+then add each item with a name, an optional price and optionally one of the sale's photos.
+Items can be reordered, edited, deleted and **marked sold**; sellers can also tick items sold
+right from the sale page while the sale is on. Buyers see the list on the sale page (sold items
+struck through and dimmed, with a **Hide sold** switch; tapping a thumbnail shows that photo).
+The **What?** box on the home page (e.g. "bike") finds sales whose title, description or
+unsold items match every word, on the recent list or together with a location search, and
+the cards show the matching items.
+
 ## Saved sales & weekend route
 
 Logged-in buyers tap the **star** on a sale card (or **Save** on the sale page) to keep it in

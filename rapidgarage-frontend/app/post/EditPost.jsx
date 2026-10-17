@@ -94,6 +94,13 @@ class EditPost extends Component {
               ? <PhotoPicker key={remaining} max={remaining} onChange={(newPhotos) => this.setState({ newPhotos })} />
               : <p className="muted small">This post has the maximum of {MAX_PHOTOS} photos.</p>}
           </section>
+          {own ? (
+            <section className="card-form">
+              <h2 className="h4">Items</h2>
+              <p className="muted small">{(post.items || []).length ? (post.items.length + ' on the list. ') : ''}List what you're selling, with prices and sold marks.</p>
+              <div><Link className="btn btn-secondary" to={'/post/' + post.id + '/items'}>{(post.items || []).length ? 'Edit items' : 'Add items'}</Link></div>
+            </section>
+          ) : null}
         </PostForm>
       </div>
     );

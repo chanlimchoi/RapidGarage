@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
 import { addressLine, timeAgo } from '../lib/format';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
@@ -9,6 +9,7 @@ import { formatPrice } from '../lib/price';
 import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../components/ui';
 import toast from '../components/toast';
 import SaveButton from '../saved/SaveButton';
+import ItemList from './ItemList';
 
 // GET /post/:id with a photo gallery and a details sidebar.
 class Post extends Component {
@@ -218,6 +219,8 @@ class Post extends Component {
                 <p className="post-description">{post.description}</p>
               </section>
             ) : <p className="muted">The seller didn't add a description.</p>}
+            <ItemList post={post} owner={isOwner} onItems={(items) => this.setState({ post: Object.assign({}, post, { items }) })}
+              onPhoto={(i) => { this.setState({ active: i }); const g = document.querySelector('.post-gallery'); if (g && g.scrollIntoView) g.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }} />
           </div>
           <aside className="post-aside">
             <div className="panel">
@@ -241,6 +244,7 @@ class Post extends Component {
                 ) : null}
                 {!isOwner ? <SaveButton post={post} /> : null}
                 {canEditPost(this.props.user, post) ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/edit'}><Pencil size={16} aria-hidden="true" />Edit post &amp; photos</Link> : null}
+                {isOwner ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/items'}><Package size={16} aria-hidden="true" />{(post.items || []).length ? 'Edit items' : 'Add items'}</Link> : null}
               </div>
             </div>
             {!isOwner ? (

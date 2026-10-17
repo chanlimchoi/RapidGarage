@@ -19,6 +19,7 @@ import Admin from './admin/Admin';
 import Messages from './messages/Messages';
 import Unsubscribe from './user/Unsubscribe';
 import Saved from './saved/Saved';
+import ItemsEditor from './post/ItemsEditor';
 import * as savedStore from './lib/saved';
 
 const UNREAD_POLL_MS = 15000;
@@ -104,6 +105,7 @@ class App extends Component {
             <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/newpost' render={(props) => <NewPost {...props} {...common} />} />
+            <Route path='/post/:id/items' render={(props) => <ItemsEditor {...props} {...common} />} />
             <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} />} />
             <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
             <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
