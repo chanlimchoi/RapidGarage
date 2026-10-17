@@ -36,6 +36,7 @@ module.exports = (sequelize, DataTypes) => {
     Post.belongsTo(models.User, { foreignKey: 'userId', onDelete: 'CASCADE' });
     Post.hasMany(models.PostPhoto, { as: 'photos', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.SaleDay, { as: 'saleDays', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
+    Post.hasMany(models.SavedPost, { as: 'saves', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
   };
   // Nested includes are serialized with get({ plain: true }), which skips
   // PostPhoto#toJSON; serialize photos explicitly so clients get URLs only.

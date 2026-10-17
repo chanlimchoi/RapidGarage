@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle } from 'lucide-react';
+import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, Star } from 'lucide-react';
 import { initials, displayName } from '../lib/format';
 
 const badgeText = (n) => (n > 99 ? '99+' : String(n));
@@ -87,6 +87,7 @@ export default class NavBar extends React.Component {
             </div>
             <Link role="menuitem" className="menu-item" to="/messages" onClick={close}><MessageCircle size={18} aria-hidden="true" />Messages
               {unread ? <span className="nav-badge menu-badge" aria-label={unreadLabel(unread)}>{badgeText(unread)}</span> : null}</Link>
+            <Link role="menuitem" className="menu-item" to="/saved" onClick={close}><Star size={18} aria-hidden="true" />Saved sales</Link>
             <Link role="menuitem" className="menu-item" to="/profile" onClick={close}><User size={18} aria-hidden="true" />Profile &amp; listings</Link>
             <Link role="menuitem" className="menu-item" to="/settings" onClick={close}><SettingsIcon size={18} aria-hidden="true" />Settings</Link>
             {isAdmin ? <Link role="menuitem" className="menu-item" to="/admin" onClick={close}><ShieldCheck size={18} aria-hidden="true" />Admin</Link> : null}
@@ -118,6 +119,7 @@ export default class NavBar extends React.Component {
                 {this.props.unread ? <span className="nav-badge" aria-label={unreadLabel(this.props.unread)}>{badgeText(this.props.unread)}</span> : null}
               </NavLink>
             ) : null}
+            {user ? <NavLink to="/saved" className="nav-link nav-saved" activeClassName="active"><Star size={16} aria-hidden="true" />Saved</NavLink> : null}
             <NavLink to="/about" className="nav-link" activeClassName="active">About</NavLink>
           </nav>
           <div className="nav-spacer" />
@@ -146,6 +148,7 @@ export default class NavBar extends React.Component {
               <React.Fragment>
                 <Link className="menu-item" to="/messages"><MessageCircle size={18} aria-hidden="true" />Messages
                   {this.props.unread ? <span className="nav-badge menu-badge" aria-label={unreadLabel(this.props.unread)}>{badgeText(this.props.unread)}</span> : null}</Link>
+                <Link className="menu-item" to="/saved"><Star size={18} aria-hidden="true" />Saved sales</Link>
                 <Link className="menu-item" to="/profile"><User size={18} aria-hidden="true" />Profile &amp; listings</Link>
                 <Link className="menu-item" to="/settings"><SettingsIcon size={18} aria-hidden="true" />Settings</Link>
                 {isAdmin ? <Link className="menu-item" to="/admin"><ShieldCheck size={18} aria-hidden="true" />Admin</Link> : null}
