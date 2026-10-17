@@ -5,6 +5,7 @@ import { formatMiles, placeLine, timeAgo } from '../lib/format';
 import { shortWhen, saleBadge } from '../lib/schedule';
 import { formatPrice } from '../lib/price';
 import SaveButton from '../saved/SaveButton';
+import { t } from '../i18n';
 
 export const BADGE_CLASS = { open: 'chip-success', upcoming: 'chip-info', ended: 'chip-muted' };
 
@@ -24,29 +25,29 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
       <div className="post-card-media">
         {photos.length
           ? <img className="post-thumb" src={photos[0].thumbUrl} alt="" loading="lazy" />
-          : <div className="post-card-placeholder"><ImageOff size={28} aria-hidden="true" /><span className="sr-only">No photos</span></div>}
+          : <div className="post-card-placeholder"><ImageOff size={28} aria-hidden="true" /><span className="sr-only">{t('card.noPhotos')}</span></div>}
         {distance ? <span className="chip post-card-distance post-distance"><Navigation size={12} aria-hidden="true" />{distance}</span> : null}
         <SaveButton post={post} variant="card" />
-        {photos.length > 1 ? <span className="post-card-badge"><Images size={12} aria-hidden="true" />{photos.length} photos</span> : null}
+        {photos.length > 1 ? <span className="post-card-badge"><Images size={12} aria-hidden="true" />{t('card.photos', { count: photos.length })}</span> : null}
       </div>
       <div className="post-card-body">
         <h3 className="post-card-title"><Link to={'/post/' + post.id}>{post.title}</Link></h3>
-        <div className="post-card-meta"><MapPin size={14} aria-hidden="true" /><span>{placeLine(post) || 'Location not given'}</span></div>
+        <div className="post-card-meta"><MapPin size={14} aria-hidden="true" /><span>{placeLine(post) || t('card.noLocation')}</span></div>
         <div className="chips">
-          {post.hidden ? <span className="chip chip-warning">Hidden</span> : null}
+          {post.hidden ? <span className="chip chip-warning">{t('card.hidden')}</span> : null}
           {price ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{price}</span> : null}
           {when ? <span className="chip chip-brand"><CalendarDays size={12} aria-hidden="true" />{when}</span> : null}
           {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
-          {!when && !badge ? <span className="chip"><Clock size={12} aria-hidden="true" />Posted {timeAgo(post.createdAt)}</span> : null}
+          {!when && !badge ? <span className="chip"><Clock size={12} aria-hidden="true" />{t('card.posted', { when: timeAgo(post.createdAt) })}</span> : null}
         </div>
         {post.matchedItems && post.matchedItems.length ? (
-          <p className="post-card-items small"><Package size={12} aria-hidden="true" /><span><span className="sr-only">Matching items: </span>{post.matchedItems.join(', ')}</span></p>
+          <p className="post-card-items small"><Package size={12} aria-hidden="true" /><span><span className="sr-only">{t('card.matching')}</span>{post.matchedItems.join(', ')}</span></p>
         ) : null}
         {onShowOnMap && hasPin ? (
           <div className="post-card-foot">
-            <span className="small muted">Posted {timeAgo(post.createdAt)}</span>
+            <span className="small muted">{t('card.posted', { when: timeAgo(post.createdAt) })}</span>
             <button type="button" className="btn btn-ghost btn-sm show-on-map" onClick={() => onShowOnMap(post.id)}
-              aria-label={'Show ' + post.title + ' on the map'}><MapPin size={14} aria-hidden="true" />Map</button>
+              aria-label={t('card.showOnMap', { title: post.title })}><MapPin size={14} aria-hidden="true" />{t('card.map')}</button>
           </div>
         ) : null}
       </div>

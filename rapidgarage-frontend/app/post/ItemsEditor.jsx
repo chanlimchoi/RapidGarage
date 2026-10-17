@@ -5,23 +5,24 @@ import { apiFetch, errorMessage } from '../api';
 import { Field, Alert, EmptyState, SkeletonBlock, Spinner, Dialog } from '../components/ui';
 import { formatCents, centsInput, validateItemFields, itemSummary, ITEM_NAME_MAX } from '../lib/items';
 import toast from '../components/toast';
+import { t } from '../i18n';
 
 const MAX_ITEMS = 100;
 const blank = () => ({ name: '', price: '', photoId: null });
 
 // Photo picker limited to the sale's existing photos.
 function PhotoChoice({ idPrefix, photos, value, onChange }) {
-  if (!photos.length) return <p className="small muted">Add photos to the sale to pick one for an item.</p>;
+  if (!photos.length) return <p className="small muted">{t('items.addPhotosFirst')}</p>;
   return (
     <fieldset className="photo-choice">
-      <legend>Photo <span className="muted small">(optional)</span></legend>
+      <legend>{t('items.photo')} <span className="muted small">{t('ui.optional')}</span></legend>
       <label title="No photo">
-        <input type="radio" name={idPrefix + '-photo'} checked={!value} onChange={() => onChange(null)} aria-label="No photo" />
+        <input type="radio" name={idPrefix + '-photo'} checked={!value} onChange={() => onChange(null)} aria-label={t('items.noPhoto')} />
         <ImageOff size={18} aria-hidden="true" />
       </label>
       {photos.map((p, i) => (
-        <label key={p.id} title={'Photo ' + (i + 1)}>
-          <input type="radio" name={idPrefix + '-photo'} checked={value === p.id} onChange={() => onChange(p.id)} aria-label={'Photo ' + (i + 1)} />
+        <label key={p.id} title={t('edit.photoAlt', { n: i + 1 })}>
+          <input type="radio" name={idPrefix + '-photo'} checked={value === p.id} onChange={() => onChange(p.id)} aria-label={t('edit.photoAlt', { n: i + 1 })} />
           <img src={p.thumbUrl} alt="" />
         </label>
       ))}
@@ -33,12 +34,12 @@ function ItemFields({ idPrefix, values, errors, photos, onChange }) {
   return (
     <React.Fragment>
       <div className="item-form-row">
-        <Field id={idPrefix + '-name'} label="Item" error={errors.name}>
-          <input id={idPrefix + '-name'} className="input" value={values.name} maxLength={ITEM_NAME_MAX} placeholder="e.g. Road bike"
+        <Field id={idPrefix + '-name'} label={t('items.item')} error={errors.name}>
+          <input id={idPrefix + '-name'} className="input" value={values.name} maxLength={ITEM_NAME_MAX} placeholder={t('items.namePlaceholder')}
             onChange={(e) => onChange({ name: e.target.value })} aria-invalid={errors.name ? 'true' : undefined} />
         </Field>
-        <Field id={idPrefix + '-price'} label="Price ($)" optional error={errors.price}>
-          <input id={idPrefix + '-price'} className="input" value={values.price} inputMode="decimal" maxLength={9} placeholder="e.g. 5"
+        <Field id={idPrefix + '-price'} label={t('items.price')} optional error={errors.price}>
+          <input id={idPrefix + '-price'} className="input" value={values.price} inputMode="decimal" maxLength={9} placeholder={t('items.pricePlaceholder')}
             onChange={(e) => onChange({ price: e.target.value })} aria-invalid={errors.price ? 'true' : undefined} />
         </Field>
       </div>
@@ -60,9 +61,9 @@ class ItemsEditor extends Component {
 
   load() {
     apiFetch('/post/' + encodeURIComponent(this.props.match.params.id)).then(({ ok, data }) => {
-      if (!ok) return this.setState({ loadError: errorMessage(data, 'Post not found.') });
+      if (!ok) return this.setState({ loadError: errorMessage(data, t('post.notFound')) });
       return this.setState({ post: data });
-    }).catch(() => this.setState({ loadError: 'Unable to reach the server. Please try again.' }));
+    }).catch(() => this.setState({ loadError: t('common.network') }));
   }
 
   items() { return (this.state.post && this.state.post.items) || []; }
@@ -83,12 +84,12 @@ class ItemsEditor extends Component {
       if (!ok) {
         const d = (data && data.error && data.error.details) || {};
         this.setState({ adding: false, draftErrors: d });
-        if (!Object.keys(d).length) toast.error(errorMessage(data, "Couldn't add the item."));
+        if (!Object.keys(d).length) toast.error(errorMessage(data, t('items.addFailed')));
         return;
       }
       this.setItems(this.items().concat(data));
       this.setState({ adding: false, draft: Object.assign(blank(), { photoId: null }), draftErrors: {} });
-      toast.success(data.name + ' added.');
+      toast.success(t('items.added', { name: data.name }));
       const el = document.getElementById('new-name');
       if (el) el.focus();
     });
@@ -109,12 +110,12 @@ class ItemsEditor extends Component {
       if (!ok) {
         const d = (data && data.error && data.error.details) || {};
         this.setState({ editErrors: d });
-        if (!Object.keys(d).length) toast.error(errorMessage(data, "Couldn't save the item."));
+        if (!Object.keys(d).length) toast.error(errorMessage(data, t('items.saveFailed')));
         return;
       }
       this.setItems(this.items().map((i) => (i.id === data.id ? data : i)));
       this.setState({ editing: null, edit: null });
-      toast.success('Saved.');
+      toast.success(t('common.saved'));
     });
   }
 
@@ -122,7 +123,7 @@ class ItemsEditor extends Component {
     this.setState({ busy: item.id });
     this.call('/' + item.id, 'PUT', { sold: !item.sold }).then(({ ok, data }) => {
       this.setState({ busy: null });
-      if (!ok) { toast.error(errorMessage(data, "Couldn't update the item.")); return; }
+      if (!ok) { toast.error(errorMessage(data, t('items.updateFailed'))); return; }
       this.setItems(this.items().map((i) => (i.id === data.id ? data : i)));
     });
   }
@@ -147,9 +148,9 @@ class ItemsEditor extends Component {
     this.setState({ busy: item.id });
     this.call('/' + item.id, 'DELETE').then(({ ok, data }) => {
       this.setState({ busy: null, confirm: null });
-      if (!ok) { toast.error(errorMessage(data, "Couldn't delete the item.")); return; }
+      if (!ok) { toast.error(errorMessage(data, t('items.deleteFailed'))); return; }
       this.setItems(this.items().filter((i) => i.id !== item.id));
-      toast.success(item.name + ' deleted.');
+      toast.success(t('items.deleted', { name: item.name }));
     });
   }
 
@@ -164,8 +165,8 @@ class ItemsEditor extends Component {
             <ItemFields idPrefix={'edit-' + item.id} values={edit} errors={editErrors} photos={photos}
               onChange={(patch) => this.setState({ edit: Object.assign({}, this.state.edit, patch) })} />
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary btn-sm" disabled={busy === item.id}>{busy === item.id ? <Spinner /> : <Check size={14} aria-hidden="true" />}Save</button>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => this.setState({ editing: null, edit: null })}>Cancel</button>
+              <button type="submit" className="btn btn-primary btn-sm" disabled={busy === item.id}>{busy === item.id ? <Spinner /> : <Check size={14} aria-hidden="true" />}{t('common.save')}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => this.setState({ editing: null, edit: null })}>{t('common.cancel')}</button>
             </div>
           </form>
         </li>
@@ -174,17 +175,17 @@ class ItemsEditor extends Component {
     return (
       <li key={item.id} className={'item-row' + (item.sold ? ' is-sold' : '')} data-item-id={item.id}>
         {photo ? <span className="item-thumb item-thumb-empty"><img src={photo.thumbUrl} alt="" /></span> : <span className="item-thumb item-thumb-empty" aria-hidden="true"><Package size={16} /></span>}
-        <span className="item-name">{item.name}{item.sold ? <span className="sr-only"> (sold)</span> : null}</span>
+        <span className="item-name">{item.name}{item.sold ? <span className="sr-only">{t('items.soldSr')}</span> : null}</span>
         {item.priceCents !== null ? <span className={'item-price' + (item.priceCents === 0 ? ' is-free' : '')}>{formatCents(item.priceCents)}</span> : null}
         <span className="item-actions">
           <button type="button" className={'btn btn-sm item-sold-toggle ' + (item.sold ? 'btn-ghost' : 'btn-secondary')} aria-pressed={item.sold} disabled={busy === item.id}
-            aria-label={item.sold ? 'Mark ' + item.name + ' available' : 'Mark ' + item.name + ' sold'} onClick={() => this.toggleSold(item)}>
-            <Check size={14} aria-hidden="true" />{item.sold ? 'Sold' : 'Mark sold'}
+            aria-label={item.sold ? t('items.markAvailable', { name: item.name }) : t('items.markSoldNamed', { name: item.name })} onClick={() => this.toggleSold(item)}>
+            <Check size={14} aria-hidden="true" />{item.sold ? t('items.sold') : t('items.markSold')}
           </button>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm move-up" aria-label={'Move ' + item.name + ' up'} disabled={index === 0} onClick={() => this.move(index, -1)}><ArrowUp size={14} aria-hidden="true" /></button>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm move-down" aria-label={'Move ' + item.name + ' down'} disabled={index === n - 1} onClick={() => this.move(index, 1)}><ArrowDown size={14} aria-hidden="true" /></button>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={'Edit ' + item.name} onClick={() => this.startEdit(item)}><Pencil size={14} aria-hidden="true" /></button>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={'Delete ' + item.name} onClick={() => this.setState({ confirm: item })}><Trash2 size={14} aria-hidden="true" /></button>
+          <button type="button" className="btn btn-ghost btn-icon btn-sm move-up" aria-label={t('items.moveUp', { name: item.name })} disabled={index === 0} onClick={() => this.move(index, -1)}><ArrowUp size={14} aria-hidden="true" /></button>
+          <button type="button" className="btn btn-ghost btn-icon btn-sm move-down" aria-label={t('items.moveDown', { name: item.name })} disabled={index === n - 1} onClick={() => this.move(index, 1)}><ArrowDown size={14} aria-hidden="true" /></button>
+          <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={t('common.editNamed', { name: item.name })} onClick={() => this.startEdit(item)}><Pencil size={14} aria-hidden="true" /></button>
+          <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={t('common.deleteNamed', { name: item.name })} onClick={() => this.setState({ confirm: item })}><Trash2 size={14} aria-hidden="true" /></button>
         </span>
       </li>
     );
@@ -192,40 +193,40 @@ class ItemsEditor extends Component {
 
   render() {
     const { post, loadError, draft, draftErrors, adding, confirm, busy } = this.state;
-    if (loadError) return <div className="container container-narrow"><EmptyState icon={SearchX} title="We couldn't load that sale" action={<Link className="btn btn-primary" to="/">Browse sales</Link>}>{loadError}</EmptyState></div>;
+    if (loadError) return <div className="container container-narrow"><EmptyState icon={SearchX} title={t('edit.cantLoad')} action={<Link className="btn btn-primary" to="/">{t('nav.browseSales')}</Link>}>{loadError}</EmptyState></div>;
     if (!post) return <div className="container container-narrow"><SkeletonBlock height={240} lines={4} /></div>;
     const user = this.props.user;
     if (this.props.ready && (!user || user.id !== post.userId)) {
-      return <div className="container container-narrow"><EmptyState icon={Lock} title="Only the seller can edit items" action={<Link className="btn btn-secondary" to={'/post/' + post.id}>Back to the sale</Link>}>Items are managed by the person who posted the sale.</EmptyState></div>;
+      return <div className="container container-narrow"><EmptyState icon={Lock} title={t('items.onlySeller')} action={<Link className="btn btn-secondary" to={'/post/' + post.id}>{t('edit.backToSale')}</Link>}>{t('items.managedBySeller')}</EmptyState></div>;
     }
     const items = this.items();
     const photos = post.photos || [];
     return (
       <div className="container container-narrow items-editor">
-        <Link to={'/post/' + post.id} className="back-link"><ArrowLeft size={16} aria-hidden="true" />Back to the sale</Link>
-        <header className="page-header"><div><h1>Items for sale</h1><p>{post.title}{items.length ? ' · ' + itemSummary(items) : ''}</p></div></header>
+        <Link to={'/post/' + post.id} className="back-link"><ArrowLeft size={16} aria-hidden="true" />{t('edit.backToSale')}</Link>
+        <header className="page-header"><div><h1>{t('items.title')}</h1><p>{post.title}{items.length ? ' · ' + itemSummary(items) : ''}</p></div></header>
         <div className="stack">
           <form className="card-form item-form" onSubmit={(e) => this.add(e)} noValidate aria-labelledby="add-item-title">
-            <h2 id="add-item-title" className="h4">Add an item</h2>
+            <h2 id="add-item-title" className="h4">{t('items.addAnItem')}</h2>
             <ItemFields idPrefix="new" values={draft} errors={draftErrors} photos={photos}
               onChange={(patch) => this.setState({ draft: Object.assign({}, draft, patch) })} />
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary" disabled={adding || items.length >= MAX_ITEMS}>{adding ? <Spinner /> : <Plus size={16} aria-hidden="true" />}Add item</button>
-              {items.length >= MAX_ITEMS ? <span className="small muted">That's the maximum of {MAX_ITEMS} items.</span> : null}
+              <button type="submit" className="btn btn-primary" disabled={adding || items.length >= MAX_ITEMS}>{adding ? <Spinner /> : <Plus size={16} aria-hidden="true" />}{t('items.addItem')}</button>
+              {items.length >= MAX_ITEMS ? <span className="small muted">{t('items.max', { max: MAX_ITEMS })}</span> : null}
             </div>
-            <p className="small muted">Buyers can search for item names. Sold items stay on the list, struck through, and stop matching searches.</p>
+            <p className="small muted">{t('items.searchHint')}</p>
           </form>
           {items.length ? <ul className="item-list">{items.map((it, i) => this.renderRow(it, i, photos))}</ul>
-            : <Alert tone="info">No items yet. Add a few highlights; you don't need to list everything.</Alert>}
-          <div className="form-actions"><Link className="btn btn-secondary" to={'/post/' + post.id}>Done</Link></div>
+            : <Alert tone="info">{t('items.none')}</Alert>}
+          <div className="form-actions"><Link className="btn btn-secondary" to={'/post/' + post.id}>{t('common.done')}</Link></div>
         </div>
         {confirm ? (
-          <Dialog id="delete-item" title={'Delete ' + confirm.name + '?'} onClose={() => busy !== confirm.id && this.setState({ confirm: null })}
-            description="This removes it from the list. To show it's gone but keep it listed, mark it sold instead."
+          <Dialog id="delete-item" title={t('items.confirmDelete', { name: confirm.name })} onClose={() => busy !== confirm.id && this.setState({ confirm: null })}
+            description={t('items.deleteDesc')}
             footer={(
               <React.Fragment>
-                <button type="button" className="btn btn-ghost" onClick={() => this.setState({ confirm: null })}>Cancel</button>
-                <button type="button" className="btn btn-danger" disabled={busy === confirm.id} onClick={() => this.remove(confirm)}>{busy === confirm.id ? <Spinner /> : <Trash2 size={16} aria-hidden="true" />}Delete</button>
+                <button type="button" className="btn btn-ghost" onClick={() => this.setState({ confirm: null })}>{t('common.cancel')}</button>
+                <button type="button" className="btn btn-danger" disabled={busy === confirm.id} onClick={() => this.remove(confirm)}>{busy === confirm.id ? <Spinner /> : <Trash2 size={16} aria-hidden="true" />}{t('common.delete')}</button>
               </React.Fragment>
             )} />
         ) : null}

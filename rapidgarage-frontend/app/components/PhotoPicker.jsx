@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { ImagePlus, X } from 'lucide-react';
 import { MAX_PHOTO_BYTES, PHOTO_TYPES } from '../api';
+import { t } from '../i18n';
 
 // Pick (or drop) up to `max` photos and preview them before upload.
 // Calls onChange(files) with the current File list.
@@ -20,15 +21,15 @@ class PhotoPicker extends Component {
     const picked = Array.prototype.slice.call(list || []);
     let error = '';
     const ok = picked.filter((f) => {
-      if (PHOTO_TYPES.indexOf(f.type) === -1) { error = f.name + ' is not a JPEG, PNG or WebP image.'; return false; }
-      if (f.size > MAX_PHOTO_BYTES) { error = f.name + ' is larger than 8 MB.'; return false; }
+      if (PHOTO_TYPES.indexOf(f.type) === -1) { error = t('photos.badType', { name: f.name }); return false; }
+      if (f.size > MAX_PHOTO_BYTES) { error = t('photos.tooBig', { name: f.name }); return false; }
       return true;
     });
     let items = this.state.items.concat(ok.map((file) => ({ file, preview: URL.createObjectURL(file) })));
     if (items.length > max) {
       items.slice(max).forEach((i) => URL.revokeObjectURL(i.preview));
       items = items.slice(0, max);
-      error = 'You can add ' + max + ' more photo' + (max === 1 ? '' : 's') + ' to this post.';
+      error = t('photos.canAdd', { count: max });
     }
     this.setState({ items, error });
     this.props.onChange(items.map((i) => i.file));
@@ -66,8 +67,8 @@ class PhotoPicker extends Component {
           onDragLeave={() => this.setState({ dragging: false })}
           onDrop={(e) => this.onDrop(e)}>
           <ImagePlus size={28} aria-hidden="true" />
-          <strong>{full ? 'Photo limit reached' : 'Add photos'}</strong>
-          <span className="small">Drag and drop or click to choose. JPEG, PNG or WebP, up to 8 MB each. {left} left.</span>
+          <strong>{full ? t('photos.limit') : t('photos.add')}</strong>
+          <span className="small">{t('photos.hint', { count: left })}</span>
           <input type="file" name="photos" accept={PHOTO_TYPES.join(',')} multiple disabled={full}
             onChange={this.handleFiles} className="sr-only" data-testid="photo-input" />
         </label>
@@ -75,8 +76,8 @@ class PhotoPicker extends Component {
           <div className="photo-grid photo-previews">
             {this.state.items.map((item, i) => (
               <div key={item.preview} className="photo-tile">
-                <img src={item.preview} alt={'Preview ' + (i + 1)} className="photo-preview" />
-                <button type="button" className="btn photo-remove" aria-label={'Remove ' + item.file.name} onClick={() => this.remove(i)}><X size={16} aria-hidden="true" /></button>
+                <img src={item.preview} alt={t('photos.preview', { n: i + 1 })} className="photo-preview" />
+                <button type="button" className="btn photo-remove" aria-label={t('photos.remove', { name: item.file.name })} onClick={() => this.remove(i)}><X size={16} aria-hidden="true" /></button>
               </div>
             ))}
           </div>

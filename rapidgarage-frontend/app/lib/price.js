@@ -1,20 +1,26 @@
-// Client mirror of rapidgarage-backend/lib/price.js. Prices are whole US dollars.
+// Client mirror of rapidgarage-backend/lib/price.js. Prices are whole US dollars,
+// written the way the current UI language writes US dollars.
+import { t, intlLocale } from '../i18n';
 export const PRICE_CAP = 100000;
 
-const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0, minimumFractionDigits: 0 });
-export const formatUSD = (n) => usd.format(n);
+const formatters = {};
+export const formatUSD = (n) => {
+  const l = intlLocale();
+  if (!formatters[l]) formatters[l] = new Intl.NumberFormat(l, { style: 'currency', currency: 'USD', maximumFractionDigits: 0, minimumFractionDigits: 0 });
+  return formatters[l].format(n);
+};
 
 const has = (v) => typeof v === 'number' && Number.isFinite(v);
 
 // "Free" | "$5" | "$5–$50" | "Up to $50" | "From $5" | null
 export function formatPrice(post) {
   if (!post) return null;
-  if (post.isFree) return 'Free';
+  if (post.isFree) return t('price.free');
   const min = has(post.priceMin) ? post.priceMin : null;
   const max = has(post.priceMax) ? post.priceMax : null;
-  if (min !== null && max !== null) return min === max ? formatUSD(min) : formatUSD(min) + '–' + formatUSD(max);
-  if (max !== null) return 'Up to ' + formatUSD(max);
-  if (min !== null) return 'From ' + formatUSD(min);
+  if (min !== null && max !== null) return min === max ? formatUSD(min) : t('price.range', { min: formatUSD(min), max: formatUSD(max) });
+  if (max !== null) return t('price.upTo', { max: formatUSD(max) });
+  if (min !== null) return t('price.from', { min: formatUSD(min) });
   return null;
 }
 
@@ -22,25 +28,25 @@ export function formatPrice(post) {
 export function priceFieldError(raw, label) {
   const v = String(raw == null ? '' : raw).trim();
   if (!v) return '';
-  if (!/^-?\d+(\.\d+)?$/.test(v)) return label + ' must be a number of dollars.';
+  if (!/^-?\d+(\.\d+)?$/.test(v)) return t('price.errNumber', { label });
   const n = Number(v);
-  if (n < 0) return label + " can't be negative.";
-  if (!Number.isInteger(n)) return label + ' must be whole dollars (no cents).';
-  if (n > PRICE_CAP) return label + ' must be ' + formatUSD(PRICE_CAP) + ' or less.';
+  if (n < 0) return t('price.errNegative', { label });
+  if (!Number.isInteger(n)) return t('price.errWhole', { label });
+  if (n > PRICE_CAP) return t('price.errMax', { label, max: formatUSD(PRICE_CAP) });
   return '';
 }
 
 // Form values { isFree, priceMin, priceMax } (strings) -> { field: message }.
 export function priceErrors(v) {
   const errors = {};
-  const minErr = priceFieldError(v.priceMin, 'Lowest price');
-  const maxErr = priceFieldError(v.priceMax, 'Highest price');
+  const minErr = priceFieldError(v.priceMin, t('price.lowest'));
+  const maxErr = priceFieldError(v.priceMax, t('price.highest'));
   if (minErr) errors.priceMin = minErr;
   if (maxErr) errors.priceMax = maxErr;
   const min = String(v.priceMin || '').trim();
   const max = String(v.priceMax || '').trim();
-  if (v.isFree && (min || max)) errors.isFree = "A free sale can't also have a price. Clear the prices or untick Free.";
-  else if (!minErr && !maxErr && min && max && Number(min) > Number(max)) errors.priceMax = 'Highest price must be at least the lowest price.';
+  if (v.isFree && (min || max)) errors.isFree = t('price.errFreeAndPrice');
+  else if (!minErr && !maxErr && min && max && Number(min) > Number(max)) errors.priceMax = t('price.errOrder');
   return errors;
 }
 

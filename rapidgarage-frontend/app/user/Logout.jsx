@@ -3,6 +3,7 @@ import { Redirect } from 'react-router';
 import { apiFetch } from '../api';
 import { Spinner } from '../components/ui';
 import toast from '../components/toast';
+import { t } from '../i18n';
 
 export default class Logout extends React.Component {
   constructor(props) {
@@ -17,12 +18,12 @@ export default class Logout extends React.Component {
       .catch(() => {})
       .then(() => {
         if (this.props.onAuthChange) this.props.onAuthChange();
-        toast.info('You have been logged out.');
+        toast.info(t('logout.done'));
         this.setState({ done: true });
       });
   }
 
   render() {
-    return this.state.done ? <Redirect to="/" /> : <div className="container container-narrow"><p className="row muted"><Spinner />Logging out…</p></div>;
+    return this.state.done ? <Redirect to="/" /> : <div className="container container-narrow"><p className="row muted"><Spinner />{t('logout.working')}</p></div>;
   }
 }

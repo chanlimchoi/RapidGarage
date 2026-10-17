@@ -11,6 +11,7 @@ import toast from '../components/toast';
 import linkify from './linkify';
 import RatePanel from '../ratings/RatePanel';
 import { RatingBadge } from '../ratings/Stars';
+import { t, intlLocale } from '../i18n';
 
 const POLL_MS = 10000;
 
@@ -19,20 +20,20 @@ function clock(value) {
   const today = new Date();
   const sameDay = d.toDateString() === today.toDateString();
   return sameDay
-    ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-    : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    ? d.toLocaleTimeString(intlLocale(), { hour: 'numeric', minute: '2-digit' })
+    : d.toLocaleString(intlLocale(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 function initialsOf(name) {
   return String(name || '?').split(/\s+/).map((w) => w.charAt(0)).join('').slice(0, 2).toUpperCase();
 }
 
-// "Bea B." already ends a sentence; "Bea" needs a period.
-const endSentence = (s) => (/[.!?]$/.test(s) ? s : s + '.');
+// Names are "First L.", so "You blocked {name}. ..." can end up with "B.."; collapse it.
+const tidy = (s) => s.replace(/\.\./g, '.');
 
 function postLabel(post) {
-  if (post.status === 'deleted') return 'Post deleted';
-  if (post.status === 'hidden') return post.canView ? 'Hidden by moderator' : 'Post unavailable';
+  if (post.status === 'deleted') return t('msg.postDeleted');
+  if (post.status === 'hidden') return post.canView ? t('msg.hidden') : t('msg.unavailable');
   return null;
 }
 
@@ -87,8 +88,8 @@ export default class Messages extends React.Component {
   submitReport(e) {
     e.preventDefault();
     const { conv, reason, note, alsoBlock } = this.state;
-    if (!reason) { this.setState({ reportError: 'Choose a reason.' }); return; }
-    if (note.length > REPORT_NOTE_MAX) { this.setState({ reportError: 'Keep the note under ' + REPORT_NOTE_MAX + ' characters.' }); return; }
+    if (!reason) { this.setState({ reportError: t('report.chooseReason') }); return; }
+    if (note.length > REPORT_NOTE_MAX) { this.setState({ reportError: t('report.noteLong', { max: REPORT_NOTE_MAX }) }); return; }
     this.setState({ reporting: true, reportError: '' });
     reportConversation(conv.id, reason, note.trim(), alsoBlock)
       .then(({ ok, status, data }) => {
@@ -97,26 +98,26 @@ export default class Messages extends React.Component {
           const patch = { reporting: false, reportOpen: false, conv: Object.assign({}, this.state.conv, { reportedByMe: true }) };
           if (ok && data.blocked) Object.assign(patch.conv, { blocked: data.blocked, canSend: false });
           this.setState(patch);
-          if (ok) toast.success('Thanks. A moderator will review this conversation.' + (alsoBlock ? ' ' + endSentence(conv.other ? conv.other.name : 'They') + ' is blocked.' : ''));
-          else toast.info("You've already reported this conversation.");
+          if (ok) toast.success(t('msg.reportThanks') + (alsoBlock ? tidy(t('msg.alsoBlocked', { name: conv.other ? conv.other.name : t('msg.they') })) : ''));
+          else toast.info(t('msg.reportedAlready'));
           return;
         }
-        if (status === 429) { this.setState({ reporting: false, reportOpen: false }); toast.error("You've sent a lot of reports recently. Please try again later."); return; }
-        this.setState({ reporting: false, reportError: errorMessage(data, 'Could not send the report.') });
+        if (status === 429) { this.setState({ reporting: false, reportOpen: false }); toast.error(t('report.tooMany')); return; }
+        this.setState({ reporting: false, reportError: errorMessage(data, t('report.sendFailed')) });
       })
-      .catch(() => { if (!this.unmounted) this.setState({ reporting: false, reportError: 'Unable to reach the server. Please try again.' }); });
+      .catch(() => { if (!this.unmounted) this.setState({ reporting: false, reportError: t('common.network') }); });
   }
 
   renderReportDialog() {
     const { conv, reason, note, alsoBlock, reportError, reporting } = this.state;
-    const name = conv.other ? conv.other.name : 'this person';
+    const name = conv.other ? conv.other.name : t('msg.thisPerson');
     const left = REPORT_NOTE_MAX - note.length;
     return (
-      <Dialog id="convreport-dialog" title="Report conversation" onClose={() => !reporting && this.setState({ reportOpen: false })}
-        description={'A moderator will be able to read this conversation to review your report. ' + name + " won't be told who reported it."}>
+      <Dialog id="convreport-dialog" title={t('msg.reportTitle')} onClose={() => !reporting && this.setState({ reportOpen: false })}
+        description={t('msg.reportDesc', { name })}>
         <form onSubmit={(e) => this.submitReport(e)} noValidate>
           <fieldset className="field report-reasons">
-            <legend className="field-label">What's wrong?</legend>
+            <legend className="field-label">{t('msg.whatsWrong')}</legend>
             {CONVERSATION_REPORT_REASONS.map((r) => (
               <label key={r.value} className="radio-row">
                 <input type="radio" name="convreport-reason" value={r.value} checked={reason === r.value}
@@ -125,20 +126,20 @@ export default class Messages extends React.Component {
               </label>
             ))}
           </fieldset>
-          <Field id="convreport-note" label="Details" optional hint={left >= 0 ? left + ' characters left' : 'Too long by ' + (-left)}>
+          <Field id="convreport-note" label={t('report.details')} optional hint={left >= 0 ? t('common.charsLeft', { count: left }) : t('common.tooLongBy', { n: -left })}>
             <textarea className="textarea" rows={3} maxLength={REPORT_NOTE_MAX} value={note} onChange={(e) => this.setState({ note: e.target.value })}
-              placeholder="What happened? This goes to moderators only." />
+              placeholder={t('msg.notePlaceholder')} />
           </Field>
           {!(conv.blocked && conv.blocked.byMe) ? (
             <label className="checkbox-row" htmlFor="convreport-block">
               <input id="convreport-block" type="checkbox" checked={alsoBlock} onChange={(e) => this.setState({ alsoBlock: e.target.checked })} />
-              <span><strong>Also block {name}</strong><span className="field-hint" style={{ display: 'block' }}>Neither of you will be able to send messages.</span></span>
+              <span><strong>{t('msg.alsoBlock', { name })}</strong><span className="field-hint" style={{ display: 'block' }}>{t('msg.blockHint')}</span></span>
             </label>
           ) : null}
           {reportError ? <Alert tone="danger">{reportError}</Alert> : null}
           <div className="dialog-footer">
-            <button type="button" className="btn btn-ghost" disabled={reporting} onClick={() => this.setState({ reportOpen: false })}>Cancel</button>
-            <button type="submit" className="btn btn-danger" disabled={reporting}>{reporting ? <Spinner /> : <Flag size={16} aria-hidden="true" />}Send report</button>
+            <button type="button" className="btn btn-ghost" disabled={reporting} onClick={() => this.setState({ reportOpen: false })}>{t('common.cancel')}</button>
+            <button type="submit" className="btn btn-danger" disabled={reporting}>{reporting ? <Spinner /> : <Flag size={16} aria-hidden="true" />}{t('report.send')}</button>
           </div>
         </form>
       </Dialog>
@@ -173,25 +174,25 @@ export default class Messages extends React.Component {
     return fetchConversations()
       .then(({ ok, data }) => {
         if (this.unmounted) return;
-        if (!ok) { this.setState({ listError: errorMessage(data, 'Could not load your messages.') }); return; }
+        if (!ok) { this.setState({ listError: errorMessage(data, t('msg.loadFailed')) }); return; }
         const patch = { list: data.results, listError: '' };
         // Keep the open thread's block / post state in sync with the list.
         const open = this.state.conv && data.results.filter((c) => c.id === this.state.conv.id)[0];
         if (open) patch.conv = Object.assign({}, this.state.conv, { blocked: open.blocked, post: open.post, canSend: !open.blocked.byMe && !open.blocked.byThem && !this.state.conv.messagingBanned });
         this.setState(patch);
       })
-      .catch(() => { if (!this.unmounted) this.setState({ listError: 'Unable to reach the server.' }); });
+      .catch(() => { if (!this.unmounted) this.setState({ listError: t('common.networkShort') }); });
   }
 
   loadThread() {
     const id = this.currentId();
     if (!this.props.match.params.id) { this.setState({ conv: null, messages: [], threadError: '' }); return; }
-    if (!id) { this.setState({ conv: null, threadError: 'Conversation not found.' }); return; }
+    if (!id) { this.setState({ conv: null, threadError: t('msg.notFound') }); return; }
     this.setState({ loadingThread: true, threadError: '', conv: null, messages: [] });
     fetchConversation(id)
       .then(({ ok, data }) => {
         if (this.unmounted || this.currentId() !== id) return;
-        if (!ok) { this.setState({ loadingThread: false, threadError: errorMessage(data, 'Conversation not found.') }); return; }
+        if (!ok) { this.setState({ loadingThread: false, threadError: errorMessage(data, t('msg.notFound')) }); return; }
         this.setState({ loadingThread: false, conv: data.conversation, messages: data.messages, hasMore: data.hasMore }, () => {
           this.scrollToEnd();
           this.markListRead(id);
@@ -199,7 +200,7 @@ export default class Messages extends React.Component {
         });
         if (this.props.onUnreadChange) this.props.onUnreadChange();
       })
-      .catch(() => { if (!this.unmounted) this.setState({ loadingThread: false, threadError: 'Unable to reach the server.' }); });
+      .catch(() => { if (!this.unmounted) this.setState({ loadingThread: false, threadError: t('common.networkShort') }); });
   }
 
   markListRead(id) {
@@ -241,12 +242,12 @@ export default class Messages extends React.Component {
     this.setState({ loadingOlder: true });
     fetchMessagesBefore(conv.id, first.id)
       .then(({ ok, data }) => {
-        if (!ok) { this.setState({ loadingOlder: false }); toast.error(errorMessage(data, 'Could not load older messages.')); return; }
+        if (!ok) { this.setState({ loadingOlder: false }); toast.error(errorMessage(data, t('msg.olderFailed'))); return; }
         this.setState({ loadingOlder: false, hasMore: data.hasMore, messages: data.messages.concat(this.state.messages) }, () => {
           if (el) el.scrollTop = el.scrollHeight - prevHeight;
         });
       })
-      .catch(() => { this.setState({ loadingOlder: false }); toast.error('Unable to reach the server.'); });
+      .catch(() => { this.setState({ loadingOlder: false }); toast.error(t('common.networkShort')); });
   }
 
   scrollToEnd() {
@@ -259,14 +260,14 @@ export default class Messages extends React.Component {
     const { conv, draft, sending } = this.state;
     const text = draft.trim();
     if (!conv || sending) return;
-    if (!text) { this.setState({ sendError: 'Write a message first.' }); return; }
-    if (text.length > MESSAGE_MAX) { this.setState({ sendError: 'Keep messages under ' + MESSAGE_MAX + ' characters.' }); return; }
+    if (!text) { this.setState({ sendError: t('msg.writeFirst') }); return; }
+    if (text.length > MESSAGE_MAX) { this.setState({ sendError: t('msg.tooLong', { max: MESSAGE_MAX }) }); return; }
     this.setState({ sending: true, sendError: '' });
     sendMessage(conv.id, text)
       .then(({ ok, status, data }) => {
         if (this.unmounted) return;
         if (!ok) {
-          const msg = errorMessage(data, 'Could not send your message.');
+          const msg = errorMessage(data, t('msg.sendFailed'));
           this.setState({ sending: false, sendError: msg });
           // Blocked: say so, then refresh so the composer is replaced by the notice.
           if (status === 403) {
@@ -280,7 +281,7 @@ export default class Messages extends React.Component {
         this.appendMessages([data]);
         this.loadList();
       })
-      .catch(() => { if (!this.unmounted) this.setState({ sending: false, sendError: 'Unable to reach the server. Your message was not sent.' }); });
+      .catch(() => { if (!this.unmounted) this.setState({ sending: false, sendError: t('msg.notSent') }); });
   }
 
   onComposerKey(e) {
@@ -293,16 +294,16 @@ export default class Messages extends React.Component {
   toggleBlock() {
     const conv = this.state.conv;
     const block = !conv.blocked.byMe;
-    if (block && !window.confirm('Block ' + conv.other.name + "? Neither of you will be able to send messages. You can unblock them later.")) return;
+    if (block && !window.confirm(t('msg.confirmBlock', { name: conv.other.name }))) return;
     setBlocked(conv.id, block)
       .then(({ ok, data }) => {
-        if (!ok) { toast.error(errorMessage(data, 'Could not update the block.')); return; }
+        if (!ok) { toast.error(errorMessage(data, t('msg.blockFailed'))); return; }
         const blocked = data.blocked;
         this.setState({ menuOpen: false, conv: Object.assign({}, this.state.conv, { blocked, canSend: !blocked.byMe && !blocked.byThem && !this.state.conv.messagingBanned }) });
-        toast.success(block ? conv.other.name + ' is blocked.' : conv.other.name + ' is unblocked.');
+        toast.success(tidy(t(block ? 'msg.blocked' : 'msg.unblocked', { name: conv.other.name })));
         this.loadList();
       })
-      .catch(() => toast.error('Unable to reach the server.'));
+      .catch(() => toast.error(t('common.networkShort')));
   }
 
   renderThumb(post, size) {
@@ -317,8 +318,8 @@ export default class Messages extends React.Component {
     if (!list) return <SkeletonBlock lines={5} />;
     if (!list.length) {
       return (
-        <EmptyState icon={Inbox} title="No messages yet" action={<Link className="btn btn-primary" to="/">Browse sales</Link>}>
-          When you message a seller, or a buyer messages you, the conversation shows up here.
+        <EmptyState icon={Inbox} title={t('msg.noneTitle')} action={<Link className="btn btn-primary" to="/">{t('nav.browseSales')}</Link>}>
+          {t('msg.noneText')}
         </EmptyState>
       );
     }
@@ -326,7 +327,7 @@ export default class Messages extends React.Component {
       <ul className="convo-list">
         {list.map((c) => {
           const label = postLabel(c.post);
-          const preview = !c.lastMessage ? 'No messages yet' : c.lastMessage.removed ? 'Message removed by moderator' : (c.lastMessage.mine ? 'You: ' : '') + c.lastMessage.body;
+          const preview = !c.lastMessage ? t('msg.noneTitle') : c.lastMessage.removed ? t('msg.removed') : c.lastMessage.mine ? t('msg.youPrefix', { text: c.lastMessage.body }) : c.lastMessage.body;
           return (
             <li key={c.id}>
               <Link to={'/messages/' + c.id} className={'convo-item' + (c.id === activeId ? ' active' : '') + (c.unreadCount ? ' unread' : '')}
@@ -334,13 +335,13 @@ export default class Messages extends React.Component {
                 {this.renderThumb(c.post)}
                 <span className="convo-main">
                   <span className="convo-top">
-                    <strong className="convo-name">{c.other ? c.other.name : 'Former user'}</strong>
+                    <strong className="convo-name">{c.other ? c.other.name : t('msg.formerUser')}</strong>
                     <span className="convo-time">{c.lastMessageAt ? timeAgo(c.lastMessageAt) : ''}</span>
                   </span>
                   <span className="convo-post">{c.post.title}{label ? ' · ' + label : ''}</span>
                   <span className="convo-preview">{preview}</span>
                 </span>
-                {c.unreadCount ? <span className="nav-badge" aria-label={c.unreadCount + ' unread'}>{c.unreadCount > 99 ? '99+' : c.unreadCount}</span> : null}
+                {c.unreadCount ? <span className="nav-badge" aria-label={t('msg.unread', { count: c.unreadCount })}>{c.unreadCount > 99 ? '99+' : c.unreadCount}</span> : null}
               </Link>
             </li>
           );
@@ -351,8 +352,8 @@ export default class Messages extends React.Component {
 
   renderThread() {
     const { conv, messages, hasMore, threadError, loadingThread, loadingOlder, draft, sending, sendError } = this.state;
-    const back = <Link to="/messages" className="back-link thread-back"><ArrowLeft size={16} aria-hidden="true" />All messages</Link>;
-    if (threadError) return <div className="thread-pane">{back}<EmptyState icon={MessageCircle} title="Conversation not found">{threadError}</EmptyState></div>;
+    const back = <Link to="/messages" className="back-link thread-back"><ArrowLeft size={16} aria-hidden="true" />{t('msg.all')}</Link>;
+    if (threadError) return <div className="thread-pane">{back}<EmptyState icon={MessageCircle} title={t('msg.notFoundTitle')}>{threadError}</EmptyState></div>;
     if (loadingThread || !conv) return <div className="thread-pane">{back}<SkeletonBlock lines={6} /></div>;
     const label = postLabel(conv.post);
     const blocked = conv.blocked || {};
@@ -363,9 +364,9 @@ export default class Messages extends React.Component {
         <header className="thread-header">
           {this.renderThumb(conv.post, 'lg')}
           <div className="thread-heading">
-            <h2 id="thread-title">{conv.other ? conv.other.name : 'Former user'}{conv.other ? <RatingBadge summary={conv.otherRating} personId={conv.other.id} compact /> : null}</h2>
+            <h2 id="thread-title">{conv.other ? conv.other.name : t('msg.formerUser')}{conv.other ? <RatingBadge summary={conv.otherRating} personId={conv.other.id} compact /> : null}</h2>
             <div className="thread-sub">
-              <span className="chip">{conv.role === 'buyer' ? 'Seller' : 'Buyer'}</span>
+              <span className="chip">{conv.role === 'buyer' ? t('post.seller') : t('msg.buyer')}</span>
               {conv.post.canView && conv.post.status !== 'deleted'
                 ? <Link to={'/post/' + conv.post.id}>{conv.post.title}</Link>
                 : <span>{conv.post.title}</span>}
@@ -374,14 +375,14 @@ export default class Messages extends React.Component {
           </div>
           <div className="menu thread-menu" ref={this.menuRef}>
             <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-haspopup="menu" aria-expanded={this.state.menuOpen}
-              aria-label="Conversation options" onClick={() => this.toggleMenu()}><MoreHorizontal size={18} aria-hidden="true" /></button>
+              aria-label={t('msg.options')} onClick={() => this.toggleMenu()}><MoreHorizontal size={18} aria-hidden="true" /></button>
             {this.state.menuOpen ? (
-              <div className="menu-panel" role="menu" aria-label="Conversation options" onKeyDown={(e) => this.onMenuKey(e)}>
+              <div className="menu-panel" role="menu" aria-label={t('msg.options')} onKeyDown={(e) => this.onMenuKey(e)}>
                 <button type="button" role="menuitem" className="menu-item" onClick={() => this.toggleBlock()}>
-                  <Ban size={18} aria-hidden="true" />{blocked.byMe ? 'Unblock ' : 'Block '}{conv.other ? conv.other.name : ''}
+                  <Ban size={18} aria-hidden="true" />{t(blocked.byMe ? 'msg.unblockNamed' : 'msg.blockNamed', { name: conv.other ? conv.other.name : '' }).trim()}
                 </button>
                 <button type="button" role="menuitem" className="menu-item menu-item-danger" disabled={conv.reportedByMe} onClick={() => this.openReport()}>
-                  <Flag size={18} aria-hidden="true" />{conv.reportedByMe ? 'Reported' : 'Report conversation'}
+                  <Flag size={18} aria-hidden="true" />{conv.reportedByMe ? t('msg.reported') : t('msg.reportTitle')}
                 </button>
               </div>
             ) : null}
@@ -389,21 +390,21 @@ export default class Messages extends React.Component {
         </header>
         {conv.other ? <RatePanel conversationId={conv.id} iWrote={messages.some((m) => m.mine)}
           refreshKey={[messages.some((m) => m.mine), messages.some((m) => !m.mine), blocked.byMe, blocked.byThem].join()} /> : null}
-        {label && !conv.post.canView ? <Alert tone="warning">This post is no longer available. You can still read this conversation.</Alert> : null}
-        <div className="thread-log" ref={this.logRef} role="log" aria-live="polite" aria-label={'Messages with ' + (conv.other ? conv.other.name : 'former user')} tabIndex="0">
+        {label && !conv.post.canView ? <Alert tone="warning">{t('msg.postGone')}</Alert> : null}
+        <div className="thread-log" ref={this.logRef} role="log" aria-live="polite" aria-label={t('msg.with', { name: conv.other ? conv.other.name : t('msg.formerUserLower') })} tabIndex="0">
           {hasMore ? (
             <div className="thread-older">
-              <button type="button" className="btn btn-ghost btn-sm" disabled={loadingOlder} onClick={() => this.loadOlder()}>{loadingOlder ? <Spinner /> : null}Load older messages</button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={loadingOlder} onClick={() => this.loadOlder()}>{loadingOlder ? <Spinner /> : null}{t('msg.loadOlder')}</button>
             </div>
           ) : null}
-          {!messages.length ? <p className="thread-empty muted">Say hello. Ask about the items, times or prices.</p> : null}
+          {!messages.length ? <p className="thread-empty muted">{t('msg.sayHello')}</p> : null}
           {messages.map((m) => (
             <div key={m.id} className={'bubble-row' + (m.mine ? ' mine' : '')}>
-              <span className="sr-only">{m.mine ? 'You' : (conv.other ? conv.other.name : 'Them')}: </span>
+              <span className="sr-only">{t('msg.speaker', { name: m.mine ? t('msg.you') : (conv.other ? conv.other.name : t('msg.them')) })} </span>
               {!m.mine ? <span className="avatar avatar-sm" aria-hidden="true">{initialsOf(conv.other && conv.other.name)}</span> : null}
               <div className={'bubble' + (m.removed ? ' bubble-removed' : '')}>
                 {m.removed
-                  ? <p className="bubble-text"><ShieldOff size={14} aria-hidden="true" /> Removed by moderator</p>
+                  ? <p className="bubble-text"><ShieldOff size={14} aria-hidden="true" /> {t('msg.removedShort')}</p>
                   : <p className="bubble-text">{linkify(m.body)}</p>}
                 <time className="bubble-time" dateTime={m.createdAt}>{clock(m.createdAt)}</time>
               </div>
@@ -412,21 +413,21 @@ export default class Messages extends React.Component {
         </div>
         {conv.canSend ? (
           <form className="composer" onSubmit={(e) => this.send(e)}>
-            <label htmlFor="composer-input" className="sr-only">Message {conv.other ? conv.other.name : ''}</label>
+            <label htmlFor="composer-input" className="sr-only">{t('msg.messageNamed', { name: conv.other ? conv.other.name : '' }).trim()}</label>
             <textarea id="composer-input" ref={this.inputRef} className="textarea composer-input" rows={1} maxLength={MESSAGE_MAX} value={draft}
-              placeholder="Write a message…" aria-describedby="composer-hint" aria-invalid={sendError ? 'true' : undefined}
+              placeholder={t('msg.placeholder')} aria-describedby="composer-hint" aria-invalid={sendError ? 'true' : undefined}
               onChange={(e) => this.setState({ draft: e.target.value, sendError: '' })} onKeyDown={(e) => this.onComposerKey(e)} />
-            <button type="submit" className="btn btn-primary composer-send" disabled={sending || !draft.trim()} aria-label="Send message">
-              {sending ? <Spinner /> : <Send size={16} aria-hidden="true" />}<span className="hide-mobile">Send</span>
+            <button type="submit" className="btn btn-primary composer-send" disabled={sending || !draft.trim()} aria-label={t('msg.send')}>
+              {sending ? <Spinner /> : <Send size={16} aria-hidden="true" />}<span className="hide-mobile">{t('msg.sendShort')}</span>
             </button>
             <div id="composer-hint" className="composer-hint field-hint">
               {sendError ? <span className="field-error" role="alert"><AlertTriangle size={14} aria-hidden="true" />{sendError}</span>
-                : left < 200 ? left + ' characters left' : 'Enter to send · Shift+Enter for a new line'}
+                : left < 200 ? t('common.charsLeft', { count: left }) : t('msg.enterHint')}
             </div>
           </form>
         ) : (
           <Alert tone="info" className="composer-blocked">
-            {conv.messagingBanned ? <p>A moderator has turned off messaging for your account. You can still read your conversations.</p> : blocked.byMe ? <p>You blocked {endSentence(conv.other ? conv.other.name : 'this person')} Unblock them to send messages.</p> : <p>You can't reply to this conversation.</p>}
+            {conv.messagingBanned ? <p>{t('msg.banned')}</p> : blocked.byMe ? <p>{tidy(t('msg.youBlocked', { name: conv.other ? conv.other.name : t('msg.thisPerson') }))}</p> : <p>{t('msg.cantReply')}</p>}
           </Alert>
         )}
         {this.state.reportOpen ? this.renderReportDialog() : null}
@@ -440,7 +441,7 @@ export default class Messages extends React.Component {
       if (!ready) return <div className="container"><SkeletonBlock lines={4} /></div>;
       return (
         <div className="container container-narrow">
-          <EmptyState icon={LogIn} title="Log in to see your messages" action={<Link className="btn btn-primary" to="/login">Log in</Link>}>Messages between buyers and sellers are private to the two of you.</EmptyState>
+          <EmptyState icon={LogIn} title={t('msg.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('msg.private')}</EmptyState>
         </div>
       );
     }
@@ -448,13 +449,13 @@ export default class Messages extends React.Component {
     return (
       <div className={'container messages-page' + (hasThread ? ' has-thread' : '')}>
         <header className="page-header messages-header">
-          <div><h1>Messages</h1></div>
+          <div><h1>{t('nav.messages')}</h1></div>
         </header>
         <div className="messages-layout">
-          <nav className="convo-pane" aria-label="Conversations">{this.renderList()}</nav>
+          <nav className="convo-pane" aria-label={t('msg.conversations')}>{this.renderList()}</nav>
           {hasThread ? this.renderThread() : (
             <div className="thread-pane thread-placeholder">
-              <EmptyState icon={MessageCircle} title="Pick a conversation">Choose a conversation on the left to read and reply.</EmptyState>
+              <EmptyState icon={MessageCircle} title={t('msg.pickTitle')}>{t('msg.pickText')}</EmptyState>
             </div>
           )}
         </div>

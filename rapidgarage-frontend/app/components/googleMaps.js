@@ -1,6 +1,7 @@
 // Loads the Google Maps JavaScript API once. The optional build-time fallback
 // key comes from VITE_GOOGLE_MAPS_API_KEY (see .env.example). Never hard-code a key here.
 import { apiFetch } from '../api';
+import { intlLocale } from '../i18n';
 
 // Build-time key: last-resort fallback for static deployments.
 export const BUILD_MAPS_API_KEY = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '').trim();
@@ -55,7 +56,7 @@ export function loadGoogleMaps(key) {
     };
     const script = document.createElement('script');
     script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) +
-      '&v=weekly&loading=async&callback=' + cb;
+      '&v=weekly&loading=async&language=' + encodeURIComponent(intlLocale()) + '&callback=' + cb;
     script.async = true;
     script.onerror = () => {
       loadPromise = null;

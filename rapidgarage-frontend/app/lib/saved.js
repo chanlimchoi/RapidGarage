@@ -2,6 +2,7 @@
 // logged-in user has saved. App calls setUser() whenever /me changes.
 import { apiFetch, errorMessage } from '../api';
 import toast, { dismiss } from '../components/toast';
+import { t } from '../i18n';
 
 let user;          // undefined until App knows; null when logged out
 let ids = new Set();
@@ -59,14 +60,14 @@ export function toggle(post) {
   emit();
   return apiFetch('/saved/' + id, { method: want ? 'PUT' : 'DELETE' })
     .then(({ ok, data }) => {
-      if (!ok) throw new Error(errorMessage(data, want ? "Couldn't save this sale." : "Couldn't remove this sale."));
+      if (!ok) throw new Error(errorMessage(data, want ? t('saved.saveFailed') : t('saved.removeFailed')));
       if (lastToast) dismiss(lastToast);
-      lastToast = toast.success(want ? 'Saved. Find it under Saved.' : 'Removed from Saved.');
+      lastToast = toast.success(want ? t('saved.savedToast') : t('saved.removedToast'));
       return want;
     })
     .catch((err) => {
       if (want) ids.delete(id); else ids.add(id);
-      toast.error(err.message && err.message !== 'Failed to fetch' ? err.message : 'Network problem. Please try again.');
+      toast.error(err.message && err.message !== 'Failed to fetch' ? err.message : t('common.networkProblem'));
       return !want;
     })
     .then((state) => { pending.delete(id); emit(); return state; });

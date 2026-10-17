@@ -6,6 +6,7 @@ import PostCard from './PostCard';
 import { EmptyState, SkeletonGrid } from './ui';
 import { initials, displayName } from '../lib/format';
 import toast from './toast';
+import { t } from '../i18n';
 
 // The signed-in user's profile and listings; the user comes from GET /me (via App).
 class Profile extends Component {
@@ -33,18 +34,18 @@ class Profile extends Component {
     this.setState({ loading: true });
     apiFetch('/allbyuserId/' + user.id)
       .then(({ ok, data }) => this.setState({ loading: false, listResult: ok && Array.isArray(data) ? data : [] }))
-      .catch(() => { this.setState({ loading: false, listResult: [] }); toast.error('Could not load your listings.'); });
+      .catch(() => { this.setState({ loading: false, listResult: [] }); toast.error(t('profile.loadFailed')); });
   }
 
   deletePost(post) {
-    if (!window.confirm('Delete "' + post.title + '"? This removes its photos too.')) return;
+    if (!window.confirm(t('profile.confirmDelete', { title: post.title }))) return;
     apiFetch('/post/' + post.id, { method: 'DELETE' })
       .then(({ ok, data }) => {
-        if (!ok) { toast.error(errorMessage(data, 'Could not delete the post.')); return; }
-        toast.success('Deleted “' + post.title + '”.');
+        if (!ok) { toast.error(errorMessage(data, t('profile.deleteFailed'))); return; }
+        toast.success(t('profile.deleted', { title: post.title }));
         this.setState({ listResult: this.state.listResult.filter((p) => p.id !== post.id) });
       })
-      .catch(() => toast.error('Unable to reach the server. Please try again.'));
+      .catch(() => toast.error(t('common.network')));
   }
 
   render() {
@@ -53,7 +54,7 @@ class Profile extends Component {
       if (!this.props.ready) return <div className="container"><SkeletonGrid count={3} className="card-grid-wide" /></div>;
       return (
         <div className="container container-narrow">
-          <EmptyState icon={LogIn} title="Please log in to see your profile" action={<Link className="btn btn-primary" to="/login">Log in</Link>} />
+          <EmptyState icon={LogIn} title={t('profile.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>} />
         </div>
       );
     }
@@ -64,30 +65,30 @@ class Profile extends Component {
           <span className="avatar" aria-hidden="true">{initials(user)}</span>
           <div>
             <h1>{displayName(user)}</h1>
-            <p>{user.email}{user.role === 'admin' ? ' · Admin' : ''}</p>
+            <p>{user.email}{user.role === 'admin' ? t('profile.adminSuffix') : ''}</p>
           </div>
           <div className="row">
-            <Link className="btn btn-secondary" to="/settings"><SettingsIcon size={16} aria-hidden="true" />Settings</Link>
-            <Link className="btn btn-primary" to="/newpost"><Plus size={16} aria-hidden="true" />Post a sale</Link>
+            <Link className="btn btn-secondary" to="/settings"><SettingsIcon size={16} aria-hidden="true" />{t('nav.settings')}</Link>
+            <Link className="btn btn-primary" to="/newpost"><Plus size={16} aria-hidden="true" />{t('nav.postSale')}</Link>
           </div>
         </section>
-        <div className="browse-toolbar"><h2>Your listings{!this.state.loading ? ' (' + list.length + ')' : ''}</h2></div>
+        <div className="browse-toolbar"><h2>{this.state.loading ? t('profile.yourListings') : t('profile.yourListingsCount', { count: list.length })}</h2></div>
         {this.state.loading ? <SkeletonGrid count={3} className="card-grid-wide" /> : list.length ? (
           <div className="card-grid card-grid-wide">
             {list.map((post) => (
               <PostCard key={post.id} post={post} actions={(
                 <React.Fragment>
-                  <Link className="btn btn-secondary btn-sm" to={'/post/' + post.id}><Eye size={14} aria-hidden="true" />View</Link>
-                  <Link className="btn btn-secondary btn-sm" to={'/post/' + post.id + '/edit'}><Pencil size={14} aria-hidden="true" />Edit</Link>
-                  <button type="button" className="btn btn-danger btn-sm" onClick={() => this.deletePost(post)} aria-label={'Delete ' + post.title}><Trash2 size={14} aria-hidden="true" />Delete</button>
+                  <Link className="btn btn-secondary btn-sm" to={'/post/' + post.id}><Eye size={14} aria-hidden="true" />{t('common.view')}</Link>
+                  <Link className="btn btn-secondary btn-sm" to={'/post/' + post.id + '/edit'}><Pencil size={14} aria-hidden="true" />{t('common.edit')}</Link>
+                  <button type="button" className="btn btn-danger btn-sm" onClick={() => this.deletePost(post)} aria-label={t('common.deleteNamed', { name: post.title })}><Trash2 size={14} aria-hidden="true" />{t('common.delete')}</button>
                 </React.Fragment>
               )} />
             ))}
           </div>
         ) : (
-          <EmptyState icon={Store} title="You haven't posted any sales yet"
-            action={<Link className="btn btn-primary" to="/newpost"><Plus size={16} aria-hidden="true" />Post your first sale</Link>}>
-            List a garage, yard or moving sale and it will show up here.
+          <EmptyState icon={Store} title={t('profile.emptyTitle')}
+            action={<Link className="btn btn-primary" to="/newpost"><Plus size={16} aria-hidden="true" />{t('profile.firstSale')}</Link>}>
+            {t('profile.emptyText')}
           </EmptyState>
         )}
       </div>
