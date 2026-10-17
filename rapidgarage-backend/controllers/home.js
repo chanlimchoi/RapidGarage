@@ -4,7 +4,10 @@ const { badRequest, notFound, serverError, parseId } = require('../lib/http');
 const { ZIP_RE } = require('../lib/validate');
 
 const router = express.Router();
-const newestFirst = { order: [['createdAt', 'DESC']] };
+const newestFirst = {
+  include: [{ model: models.PostPhoto, as: 'photos' }],
+  order: [['createdAt', 'DESC'], [{ model: models.PostPhoto, as: 'photos' }, 'position', 'ASC']],
+};
 
 // Destroy the passport session.
 router.post('/logout', (req, res, next) => {

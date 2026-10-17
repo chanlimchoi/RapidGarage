@@ -9,6 +9,7 @@ import Login from './user/Login';
 import Logout from './user/Logout';
 import SignUp from './user/SignUp';
 import NewPost from './post/NewPost';
+import EditPost from './post/EditPost';
 import Settings from './user/Settings';
 import Admin from './admin/Admin';
 import { apiFetch } from './api';
@@ -106,6 +107,8 @@ class App extends Component {
               <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
               <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />
               <Route path='/newpost' render={(props) => <NewPost {...props} user={user} />} />
+              <Route path='/post/:id/edit' render={(props) => <EditPost {...props} user={user} />} />
+              <Route path='/post/:id' render={(props) => <Post {...props} user={user} />} />
               <Route path='/profile' render={(props) => <Profile {...props} user={user} />} />
             </Switch>
             </div>

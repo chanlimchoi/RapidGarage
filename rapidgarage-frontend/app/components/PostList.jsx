@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Post from '../post/Post';
+import { Link } from 'react-router-dom';
 import Map from './Map';
 
 function resultList(props){
@@ -7,7 +7,11 @@ function resultList(props){
         
     <div className="panel-info">
       <div className="panel-heading">
-      <span><h4>{props.title} </h4><span className="glyphicon glyphicon-time"></span> Post by {props.userId}, post on {props.updatedAt} </span>
+      {props.photos && props.photos.length ? (
+        <Link to={'/post/' + props.id}><img className="post-thumb" src={props.photos[0].thumbUrl} alt={props.title}
+          style={{ float: 'right', width: 72, height: 72, objectFit: 'cover', borderRadius: 4, marginLeft: 8 }} /></Link>
+      ) : null}
+      <span><h4><Link to={'/post/' + props.id}>{props.title}</Link> {props.photos && props.photos.length > 1 ? <small>({props.photos.length} photos)</small> : null}</h4><span className="glyphicon glyphicon-time"></span> Post by {props.userId}, post on {props.updatedAt} </span>
       </div>
       <div className="panel-body">
         <h5><span className="label label-danger">Devices</span> <span className="label label-primary">Furniture</span></h5>

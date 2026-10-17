@@ -31,3 +31,28 @@ export function fetchMe() {
     .then(({ ok, data }) => (ok && data && data.user ? data.user : null))
     .catch(() => null);
 }
+
+export const MAX_PHOTOS = 5;
+export const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
+export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+// Upload File objects to a post (multipart field "photos").
+// Resolves to { ok, status, data } like apiFetch.
+export function uploadPhotos(postId, files) {
+  const form = new FormData();
+  files.forEach((f) => form.append('photos', f, f.name));
+  return fetch('/api/post/' + postId + '/photos', { method: 'POST', body: form, credentials: 'same-origin' })
+    .then((response) => response.text().then((text) => {
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+      return { ok: response.ok, status: response.status, data };
+    }));
+}
+
+export function deletePhoto(postId, photoId) {
+  return apiFetch('/post/' + postId + '/photos/' + photoId, { method: 'DELETE' });
+}
+
+export function canEditPost(user, post) {
+  return !!user && !!post && (user.id === post.userId || user.role === 'admin');
+}
