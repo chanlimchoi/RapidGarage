@@ -7,6 +7,7 @@ import { saleBadge } from '../lib/schedule';
 import { formatMiles } from '../lib/format';
 import { t } from '../i18n';
 import { tx } from '../i18n/rich';
+import { groupForMap, pinCount } from '../lib/events';
 
 const MILE_M = 1609.344;
 const hasCoords = (p) => typeof p.lat === 'number' && typeof p.lng === 'number';
@@ -85,7 +86,7 @@ class Map extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.posts !== this.props.posts || prevProps.center !== this.props.center || prevProps.radius !== this.props.radius || prevProps.start !== this.props.start) this.renderMarkers();
+    if (prevProps.posts !== this.props.posts || prevProps.events !== this.props.events || prevProps.center !== this.props.center || prevProps.radius !== this.props.radius || prevProps.start !== this.props.start) this.renderMarkers();
     else if (prevProps.selectedId !== this.props.selectedId) this.showSelected();
     // Logging in/out or saving a key in Settings can change which key applies.
     const sig = (u) => (u ? u.id + ':' + (u.mapsKeyLast4 || '') : '');
@@ -129,6 +130,47 @@ class Map extends React.Component {
     }
     this.info.setContent(el);
     this.info.open(this.map, marker);
+  }
+
+  // A neighborhood sale's pin: its name, area, sale count and a link to its page.
+  openEventInfo(group, marker) {
+    const ev = group.event;
+    const el = document.createElement('div');
+    el.className = 'map-info-event';
+    const kicker = document.createElement('div');
+    kicker.className = 'map-info-kicker';
+    kicker.textContent = t('ev.kicker');
+    const strong = document.createElement('strong');
+    strong.textContent = ev.name;
+    const area = document.createElement('div');
+    area.textContent = ev.areaLabel;
+    const count = document.createElement('div');
+    count.textContent = t('ev.saleCount', { count: pinCount(group) });
+    const link = document.createElement('a');
+    link.href = '/events/' + ev.id;
+    link.textContent = t('ev.viewEvent');
+    link.addEventListener('click', (e) => {
+      if (this.props.onOpenEvent) { e.preventDefault(); this.props.onOpenEvent(ev.id); }
+    });
+    [kicker, strong, area, count, link].forEach((n) => el.appendChild(n));
+    this.info.setContent(el);
+    this.info.open(this.map, marker);
+  }
+
+  // One pin per neighborhood sale (not clustered with single sales), labelled with its count.
+  addEventMarker(group, bounds) {
+    const maps = this.maps;
+    const ev = group.event;
+    const loc = { lat: ev.lat, lng: ev.lng };
+    const marker = new maps.Marker({
+      position: loc, map: this.map, title: ev.name, zIndex: 1000,
+      label: { text: String(pinCount(group)), color: '#fff', fontWeight: '700' },
+      icon: { path: maps.SymbolPath.CIRCLE, scale: 16, fillColor: accentColor(), fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 },
+    });
+    marker.addListener('click', () => this.openEventInfo(group, marker));
+    this.markers.push(marker);
+    group.posts.forEach((p) => { this.markerById[p.id] = marker; });
+    bounds.extend(loc);
   }
 
   // List -> map: pan to the selected post and open its info window.
@@ -200,12 +242,15 @@ class Map extends React.Component {
       } else this.fit(bounds);
       return;
     }
+    // Sales in a shown neighborhood sale collapse into that event's pin.
+    const grouped = groupForMap(all, this.props.events);
+    grouped.events.forEach((g) => this.addEventMarker(g, bounds));
     // Posts with stored coordinates need no geocoding.
-    all.filter(hasCoords).forEach((p) => this.addMarker(p, { lat: p.lat, lng: p.lng }, bounds));
+    grouped.singles.filter(hasCoords).forEach((p) => this.addMarker(p, { lat: p.lat, lng: p.lng }, bounds));
     this.fit(bounds);
     this.showSelected();
     // Older posts without coordinates: geocode in the browser (capped, sequential).
-    const rest = all.filter((p) => !hasCoords(p) && addressOf(p)).slice(0, MAX_GEOCODE);
+    const rest = grouped.singles.filter((p) => !hasCoords(p) && addressOf(p)).slice(0, MAX_GEOCODE);
     rest.reduce((chain, post) => chain.then(() => {
       if (token !== this.renderToken || !this.mounted) return null;
       return geocode(maps, this.geocoder, addressOf(post)).then((loc) => {

@@ -145,15 +145,34 @@ function renderEmail(user, items) {
   const subject = items.length === 1
     ? L('mail.subjectOne', { title: first.post.title })
     : L('mail.subjectMany', { count: items.length });
-  const lines = items.map((i) => {
+  // Sales of the same neighborhood sale (i.event) collapse into one entry that
+  // links to the event page; a lone sale just says which event it is part of.
+  const away = (d) => (d !== null && d !== undefined ? L('mail.away', { distance: i18n.formatNumber(lang, d) }) : null);
+  const perEvent = new Map();
+  items.forEach((i) => { if (i.event) perEvent.set(i.event.id, (perEvent.get(i.event.id) || []).concat([i])); });
+  const done = new Set();
+  const lines = [];
+  items.forEach((i) => {
+    const group = i.event ? perEvent.get(i.event.id) : null;
+    if (group && group.length > 1) {
+      if (done.has(i.event.id)) return;
+      done.add(i.event.id);
+      lines.push({
+        title: L('mail.eventTitle', { name: i.event.name }),
+        url: base + '/events/' + i.event.id,
+        meta: [L('mail.eventSales', { count: group.length }), away(i.distanceMiles)].filter(Boolean).join(' · '),
+        alert: name(i.alert),
+      });
+      return;
+    }
     const price = priceIn(lang, i.post);
     const where = [i.post.city, i.post.state].filter(Boolean).join(', ');
-    return {
+    lines.push({
       title: i.post.title,
       url: base + '/post/' + i.post.id,
-      meta: [price, i.distanceMiles !== null && i.distanceMiles !== undefined ? L('mail.away', { distance: i18n.formatNumber(lang, i.distanceMiles) }) : null, where, L('mail.by', { name: publicName(i.seller) })].filter(Boolean).join(' · '),
+      meta: [price, away(i.distanceMiles), where, L('mail.by', { name: publicName(i.seller) }), i.event ? L('mail.partOf', { name: i.event.name }) : null].filter(Boolean).join(' · '),
       alert: name(i.alert),
-    };
+    });
   });
   const hello = user.firstName ? L('mail.hi', { name: user.firstName }) : L('mail.hiAnon');
   const text = [
@@ -256,6 +275,9 @@ async function processQueue(now) {
     summary.skipped += drop.length;
     if (!user || !items.length) { await finish(items.map((i) => i.row), { status: 'skipped', lastError: 'no_user', claimToken: null }); continue; }
     items.sort((a, b) => (a.distanceMiles || 0) - (b.distanceMiles || 0));
+    // Neighborhood sales these sales are part of (visible, not ended).
+    const evMap = await require('./events').eventsForPosts(items.map((i) => i.post.id), null);
+    items.forEach((i) => { i.event = evMap.get(i.post.id) || null; });
     const email = renderEmail(user, items);
     try {
       await mailer.send({ to: user.email, subject: email.subject, text: email.text, html: email.html, headers: email.headers });

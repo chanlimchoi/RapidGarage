@@ -6,6 +6,10 @@
 //   free=true: free sales only (wins over maxPrice)
 //   when=today|weekend|now: sales open in that window (sale's local time)
 //   keyword: words that must each match the title, description or an unsold item
+//   neighborhood=true: only sales that are part of a neighborhood sale
+// Results carry `event: { id, name }` for sales in a neighborhood sale, and a
+// distance search also returns `events`: neighborhood sales centered within
+// the radius (with at least one sale), so the map can show one pin for each.
 // Ended sales never show up.
 // Without a usable geocoding key, q falls back to a plain text/zip match
 // (no distances) and the response says so in `notice`.
@@ -20,6 +24,7 @@ const { PRICE_CAP, priceWhere } = require('../lib/price');
 const { visibleWhere } = require('../lib/moderation');
 const schedule = require('../lib/schedule');
 const itemsLib = require('../lib/items');
+const eventsLib = require('../lib/events');
 
 const MAX_PAGE_SIZE = 50;
 const MAX_CANDIDATES = 5000; // hard cap on rows pulled by the bounding box
@@ -70,6 +75,11 @@ function parseQuery(query) {
   const w = schedule.parseWhen(query.when);
   if (w.error) errors.when = w.error;
   else out.when = w.when;
+  const nb = query.neighborhood;
+  if (nb !== undefined && nb !== '') {
+    if (nb === 'true' || nb === '1') out.neighborhood = true;
+    else if (nb !== 'false' && nb !== '0') errors.neighborhood = 'neighborhood must be true or false.';
+  }
   const k = itemsLib.parseKeyword(query.keyword);
   if (k.error) errors.keyword = k.error;
   else if (k.words) { out.words = k.words; out.keyword = k.keyword; }
@@ -108,6 +118,10 @@ async function nearbyRanked(center, radius, filter, user) {
     const ids = await itemsLib.keywordPostIds(models, filter.words, kept.map((r) => r.id));
     kept = kept.filter((r) => ids.has(r.id));
   }
+  if (filter.neighborhood) {
+    const inEvent = await eventsLib.eventsForPosts(kept.map((r) => r.id), user);
+    kept = kept.filter((r) => inEvent.has(r.id));
+  }
   return kept
     .map((p) => ({ id: p.id, createdAt: new Date(p.createdAt), distance: geo.haversineMiles(center, { lat: p.lat, lng: p.lng }) }))
     .filter((r) => r.distance <= radius)
@@ -135,6 +149,10 @@ async function textMatch(q, filter, user) {
     : { [Op.or]: ['street', 'city', 'state', 'zipCode', 'title'].map((f) => ({ [f]: { [op]: like } })) };
   const found = await models.Post.findAll({ where: and(where, priceWhere(Op, filter), visibleWhere(user), schedule.notEndedWhere()), include: [photoInclude, daysInclude], order: [['createdAt', 'DESC'], photoOrder] });
   let posts = filter.when ? found.filter((p) => schedule.matchesWhen(p, filter.when)) : found;
+  if (filter.neighborhood) {
+    const inEvent = await eventsLib.eventsForPosts(posts.map((p) => p.id), user);
+    posts = posts.filter((p) => inEvent.has(p.id));
+  }
   let matched = {};
   if (filter.words) {
     const ids = await itemsLib.keywordPostIds(models, filter.words, posts.map((p) => p.id));
@@ -148,7 +166,22 @@ function filterOf(v) {
   const out = { maxPrice: v.maxPrice !== undefined ? v.maxPrice : null, freeOnly: !!v.freeOnly };
   if (v.when) out.when = v.when;
   if (v.keyword) out.keyword = v.keyword;
+  if (v.neighborhood) out.neighborhood = true;
   return out;
+}
+
+async function withEvents(list, user) {
+  const map = await eventsLib.eventsForPosts(list.map((p) => p.id), user);
+  return list.map((p) => (map.has(p.id) ? Object.assign(p, { event: map.get(p.id) }) : p));
+}
+
+// Neighborhood sales centered in the search circle that have a sale to visit.
+async function nearbyEvents(center, radius, user) {
+  const found = await eventsLib.nearby(center, radius, user);
+  if (!found.length) return [];
+  const counts = await eventsLib.publicSaleCounts(found.map((x) => x.e.id));
+  return found.filter((x) => counts.get(x.e.id) > 0)
+    .map((x) => eventsLib.toJSON(x.e, user, { saleCount: counts.get(x.e.id), distanceMiles: Math.round(x.d * 10) / 10 }));
 }
 
 const NOTICES = {
@@ -172,15 +205,16 @@ router.get('/', async (req, res) => {
       } else if (r.status === 'not_found') {
         return sendError(res, 404, 'location_not_found', 'Could not find that address or zip code.');
       } else {
-        const items = await textMatch(values.q, values, req.user);
+        const items = await withEvents(await textMatch(values.q, values, req.user), req.user);
         return res.json(Object.assign({ mode: 'text', center: null, radius: values.radius, filter: filterOf(values), notice: { code: r.status, message: i18n.translate(i18n.requestLang(req), NOTICES[r.status] || NOTICES.error) } },
-          paginate(items, values.page, values.pageSize)));
+          paginate(items, values.page, values.pageSize), { events: [] }));
       }
     }
     const ranked = await nearbyRanked(center, values.radius, values, req.user);
     const pageInfo = paginate(ranked, values.page, values.pageSize);
-    pageInfo.results = await loadPage(pageInfo.results, values.words);
-    return res.json(Object.assign({ mode: 'distance', center, radius: values.radius, filter: filterOf(values), notice: null }, pageInfo));
+    pageInfo.results = await withEvents(await loadPage(pageInfo.results, values.words), req.user);
+    const events = await nearbyEvents(center, values.radius, req.user);
+    return res.json(Object.assign({ mode: 'distance', center, radius: values.radius, filter: filterOf(values), notice: null }, pageInfo, { events }));
   } catch (err) {
     return serverError(res, err);
   }

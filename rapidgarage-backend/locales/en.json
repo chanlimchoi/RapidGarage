@@ -42,6 +42,14 @@
   "flyer.signDay": "{wd} {md}",
   "flyer.join": " & ",
   "flyer.qrAlt": "QR code for {url}",
+  "flyer.headline.neighborhood": "Neighborhood sale",
+  "flyer.eventSales": "Sales taking part",
+  "flyer.eventScanHint": "See every sale on one map, with dates and items.",
+  "flyer.eventScanForMap": "Scan for the map",
+  "flyer.moreSales": {
+   "one": "+ {count} more sale",
+   "other": "+ {count} more sales"
+  },
   "mail.subjectOne": "New garage sale near you: {title}",
   "mail.subjectMany": {
    "one": "{count} new garage sale near you",
@@ -79,7 +87,13 @@
    "other": "(+{count} more)"
   },
   "flyer.docFlyer": "{title} (flyer)",
-  "flyer.docSign": "{title} (sign)"
+  "flyer.docSign": "{title} (sign)",
+  "mail.eventTitle": "Neighborhood sale: {name}",
+  "mail.eventSales": {
+   "one": "{count} sale",
+   "other": "{count} sales"
+  },
+  "mail.partOf": "part of {name}"
  },
  "messages": {
   "Login required.": "Login required.",
@@ -277,6 +291,44 @@
   "Pick a pickup time in the future.": "Pick a pickup time in the future.",
   "Pick a pickup time within the next {n} days.": "Pick a pickup time within the next {n} days.",
   "Pick a pickup time before the sale ends.": "Pick a pickup time before the sale ends.",
-  "Hold for 1 to {n} hours.": "Hold for 1 to {n} hours."
+  "Hold for 1 to {n} hours.": "Hold for 1 to {n} hours.",
+  "Give the neighborhood sale a name.": "Give the neighborhood sale a name.",
+  "Description must be text.": "Description must be text.",
+  "Keep the description under {n} characters.": "Keep the description under {n} characters.",
+  "Name the area, like a neighborhood or a few streets.": "Name the area, like a neighborhood or a few streets.",
+  "Keep the area under {n} characters.": "Keep the area under {n} characters.",
+  "{field} must be one of {list} (miles).": "{field} must be one of {list} (miles).",
+  "The area can't be changed after the neighborhood sale is created.": "The area can't be changed after the neighborhood sale is created.",
+  "Pick the days of the neighborhood sale.": "Pick the days of the neighborhood sale.",
+  "A neighborhood sale can run at most {n} days.": "A neighborhood sale can run at most {n} days.",
+  "A moderator has hidden this sale, so it can't join a neighborhood sale.": "A moderator has hidden this sale, so it can't join a neighborhood sale.",
+  "Your sale needs an address on the map to join a neighborhood sale.": "Your sale needs an address on the map to join a neighborhood sale.",
+  "Your sale is outside this neighborhood sale's area.": "Your sale is outside this neighborhood sale's area.",
+  "Your sale needs at least one day on the neighborhood sale's dates.": "Your sale needs at least one day on the neighborhood sale's dates.",
+  "Event id must be a positive integer.": "Event id must be a positive integer.",
+  "Neighborhood sale not found.": "Neighborhood sale not found.",
+  "Only the organizer can do that.": "Only the organizer can do that.",
+  "Only the seller can add this sale to a neighborhood sale.": "Only the seller can add this sale to a neighborhood sale.",
+  "Invalid neighborhood sale.": "Invalid neighborhood sale.",
+  "You already organize {n} upcoming neighborhood sales. Wait until one ends.": "You already organize {n} upcoming neighborhood sales. Wait until one ends.",
+  "You have created a lot of neighborhood sales today. Please try again tomorrow.": "You have created a lot of neighborhood sales today. Please try again tomorrow.",
+  "Couldn't find that area. Try a street and city, or use your location.": "Couldn't find that area. Try a street and city, or use your location.",
+  "Couldn't look up that area right now. Use your location instead.": "Couldn't look up that area right now. Use your location instead.",
+  "Invalid request.": "Invalid request.",
+  "Choose one of your sales.": "Choose one of your sales.",
+  "A moderator has hidden this neighborhood sale.": "A moderator has hidden this neighborhood sale.",
+  "This neighborhood sale has ended.": "This neighborhood sale has ended.",
+  "You can't join this neighborhood sale.": "You can't join this neighborhood sale.",
+  "This sale is already part of this neighborhood sale.": "This sale is already part of this neighborhood sale.",
+  "This sale is already part of another neighborhood sale. Leave it first.": "This sale is already part of another neighborhood sale. Leave it first.",
+  "This neighborhood sale is full.": "This neighborhood sale is full.",
+  "You can't approve this sale.": "You can't approve this sale.",
+  "That sale is not part of this neighborhood sale.": "That sale is not part of this neighborhood sale.",
+  "Only the organizer or the seller can do that.": "Only the organizer or the seller can do that.",
+  "You can't report your own neighborhood sale.": "You can't report your own neighborhood sale.",
+  "You already reported this neighborhood sale. A moderator will review it.": "You already reported this neighborhood sale. A moderator will review it.",
+  "Only the organizer can print flyers for this neighborhood sale.": "Only the organizer can print flyers for this neighborhood sale.",
+  "A moderator has hidden this neighborhood sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.": "A moderator has hidden this neighborhood sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.",
+  "Only the organizer and admins can see scan counts.": "Only the organizer and admins can see scan counts."
  }
 }

@@ -12,6 +12,7 @@ router.use('/post', require('./post'));
 router.use('/search', require('./search'));
 router.use('/conversations', require('./conversations'));
 router.use('/holds', require('./holds'));
+router.use('/events', require('./events'));
 router.use('/alerts', require('./alerts'));
 router.use('/saved', require('./saved'));
 router.use('/ratings', require('./ratings'));

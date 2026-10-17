@@ -165,3 +165,28 @@ export function printAssetUrl(postId, file, params) {
   const q = Object.keys(params || {}).filter((k) => params[k] !== undefined && params[k] !== null).map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&');
   return '/api/post/' + postId + '/print/' + file + (q ? '?' + q : '');
 }
+
+// ---- neighborhood sales (controllers/events.js) ----
+export const EVENT_RADII = [0.25, 0.5, 1, 2, 3, 5];
+export const EVENT_MAX_DAYS = 7;
+const qs = (params) => Object.keys(params || {}).filter((k) => params[k] !== undefined && params[k] !== null && params[k] !== '')
+  .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&');
+const jsonBody = (method, body) => ({ method, body: JSON.stringify(body || {}) });
+export const fetchEvents = (params) => apiFetch('/events' + (params ? '?' + qs(params) : ''));
+export const fetchMyEvents = () => apiFetch('/events/mine');
+export const fetchEvent = (id) => apiFetch('/events/' + id);
+export const createEvent = (body) => apiFetch('/events', jsonBody('POST', body));
+export const updateEvent = (id, body) => apiFetch('/events/' + id, jsonBody('PUT', body));
+export const deleteEvent = (id) => apiFetch('/events/' + id, { method: 'DELETE' });
+export const joinEvent = (id, postId) => apiFetch('/events/' + id + '/join', jsonBody('POST', { postId }));
+export const approveParticipant = (id, postId) => apiFetch('/events/' + id + '/participants/' + postId + '/approve', jsonBody('POST'));
+export const removeParticipant = (id, postId) => apiFetch('/events/' + id + '/participants/' + postId, { method: 'DELETE' });
+export const reportEvent = (id, reason, note) => apiFetch('/events/' + id + '/report', jsonBody('POST', { reason, note: note || undefined }));
+export const fetchEventPrint = (id) => apiFetch('/events/' + id + '/print');
+export const eventsForPost = (postId) => apiFetch('/events/for-post/' + postId);
+export const fetchEventReports = () => apiFetch('/admin/events/reports');
+export const moderateEvent = (id, action, note) => apiFetch('/admin/events/' + id + '/moderate', jsonBody('POST', { action, note: note || undefined }));
+export function eventAssetUrl(eventId, file, params) {
+  const q = qs(params);
+  return '/api/events/' + eventId + '/' + file + (q ? '?' + q : '');
+}

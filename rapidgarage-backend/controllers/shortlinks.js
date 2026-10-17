@@ -2,6 +2,8 @@
 // lib/scans.js) and redirects to the post. Unknown, malformed and hidden
 // posts get the same "not available" page, so the link can't be used to tell
 // them apart. Ended sales still redirect (the post page says it ended).
+// Neighborhood sales share the code space: a code that is no post's is looked
+// up among events (redirect to /events/<id>; hidden events are "not available").
 const router = require('express').Router();
 const i18n = require('../lib/i18n');
 const crypto = require('crypto');
@@ -54,6 +56,14 @@ router.get('/:code', async (req, res) => {
   const code = links.normalize(req.params.code);
   try {
     const post = code ? await models.Post.findOne({ where: { shortCode: code }, attributes: ['id', 'userId', 'hidden', 'timeZone'] }) : null;
+    if (!post && code) {
+      const event = await models.SaleEvent.findOne({ where: { shortCode: code }, attributes: ['id', 'organizerId', 'hidden', 'timeZone'] });
+      if (event && !event.hidden) {
+        try { await scans.record(req, event, 'event'); } catch (err) { console.error('scan count failed', err && err.message); }
+        res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex' });
+        return res.redirect(302, links.baseUrl() + '/events/' + event.id);
+      }
+    }
     if (!post || post.hidden) { missed(req); return unavailable(res); }
     try { await scans.record(req, post); } catch (err) { console.error('scan count failed', err && err.message); }
     res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex' });

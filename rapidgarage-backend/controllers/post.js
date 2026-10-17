@@ -10,6 +10,7 @@ const alerts = require('../lib/alerts');
 const schedule = require('../lib/schedule');
 const ratings = require('../lib/ratings');
 const { publicUser } = require('../lib/people');
+const events = require('../lib/events');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -83,7 +84,8 @@ router.get('/:id', loadPost, async (req, res) => {
   try {
     const owner = await models.User.findByPk(req.post.userId, { attributes: ['id', 'firstName', 'lastName'] });
     const seller = owner ? Object.assign(publicUser(owner), { rating: await ratings.summaryOf(owner.id) }) : null;
-    return res.json(Object.assign(req.post.toJSON(), { seller }));
+    const ev = (await events.eventsForPosts([req.post.id], req.user)).get(req.post.id) || null;
+    return res.json(Object.assign(req.post.toJSON(), { seller }, ev ? { event: ev } : {}));
   } catch (err) { return serverError(res, err); }
 });
 

@@ -8,6 +8,14 @@ const { isAdmin } = require('../lib/roles');
 const { publicUser } = require('../lib/people');
 const schedule = require('../lib/schedule');
 const itemsLib = require('../lib/items');
+const events = require('../lib/events');
+
+// Add { event: { id, name } } to posts that are part of a neighborhood sale.
+async function withEvents(list, viewer) {
+  const json = list.map((p) => (typeof p.toJSON === 'function' ? p.toJSON() : p));
+  const map = await events.eventsForPosts(json.map((p) => p.id), viewer);
+  return json.map((p) => (map.has(p.id) ? Object.assign(p, { event: map.get(p.id) }) : p));
+}
 
 // AND a listing filter with the viewer's visibility rule (hidden posts).
 // Ended sales drop out of listings, except the owner's and admins' views of a seller's sales.
@@ -42,11 +50,11 @@ router.get('/allPosts', async (req, res) => {
   try {
     let posts = await models.Post.findAll(Object.assign({ where: visible(req) }, newestFirst));
     if (w.when) posts = posts.filter((p) => schedule.matchesWhen(p, w.when));
-    if (!k.words) return res.json(posts);
+    if (!k.words) return res.json(await withEvents(posts, req.user));
     const ids = await itemsLib.keywordPostIds(models, k.words, posts.map((p) => p.id));
     posts = posts.filter((p) => ids.has(p.id));
     const matched = await itemsLib.matchedItems(models, k.words, posts.map((p) => p.id));
-    return res.json(posts.map((p) => Object.assign(p.toJSON(), { matchedItems: matched[p.id] || [] })));
+    return res.json(await withEvents(posts.map((p) => Object.assign(p.toJSON(), { matchedItems: matched[p.id] || [] })), req.user));
   } catch (err) { return serverError(res, err); }
 });
 

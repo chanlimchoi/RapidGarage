@@ -23,6 +23,10 @@ import PrintFlyer from './print/PrintFlyer';
 import PersonRatings from './ratings/PersonRatings';
 import Saved from './saved/Saved';
 import ItemsEditor from './post/ItemsEditor';
+import EventsIndex from './events/EventsIndex';
+import EventForm from './events/EventForm';
+import EventPage from './events/EventPage';
+import EventPrint from './events/EventPrint';
 import * as savedStore from './lib/saved';
 import * as i18n from './i18n';
 
@@ -131,6 +135,11 @@ class App extends Component {
             <Route path='/post/:id/items' render={(props) => <ItemsEditor {...props} {...common} />} />
             <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} />} />
             <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
+            <Route exact path='/events' render={(props) => <EventsIndex {...props} {...common} />} />
+            <Route path='/events/new' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
+            <Route path='/events/:id/edit' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
+            <Route path='/events/:id/print' render={(props) => <EventPrint {...props} {...common} />} />
+            <Route path='/events/:id' render={(props) => <EventPage {...props} {...common} />} />
             <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
             <Route path='/alerts/unsubscribe' component={Unsubscribe} />
             <Route path='/saved' render={(props) => <Saved {...props} {...common} config={config} />} />

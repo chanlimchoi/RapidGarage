@@ -4,7 +4,9 @@ import { MAX_DAYS, addDays, nextSaturday, zoneNote } from '../lib/schedule';
 import { t } from '../i18n';
 
 // Day-by-day sale times. Controlled: days = [{ date, start, end }].
-export default function ScheduleEditor({ days, timeZone, errors, shownFor, onChange, onBlurRow, disabled }) {
+// legend/required/maxDays/hint: used by the neighborhood sale form (days required, at most 7).
+export default function ScheduleEditor({ days, timeZone, errors, shownFor, onChange, onBlurRow, disabled, legend, required, maxDays, hint }) {
+  const max = maxDays || MAX_DAYS;
   const set = (i, patch) => onChange(days.map((d, j) => (j === i ? Object.assign({}, d, patch) : d)));
   const remove = (i) => onChange(days.filter((_, j) => j !== i));
   const add = () => {
@@ -15,7 +17,7 @@ export default function ScheduleEditor({ days, timeZone, errors, shownFor, onCha
   const zone = zoneNote({ schedule: { timeZone } }) || t('sched.yourZone', { zone: (timeZone || '').replace(/_/g, ' ') });
   return (
     <fieldset className="schedule-fieldset" aria-describedby="schedule-hint">
-      <legend className="field-label">{t('post.when')} <span className="optional"> {t('ui.optional')}</span></legend>
+      <legend className="field-label">{legend || t('post.when')}{required ? null : <span className="optional"> {t('ui.optional')}</span>}</legend>
       {days.length ? (
         <ol className="schedule-rows">
           {days.map((d, i) => {
@@ -48,13 +50,13 @@ export default function ScheduleEditor({ days, timeZone, errors, shownFor, onCha
         </ol>
       ) : <p className="small muted schedule-empty">{t('sched.noDates', { notSet: t('post.datesNotSet') })}</p>}
       <div className="row">
-        <button type="button" className="btn btn-secondary btn-sm" onClick={add} disabled={disabled || days.length >= MAX_DAYS}>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={add} disabled={disabled || days.length >= max}>
           <CalendarPlus size={16} aria-hidden="true" />{days.length ? t('sched.addAnother') : t('sched.addDay')}
         </button>
       </div>
       {shownFor('schedule') && errors.schedule ? <span className="field-error" role="alert"><AlertCircle size={14} aria-hidden="true" />{errors.schedule}</span> : null}
       {errors.timeZone ? <span className="field-error" role="alert"><AlertCircle size={14} aria-hidden="true" />{errors.timeZone}</span> : null}
-      <span className="field-hint" id="schedule-hint">{zone} {t('sched.dropsOut')}</span>
+      <span className="field-hint" id="schedule-hint">{zone} {hint || t('sched.dropsOut')}</span>
     </fieldset>
   );
 }

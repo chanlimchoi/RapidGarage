@@ -88,6 +88,8 @@ const signWhen = (days, lang) => ft.signLines(lang || 'en', days);
 
 // What goes on the flyer (also used by tests and the HTML print view).
 // opts.lang: 'en' | 'es' | 'ko' | 'zh-CN' (default English).
+// opts.kind 'event': a neighborhood sale (see eventAsPost); its "items" are the
+// participating sales, with the street in the price column.
 function flyerData(post, opts) {
   const o = opts || {};
   const lang = i18n.CODES.includes(o.lang) ? o.lang : 'en';
@@ -98,7 +100,7 @@ function flyerData(post, opts) {
   return {
     lang,
     title: flyerText(post.title) || L(HEADLINES.garage),
-    headline: L(HEADLINES[o.headline] || HEADLINES.garage),
+    headline: L(o.kind === 'event' ? 'flyer.headline.neighborhood' : HEADLINES[o.headline] || HEADLINES.garage),
     street: flyerText(post.street),
     cityLine: flyerText(cityLine),
     price: flyerText(ft.priceIn(lang, post)),
@@ -106,16 +108,17 @@ function flyerData(post, opts) {
     when: scheduleLines(days, lang),
     signWhen: signWhen(days, lang),
     ended,
-    items: unsold.slice(0, o.itemCount || 6).map((i) => ({ name: flyerText(i.name), price: ft.centsIn(lang, i.priceCents) })).filter((i) => i.name),
+    items: unsold.slice(0, o.itemCount || 6).map((i) => ({ name: flyerText(i.name), price: i.label !== undefined ? flyerText(i.label || '') : ft.centsIn(lang, i.priceCents) })).filter((i) => i.name),
     unsoldCount: unsold.length,
     url: o.url,
     text: {
       brand: 'RapidGarage',
-      tagline: L('flyer.tagline'), when: L('flyer.when'), where: L('flyer.where'), prices: L('flyer.prices'), featured: L('flyer.featured'),
+      tagline: L('flyer.tagline'), when: L('flyer.when'), where: L('flyer.where'), prices: L('flyer.prices'),
+      featured: L(o.kind === 'event' ? 'flyer.eventSales' : 'flyer.featured'),
       ended: L('flyer.ended'), seeDates: L('flyer.seeDates'), seeAddress: L('flyer.seeAddress'),
-      scanTitle: L('flyer.scanTitle'), scanHint: L('flyer.scanHint'), listed: L('flyer.listed'),
-      seeListing: L('flyer.seeListing'), scanForItems: L('flyer.scanForItems'),
-      moreWhen: (n) => L('flyer.moreWhen', { count: n }), moreItems: (n) => L('flyer.more', { count: n }),
+      scanTitle: L('flyer.scanTitle'), scanHint: L(o.kind === 'event' ? 'flyer.eventScanHint' : 'flyer.scanHint'), listed: L('flyer.listed'),
+      seeListing: L('flyer.seeListing'), scanForItems: L(o.kind === 'event' ? 'flyer.eventScanForMap' : 'flyer.scanForItems'),
+      moreWhen: (n) => L('flyer.moreWhen', { count: n }), moreItems: (n) => L(o.kind === 'event' ? 'flyer.moreSales' : 'flyer.more', { count: n }),
       upper: (str) => ft.upper(lang, str),
     },
   };
@@ -301,6 +304,16 @@ function drawSign(doc, d, arrow) {
   if (d.price) put(doc, d.price, x0, H - m - 10 - 46, { bold: true, size: fit(doc, d.price, true, 30, 12, aw2, 1), width: aw2, lineBreak: false });
 }
 
+// A neighborhood sale in the shape flyerData reads: its name as the title, the
+// area as the address, its days, and the participating sales as the list.
+function eventAsPost(ev, sales) {
+  return {
+    title: ev.name, street: ev.areaLabel, city: null, state: null, zipCode: null,
+    priceMin: null, priceMax: null, isFree: false, saleDays: ev.days || [],
+    items: (sales || []).map((s, i) => ({ id: i, position: i, sold: false, name: s.title, priceCents: null, label: s.street || '' })),
+  };
+}
+
 // -> Promise<Buffer>. opts.lang picks the flyer's language (default English).
 function buildPdf(post, opts) {
   const o = Object.assign({ layout: 'letter', arrow: 'none', photo: null }, opts);
@@ -316,4 +329,4 @@ function buildPdf(post, opts) {
   return done;
 }
 
-module.exports = { LAYOUTS, ARROWS, HEADLINES, pdfText, flyerText, isWinAnsi, flyerData, scheduleLines, signWhen, qrPng, qrSvg, buildPdf, EC };
+module.exports = { LAYOUTS, ARROWS, HEADLINES, pdfText, flyerText, isWinAnsi, flyerData, scheduleLines, signWhen, qrPng, qrSvg, buildPdf, eventAsPost, EC };

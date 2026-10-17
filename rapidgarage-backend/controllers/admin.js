@@ -208,5 +208,8 @@ router.use(require('./adminConversations'));
 // Rating reports.
 router.use(require('./adminRatings'));
 
+// Neighborhood sale reports and hiding.
+router.use(require('./adminEvents'));
+
 module.exports = router;
 module.exports.requireAdmin = requireAdmin;

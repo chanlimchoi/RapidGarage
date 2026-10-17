@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag, BellRing, Check, Package, X } from 'lucide-react';
+import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag, BellRing, Check, Package, X, UsersRound } from 'lucide-react';
 import Map from './Map';
 import PostCard from './PostCard';
 import { Alert, EmptyState, SkeletonGrid, Spinner } from './ui';
-import { apiFetch, searchPosts, errorMessage, SEARCH_RADII, createAlert } from '../api';
+import { apiFetch, searchPosts, errorMessage, SEARCH_RADII, createAlert, fetchEvents } from '../api';
+import EventCard from '../events/EventCard';
 import toast from './toast';
 import { priceFieldError, formatUSD } from '../lib/price';
 import { WHEN_FILTERS } from '../lib/schedule';
@@ -23,6 +24,8 @@ class PostList extends React.Component {
       maxPrice: '', freeOnly: false, when: '', alertBusy: false, alertSavedFor: null,
       // keyword: what's typed; activeKeyword: what the shown results were filtered by.
       keyword: '', activeKeyword: '',
+      // Neighborhood sales: shown as a strip and as one map pin each; neighborhood = only their sales.
+      events: [], neighborhood: false,
     };
     this.handleSubmit = this.handleSubmit.bind(this);
     this.useMyLocation = this.useMyLocation.bind(this);
@@ -34,6 +37,7 @@ class PostList extends React.Component {
   componentDidMount() {
     this.mounted = true;
     this.loadRecent();
+    this.loadRecentEvents();
   }
 
   loadRecent() {
@@ -41,12 +45,17 @@ class PostList extends React.Component {
     if (this.state.when) q.push('when=' + encodeURIComponent(this.state.when));
     if (this.state.activeKeyword) q.push('keyword=' + encodeURIComponent(this.state.activeKeyword));
     apiFetch('/allPosts' + (q.length ? '?' + q.join('&') : ''))
-      .then(({ ok, data }) => this.mounted && this.setState({ loading: false, results: ok && Array.isArray(data) ? data : [],
+      .then(({ ok, data }) => this.mounted && this.setState({ loading: false, results: ok && Array.isArray(data) ? data.filter((p) => !this.state.neighborhood || p.event) : [],
         error: ok ? '' : errorMessage(data, t('list.loadFailed')) }))
       .catch(() => this.mounted && this.setState({ loading: false, results: [], error: t('common.network') }));
   }
 
   componentWillUnmount() { this.mounted = false; }
+
+  // Upcoming neighborhood sales for the recent (no-location) view.
+  loadRecentEvents() {
+    fetchEvents().then(({ ok, data }) => { if (this.mounted && ok && this.state.mode === 'recent') this.setState({ events: data.results.slice(0, 6) }); }).catch(() => null);
+  }
 
   // where: { coords } or { q }
   runSearch(where, page) {
@@ -56,6 +65,7 @@ class PostList extends React.Component {
       this.state.freeOnly ? { free: 'true' } : {},
       this.state.when ? { when: this.state.when } : {},
       this.state.activeKeyword ? { keyword: this.state.activeKeyword } : {},
+      this.state.neighborhood ? { neighborhood: 'true' } : {},
       !this.state.freeOnly && this.state.maxPrice.trim() ? { maxPrice: this.state.maxPrice.trim() } : {});
     this.setState({ loading: true, error: '', notice: '' });
     return searchPosts(params).then(({ ok, data }) => {
@@ -68,6 +78,7 @@ class PostList extends React.Component {
         loading: false, results: data.results, mode: data.mode, page: data.page, totalPages: data.totalPages,
         total: data.total, resultRadius: data.radius, center: data.center ? { lat: data.center.lat, lng: data.center.lng } : null,
         notice: data.notice ? data.notice.message : '', selectedId: null, lastWhere: where, resultFilter: data.filter || null,
+        events: data.events || [],
       });
     }).catch(() => this.mounted && this.setState({ loading: false, error: t('common.network') }));
   }
@@ -120,6 +131,15 @@ class PostList extends React.Component {
   // When filter works on the recent list too (server-side ?when=).
   changeWhen(when) {
     this.setState({ when }, () => {
+      if (this.state.lastWhere) return this.runSearch(this.state.lastWhere, 1);
+      this.setState({ loading: true });
+      return this.loadRecent();
+    });
+  }
+
+  // "Neighborhood sales only": re-runs the search (server-side) or filters the recent list.
+  changeNeighborhood(neighborhood) {
+    this.setState({ neighborhood }, () => {
       if (this.state.lastWhere) return this.runSearch(this.state.lastWhere, 1);
       this.setState({ loading: true });
       return this.loadRecent();
@@ -188,8 +208,9 @@ class PostList extends React.Component {
   }
 
   clearSearch() {
-    this.setState({ q: '', coords: null, lastWhere: null, notice: '', error: '', mode: 'recent', center: null, loading: true, results: [], keyword: '', activeKeyword: '' });
+    this.setState({ q: '', coords: null, lastWhere: null, notice: '', error: '', mode: 'recent', center: null, loading: true, results: [], keyword: '', activeKeyword: '', events: [] });
     this.loadRecent();
+    this.loadRecentEvents();
   }
 
   renderResults() {
@@ -256,7 +277,7 @@ class PostList extends React.Component {
     const f = s.mode !== 'recent' ? s.resultFilter : null;
     const priceNote = f && f.freeOnly ? t('list.noteFree') : f && f.maxPrice !== null && f.maxPrice !== undefined ? t('list.noteMax', { price: formatUSD(f.maxPrice) }) : '';
     const whenItem = WHEN_FILTERS.filter((w) => w.value && w.value === s.when)[0];
-    const filterNote = priceNote + (whenItem ? ' · ' + t(whenItem.labelKey).toLocaleLowerCase() : '') + (s.activeKeyword ? ' · “' + s.activeKeyword + '”' : '');
+    const filterNote = priceNote + (whenItem ? ' · ' + t(whenItem.labelKey).toLocaleLowerCase() : '') + (s.activeKeyword ? ' · “' + s.activeKeyword + '”' : '') + (f && f.neighborhood ? ' · ' + t('ev.noteNeighborhood') : '');
     const maxPriceError = priceFieldError(s.maxPrice, t('list.maxPrice'));
     return (
       <div className="container">
@@ -308,6 +329,10 @@ class PostList extends React.Component {
               <input id="search-free" name="free" type="checkbox" checked={s.freeOnly} onChange={(e) => this.changeFilter({ freeOnly: e.target.checked })} />
               {t('list.freeOnly')}
             </label>
+            <label className="chip-toggle" htmlFor="search-neighborhood">
+              <input id="search-neighborhood" name="neighborhood" type="checkbox" checked={s.neighborhood} onChange={(e) => this.changeNeighborhood(e.target.checked)} />
+              <UsersRound size={14} aria-hidden="true" />{t('ev.filter')}
+            </label>
             <div className="segmented when-filter" role="group" aria-label={t('list.when')}>
               {WHEN_FILTERS.map((w) => (
                 <button key={w.value || 'any'} type="button" aria-pressed={s.when === w.value} onClick={() => this.changeWhen(w.value)}>{t(w.labelKey)}</button>
@@ -331,10 +356,20 @@ class PostList extends React.Component {
           </div>
         </div>
 
+        {s.events.length && !s.loading ? (
+          <section className="event-strip" aria-labelledby="event-strip-title">
+            <div className="event-strip-head">
+              <h2 id="event-strip-title" className="h4"><UsersRound size={18} aria-hidden="true" />{s.mode === 'distance' ? t('ev.stripNear') : t('ev.stripUpcoming')}</h2>
+              <Link className="small" to="/events">{t('ev.seeAll')}</Link>
+            </div>
+            <div className="event-strip-list">{s.events.map((e) => <EventCard key={e.id} event={e} compact />)}</div>
+          </section>
+        ) : null}
+
         <div className={'browse' + (s.view === 'map' ? ' show-map' : '')}>
           <section className="browse-list" aria-label={t('list.sales')}>{this.renderResults()}</section>
           <section className="browse-map" aria-label={t('card.map')}>
-            <Map posts={s.results} user={this.props.user} config={this.props.config}
+            <Map posts={s.results} events={s.mode === 'distance' ? s.events : null} onOpenEvent={(id) => this.props.history.push('/events/' + id)} user={this.props.user} config={this.props.config}
               center={s.mode === 'distance' ? s.center : null} radius={s.mode === 'distance' ? s.resultRadius : null}
               selectedId={s.selectedId} onSelect={this.select} />
           </section>

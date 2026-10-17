@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
 import { addressLine, timeAgo, formatMiles } from '../lib/format';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
@@ -13,6 +13,7 @@ import ScanStats from '../print/ScanStats';
 import { fetchPrintInfo } from '../api';
 import SaveButton from '../saved/SaveButton';
 import ItemList from './ItemList';
+import JoinEventPanel from '../events/JoinEventPanel';
 import { t } from '../i18n';
 
 // GET /post/:id with a photo gallery and a details sidebar.
@@ -222,6 +223,7 @@ class Post extends Component {
             {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
             {address ? <span className="chip"><MapPin size={12} aria-hidden="true" />{[post.city, post.state].filter(Boolean).join(', ')}</span> : null}
             <span className="chip"><Clock size={12} aria-hidden="true" />{t('card.posted', { when: timeAgo(post.createdAt) })}</span>
+            {post.event ? <Link className="chip chip-event" to={'/events/' + post.event.id}><UsersRound size={12} aria-hidden="true" />{t('ev.partOf', { name: post.event.name })}</Link> : null}
           </div>
         </header>
         <article className="post-layout">
@@ -263,6 +265,7 @@ class Post extends Component {
                 {isOwner ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/items'}><Package size={16} aria-hidden="true" />{(post.items || []).length ? t('post.editItems') : t('post.addItems')}</Link> : null}
               </div>
             </div>
+            {isOwner && !post.hidden ? <JoinEventPanel post={post} /> : null}
             {this.state.scans ? (
               <div className="panel scan-panel">
                 <h2 className="h4">{t('post.scansTitle')}</h2>
