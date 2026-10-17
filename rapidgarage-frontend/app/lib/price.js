@@ -6,7 +6,7 @@ export const PRICE_CAP = 100000;
 const formatters = {};
 export const formatUSD = (n) => {
   const l = intlLocale();
-  if (!formatters[l]) formatters[l] = new Intl.NumberFormat(l, { style: 'currency', currency: 'USD', maximumFractionDigits: 0, minimumFractionDigits: 0 });
+  if (!formatters[l]) formatters[l] = new Intl.NumberFormat(l, { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0, minimumFractionDigits: 0 });
   return formatters[l].format(n);
 };
 

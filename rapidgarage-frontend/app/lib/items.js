@@ -8,7 +8,7 @@ export function formatCents(c) {
   if (c === null || c === undefined) return '';
   if (c === 0) return t('price.free');
   const digits = c % 100 ? 2 : 0;
-  return new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'USD', minimumFractionDigits: digits, maximumFractionDigits: digits }).format(c / 100);
+  return new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol', minimumFractionDigits: digits, maximumFractionDigits: digits }).format(c / 100);
 }
 
 // For an <input>: 450 -> "4.50", 300 -> "3".

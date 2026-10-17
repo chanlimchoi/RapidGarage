@@ -46,7 +46,7 @@ export function signLines(lang, post) {
     .concat(days.length > 2 ? [upper(lang, tIn(lang, 'flyer.moreDays', { count: days.length - 2 }))] : []);
 }
 
-const usd = (lang, n, cents) => new Intl.NumberFormat(intlLocale(lang), { style: 'currency', currency: 'USD', minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 }).format(n);
+const usd = (lang, n, cents) => new Intl.NumberFormat(intlLocale(lang), { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol', minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 }).format(n);
 const has = (v) => typeof v === 'number' && Number.isFinite(v);
 export function priceIn(lang, post) {
   if (post.isFree) return tIn(lang, 'price.free');

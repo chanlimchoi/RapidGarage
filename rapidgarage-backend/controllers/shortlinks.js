@@ -3,6 +3,7 @@
 // posts get the same "not available" page, so the link can't be used to tell
 // them apart. Ended sales still redirect (the post page says it ended).
 const router = require('express').Router();
+const i18n = require('../lib/i18n');
 const crypto = require('crypto');
 const models = require('../models');
 const links = require('../lib/shortlinks');
@@ -29,21 +30,27 @@ function tooMany(req) {
 }
 function resetMisses() { misses.clear(); }
 
-function page(res, status, title, text) {
+// Small HTML pages for people who scanned a printed QR code, in their phone's language.
+const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function page(res, status, titleKey, textKey) {
+  const lang = i18n.requestLang(res.req);
+  const title = escHtml(i18n.t(lang, titleKey));
+  const text = escHtml(i18n.t(lang, textKey));
   const home = links.baseUrl() + '/';
+  res.vary('Accept-Language');
   res.status(status).set({ 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex' });
-  return res.send('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+  return res.send('<!doctype html><html lang="' + lang + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<meta name="robots" content="noindex"><title>' + title + ' · RapidGarage</title><style>'
     + 'body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#faf9f7;color:#1c1917;display:grid;place-items:center;min-height:100vh}'
     + 'main{max-width:420px;padding:32px;text-align:center}.brand{color:#c2410c;font-weight:800;font-size:20px;letter-spacing:-.02em}'
     + 'h1{font-size:24px;margin:24px 0 8px}p{color:#57534e;line-height:1.5}a.btn{display:inline-block;margin-top:16px;background:#c2410c;color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:600}'
-    + '</style></head><body><main><div class="brand">RapidGarage</div><h1>' + title + '</h1><p>' + text + '</p><a class="btn" href="' + home + '">Find sales near you</a></main></body></html>');
+    + '</style></head><body><main><div class="brand">RapidGarage</div><h1>' + title + '</h1><p>' + text + '</p><a class="btn" href="' + home + '">' + escHtml(i18n.t(lang, 'page.findSales')) + '</a></main></body></html>');
 }
 
-const unavailable = (res) => page(res, 404, 'This sale isn’t available', 'The link may be mistyped, or the seller has removed this sale.');
+const unavailable = (res) => page(res, 404, 'page.unavailableTitle', 'page.unavailableText');
 
 router.get('/:code', async (req, res) => {
-  if (tooMany(req)) { res.set('Retry-After', '600'); return page(res, 429, 'Too many tries', 'Please wait a few minutes and try again.'); }
+  if (tooMany(req)) { res.set('Retry-After', '600'); return page(res, 429, 'page.tooManyTitle', 'page.tooManyText'); }
   const code = links.normalize(req.params.code);
   try {
     const post = code ? await models.Post.findOne({ where: { shortCode: code }, attributes: ['id', 'userId', 'hidden', 'timeZone'] }) : null;
@@ -53,7 +60,7 @@ router.get('/:code', async (req, res) => {
     return res.redirect(302, links.postUrl(post.id));
   } catch (err) {
     console.error(err);
-    return page(res, 500, 'Something went wrong', 'Please try again in a moment.');
+    return page(res, 500, 'page.errorTitle', 'page.errorText');
   }
 });
 
