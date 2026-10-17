@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost } from '../api';
 import { addressLine, saleWhen, saleStatus, timeAgo } from '../lib/format';
+import { formatPrice } from '../lib/price';
 import { EmptyState, SkeletonBlock } from '../components/ui';
 
 // GET /post/:id with a photo gallery and a details sidebar.
@@ -100,6 +101,7 @@ class Post extends Component {
         <header className="post-header">
           <h1>{post.title}</h1>
           <div className="chips">
+            {formatPrice(post) ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{formatPrice(post)}</span> : null}
             {status === 'live' ? <span className="chip chip-success">Happening now</span> : null}
             {status === 'upcoming' ? <span className="chip chip-brand">Upcoming</span> : null}
             {status === 'ended' ? <span className="chip">Ended</span> : null}

@@ -2,6 +2,8 @@
 //   center: lat & lng (e.g. the browser's location)  OR  q (address / zip, geocoded)
 //   radius: 5 | 10 | 25 | 50 miles (default 10)
 //   page (default 1), pageSize (default 20, max 50)
+//   maxPrice: whole dollars; sales with something at or under it (see lib/price.js)
+//   free=true: free sales only (wins over maxPrice)
 // Without a usable geocoding key, q falls back to a plain text/zip match
 // (no distances) and the response says so in `notice`.
 const router = require('express').Router();
@@ -10,6 +12,7 @@ const models = require('../models');
 const { badRequest, sendError, serverError } = require('../lib/http');
 const { ZIP_RE } = require('../lib/validate');
 const geo = require('../lib/geo');
+const { PRICE_CAP, priceWhere } = require('../lib/price');
 
 const MAX_PAGE_SIZE = 50;
 const MAX_CANDIDATES = 5000; // hard cap on rows pulled by the bounding box
@@ -45,6 +48,17 @@ function parseQuery(query) {
   const pageSize = query.pageSize === undefined ? 20 : num(query.pageSize);
   if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > MAX_PAGE_SIZE) errors.pageSize = 'pageSize must be an integer from 1 to ' + MAX_PAGE_SIZE + '.';
   out.pageSize = pageSize;
+  // Price filter: maxPrice (whole dollars, 0..cap) and/or free=true.
+  const free = query.free;
+  if (free !== undefined && free !== '') {
+    if (free === 'true' || free === '1') out.freeOnly = true;
+    else if (free !== 'false' && free !== '0') errors.free = 'free must be true or false.';
+  }
+  if (query.maxPrice !== undefined && query.maxPrice !== '') {
+    const mp = num(query.maxPrice);
+    if (!Number.isInteger(mp) || mp < 0 || mp > PRICE_CAP) errors.maxPrice = 'maxPrice must be whole dollars from 0 to ' + PRICE_CAP + '.';
+    else out.maxPrice = mp;
+  }
   return { errors, values: out };
 }
 
@@ -58,14 +72,18 @@ function paginate(items, page, pageSize) {
 }
 
 // Bounding-box prefilter in SQL (uses the lat/lng index), exact haversine in JS.
-async function nearbyRanked(center, radius) {
+// Combine where clauses with AND (each may contain its own Op.or).
+const and = (...parts) => ({ [Op.and]: parts.filter(Boolean) });
+
+async function nearbyRanked(center, radius, filter) {
   const box = geo.boundingBox(center, radius);
   const rows = await models.Post.findAll({
     attributes: ['id', 'lat', 'lng', 'createdAt'],
-    where: {
-      lat: { [Op.between]: [box.minLat, box.maxLat] },
-      [Op.or]: box.lngRanges.map(([a, b]) => ({ lng: { [Op.between]: [a, b] } })),
-    },
+    where: and(
+      { lat: { [Op.between]: [box.minLat, box.maxLat] } },
+      { [Op.or]: box.lngRanges.map(([a, b]) => ({ lng: { [Op.between]: [a, b] } })) },
+      priceWhere(Op, filter)
+    ),
     limit: MAX_CANDIDATES,
     raw: true,
   });
@@ -85,7 +103,7 @@ async function loadPage(ranked) {
 }
 
 // No geocoder: match zip exactly (if q is a zip) or the text against address fields.
-async function textMatch(q) {
+async function textMatch(q, filter) {
   // Postgres: case-insensitive ILIKE (backslash is its default escape). SQLite's LIKE is already case-insensitive.
   const pg = models.sequelize.getDialect() === 'postgres';
   const like = '%' + (pg ? q.replace(/[\\%_]/g, (c) => '\\' + c) : q) + '%';
@@ -93,8 +111,12 @@ async function textMatch(q) {
   const where = ZIP_RE.test(q)
     ? { zipCode: q.slice(0, 5) }
     : { [Op.or]: ['street', 'city', 'state', 'zipCode', 'title'].map((f) => ({ [f]: { [op]: like } })) };
-  const posts = await models.Post.findAll({ where, include: [photoInclude], order: [['createdAt', 'DESC'], photoOrder] });
+  const posts = await models.Post.findAll({ where: and(where, priceWhere(Op, filter)), include: [photoInclude], order: [['createdAt', 'DESC'], photoOrder] });
   return posts.map((p) => Object.assign(p.toJSON(), { distanceMiles: null }));
+}
+
+function filterOf(v) {
+  return { maxPrice: v.maxPrice !== undefined ? v.maxPrice : null, freeOnly: !!v.freeOnly };
 }
 
 const NOTICES = {
@@ -118,15 +140,15 @@ router.get('/', async (req, res) => {
       } else if (r.status === 'not_found') {
         return sendError(res, 404, 'location_not_found', 'Could not find that address or zip code.');
       } else {
-        const items = await textMatch(values.q);
-        return res.json(Object.assign({ mode: 'text', center: null, radius: values.radius, notice: { code: r.status, message: NOTICES[r.status] || NOTICES.error } },
+        const items = await textMatch(values.q, values);
+        return res.json(Object.assign({ mode: 'text', center: null, radius: values.radius, filter: filterOf(values), notice: { code: r.status, message: NOTICES[r.status] || NOTICES.error } },
           paginate(items, values.page, values.pageSize)));
       }
     }
-    const ranked = await nearbyRanked(center, values.radius);
+    const ranked = await nearbyRanked(center, values.radius, values);
     const pageInfo = paginate(ranked, values.page, values.pageSize);
     pageInfo.results = await loadPage(pageInfo.results);
-    return res.json(Object.assign({ mode: 'distance', center, radius: values.radius, notice: null }, pageInfo));
+    return res.json(Object.assign({ mode: 'distance', center, radius: values.radius, filter: filterOf(values), notice: null }, pageInfo));
   } catch (err) {
     return serverError(res, err);
   }

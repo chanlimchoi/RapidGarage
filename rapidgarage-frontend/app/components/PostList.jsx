@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus } from 'lucide-react';
+import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag } from 'lucide-react';
 import Map from './Map';
 import PostCard from './PostCard';
 import { Alert, EmptyState, SkeletonGrid, Spinner } from './ui';
 import { apiFetch, searchPosts, errorMessage, SEARCH_RADII } from '../api';
+import { priceFieldError, formatUSD } from '../lib/price';
 
 const PAGE_SIZE = 10;
 
@@ -15,6 +16,7 @@ class PostList extends React.Component {
       results: [], mode: 'recent', notice: '', error: '', loading: true,
       q: '', radius: 10, coords: null, center: null, page: 1, totalPages: 1, total: 0,
       selectedId: null, locating: false, view: 'list',
+      maxPrice: '', freeOnly: false,
     };
     this.handleSubmit = this.handleSubmit.bind(this);
     this.useMyLocation = this.useMyLocation.bind(this);
@@ -38,8 +40,11 @@ class PostList extends React.Component {
 
   // where: { coords } or { q }
   runSearch(where, page) {
+    if (priceFieldError(this.state.maxPrice, 'Max price')) return Promise.resolve();
     const params = Object.assign({ radius: this.state.radius, page: page || 1, pageSize: PAGE_SIZE },
-      where.coords ? { lat: where.coords.lat, lng: where.coords.lng } : { q: where.q });
+      where.coords ? { lat: where.coords.lat, lng: where.coords.lng } : { q: where.q },
+      this.state.freeOnly ? { free: 'true' } : {},
+      !this.state.freeOnly && this.state.maxPrice.trim() ? { maxPrice: this.state.maxPrice.trim() } : {});
     this.setState({ loading: true, error: '', notice: '' });
     return searchPosts(params).then(({ ok, data }) => {
       if (!this.mounted) return;
@@ -50,7 +55,7 @@ class PostList extends React.Component {
       this.setState({
         loading: false, results: data.results, mode: data.mode, page: data.page, totalPages: data.totalPages,
         total: data.total, resultRadius: data.radius, center: data.center ? { lat: data.center.lat, lng: data.center.lng } : null,
-        notice: data.notice ? data.notice.message : '', selectedId: null, lastWhere: where,
+        notice: data.notice ? data.notice.message : '', selectedId: null, lastWhere: where, resultFilter: data.filter || null,
       });
     }).catch(() => this.mounted && this.setState({ loading: false, error: 'Unable to reach the server. Please try again.' }));
   }
@@ -76,6 +81,11 @@ class PostList extends React.Component {
       () => this.setState({ locating: false, error: 'Could not get your location. Allow location access or type an address.' }),
       { timeout: 10000, maximumAge: 300000 }
     );
+  }
+
+  // Price filters re-run the current search (they need a center or text).
+  changeFilter(patch) {
+    this.setState(patch, () => { if (this.state.lastWhere && !priceFieldError(this.state.maxPrice, 'Max price')) this.runSearch(this.state.lastWhere, 1); });
   }
 
   changeRadius(radius) {
@@ -143,6 +153,9 @@ class PostList extends React.Component {
     const heading = s.mode === 'distance'
       ? s.total + ' sale' + (s.total === 1 ? '' : 's') + ' within ' + s.resultRadius + ' mi'
       : s.mode === 'text' ? s.total + ' matching sale' + (s.total === 1 ? '' : 's') : 'Recent sales';
+    const f = s.mode !== 'recent' ? s.resultFilter : null;
+    const filterNote = f && f.freeOnly ? ' · free only' : f && f.maxPrice !== null && f.maxPrice !== undefined ? ' · items ' + formatUSD(f.maxPrice) + ' or less' : '';
+    const maxPriceError = priceFieldError(s.maxPrice, 'Max price');
     return (
       <div className="container">
         <section className="hero">
@@ -171,13 +184,32 @@ class PostList extends React.Component {
               </button>
             </div>
           </form>
+          <div className="search-filters" role="group" aria-label="Price filters">
+            <div className="search-field">
+              <Tag size={16} aria-hidden="true" />
+              <label htmlFor="search-max-price" className="small muted">Max price $</label>
+              <input id="search-max-price" name="maxPrice" type="text" inputMode="numeric" maxLength={7} placeholder="Any"
+                value={s.maxPrice} disabled={s.freeOnly} aria-invalid={maxPriceError ? 'true' : undefined}
+                aria-describedby={maxPriceError ? 'search-max-price-error' : 'search-max-price-hint'}
+                onChange={(e) => this.setState({ maxPrice: e.target.value })}
+                onBlur={() => this.changeFilter({})}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); this.changeFilter({}); } }} />
+            </div>
+            <label className="chip-toggle" htmlFor="search-free">
+              <input id="search-free" name="free" type="checkbox" checked={s.freeOnly} onChange={(e) => this.changeFilter({ freeOnly: e.target.checked })} />
+              Free only
+            </label>
+            {maxPriceError
+              ? <span className="field-error" id="search-max-price-error">{maxPriceError}</span>
+              : <span className="field-hint" id="search-max-price-hint">Sales with something at or under this price.</span>}
+          </div>
         </section>
 
         {s.notice ? <Alert tone="warning" className="search-notice">{s.notice}</Alert> : null}
         {s.error ? <Alert tone="danger" className="search-error">{s.error}</Alert> : null}
 
         <div className="browse-toolbar">
-          <h2 className="search-heading" aria-live="polite">{s.loading ? 'Searching…' : heading}</h2>
+          <h2 className="search-heading" aria-live="polite">{s.loading ? 'Searching…' : heading + filterNote}</h2>
           <div className="segmented view-toggle" role="group" aria-label="View">
             <button type="button" aria-pressed={s.view === 'list'} onClick={() => this.setState({ view: 'list' })}><List size={16} aria-hidden="true" />List</button>
             <button type="button" aria-pressed={s.view === 'map'} onClick={() => this.setState({ view: 'map' })}><MapIcon size={16} aria-hidden="true" />Map</button>

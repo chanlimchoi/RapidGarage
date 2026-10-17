@@ -2,6 +2,7 @@ import React from 'react';
 import { Field, Alert, Spinner } from '../components/ui';
 import { rules, validateAll, serverFieldErrors, focusFirstError } from '../lib/validate';
 import { toLocalInput, fromLocalInput } from '../lib/format';
+import { priceErrors, toPriceNumber, formatPrice } from '../lib/price';
 
 const SCHEMA = {
   title: rules.title,
@@ -11,11 +12,19 @@ const SCHEMA = {
   endDate: (v, all) => (v && all.startDate && new Date(v) < new Date(all.startDate) ? 'End must be after the start.' : ''),
 };
 
+// Price rules span three fields, so they run together (lib/price.js mirrors the server).
+function validateForm(values) {
+  return Object.assign(validateAll(values, SCHEMA), priceErrors(values));
+}
+
 export function initialValues(post) {
   const p = post || {};
   return {
     title: p.title || '', street: p.street || '', city: p.city || '', state: p.state || '', zipCode: p.zipCode || '',
     startDate: toLocalInput(p.startDate), endDate: toLocalInput(p.endDate), description: p.description || '',
+    isFree: !!p.isFree,
+    priceMin: p.priceMin === null || p.priceMin === undefined ? '' : String(p.priceMin),
+    priceMax: p.priceMax === null || p.priceMax === undefined ? '' : String(p.priceMax),
   };
 }
 
@@ -24,6 +33,9 @@ export function toBody(v) {
   return {
     title: v.title.trim(), street: v.street.trim(), city: v.city.trim(), state: v.state.trim(), zipCode: v.zipCode.trim(),
     startDate: fromLocalInput(v.startDate), endDate: fromLocalInput(v.endDate), description: v.description,
+    isFree: !!v.isFree,
+    priceMin: v.isFree ? null : toPriceNumber(v.priceMin),
+    priceMax: v.isFree ? null : toPriceNumber(v.priceMax),
   };
 }
 
@@ -45,7 +57,7 @@ export default class PostForm extends React.Component {
   }
 
   errors() {
-    const own = validateAll(this.state.values, SCHEMA);
+    const own = validateForm(this.state.values);
     return Object.assign({}, this.state.serverErrors, own);
   }
 
@@ -61,6 +73,15 @@ export default class PostForm extends React.Component {
     };
   }
 
+  toggleFree(e) {
+    const isFree = e.target.checked;
+    const serverErrors = Object.assign({}, this.state.serverErrors);
+    ['isFree', 'priceMin', 'priceMax'].forEach((k) => delete serverErrors[k]);
+    // Ticking Free clears the prices (a sale can't be both).
+    const values = Object.assign({}, this.state.values, isFree ? { isFree, priceMin: '', priceMax: '' } : { isFree });
+    this.setState({ values, serverErrors });
+  }
+
   blur(name) {
     return () => this.setState({ touched: Object.assign({}, this.state.touched, { [name]: true }) });
   }
@@ -68,7 +89,7 @@ export default class PostForm extends React.Component {
   submit(e) {
     e.preventDefault();
     if (this.props.textDisabled) { this.props.onSubmit(null); return; }
-    const errors = validateAll(this.state.values, SCHEMA);
+    const errors = validateForm(this.state.values);
     this.setState({ submitted: true });
     if (Object.keys(errors).length) {
       focusFirstError(this.formRef.current, errors);
@@ -87,6 +108,8 @@ export default class PostForm extends React.Component {
   render() {
     const errors = this.errors();
     const v = this.state.values;
+    const preview = Object.keys(priceErrors(v)).length ? null
+      : formatPrice({ isFree: v.isFree, priceMin: toPriceNumber(v.priceMin), priceMax: toPriceNumber(v.priceMax) });
     const { textDisabled, saving, submitLabel, error, children, footer } = this.props;
     return (
       <form ref={this.formRef} onSubmit={this.submit} noValidate className="stack">
@@ -119,6 +142,30 @@ export default class PostForm extends React.Component {
                 <input className="input" type="datetime-local" name="endDate" value={v.endDate} min={v.startDate || undefined} onChange={this.change('endDate')} onBlur={this.blur('endDate')} />
               </Field>
             </div>
+            <fieldset className="price-fieldset" aria-describedby="price-hint">
+              <legend className="field-label">Prices <span className="optional"> (optional)</span></legend>
+              <label className="checkbox-row" htmlFor="isFree">
+                <span className="switch">
+                  <input id="isFree" name="isFree" type="checkbox" role="switch" checked={v.isFree} onChange={(e) => this.toggleFree(e)}
+                    aria-invalid={this.shown('isFree', errors) ? 'true' : undefined} />
+                  <span className="switch-track" aria-hidden="true" />
+                </span>
+                <span><strong>Everything is free</strong></span>
+              </label>
+              {this.shown('isFree', errors) ? <span className="field-error" id="isFree-error">{errors.isFree}</span> : null}
+              <div className="form-grid form-grid-2">
+                <Field id="priceMin" label="Lowest price ($)" optional error={this.shown('priceMin', errors)}>
+                  {this.input('priceMin', 'priceMin', { inputMode: 'numeric', placeholder: '1', disabled: v.isFree, maxLength: 7 })}
+                </Field>
+                <Field id="priceMax" label="Highest price ($)" optional error={this.shown('priceMax', errors)}>
+                  {this.input('priceMax', 'priceMax', { inputMode: 'numeric', placeholder: '50', disabled: v.isFree, maxLength: 7 })}
+                </Field>
+              </div>
+              <span className="field-hint" id="price-hint">
+                Whole dollars. Use the same number twice for one price, or fill in just the highest for “Up to”.
+                {preview ? <span className="price-preview"> Shows as: <span className="chip chip-price">{preview}</span></span> : null}
+              </span>
+            </fieldset>
             <Field id="description" label="Description" optional hint="What's for sale, payment options, parking, early birds…">
               <textarea className="textarea" name="description" rows="6" value={v.description} onChange={this.change('description')} />
             </Field>

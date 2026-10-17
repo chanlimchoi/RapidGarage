@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
     // ok | no_key | not_found | error | null (never tried)
     geocodeStatus: { type: DataTypes.STRING(16), allowNull: true },
     geocodedAt: { type: DataTypes.DATE, allowNull: true },
+    // Optional price range in whole US dollars; see lib/price.js.
+    priceMin: { type: DataTypes.INTEGER, allowNull: true },
+    priceMax: { type: DataTypes.INTEGER, allowNull: true },
+    isFree: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   });
 
   // Sequelize 4 ignores classMethods; associations must be set like this.

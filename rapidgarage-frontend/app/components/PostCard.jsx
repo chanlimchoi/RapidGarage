@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock } from 'lucide-react';
+import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag } from 'lucide-react';
 import { formatMiles, placeLine, saleWhen, saleStatus, timeAgo } from '../lib/format';
+import { formatPrice } from '../lib/price';
 
 const STATUS = { live: ['Happening now', 'chip-success'], upcoming: null, ended: ['Ended', ''] };
 
@@ -12,6 +13,7 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
   const distance = formatMiles(post.distanceMiles);
   const when = saleWhen(post);
   const status = STATUS[saleStatus(post)];
+  const price = formatPrice(post);
   const hasPin = typeof post.lat === 'number' && typeof post.lng === 'number';
   return (
     <article className={'post-card post-item' + (selected ? ' post-item-selected' : '')} data-post-id={post.id}>
@@ -26,6 +28,7 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
         <h3 className="post-card-title"><Link to={'/post/' + post.id}>{post.title}</Link></h3>
         <div className="post-card-meta"><MapPin size={14} aria-hidden="true" /><span>{placeLine(post) || 'Location not given'}</span></div>
         <div className="chips">
+          {price ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{price}</span> : null}
           {when ? <span className="chip chip-brand"><CalendarDays size={12} aria-hidden="true" />{when}</span> : null}
           {status ? <span className={'chip ' + status[1]}>{status[0]}</span> : null}
           {!when ? <span className="chip"><Clock size={12} aria-hidden="true" />Posted {timeAgo(post.createdAt)}</span> : null}

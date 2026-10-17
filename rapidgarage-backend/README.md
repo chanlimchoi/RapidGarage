@@ -97,6 +97,35 @@ Settings (`.env`):
 | `PHOTO_STORAGE` | `local` | Storage driver. `lib/storage/` has a small `put/remove/read` interface so an S3 driver can be added. |
 | `PHOTO_PUBLIC_BASE` | `/api/uploads` | URL prefix returned to browsers (matches the Vite `/api` proxy). Use e.g. `https://api.example.com/uploads` or a CDN in production. |
 
+## Prices
+
+A garage sale has many items, so a post has an optional price **range** in **whole US dollars**
+(integers, no cents), or is marked free. Migration: `20261017030000-post-price` adds `priceMin`,
+`priceMax` (INTEGER, nullable) and `isFree` (BOOLEAN, default false).
+
+| Stored | Shown as |
+| --- | --- |
+| `isFree: true` | Free |
+| `priceMin = priceMax = 5` | $5 |
+| `priceMin 5, priceMax 50` | $5–$50 |
+| only `priceMax 50` | Up to $50 |
+| only `priceMin 5` | From $5 |
+| nothing | no price chip |
+
+Server rules (`lib/price.js`, mirrored in `rapidgarage-frontend/app/lib/price.js`): values are
+whole dollars from 0 to $100,000, `priceMin` ≤ `priceMax`, and a free post can't also have a
+price. Numbers or digit strings are accepted, and `null` or `""` clears a value. On `PUT`, the
+cross-field rules are checked against the stored post, so to switch a priced post to free, send
+`isFree: true` with `priceMin: null, priceMax: null`. Errors are `400` with
+`details.priceMin` / `priceMax` / `isFree`.
+
+`GET /search` also takes `maxPrice` (whole dollars) and `free=true`. Both work with any radius
+and keep distance sorting and pagination. `maxPrice=X` keeps sales with something at or under $X:
+free sales, sales whose lowest price is ≤ X, and "Up to $Y" sales (their cheapest item is
+somewhere in $0–$Y). Sales with no price info are left out while the filter is on. `free=true`
+returns only free sales and overrides `maxPrice`. The response echoes
+`filter: { maxPrice, freeOnly }`.
+
 ## Map search
 
 Posts store `lat` / `lng` (migration `20261017010000-post-coordinates`), filled by server-side
