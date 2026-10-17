@@ -40,6 +40,13 @@
   "flyer.signDay": "{md} {wd}",
   "flyer.join": "、",
   "flyer.qrAlt": "{url} 的二维码",
+  "flyer.headline.neighborhood": "社区甩卖",
+  "flyer.eventSales": "参与的甩卖",
+  "flyer.eventScanHint": "在一张地图上查看所有甩卖及其日期和物品。",
+  "flyer.eventScanForMap": "扫码查看地图",
+  "flyer.moreSales": {
+   "other": "另有 {count} 场甩卖"
+  },
   "mail.subjectOne": "你附近有新的车库甩卖：{title}",
   "mail.subjectMany": {
    "other": "你附近有 {count} 场新的车库甩卖"
@@ -73,7 +80,12 @@
    "other": "（另有 {count} 天）"
   },
   "flyer.docFlyer": "{title}（传单）",
-  "flyer.docSign": "{title}（指示牌）"
+  "flyer.docSign": "{title}（指示牌）",
+  "mail.eventTitle": "社区甩卖：{name}",
+  "mail.eventSales": {
+   "other": "{count} 场甩卖"
+  },
+  "mail.partOf": "属于{name}"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -271,6 +283,44 @@
   "Pick a pickup time in the future.": "请选择将来的取货时间。",
   "Pick a pickup time within the next {n} days.": "请选择 {n} 天内的取货时间。",
   "Pick a pickup time before the sale ends.": "请选择甩卖结束前的取货时间。",
-  "Hold for 1 to {n} hours.": "保留时间为 1 到 {n} 小时。"
+  "Hold for 1 to {n} hours.": "保留时间为 1 到 {n} 小时。",
+  "Give the neighborhood sale a name.": "请为社区甩卖起个名字。",
+  "Description must be text.": "描述必须是文本。",
+  "Keep the description under {n} characters.": "描述请少于 {n} 个字符。",
+  "Name the area, like a neighborhood or a few streets.": "请填写区域，比如一个街区或几条街。",
+  "Keep the area under {n} characters.": "区域请少于 {n} 个字符。",
+  "{field} must be one of {list} (miles).": "{field} 必须是 {list} 之一（英里）。",
+  "The area can't be changed after the neighborhood sale is created.": "社区甩卖创建后不能更改区域。",
+  "Pick the days of the neighborhood sale.": "请选择社区甩卖的日期。",
+  "A neighborhood sale can run at most {n} days.": "社区甩卖最多持续 {n} 天。",
+  "A moderator has hidden this sale, so it can't join a neighborhood sale.": "管理员已隐藏此甩卖，因此无法加入社区甩卖。",
+  "Your sale needs an address on the map to join a neighborhood sale.": "你的甩卖需要有地图上的地址才能加入社区甩卖。",
+  "Your sale is outside this neighborhood sale's area.": "你的甩卖不在此社区甩卖的区域内。",
+  "Your sale needs at least one day on the neighborhood sale's dates.": "你的甩卖至少要有一天在社区甩卖的日期内。",
+  "Event id must be a positive integer.": "活动 ID 必须是正整数。",
+  "Neighborhood sale not found.": "找不到该社区甩卖。",
+  "Only the organizer can do that.": "只有组织者可以这样做。",
+  "Only the seller can add this sale to a neighborhood sale.": "只有卖家可以把此甩卖加入社区甩卖。",
+  "Invalid neighborhood sale.": "社区甩卖信息无效。",
+  "You already organize {n} upcoming neighborhood sales. Wait until one ends.": "你已经在组织 {n} 场即将举行的社区甩卖。请等其中一场结束。",
+  "You have created a lot of neighborhood sales today. Please try again tomorrow.": "你今天创建了很多社区甩卖。请明天再试。",
+  "Couldn't find that area. Try a street and city, or use your location.": "找不到该区域。请尝试输入街道和城市，或使用你的位置。",
+  "Couldn't look up that area right now. Use your location instead.": "目前无法查找该区域。请改用你的位置。",
+  "Invalid request.": "请求无效。",
+  "Choose one of your sales.": "请选择你的一场甩卖。",
+  "A moderator has hidden this neighborhood sale.": "管理员已隐藏此社区甩卖。",
+  "This neighborhood sale has ended.": "此社区甩卖已结束。",
+  "You can't join this neighborhood sale.": "你无法加入此社区甩卖。",
+  "This sale is already part of this neighborhood sale.": "此甩卖已经在这个社区甩卖中。",
+  "This sale is already part of another neighborhood sale. Leave it first.": "此甩卖已在另一个社区甩卖中。请先退出。",
+  "This neighborhood sale is full.": "此社区甩卖已满。",
+  "You can't approve this sale.": "你无法批准此甩卖。",
+  "That sale is not part of this neighborhood sale.": "该甩卖不在此社区甩卖中。",
+  "Only the organizer or the seller can do that.": "只有组织者或卖家可以这样做。",
+  "You can't report your own neighborhood sale.": "你不能举报自己的社区甩卖。",
+  "You already reported this neighborhood sale. A moderator will review it.": "你已经举报过此社区甩卖。管理员会进行审核。",
+  "Only the organizer can print flyers for this neighborhood sale.": "只有组织者可以打印此社区甩卖的传单。",
+  "A moderator has hidden this neighborhood sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.": "管理员已隐藏此社区甩卖，其二维码会显示“不可用”。在恢复可见之前无法打印。",
+  "Only the organizer and admins can see scan counts.": "只有组织者和管理员可以查看扫描次数。"
  }
 }

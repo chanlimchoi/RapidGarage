@@ -42,6 +42,14 @@
   "flyer.signDay": "{wd} {md}",
   "flyer.join": " y ",
   "flyer.qrAlt": "Código QR de {url}",
+  "flyer.headline.neighborhood": "Venta vecinal",
+  "flyer.eventSales": "Ventas participantes",
+  "flyer.eventScanHint": "Mira todas las ventas en un mapa, con fechas y artículos.",
+  "flyer.eventScanForMap": "Escanea para ver el mapa",
+  "flyer.moreSales": {
+   "one": "+ {count} venta más",
+   "other": "+ {count} ventas más"
+  },
   "mail.subjectOne": "Nueva venta de garaje cerca de ti: {title}",
   "mail.subjectMany": {
    "one": "{count} nueva venta de garaje cerca de ti",
@@ -79,7 +87,13 @@
    "other": "(+{count} más)"
   },
   "flyer.docFlyer": "{title} (volante)",
-  "flyer.docSign": "{title} (letrero)"
+  "flyer.docSign": "{title} (letrero)",
+  "mail.eventTitle": "Venta vecinal: {name}",
+  "mail.eventSales": {
+   "one": "{count} venta",
+   "other": "{count} ventas"
+  },
+  "mail.partOf": "parte de {name}"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -277,6 +291,44 @@
   "Pick a pickup time in the future.": "Elige una hora de recogida futura.",
   "Pick a pickup time within the next {n} days.": "Elige una hora de recogida dentro de los próximos {n} días.",
   "Pick a pickup time before the sale ends.": "Elige una hora de recogida antes de que termine la venta.",
-  "Hold for 1 to {n} hours.": "Aparta de 1 a {n} horas."
+  "Hold for 1 to {n} hours.": "Aparta de 1 a {n} horas.",
+  "Give the neighborhood sale a name.": "Ponle un nombre a la venta vecinal.",
+  "Description must be text.": "La descripción debe ser texto.",
+  "Keep the description under {n} characters.": "La descripción debe tener menos de {n} caracteres.",
+  "Name the area, like a neighborhood or a few streets.": "Indica la zona, por ejemplo un barrio o unas calles.",
+  "Keep the area under {n} characters.": "La zona debe tener menos de {n} caracteres.",
+  "{field} must be one of {list} (miles).": "{field} debe ser uno de {list} (millas).",
+  "The area can't be changed after the neighborhood sale is created.": "La zona no se puede cambiar después de crear la venta vecinal.",
+  "Pick the days of the neighborhood sale.": "Elige los días de la venta vecinal.",
+  "A neighborhood sale can run at most {n} days.": "Una venta vecinal puede durar como máximo {n} días.",
+  "A moderator has hidden this sale, so it can't join a neighborhood sale.": "Un moderador ocultó esta venta, así que no puede unirse a una venta vecinal.",
+  "Your sale needs an address on the map to join a neighborhood sale.": "Tu venta necesita una dirección en el mapa para unirse a una venta vecinal.",
+  "Your sale is outside this neighborhood sale's area.": "Tu venta está fuera de la zona de esta venta vecinal.",
+  "Your sale needs at least one day on the neighborhood sale's dates.": "Tu venta necesita al menos un día en las fechas de la venta vecinal.",
+  "Event id must be a positive integer.": "El id del evento debe ser un entero positivo.",
+  "Neighborhood sale not found.": "No se encontró la venta vecinal.",
+  "Only the organizer can do that.": "Solo el organizador puede hacer eso.",
+  "Only the seller can add this sale to a neighborhood sale.": "Solo el vendedor puede añadir esta venta a una venta vecinal.",
+  "Invalid neighborhood sale.": "Venta vecinal no válida.",
+  "You already organize {n} upcoming neighborhood sales. Wait until one ends.": "Ya organizas {n} ventas vecinales próximas. Espera a que termine una.",
+  "You have created a lot of neighborhood sales today. Please try again tomorrow.": "Hoy has creado muchas ventas vecinales. Inténtalo de nuevo mañana.",
+  "Couldn't find that area. Try a street and city, or use your location.": "No encontramos esa zona. Prueba con una calle y ciudad, o usa tu ubicación.",
+  "Couldn't look up that area right now. Use your location instead.": "Ahora no podemos buscar esa zona. Usa tu ubicación.",
+  "Invalid request.": "Solicitud no válida.",
+  "Choose one of your sales.": "Elige una de tus ventas.",
+  "A moderator has hidden this neighborhood sale.": "Un moderador ocultó esta venta vecinal.",
+  "This neighborhood sale has ended.": "Esta venta vecinal ya terminó.",
+  "You can't join this neighborhood sale.": "No puedes unirte a esta venta vecinal.",
+  "This sale is already part of this neighborhood sale.": "Esta venta ya forma parte de esta venta vecinal.",
+  "This sale is already part of another neighborhood sale. Leave it first.": "Esta venta ya forma parte de otra venta vecinal. Sal de ella primero.",
+  "This neighborhood sale is full.": "Esta venta vecinal está completa.",
+  "You can't approve this sale.": "No puedes aprobar esta venta.",
+  "That sale is not part of this neighborhood sale.": "Esa venta no forma parte de esta venta vecinal.",
+  "Only the organizer or the seller can do that.": "Solo el organizador o el vendedor pueden hacer eso.",
+  "You can't report your own neighborhood sale.": "No puedes denunciar tu propia venta vecinal.",
+  "You already reported this neighborhood sale. A moderator will review it.": "Ya denunciaste esta venta vecinal. Un moderador la revisará.",
+  "Only the organizer can print flyers for this neighborhood sale.": "Solo el organizador puede imprimir volantes de esta venta vecinal.",
+  "A moderator has hidden this neighborhood sale, so its QR code shows \"not available\". Printing is turned off until it is visible again.": "Un moderador ocultó esta venta vecinal, así que su código QR muestra «no disponible». La impresión está desactivada hasta que vuelva a ser visible.",
+  "Only the organizer and admins can see scan counts.": "Solo el organizador y los administradores pueden ver los escaneos."
  }
 }
