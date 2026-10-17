@@ -6,6 +6,7 @@ import { formatCents, itemSummary } from '../lib/items';
 import { Spinner } from '../components/ui';
 import toast from '../components/toast';
 import { t } from '../i18n';
+import { holdTime } from '../messages/holdText';
 
 // A sale's items on the sale page. Sold items are struck through and
 // dimmed; the seller can mark them sold right here.
@@ -72,9 +73,10 @@ export default class ItemList extends React.Component {
                     <img src={photos[pi].thumbUrl} alt="" />
                   </button>
                 ) : <span className="item-thumb item-thumb-empty" aria-hidden="true"><Package size={16} /></span>}
-                <span className="item-name">{item.name}{item.sold ? <span className="sr-only">{t('items.soldSr')}</span> : null}</span>
+                <span className="item-name">{item.name}{item.sold ? <span className="sr-only">{t('items.soldSr')}</span> : null}{item.reserved ? <span className="sr-only">{t('items.reservedSr')}</span> : null}</span>
                 {price ? <span className={'item-price' + (item.priceCents === 0 ? ' is-free' : '')}>{price}</span> : null}
                 {item.sold ? <span className="chip chip-muted item-sold-chip" aria-hidden="true">{t('items.sold')}</span> : null}
+                {item.reserved ? <span className="chip chip-warning item-reserved-chip" aria-hidden="true" title={owner ? t('items.reservedUntil', { time: holdTime(item.reservedUntil) }) : undefined}>{t('items.reserved')}</span> : null}
                 {owner ? (
                   <button type="button" className={'btn btn-sm item-sold-toggle ' + (item.sold ? 'btn-ghost' : 'btn-secondary')} aria-pressed={item.sold}
                     disabled={this.state.busy === item.id} onClick={() => this.toggleSold(item)}

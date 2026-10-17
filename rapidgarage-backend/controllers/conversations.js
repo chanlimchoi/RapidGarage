@@ -37,7 +37,7 @@ function messageJSON(m, me, holdMap) {
   if (m.kind === 'hold') {
     const h = holdMap && m.holdId ? holdMap.get(m.holdId) : null;
     out.kind = 'hold';
-    out.hold = { id: m.holdId, event: m.holdEvent, itemName: h && h.item ? h.item.name : null, pickupAt: h ? h.pickupAt : null, expiresAt: h ? h.expiresAt : null, status: h ? h.status : null };
+    out.hold = { id: m.holdId, event: m.holdEvent, itemName: h && h.item ? h.item.name : null, pickupAt: h ? h.pickupAt : null, expiresAt: h ? h.expiresAt : null, status: h ? h.status : null, endedReason: h ? h.endedReason : null };
   }
   return out;
 }
