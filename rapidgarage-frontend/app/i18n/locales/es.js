@@ -1281,4 +1281,5 @@ export default {
   "want.hiddenToast": "Publicación oculta.",
   "want.visibleToast": "La publicación vuelve a estar visible.",
   "want.confirmAdminDelete": "¿Eliminar esta publicación y sus reportes? No se puede deshacer.",
+  "want.you": "Tú",
 };

@@ -114,7 +114,7 @@ export default class WantedPage extends React.Component {
           {w.hidden && (w.mine || admin) ? <Alert tone="warning" live={false}>{w.mine ? t('want.hiddenOwner') : t('want.hiddenAdmin')}</Alert> : null}
           <dl className="wanted-facts">
             <div><dt><MapPin size={16} aria-hidden="true" />{t('want.area')}</dt><dd>{t('want.within', { miles: w.radiusMiles, area: w.areaLabel })}</dd></div>
-            <div><dt><UserRound size={16} aria-hidden="true" />{t('want.postedBy')}</dt><dd>{w.mine ? t('want.byYou') : w.poster.name} · {timeAgo(w.createdAt)}</dd></div>
+            <div><dt><UserRound size={16} aria-hidden="true" />{t('want.postedBy')}</dt><dd>{w.mine ? t('want.you') : w.poster.name} · {timeAgo(w.createdAt)}</dd></div>
             {w.matchWords.length ? <div><dt><Sparkles size={16} aria-hidden="true" />{t('want.matchOn')}</dt><dd className="chips">{w.matchWords.map((x) => <span key={x} className="chip">{x}</span>)}</dd></div> : null}
           </dl>
           {w.details ? <p className="wanted-details">{w.details}</p> : null}

@@ -1000,9 +1000,14 @@ html:lang(ko) body { word-break: keep-all; overflow-wrap: anywhere; }
 .dash-list li { display: grid; gap: 2px; padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
 .dash-list li:first-child { border-top: 0; padding-top: 0; }
 @media (max-width: 600px) { .dash-stat-items { grid-column: auto; } .metric-total { font-size: var(--text-2xl); } }
-/* Nav: keep labels on one line; About (also in the footer) gives way first when logged in. */
+/* Nav: keep labels on one line. The bar is at most --container wide, so when
+   logged in About (also in the footer and the mobile menu) gives way and the
+   links sit a little tighter; below the container width Dashboard (also in
+   the account menu) goes too. This keeps room for Wanted at every width. */
 .nav-link { white-space: nowrap; }
-@media (max-width: 1360px) { .nav-has-user .nav-about { display: none; } }
+.nav-has-user .nav-about { display: none; }
+.nav-has-user .nav-link { padding-left: 6px; padding-right: 6px; gap: 6px; }
+@media (max-width: 1279px) { .nav-has-user .nav-dashboard { display: none; } }
 
 /* ---- Wanted posts (/wanted) ------------------------------------------------
    Cards reuse the neighborhood-sale card layout; the icon tile uses the info
@@ -1020,7 +1025,8 @@ html:lang(ko) body { word-break: keep-all; overflow-wrap: anywhere; }
 .wanted-search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
 .wanted-search .input { padding-left: 36px; width: 100%; }
 .wanted-words { display: grid; gap: var(--space-2); margin-top: calc(-1 * var(--space-2)); }
-.form-grid-2 { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.form-grid-2 { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: start; }
+.wanted-header { display: grid; justify-content: start; gap: var(--space-1); }
 .input-prefix, .input-suffix { display: flex; align-items: center; gap: var(--space-2); }
 .input-prefix > span, .input-suffix > span { color: var(--color-text-muted); font-weight: var(--weight-semibold); }
 .input-prefix .input, .input-suffix .input { flex: 1 1 auto; min-width: 0; }

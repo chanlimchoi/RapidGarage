@@ -1281,4 +1281,5 @@ export default {
   "want.hiddenToast": "구해요 글을 숨겼어요.",
   "want.visibleToast": "구해요 글이 다시 보여요.",
   "want.confirmAdminDelete": "이 구해요 글과 신고를 삭제할까요? 되돌릴 수 없어요.",
+  "want.you": "나",
 };

@@ -1281,4 +1281,5 @@ export default {
   "want.hiddenToast": "Wanted post hidden.",
   "want.visibleToast": "Wanted post is visible again.",
   "want.confirmAdminDelete": "Delete this wanted post and its reports? This can't be undone.",
+  "want.you": "You",
 };

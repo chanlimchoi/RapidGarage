@@ -102,7 +102,7 @@ export default class WantedForm extends React.Component {
     return (
       <div className="container container-narrow">
         <Link to={editing ? '/wanted/' + this.editId : '/wanted'} className="back-link"><ArrowLeft size={16} aria-hidden="true" />{editing ? t('want.backToPost') : t('want.board')}</Link>
-        <header className="page-header">
+        <header className="page-header wanted-header">
           <span className="event-kicker">{t('want.kicker')}</span>
           <h1>{editing ? t('want.editTitle') : t('want.newTitle')}</h1>
           {!editing ? <p className="muted">{t('want.newLead')}</p> : null}

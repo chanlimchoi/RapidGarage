@@ -1281,4 +1281,5 @@ export default {
   "want.hiddenToast": "求购帖已隐藏。",
   "want.visibleToast": "求购帖已重新显示。",
   "want.confirmAdminDelete": "删除此求购帖及其举报吗？此操作无法撤销。",
+  "want.you": "我",
 };
