@@ -37,6 +37,10 @@ async function accessWindow(conversationId) {
 }
 
 async function postContext(conv) {
+  if (conv.wantedId) {
+    const w = await models.WantedPost.findByPk(conv.wantedId, { attributes: ['id', 'title', 'hidden', 'userId'] });
+    return { id: conv.wantedId, wanted: true, title: w ? w.title : conv.postTitle, status: !w ? 'deleted' : w.hidden ? 'hidden' : 'available' };
+  }
   const post = await models.Post.findByPk(conv.postId, { attributes: ['id', 'title', 'hidden', 'userId'] });
   return { id: conv.postId, title: post ? post.title : conv.postTitle, status: !post ? 'deleted' : post.hidden ? 'hidden' : 'available' };
 }

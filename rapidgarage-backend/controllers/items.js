@@ -8,6 +8,7 @@ const { isAdmin } = require('../lib/roles');
 const items = require('../lib/items');
 const schedule = require('../lib/schedule');
 const holds = require('../lib/holds');
+const wanted = require('../lib/wanted');
 
 const sorted = (list) => list.slice().sort((a, b) => a.position - b.position || a.id - b.id);
 const listOf = async (post) => sorted(await models.SaleItem.findAll({ where: { postId: post.id } }));
@@ -45,7 +46,10 @@ router.post('/', requireLogin, owner, async (req, res) => {
     const sold = value.sold;
     delete value.sold;
     const item = await models.SaleItem.create(Object.assign(value, soldFields(sold || false), { postId: req.post.id, position: (Number.isFinite(last) ? last : -1) + 1 }));
-    return res.status(201).json(item);
+    res.status(201).json(item);
+    // A new item may be what someone is looking for.
+    if (!item.sold) wanted.schedulePost(req.post.id);
+    return undefined;
   } catch (err) { return serverError(res, err); }
 });
 
@@ -79,7 +83,10 @@ router.put('/:itemId', requireLogin, owner, loadItem, async (req, res) => {
     const updated = await req.item.update(Object.assign(value, soldFields(sold, req.item)));
     // Sold: an accepted hold is done; people waiting are told it's gone.
     if (becameSold) await holds.itemSold(updated);
-    return res.json(updated);
+    res.json(updated);
+    // Renamed, repriced or back on sale: it may match a wanted post now.
+    if (!updated.sold && (value.name !== undefined || value.priceCents !== undefined || sold === false)) wanted.schedulePost(req.post.id);
+    return undefined;
   } catch (err) { return serverError(res, err); }
 });
 

@@ -12,6 +12,7 @@ const ratings = require('../lib/ratings');
 const { publicUser } = require('../lib/people');
 const events = require('../lib/events');
 const scans = require('../lib/scans');
+const wanted = require('../lib/wanted');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -65,8 +66,9 @@ router.post('/', requireLogin, async (req, res) => {
     post = await geocodePost(post, req.user);
     post = await reload(post);
     res.status(201).json(post);
-    // Sale alerts: match in the background; never slows or fails the request.
+    // Sale alerts and wanted posts: match in the background; never slows or fails the request.
     alerts.schedulePostMatch(post);
+    wanted.schedulePost(post.id);
   } catch (err) {
     serverError(res, err);
   }
@@ -125,6 +127,9 @@ router.put('/:id', requireLogin, loadPost, requireOwner, async (req, res) => {
     // A sale that moved (or only now has coordinates) can match alerts;
     // the (user, post) unique index means nobody is told twice.
     if (moved) alerts.schedulePostMatch(post);
+    // Any change (title, description, price, place, dates) may make it match a
+    // wanted post now; each (wanted post, sale) pair is only ever told once.
+    wanted.schedulePost(post.id);
   } catch (err) {
     serverError(res, err);
   }
