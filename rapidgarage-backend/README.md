@@ -392,6 +392,30 @@ local today; `weekend` = a remaining window on the coming Saturday/Sunday (on Sa
 today + tomorrow; on Sunday: today). Sales without dates don't match these filters. The search
 response echoes it as `filter.when`.
 
+## Sale items
+
+`/post/:id/items` (the post must be visible to you; hidden posts 404 like the post itself):
+
+| | |
+|---|---|
+| `GET /` | `{ items, max }`, in list order. `GET /post/:id` also includes `items`. |
+| `POST /` | Seller only. `{ name, price?, photoId?, sold? }` → 201 item. |
+| `PUT /:itemId` | Seller only. Any of `name`, `price`, `photoId`, `sold`. |
+| `PUT /order` | Seller only. `{ ids }`: every item of the sale once. |
+| `DELETE /:itemId` | Seller, or an admin (moderation). |
+
+An item is `{ id, name, priceCents, photoId, sold, soldAt, position }`. `name`: 1–80
+characters. `price`: optional, dollars with up to 2 decimals (`"2.50"`, `5`), 0 = free, up to
+$100,000; stored as cents. `photoId`: one of **this** sale's photos or `null`; deleting the
+photo keeps the item without it. `soldAt` is set when marked sold and cleared when unmarked.
+Up to 100 items per sale (400 `too_many`). Deleting the sale deletes its items.
+
+**Keyword search**: `/search` and `/allPosts` take `keyword` (≤ 60 characters, up to 5 words).
+Every word must appear (case-insensitive, literally; `%` and `_` are not wildcards) in the
+title, the description or the name of an item that is **not sold**. Each result then has
+`matchedItems`: up to 3 unsold item names that match the most words. `/search` echoes it as
+`filter.keyword`.
+
 ## Saved sales & route
 
 All under `/saved`, login required, `Cache-Control: no-store`; nobody sees anyone else's list.

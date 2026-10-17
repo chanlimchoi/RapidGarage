@@ -14,13 +14,14 @@ const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 const Post = models.Post;
 const photoInclude = { model: models.PostPhoto, as: 'photos' };
 const daysInclude = { model: models.SaleDay, as: 'saleDays' };
+const itemsInclude = { model: models.SaleItem, as: 'items' };
 const photoOrder = [[{ model: models.PostPhoto, as: 'photos' }, 'position', 'ASC']];
 
 // Load the post named by :id (400 if the id is malformed, 404 if missing).
 function loadPost(req, res, next) {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'Post id must be a positive integer.');
-  Post.findByPk(id, { include: [photoInclude, daysInclude], order: photoOrder })
+  Post.findByPk(id, { include: [photoInclude, daysInclude, itemsInclude], order: photoOrder })
     .then((post) => {
       // Hidden posts look like missing posts to everyone but the owner and admins.
       if (!post || !mod.canSee(req.user, post)) return notFound(res, 'Post not found.');
@@ -41,7 +42,7 @@ function readSchedule(body, creating) {
   return schedule.validateSchedule(body.schedule, creating);
 }
 
-const reload = (post) => Post.findByPk(post.id, { include: [photoInclude, daysInclude], order: photoOrder });
+const reload = (post) => Post.findByPk(post.id, { include: [photoInclude, daysInclude, itemsInclude], order: photoOrder });
 
 // Create: the owner is always the session user, never a body userId.
 // body.schedule ({ timeZone, days }) wins over the legacy startDate/endDate.
@@ -68,6 +69,8 @@ router.post('/', requireLogin, async (req, res) => {
 });
 
 router.use('/:id/photos', requireLogin, loadPost, (req, res, next) => requireOwnerOrAdmin(req, res, next), require('./photos'));
+
+router.use('/:id/items', loadPost, require('./items'));
 
 router.use('/:id/report', requireLogin, loadPost, require('./report'));
 
@@ -113,6 +116,7 @@ router.delete('/:id', requireLogin, loadPost, requireOwnerOrAdmin, (req, res) =>
     // Open reports are closed, not deleted, so the moderation history stays.
     .then(() => mod.closeOpenReports(req.post.id, { status: 'actioned', action: 'deleted', reviewerId: byAdmin ? req.user.id : null,
       resolutionNote: byAdmin ? null : 'Deleted by the owner.' }))
+    .then(() => models.SaleItem.destroy({ where: { postId: req.post.id } }))
     .then(() => models.PostPhoto.destroy({ where: { postId: req.post.id } }))
     .then(() => req.post.destroy())
     .then(() => res.status(204).end())

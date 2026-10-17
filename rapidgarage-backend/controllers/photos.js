@@ -67,6 +67,8 @@ router.delete('/:photoId', async (req, res) => {
     const photo = await models.PostPhoto.findOne({ where: { id: photoId, postId: req.post.id } });
     if (!photo) return notFound(res, 'Photo not found.');
     await removePhotoFiles([photo]);
+    // Items that used this photo keep their place, just without a picture.
+    await models.SaleItem.update({ photoId: null }, { where: { photoId: photo.id } });
     await photo.destroy();
     return res.status(204).end();
   } catch (err) {

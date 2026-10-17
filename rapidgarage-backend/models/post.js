@@ -36,6 +36,7 @@ module.exports = (sequelize, DataTypes) => {
     Post.belongsTo(models.User, { foreignKey: 'userId', onDelete: 'CASCADE' });
     Post.hasMany(models.PostPhoto, { as: 'photos', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.SaleDay, { as: 'saleDays', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
+    Post.hasMany(models.SaleItem, { as: 'items', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.SavedPost, { as: 'saves', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
   };
   // Nested includes are serialized with get({ plain: true }), which skips
@@ -43,6 +44,7 @@ module.exports = (sequelize, DataTypes) => {
   Post.prototype.toJSON = function toJSON() {
     const out = Object.assign({}, this.get({ plain: true }));
     if (Array.isArray(this.photos)) out.photos = this.photos.map((p) => p.toJSON());
+    if (Array.isArray(this.items)) out.items = this.items.slice().sort((a, b) => a.position - b.position || a.id - b.id).map((i) => i.toJSON());
     delete out.hiddenBy; // which admin hid it is only shown in the admin API
     if (Array.isArray(this.saleDays)) out.schedule = require('../lib/schedule').toJSON(this);
     delete out.saleDays;

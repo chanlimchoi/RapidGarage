@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag, BellRing, Check } from 'lucide-react';
+import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag, BellRing, Check, Package, X } from 'lucide-react';
 import Map from './Map';
 import PostCard from './PostCard';
 import { Alert, EmptyState, SkeletonGrid, Spinner } from './ui';
@@ -8,6 +8,7 @@ import { apiFetch, searchPosts, errorMessage, SEARCH_RADII, createAlert } from '
 import toast from './toast';
 import { priceFieldError, formatUSD } from '../lib/price';
 import { WHEN_FILTERS } from '../lib/schedule';
+import { KEYWORD_MAX } from '../lib/items';
 
 const PAGE_SIZE = 10;
 
@@ -19,6 +20,8 @@ class PostList extends React.Component {
       q: '', radius: 10, coords: null, center: null, page: 1, totalPages: 1, total: 0,
       selectedId: null, locating: false, view: 'list',
       maxPrice: '', freeOnly: false, when: '', alertBusy: false, alertSavedFor: null,
+      // keyword: what's typed; activeKeyword: what the shown results were filtered by.
+      keyword: '', activeKeyword: '',
     };
     this.handleSubmit = this.handleSubmit.bind(this);
     this.useMyLocation = this.useMyLocation.bind(this);
@@ -33,7 +36,10 @@ class PostList extends React.Component {
   }
 
   loadRecent() {
-    apiFetch('/allPosts' + (this.state.when ? '?when=' + encodeURIComponent(this.state.when) : ''))
+    const q = [];
+    if (this.state.when) q.push('when=' + encodeURIComponent(this.state.when));
+    if (this.state.activeKeyword) q.push('keyword=' + encodeURIComponent(this.state.activeKeyword));
+    apiFetch('/allPosts' + (q.length ? '?' + q.join('&') : ''))
       .then(({ ok, data }) => this.mounted && this.setState({ loading: false, results: ok && Array.isArray(data) ? data : [],
         error: ok ? '' : errorMessage(data, 'Could not load recent sales.') }))
       .catch(() => this.mounted && this.setState({ loading: false, results: [], error: 'Unable to reach the server. Please try again.' }));
@@ -48,6 +54,7 @@ class PostList extends React.Component {
       where.coords ? { lat: where.coords.lat, lng: where.coords.lng } : { q: where.q },
       this.state.freeOnly ? { free: 'true' } : {},
       this.state.when ? { when: this.state.when } : {},
+      this.state.activeKeyword ? { keyword: this.state.activeKeyword } : {},
       !this.state.freeOnly && this.state.maxPrice.trim() ? { maxPrice: this.state.maxPrice.trim() } : {});
     this.setState({ loading: true, error: '', notice: '' });
     return searchPosts(params).then(({ ok, data }) => {
@@ -67,10 +74,27 @@ class PostList extends React.Component {
   handleSubmit(e) {
     e.preventDefault();
     const q = this.state.q.trim();
-    if (q) return this.runSearch({ q }, 1);
-    if (this.state.coords) return this.runSearch({ coords: this.state.coords }, 1);
-    this.setState({ error: 'Type an address or zip code, or use your location.' });
-    if (this.qInput) this.qInput.focus();
+    const activeKeyword = this.state.keyword.trim().replace(/\s+/g, ' ');
+    return new Promise((resolve) => this.setState({ activeKeyword }, resolve)).then(() => {
+      if (q) return this.runSearch({ q }, 1);
+      if (this.state.coords) return this.runSearch({ coords: this.state.coords }, 1);
+      // Only "what": filter the recent list.
+      if (activeKeyword || this.state.mode === 'recent') {
+        this.setState({ loading: true, error: '', mode: 'recent', lastWhere: null, center: null });
+        return this.loadRecent();
+      }
+      this.setState({ error: 'Type an address or zip code, or use your location.' });
+      if (this.qInput) this.qInput.focus();
+      return null;
+    });
+  }
+
+  clearKeyword() {
+    this.setState({ keyword: '', activeKeyword: '' }, () => {
+      if (this.state.lastWhere) return this.runSearch(this.state.lastWhere, 1);
+      this.setState({ loading: true });
+      return this.loadRecent();
+    });
   }
 
   useMyLocation() {
@@ -135,7 +159,8 @@ class PostList extends React.Component {
   renderAlertCta() {
     const s = this.state;
     const config = this.props.config || {};
-    if (config.saleAlerts === false || s.loading || s.mode !== 'distance' || !s.center) return null;
+    // Alerts match by area and price only, so don't offer one for a keyword search.
+    if (config.saleAlerts === false || s.loading || s.mode !== 'distance' || !s.center || s.activeKeyword) return null;
     if (!this.props.user) {
       return <Link className="btn btn-secondary btn-sm search-alert-cta" to="/login"><BellRing size={16} aria-hidden="true" />Log in to get alerts for this area</Link>;
     }
@@ -162,7 +187,7 @@ class PostList extends React.Component {
   }
 
   clearSearch() {
-    this.setState({ q: '', coords: null, lastWhere: null, notice: '', error: '', mode: 'recent', center: null, loading: true, results: [] });
+    this.setState({ q: '', coords: null, lastWhere: null, notice: '', error: '', mode: 'recent', center: null, loading: true, results: [], keyword: '', activeKeyword: '' });
     this.loadRecent();
   }
 
@@ -170,6 +195,14 @@ class PostList extends React.Component {
     const s = this.state;
     if (s.loading) return <SkeletonGrid count={4} />;
     if (!s.results.length) {
+      if (s.activeKeyword && !s.error) {
+        return (
+          <EmptyState icon={SearchX} title={'No sales with “' + s.activeKeyword + '”'}
+            action={<button type="button" className="btn btn-secondary" onClick={() => this.clearKeyword()}>Show all sales</button>}>
+            {s.mode === 'distance' ? 'Nothing matching within ' + s.resultRadius + ' miles. Try fewer words or a bigger radius.' : 'Try fewer or different words.'}
+          </EmptyState>
+        );
+      }
       if (s.mode === 'recent' && !s.error && s.when) {
         const label = WHEN_FILTERS.filter((w) => w.value === s.when)[0].label.toLowerCase();
         return (
@@ -222,7 +255,7 @@ class PostList extends React.Component {
     const f = s.mode !== 'recent' ? s.resultFilter : null;
     const priceNote = f && f.freeOnly ? ' · free only' : f && f.maxPrice !== null && f.maxPrice !== undefined ? ' · items ' + formatUSD(f.maxPrice) + ' or less' : '';
     const whenItem = WHEN_FILTERS.filter((w) => w.value && w.value === s.when)[0];
-    const filterNote = priceNote + (whenItem ? ' · ' + whenItem.label.toLowerCase() : '');
+    const filterNote = priceNote + (whenItem ? ' · ' + whenItem.label.toLowerCase() : '') + (s.activeKeyword ? ' · “' + s.activeKeyword + '”' : '');
     const maxPriceError = priceFieldError(s.maxPrice, 'Max price');
     return (
       <div className="container">
@@ -230,6 +263,13 @@ class PostList extends React.Component {
           <h1>Find garage sales near you</h1>
           <p>Browse yard sales, estate sales and moving sales in your neighborhood.</p>
           <form className="search-bar map-search" onSubmit={this.handleSubmit} role="search" aria-label="Search sales">
+            <div className="search-field search-field-what">
+              <Package size={18} aria-hidden="true" />
+              <label htmlFor="search-keyword" className="sr-only">What are you looking for?</label>
+              <input id="search-keyword" name="keyword" type="search" value={s.keyword} maxLength={KEYWORD_MAX}
+                onChange={(e) => this.setState({ keyword: e.target.value })} placeholder="What? e.g. bike, lamp" autoComplete="off" />
+              {s.activeKeyword ? <button type="button" className="btn btn-ghost btn-icon btn-sm keyword-clear" aria-label="Clear what you're looking for" onClick={() => this.clearKeyword()}><X size={14} aria-hidden="true" /></button> : null}
+            </div>
             <div className="search-field">
               <Search size={18} aria-hidden="true" />
               <label htmlFor="search-q" className="sr-only">Address or zip code</label>

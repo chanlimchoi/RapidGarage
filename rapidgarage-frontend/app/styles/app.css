@@ -602,3 +602,50 @@ fieldset.report-reasons { border: 0; padding: 0; margin: 0; }
 .btn-link { background: none; border: 0; padding: 0; color: var(--color-brand); font: inherit; font-weight: var(--weight-semibold); cursor: pointer; text-decoration: underline; }
 @media (max-width: 559px) { .route-when { width: 100%; } .route-when button { flex: 1; justify-content: center; padding: 6px 8px; } .open-in-maps { width: 100%; justify-content: center; } }
 .saved-page .save-btn-card { display: none; }
+
+/* ---------- Sale items ---------- */
+.search-field-what { border-bottom: 1px solid var(--color-border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.search-field-what .keyword-clear { flex: none; min-height: 32px; width: 32px; padding: 0; }
+@media (min-width: 768px) {
+  .search-field-what { grid-column: 1 / -1; }
+}
+@media (min-width: 1024px) {
+  .search-bar { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr) auto auto; }
+  .search-field-what { grid-column: auto; border-bottom: 0; border-radius: var(--radius-pill) 0 0 var(--radius-pill); border-right: 1px solid var(--color-border); }
+  .search-field-what:focus-within { background: transparent; }
+}
+.post-card-items { display: flex; align-items: flex-start; gap: 6px; margin: 0; color: var(--color-text-muted); }
+.post-card-items svg { flex: none; margin-top: 3px; color: var(--color-brand); }
+.items-section { display: grid; gap: var(--space-3); }
+.items-section h2 { display: flex; align-items: center; gap: var(--space-2); margin: 0; flex-wrap: wrap; }
+.items-section h2 svg { color: var(--color-brand); }
+.items-count { font-weight: var(--weight-regular); }
+.items-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.items-tools { align-items: center; gap: var(--space-3); }
+.items-tools .checkbox-row { align-items: center; gap: var(--space-2); }
+.item-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); overflow: hidden; }
+.item-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); min-height: 56px; }
+.item-row + .item-row { border-top: 1px solid var(--color-border); }
+.item-thumb { flex: none; width: 40px; height: 40px; border-radius: var(--radius-md); overflow: hidden; padding: 0; border: 1px solid var(--color-border); background: var(--color-surface-2); display: grid; place-items: center; color: var(--color-text-subtle); cursor: pointer; }
+.item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.item-thumb-empty { cursor: default; }
+.item-name { flex: 1; min-width: 0; font-weight: var(--weight-medium, 500); overflow-wrap: anywhere; }
+.item-price { flex: none; font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
+.item-price.is-free { color: var(--color-success); }
+.item-row.is-sold .item-name, .item-row.is-sold .item-price { text-decoration: line-through; text-decoration-thickness: 2px; color: var(--color-text-subtle); }
+.item-row.is-sold .item-thumb img { filter: grayscale(1); opacity: 0.55; }
+.item-sold-toggle { flex: none; }
+/* Item editor page */
+.items-editor .item-row { align-items: flex-start; flex-wrap: wrap; }
+.items-editor .item-row .item-actions { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+.item-form { display: grid; gap: var(--space-3); }
+.item-form-row { display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
+@media (min-width: 560px) { .item-form-row { grid-template-columns: minmax(0, 1fr) 140px; } }
+.item-edit { flex-basis: 100%; }
+.photo-choice { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; border: 0; }
+.photo-choice legend { font-weight: var(--weight-semibold); font-size: var(--text-sm); margin-bottom: var(--space-2); padding: 0; }
+.photo-choice label { position: relative; width: 56px; height: 56px; border-radius: var(--radius-md); border: 2px solid var(--color-border); overflow: hidden; cursor: pointer; display: grid; place-items: center; background: var(--color-surface-2); color: var(--color-text-muted); font-size: var(--text-xs); text-align: center; line-height: 1.1; }
+.photo-choice input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.photo-choice img { width: 100%; height: 100%; object-fit: cover; }
+.photo-choice label:has(input:checked) { border-color: var(--color-brand); box-shadow: 0 0 0 2px var(--color-brand-soft); }
+.photo-choice label:has(input:focus-visible) { outline: 3px solid var(--color-focus); outline-offset: 2px; }

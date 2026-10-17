@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag } from 'lucide-react';
+import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag, Package } from 'lucide-react';
 import { formatMiles, placeLine, timeAgo } from '../lib/format';
 import { shortWhen, saleBadge } from '../lib/schedule';
 import { formatPrice } from '../lib/price';
@@ -39,6 +39,9 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
           {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
           {!when && !badge ? <span className="chip"><Clock size={12} aria-hidden="true" />Posted {timeAgo(post.createdAt)}</span> : null}
         </div>
+        {post.matchedItems && post.matchedItems.length ? (
+          <p className="post-card-items small"><Package size={12} aria-hidden="true" /><span><span className="sr-only">Matching items: </span>{post.matchedItems.join(', ')}</span></p>
+        ) : null}
         {onShowOnMap && hasPin ? (
           <div className="post-card-foot">
             <span className="small muted">Posted {timeAgo(post.createdAt)}</span>
