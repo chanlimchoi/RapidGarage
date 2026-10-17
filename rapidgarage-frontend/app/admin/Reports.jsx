@@ -6,6 +6,7 @@ import { Alert, EmptyState, SkeletonBlock, Spinner } from '../components/ui';
 import { displayName, timeAgo } from '../lib/format';
 import { formatPrice } from '../lib/price';
 import toast from '../components/toast';
+import ConversationReports from './ConversationReports';
 
 const ACTION_TEXT = {
   dismiss: { done: 'Reports dismissed.', verb: 'Dismiss reports' },
@@ -19,7 +20,7 @@ const OUTCOME = { dismissed: 'Dismissed', hidden: 'Hidden', unhidden: 'Unhidden'
 export default class Reports extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { view: 'open', loading: true, error: '', groups: [], hidden: [], threshold: null, history: null, page: 1, notes: {}, busy: null };
+    this.state = { kind: 'posts', convCount: 0, view: 'open', loading: true, error: '', groups: [], hidden: [], threshold: null, history: null, page: 1, notes: {}, busy: null };
   }
 
   componentDidMount() { this.loadQueue(); }
@@ -29,8 +30,9 @@ export default class Reports extends React.Component {
     return fetchReportQueue()
       .then(({ ok, data }) => {
         if (!ok) return this.setState({ loading: false, error: errorMessage(data, 'Could not load reports.') });
-        this.setState({ loading: false, groups: data.groups, hidden: data.hidden, threshold: data.autoHideThreshold });
-        if (this.props.onCount) this.props.onCount(data.groups.reduce((n, g) => n + g.openCount, 0));
+        const postCount = data.groups.reduce((n, g) => n + g.openCount, 0);
+        this.setState({ loading: false, groups: data.groups, hidden: data.hidden, threshold: data.autoHideThreshold, postCount, convCount: data.conversationOpenCount || 0 });
+        if (this.props.onCount) this.props.onCount(postCount + (data.conversationOpenCount || 0));
         return null;
       })
       .catch(() => this.setState({ loading: false, error: 'Unable to reach the server.' }));
@@ -193,11 +195,23 @@ export default class Reports extends React.Component {
   }
 
   render() {
-    const { view, loading, error } = this.state;
+    const { view, loading, error, kind, postCount, convCount } = this.state;
+    const count = (n) => (n ? <span className="count" aria-label={n + ' open'}>{n}</span> : null);
     return (
       <section className="rg-admin-reports stack" aria-labelledby="admin-reports-heading">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <h2 id="admin-reports-heading" className="h4" style={{ margin: 0 }}><Flag size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />Reports</h2>
+          <div className="segmented admin-tabs report-kind" role="group" aria-label="Report type" style={{ margin: 0 }}>
+            <button type="button" aria-pressed={kind === 'posts'} onClick={() => this.setState({ kind: 'posts' })}>Posts{count(postCount)}</button>
+            <button type="button" aria-pressed={kind === 'conversations'} onClick={() => this.setState({ kind: 'conversations' })}>Conversations{count(convCount)}</button>
+          </div>
+        </div>
+        {kind === 'conversations' ? (
+          <ConversationReports onCount={(n) => { this.setState({ convCount: n }); if (this.props.onCount) this.props.onCount((this.state.postCount || 0) + n); }}
+            onChanged={() => this.loadQueue()} />
+        ) : (
+        <React.Fragment>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <div className="segmented" role="group" aria-label="Report view">
             <button type="button" aria-pressed={view === 'open'} onClick={() => this.switchView('open')}>Open</button>
             <button type="button" aria-pressed={view === 'history'} onClick={() => this.switchView('history')}><History size={14} aria-hidden="true" />History</button>
@@ -205,6 +219,8 @@ export default class Reports extends React.Component {
         </div>
         {error ? <Alert tone="danger">{error}</Alert> : null}
         {loading ? <SkeletonBlock height={120} lines={3} /> : (view === 'open' ? this.renderOpen() : this.renderHistory())}
+        </React.Fragment>
+        )}
       </section>
     );
   }

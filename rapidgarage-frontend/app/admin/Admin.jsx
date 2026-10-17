@@ -137,7 +137,7 @@ export default class Admin extends React.Component {
                               <span><strong>{displayName(u)}</strong><small>{u.email}</small></span>
                             </div>
                           </td>
-                          <td className="cell-role"><span className={'chip badge-role ' + (u.role === 'admin' ? 'chip-brand' : '')}>{u.role}</span></td>
+                          <td className="cell-role"><span className={'chip badge-role ' + (u.role === 'admin' ? 'chip-brand' : '')}>{u.role}</span>{u.messagingBanned ? <span className="chip chip-danger" style={{ marginLeft: 6 }}>Messaging banned</span> : null}</td>
                           <td>
                             {u.role === 'admin'
                               ? <button type="button" className="btn btn-secondary btn-sm" disabled={s.busy} onClick={() => this.setRole(u, 'user')}>Remove admin</button>

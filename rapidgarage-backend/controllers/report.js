@@ -23,7 +23,9 @@ router.post('/', async (req, res) => {
     const existing = await models.Report.findOne({ where: { postId: post.id, reporterId: req.user.id, status: 'open' } });
     if (existing) return conflict(res, 'You already reported this post. A moderator will review it.');
     const since = new Date(Date.now() - 3600 * 1000);
-    const recent = await models.Report.count({ where: { reporterId: req.user.id, createdAt: { [Op.gte]: since } } });
+    // One hourly budget for post and conversation reports together.
+    const recentWhere = { where: { reporterId: req.user.id, createdAt: { [Op.gte]: since } } };
+    const recent = (await models.Report.count(recentWhere)) + (await models.ConversationReport.count(recentWhere));
     if (recent >= mod.reportsPerHour()) {
       res.set('Retry-After', '3600');
       return sendError(res, 429, 'rate_limited', 'You have sent a lot of reports. Please try again later.');

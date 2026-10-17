@@ -92,3 +92,38 @@ export function fetchReportHistory(page) { return apiFetch('/admin/reports/histo
 export function moderatePost(postId, action, note) {
   return apiFetch('/admin/posts/' + postId + '/moderate', { method: 'POST', body: JSON.stringify({ action, note: note || undefined }) });
 }
+
+// ---- Messaging -----------------------------------------------------------
+export const MESSAGE_MAX = 2000;
+export const fetchConversations = () => apiFetch('/conversations');
+export const fetchConversation = (id) => apiFetch('/conversations/' + id);
+export const fetchMessagesAfter = (id, afterId) => apiFetch('/conversations/' + id + '/messages?after=' + (afterId || 0));
+export const fetchMessagesBefore = (id, beforeId) => apiFetch('/conversations/' + id + '/messages?before=' + beforeId);
+export const startConversation = (postId) => apiFetch('/conversations', { method: 'POST', body: JSON.stringify({ postId }) });
+export const sendMessage = (id, body) => apiFetch('/conversations/' + id + '/messages', { method: 'POST', body: JSON.stringify({ body }) });
+export const setBlocked = (id, blocked) => apiFetch('/conversations/' + id + '/block', { method: blocked ? 'POST' : 'DELETE' });
+// Resolves to the unread count, or null if it couldn't be fetched.
+export function fetchUnreadCount() {
+  return apiFetch('/conversations/unread')
+    .then(({ ok, data }) => (ok && data ? data.count : null))
+    .catch(() => null);
+}
+
+// ---- Conversation reports --------------------------------------------------
+export const CONVERSATION_REPORT_REASONS = [
+  { value: 'harassment', label: 'Harassment' },
+  { value: 'scam', label: 'Scam or fraud' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'offensive', label: 'Offensive content' },
+  { value: 'other', label: 'Something else' },
+];
+export function conversationReasonLabel(value) {
+  const r = CONVERSATION_REPORT_REASONS.filter((x) => x.value === value)[0];
+  return r ? r.label : value;
+}
+export const reportConversation = (id, reason, note, block) =>
+  apiFetch('/conversations/' + id + '/report', { method: 'POST', body: JSON.stringify({ reason, note: note || undefined, block: !!block }) });
+export const fetchConversationReportQueue = () => apiFetch('/admin/conversation-reports');
+export const fetchConversationReportHistory = (page) => apiFetch('/admin/conversation-reports/history?page=' + (page || 1));
+export const fetchReportedConversation = (id) => apiFetch('/admin/conversations/' + id);
+export const moderateConversation = (id, body) => apiFetch('/admin/conversations/' + id + '/moderate', { method: 'POST', body: JSON.stringify(body) });

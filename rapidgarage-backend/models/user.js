@@ -14,6 +14,9 @@ module.exports = (sequelize, DataTypes) => {
     // Last 4 characters only, for display ("…abcd"). Not secret.
     mapsKeyLast4: { type: DataTypes.STRING(4), allowNull: true },
     role: { type: DataTypes.STRING, allowNull: false, defaultValue: 'user', validate: { isIn: [['user', 'admin']] } },
+    // Set by a moderator: can still read conversations but not send or start them.
+    messagingBanned: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    messagingBannedAt: { type: DataTypes.DATE, allowNull: true },
   }, {
     // Never load the password hash unless explicitly asked for (login only).
     // The encrypted Maps key is excluded too; load it only via scope('withMapsKey').

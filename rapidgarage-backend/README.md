@@ -218,6 +218,82 @@ Reports are kept when a post is deleted (by an admin or its owner), so history s
   automatically (`hiddenSource: auto`) once N different users have open reports on it. It
   still shows in the admin queue to dismiss or unhide. Unset (the default) means off.
 
+## Messaging
+
+Migration `20261017050000-messaging` adds `Conversations` (one per post + buyer + seller,
+unique index; `postId` has no FK so threads survive a deleted post, `postTitle` keeps a
+snapshot; per-participant `buyerLastReadAt` / `sellerLastReadAt`), `Messages` and
+`UserBlocks`. Back up and run `npm run db:precheck` and `npx sequelize-cli db:migrate` as above.
+
+All routes need login. A conversation is visible only to its two participants: anyone else
+(admins included) gets 404, so ids can't be probed. Responses identify people as
+`{ id, name }` where `name` is first name + last initial ("Bea B."); emails are never included.
+
+| Route | |
+|---|---|
+| `POST /conversations { postId }` | Start (201) or reuse (200) your conversation with the post's seller. 403 for your own post, `post_unavailable` for a hidden post (unless you already have a conversation about it), `blocked` if either of you blocked the other; 404 for a missing post; 429 over `CONVERSATION_MAX_PER_HOUR`. |
+| `GET /conversations` | Your conversations, newest activity first: `post { id, title, status: available\|hidden\|deleted, canView, thumbUrl }`, `other`, `role` (buyer/seller), `lastMessage`, `unreadCount`, `blocked { byMe, byThem }`, plus `unreadTotal`. A seller sees a conversation once the buyer has written. |
+| `GET /conversations/unread` | `{ count, conversations }` for the nav badge. |
+| `GET /conversations/:id` | The conversation plus the newest 30 messages (oldest first), `hasMore` and `canSend`. Marks them read. |
+| `GET /conversations/:id/messages?before=<id>` | Older page. `?after=<id>` returns newer messages (for polling) and marks them read. |
+| `POST /conversations/:id/messages { body }` | Send. `body` is plain text, 1-2000 characters after trimming (stored as-is; the client renders it as text, never HTML). 403 `blocked`, 429 over `MESSAGE_MAX_PER_MINUTE`. Sending works in existing conversations even if the post is hidden. |
+| `POST` / `DELETE /conversations/:id/block` | Block or unblock the other participant. Blocking applies to all conversations between the two of you, stops messages in both directions, and only the blocker can lift it. |
+
+Settings (optional): `MESSAGE_MAX_PER_MINUTE` (messages per user per minute, default 20) and
+`CONVERSATION_MAX_PER_HOUR` (new conversations per user per hour, default 20).
+
+`GET /profile/:id` now returns the full profile (including email) only to that user and to
+admins; everyone else gets `{ id, name, createdAt }`.
+
+### Conversation reports and admin access
+
+Migration `20261017060000-conversation-reports` adds `ConversationReports` (separate from the
+post `Reports` table, so post reports and their history are untouched),
+`ConversationModerationEvents` (append-only audit log), `Users.messagingBanned` /
+`messagingBannedAt` and `Messages.removedAt` / `removedBy`.
+
+**Reporting** — `POST /conversations/:id/report { reason, note?, block? }`, participants only
+(404 for anyone else). `reason`: `harassment`, `scam`, `spam`, `offensive`, `other`; `note` up
+to 500 characters; `block: true` also blocks the other participant. One open report per
+participant per conversation (409; unique partial index `conv_reports_one_open_per_user`). Post
+and conversation reports share one hourly budget, `REPORT_MAX_PER_HOUR` (429). The thread
+response includes `reportedByMe` (your own open report only); participants never see other
+reports, reporters or admin notes.
+
+**Admin read rule** (server-enforced in `controllers/adminConversations.js`; the participant
+API stays 404 for admins):
+
+| Conversation state | `GET /admin/conversations/:id` |
+|---|---|
+| never reported | 404, identical to any non-participant |
+| has an open report | every message, before and after the report (`access.mode: "open"`) |
+| only resolved reports | messages up to the latest resolution time (`access.mode: "history"`); later messages stay private (`access.hiddenLaterMessages` counts them) until someone reports again |
+
+Every successful read writes a `read` event with the admin, time and report id (the newest open
+report, or the newest resolved one in history mode). The detail response returns participants
+as name + email (admins already see emails on Users), every report, the messages (removed ones
+keep their text for admins, flagged `removed`) and the audit trail (`events`).
+
+**Admin routes** (403 for non-admins):
+
+- `GET /admin/conversation-reports` — open reports grouped by conversation, with post context,
+  participants, reasons and reporters. No message text; reading needs the logged detail view.
+- `GET /admin/conversation-reports/history?page=` — resolved reports.
+- `GET /admin/reports` also returns `conversationOpenCount` for the tab badge.
+- `POST /admin/conversations/:id/moderate { action, userId?, messageId?, note? }` (404 unless
+  the read rule allows access; actions only touch messages the admin may see):
+
+| action | effect | open reports |
+|---|---|---|
+| `dismiss` | none | `dismissed` |
+| `warn` | none (a note in history only; optional `userId`) | `actioned` / warned |
+| `ban` | `userId` (a participant) can't send or start conversations anywhere; reading still works | `actioned` / banned |
+| `unban` | lifts the ban | unchanged |
+| `remove_message` | soft-deletes `messageId`; participants get `{ removed: true, body: null }` | unchanged |
+
+Every action is logged as an event with its note. Banned users get 403 `messaging_banned` on
+send and start, and `/me` reports `messagingBanned: true`.
+
 ## Optional
 
 - If you want to add views and handlebars to your server side

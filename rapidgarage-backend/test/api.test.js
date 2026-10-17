@@ -175,8 +175,13 @@ describe('RapidGarage API', function () {
     it('profile hides the password and 404s for unknown users', async () => {
       const res = await request(app).get('/profile/' + aliceId);
       assert.strictEqual(res.status, 200);
-      assert.strictEqual(res.body.email, 'alice@example.com');
+      assert.strictEqual(res.body.id, aliceId);
+      assert.strictEqual(res.body.email, undefined, 'other people never see the email');
       assertNoPassword(res.body);
+      assert.strictEqual((await bob.get('/profile/' + aliceId)).body.email, undefined);
+      const own = await alice.get('/profile/' + aliceId);
+      assert.strictEqual(own.body.email, 'alice@example.com');
+      assertNoPassword(own.body);
       assertError(await request(app).get('/profile/9999'), 404, 'not_found');
       assertError(await request(app).get('/profile/0'), 400, 'bad_request');
     });

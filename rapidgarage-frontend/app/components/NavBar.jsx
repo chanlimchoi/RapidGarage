@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info } from 'lucide-react';
+import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle } from 'lucide-react';
 import { initials, displayName } from '../lib/format';
+
+const badgeText = (n) => (n > 99 ? '99+' : String(n));
+const unreadLabel = (n) => n + ' unread message' + (n === 1 ? '' : 's');
 
 // Sticky top bar. Signed out: Log in / Sign up. Signed in: a user menu with
 // Profile, Settings, Admin (admins only) and Log out.
@@ -65,11 +68,15 @@ export default class NavBar extends React.Component {
 
   renderUserMenu(user, isAdmin) {
     const close = () => this.setState({ menuOpen: false });
+    const unread = this.props.unread || 0;
     return (
       <div className="menu user-menu" ref={this.menuRef}>
         <button type="button" className="menu-trigger" ref={this.triggerRef} aria-haspopup="menu" aria-expanded={this.state.menuOpen}
-          aria-label={'Account menu for ' + displayName(user)} onClick={() => this.toggleMenu()}>
-          <span className="avatar" aria-hidden="true">{initials(user)}</span>
+          aria-label={'Account menu for ' + displayName(user) + (unread ? ', ' + unreadLabel(unread) : '')} onClick={() => this.toggleMenu()}>
+          <span className="avatar-wrap" aria-hidden="true">
+            <span className="avatar">{initials(user)}</span>
+            {unread ? <span className="nav-badge avatar-badge">{badgeText(unread)}</span> : null}
+          </span>
           <ChevronDown size={16} aria-hidden="true" />
         </button>
         {this.state.menuOpen ? (
@@ -78,6 +85,8 @@ export default class NavBar extends React.Component {
               <strong>{displayName(user)}</strong>
               <span>{user.email}</span>
             </div>
+            <Link role="menuitem" className="menu-item" to="/messages" onClick={close}><MessageCircle size={18} aria-hidden="true" />Messages
+              {unread ? <span className="nav-badge menu-badge" aria-label={unreadLabel(unread)}>{badgeText(unread)}</span> : null}</Link>
             <Link role="menuitem" className="menu-item" to="/profile" onClick={close}><User size={18} aria-hidden="true" />Profile &amp; listings</Link>
             <Link role="menuitem" className="menu-item" to="/settings" onClick={close}><SettingsIcon size={18} aria-hidden="true" />Settings</Link>
             {isAdmin ? <Link role="menuitem" className="menu-item" to="/admin" onClick={close}><ShieldCheck size={18} aria-hidden="true" />Admin</Link> : null}
@@ -103,6 +112,12 @@ export default class NavBar extends React.Component {
           </Link>
           <nav className="nav-links" aria-label="Main">
             <NavLink exact to="/" className="nav-link" activeClassName="active"><Search size={16} aria-hidden="true" />Browse</NavLink>
+            {user ? (
+              <NavLink to="/messages" className="nav-link nav-messages" activeClassName="active">
+                <MessageCircle size={16} aria-hidden="true" />Messages
+                {this.props.unread ? <span className="nav-badge" aria-label={unreadLabel(this.props.unread)}>{badgeText(this.props.unread)}</span> : null}
+              </NavLink>
+            ) : null}
             <NavLink to="/about" className="nav-link" activeClassName="active">About</NavLink>
           </nav>
           <div className="nav-spacer" />
@@ -129,6 +144,8 @@ export default class NavBar extends React.Component {
             <div className="menu-sep" role="separator" />
             {user ? (
               <React.Fragment>
+                <Link className="menu-item" to="/messages"><MessageCircle size={18} aria-hidden="true" />Messages
+                  {this.props.unread ? <span className="nav-badge menu-badge" aria-label={unreadLabel(this.props.unread)}>{badgeText(this.props.unread)}</span> : null}</Link>
                 <Link className="menu-item" to="/profile"><User size={18} aria-hidden="true" />Profile &amp; listings</Link>
                 <Link className="menu-item" to="/settings"><SettingsIcon size={18} aria-hidden="true" />Settings</Link>
                 {isAdmin ? <Link className="menu-item" to="/admin"><ShieldCheck size={18} aria-hidden="true" />Admin</Link> : null}

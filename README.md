@@ -49,3 +49,28 @@ each post can be dismissed, hidden, unhidden or deleted with an optional resolut
 History view lists resolved reports. Hidden posts disappear from home, lists, search and the
 map for everyone except the owner (who sees a "Hidden by moderator" notice) and admins.
 Optional auto-hide is controlled by `REPORT_AUTO_HIDE_THRESHOLD`; see the backend README.
+
+## Messages
+
+Logged-in buyers can press **Message seller** on someone else's sale. That opens (or reuses)
+a private conversation for that post at **/messages**: a conversation list plus a thread with a
+composer (Enter sends, Shift+Enter adds a line). New messages and the unread badge on the nav
+(Messages link and avatar) update by polling: every 10 s while the inbox or a thread is open,
+and every 15 s for the badge. Messages are plain text; http(s) links become clickable. People
+only ever see each other's first name and last initial, never an email address. Either person
+can **Block** the other, which stops new messages both ways until they unblock. If the post is
+hidden by a moderator or deleted, existing conversations stay readable and show the post as
+unavailable, but new conversations can't be started on it. See the backend README for the API
+and rate limits.
+
+### Reporting a conversation
+
+Either person in a conversation can choose **Report conversation** from the thread's options
+menu: pick a reason (harassment, scam or fraud, spam, offensive, other), add an optional note
+and optionally block the other person at the same time. **Admins can't read a conversation
+unless someone in it has reported it.** Reported conversations appear in **Admin → Reports →
+Conversations**, where an admin can read the messages (every read is logged in an audit
+trail), dismiss, record a warning, remove individual messages (participants then see "Removed
+by moderator") or ban a participant from messaging (they can still read, but not send or
+start conversations), and lift a ban later. Participants never see who else reported or any
+admin notes.

@@ -4,6 +4,8 @@ const { badRequest, notFound, serverError, parseId } = require('../lib/http');
 const { ZIP_RE } = require('../lib/validate');
 const { Op } = require('sequelize');
 const { visibleWhere } = require('../lib/moderation');
+const { isAdmin } = require('../lib/roles');
+const { publicUser } = require('../lib/people');
 
 // AND a listing filter with the viewer's visibility rule (hidden posts).
 const visible = (req, where) => ({ [Op.and]: [where || {}, visibleWhere(req.user) || {}] });
@@ -36,7 +38,13 @@ router.get('/profile/:id', (req, res) => {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'User id must be a positive integer.');
   models.User.findByPk(id)
-    .then((user) => (user ? res.json(user) : notFound(res, 'User not found.')))
+    .then((user) => {
+      if (!user) return notFound(res, 'User not found.');
+      // Full profile (email etc.) only for yourself and admins; everyone else
+      // gets first name + last initial.
+      if (req.user && (req.user.id === user.id || isAdmin(req.user))) return res.json(user);
+      return res.json(Object.assign(publicUser(user), { createdAt: user.createdAt }));
+    })
     .catch((err) => serverError(res, err));
 });
 
