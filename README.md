@@ -172,6 +172,14 @@ key is available) and an **Open in Google Maps** link with the stops as waypoint
 stops, Google's limit). Your saved list is private to you.
 
 
+## Item holds
+
+From a conversation, a buyer can ask the seller to hold one item of the sale, optionally with a pickup time (before the sale ends, at most 14 days ahead). The seller accepts (choosing how long: until an hour after pickup, or 2/6/24/48 h), declines, or later releases the hold; the buyer can cancel. An accepted hold shows the item as **Reserved** on the sale page and in its item list (the seller also sees "Reserved until ..."); nobody else is told who holds it, and a reserved item can't be requested by anyone else.
+
+- **Expiry.** An unanswered request lapses after `HOLD_REQUEST_HOURS` (24); an accepted hold ends at the chosen time (default `HOLD_HOURS`, 24; at most 72 h) and never outlives the sale. Marking the item sold completes the hold. A sweep runs every minute and whenever the hold or unread endpoints are hit, so nothing depends on the timer alone.
+- **Abuse limits (per buyer).** `HOLD_MAX_ACTIVE` open holds overall (5), 3 per sale, `HOLD_MAX_PER_DAY` requests per 24 h (10), no new request for an item the seller declined within 24 h, and at most 5 pending requests per item. Accepting one request automatically declines the others for that item. Blocking someone, or a messaging ban, ends or prevents holds between the two of you.
+- **Notifications.** Each step is posted into the conversation as an event message (shown as a centred line, worded for each side in the reader's language), so it counts toward the unread badge and appears in the inbox preview. No email is sent.
+
 ## Languages
 
 RapidGarage speaks **English, Español, 한국어 and 简体中文**. The first visit follows the

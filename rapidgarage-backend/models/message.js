@@ -9,6 +9,11 @@ module.exports = (sequelize, DataTypes) => {
     // Soft delete by a moderator: participants see "removed by moderator".
     removedAt: { type: DataTypes.DATE, allowNull: true },
     removedBy: { type: DataTypes.INTEGER, allowNull: true },
+    // 'text', or 'hold' for item-hold events (holdEvent: requested | accepted |
+    // declined | released | cancelled | expired | sold); body keeps an English summary.
+    kind: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'text' },
+    holdId: { type: DataTypes.INTEGER, allowNull: true },
+    holdEvent: { type: DataTypes.STRING(16), allowNull: true },
   }, {
     updatedAt: false,
     indexes: [
@@ -19,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
   Message.associate = (models) => {
     Message.belongsTo(models.Conversation, { foreignKey: 'conversationId', onDelete: 'CASCADE' });
     Message.belongsTo(models.User, { as: 'sender', foreignKey: 'senderId', onDelete: 'CASCADE' });
+    Message.belongsTo(models.ItemHold, { as: 'hold', foreignKey: 'holdId', onDelete: 'SET NULL', constraints: false });
   };
   Message.BODY_MAX = BODY_MAX;
   return Message;

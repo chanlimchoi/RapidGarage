@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, ArrowLeft, Send, Ban, ImageOff, LogIn, Inbox, AlertTriangle, Flag, MoreHorizontal, ShieldOff } from 'lucide-react';
+import { MessageCircle, ArrowLeft, Send, Ban, ImageOff, LogIn, Inbox, AlertTriangle, Flag, MoreHorizontal, ShieldOff, Bookmark } from 'lucide-react';
 import {
   errorMessage, fetchConversations, fetchConversation, fetchMessagesAfter, fetchMessagesBefore,
   sendMessage, setBlocked, MESSAGE_MAX, reportConversation, CONVERSATION_REPORT_REASONS, REPORT_NOTE_MAX,
@@ -11,6 +11,8 @@ import toast from '../components/toast';
 import linkify from './linkify';
 import RatePanel from '../ratings/RatePanel';
 import { RatingBadge } from '../ratings/Stars';
+import HoldPanel from './HoldPanel';
+import { holdEventText } from './holdText';
 import { t, intlLocale } from '../i18n';
 
 const POLL_MS = 10000;
@@ -327,7 +329,9 @@ export default class Messages extends React.Component {
       <ul className="convo-list">
         {list.map((c) => {
           const label = postLabel(c.post);
-          const preview = !c.lastMessage ? t('msg.noneTitle') : c.lastMessage.removed ? t('msg.removed') : c.lastMessage.mine ? t('msg.youPrefix', { text: c.lastMessage.body }) : c.lastMessage.body;
+          const preview = !c.lastMessage ? t('msg.noneTitle') : c.lastMessage.removed ? t('msg.removed')
+            : c.lastMessage.kind === 'hold' ? holdEventText(c.lastMessage, c.other ? c.other.name : t('msg.formerUser'))
+              : c.lastMessage.mine ? t('msg.youPrefix', { text: c.lastMessage.body }) : c.lastMessage.body;
           return (
             <li key={c.id}>
               <Link to={'/messages/' + c.id} className={'convo-item' + (c.id === activeId ? ' active' : '') + (c.unreadCount ? ' unread' : '')}
@@ -390,6 +394,8 @@ export default class Messages extends React.Component {
         </header>
         {conv.other ? <RatePanel conversationId={conv.id} iWrote={messages.some((m) => m.mine)}
           refreshKey={[messages.some((m) => m.mine), messages.some((m) => !m.mine), blocked.byMe, blocked.byThem].join()} /> : null}
+        <HoldPanel conversationId={conv.id} role={conv.role} canAct={conv.canSend}
+          refreshKey={messages.filter((m) => m.kind === 'hold').map((m) => m.id).join()} onChange={() => this.poll()} />
         {label && !conv.post.canView ? <Alert tone="warning">{t('msg.postGone')}</Alert> : null}
         <div className="thread-log" ref={this.logRef} role="log" aria-live="polite" aria-label={t('msg.with', { name: conv.other ? conv.other.name : t('msg.formerUserLower') })} tabIndex="0">
           {hasMore ? (
@@ -398,7 +404,13 @@ export default class Messages extends React.Component {
             </div>
           ) : null}
           {!messages.length ? <p className="thread-empty muted">{t('msg.sayHello')}</p> : null}
-          {messages.map((m) => (
+          {messages.map((m) => (m.kind === 'hold' && !m.removed ? (
+            <div key={m.id} className={'thread-event hold-event hold-event-' + (m.hold && m.hold.event)}>
+              <Bookmark size={14} aria-hidden="true" />
+              <span>{holdEventText(m, conv.other ? conv.other.name : t('msg.formerUser'))}</span>
+              <time className="bubble-time" dateTime={m.createdAt}>{clock(m.createdAt)}</time>
+            </div>
+          ) : (
             <div key={m.id} className={'bubble-row' + (m.mine ? ' mine' : '')}>
               <span className="sr-only">{t('msg.speaker', { name: m.mine ? t('msg.you') : (conv.other ? conv.other.name : t('msg.them')) })} </span>
               {!m.mine ? <span className="avatar avatar-sm" aria-hidden="true">{initialsOf(conv.other && conv.other.name)}</span> : null}
@@ -409,7 +421,7 @@ export default class Messages extends React.Component {
                 <time className="bubble-time" dateTime={m.createdAt}>{clock(m.createdAt)}</time>
               </div>
             </div>
-          ))}
+          )))}
         </div>
         {conv.canSend ? (
           <form className="composer" onSubmit={(e) => this.send(e)}>

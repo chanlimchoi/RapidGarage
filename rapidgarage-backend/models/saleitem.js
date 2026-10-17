@@ -9,6 +9,8 @@ module.exports = (sequelize, DataTypes) => {
     sold: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     soldAt: { type: DataTypes.DATE, allowNull: true },
     position: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    // Until when an accepted hold sets it aside (lib/holds.js); "Reserved" while in the future.
+    reservedUntil: { type: DataTypes.DATE, allowNull: true },
   }, {
     indexes: [
       { name: 'sale_items_post_position_idx', fields: ['postId', 'position'] },
@@ -21,7 +23,9 @@ module.exports = (sequelize, DataTypes) => {
   };
   SaleItem.prototype.toJSON = function toJSON() {
     const v = this.get({ plain: true });
-    return { id: v.id, name: v.name, priceCents: v.priceCents, photoId: v.photoId, sold: !!v.sold, soldAt: v.soldAt, position: v.position };
+    // Public: only that it is reserved (and until when), never by whom.
+    const reserved = !v.sold && !!v.reservedUntil && new Date(v.reservedUntil) > require('../lib/schedule').now();
+    return { id: v.id, name: v.name, priceCents: v.priceCents, photoId: v.photoId, sold: !!v.sold, soldAt: v.soldAt, position: v.position, reserved, reservedUntil: reserved ? v.reservedUntil : null };
   };
   return SaleItem;
 };

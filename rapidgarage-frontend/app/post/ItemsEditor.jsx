@@ -6,6 +6,7 @@ import { Field, Alert, EmptyState, SkeletonBlock, Spinner, Dialog } from '../com
 import { formatCents, centsInput, validateItemFields, itemSummary, ITEM_NAME_MAX } from '../lib/items';
 import toast from '../components/toast';
 import { t } from '../i18n';
+import { holdTime } from '../messages/holdText';
 
 const MAX_ITEMS = 100;
 const blank = () => ({ name: '', price: '', photoId: null });
@@ -177,6 +178,7 @@ class ItemsEditor extends Component {
         {photo ? <span className="item-thumb item-thumb-empty"><img src={photo.thumbUrl} alt="" /></span> : <span className="item-thumb item-thumb-empty" aria-hidden="true"><Package size={16} /></span>}
         <span className="item-name">{item.name}{item.sold ? <span className="sr-only">{t('items.soldSr')}</span> : null}</span>
         {item.priceCents !== null ? <span className={'item-price' + (item.priceCents === 0 ? ' is-free' : '')}>{formatCents(item.priceCents)}</span> : null}
+        {item.reserved ? <span className="chip chip-warning item-reserved-chip">{t('items.reservedUntil', { time: holdTime(item.reservedUntil) })}</span> : null}
         <span className="item-actions">
           <button type="button" className={'btn btn-sm item-sold-toggle ' + (item.sold ? 'btn-ghost' : 'btn-secondary')} aria-pressed={item.sold} disabled={busy === item.id}
             aria-label={item.sold ? t('items.markAvailable', { name: item.name }) : t('items.markSoldNamed', { name: item.name })} onClick={() => this.toggleSold(item)}>

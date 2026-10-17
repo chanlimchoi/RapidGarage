@@ -98,6 +98,10 @@ export function moderatePost(postId, action, note) {
 export const MESSAGE_MAX = 2000;
 export const fetchConversations = () => apiFetch('/conversations');
 export const fetchConversation = (id) => apiFetch('/conversations/' + id);
+// Item holds (lib/holds.js on the server).
+export const fetchHolds = (conversationId) => apiFetch('/conversations/' + conversationId + '/holds');
+export const requestHold = (conversationId, body) => apiFetch('/conversations/' + conversationId + '/holds', { method: 'POST', body: JSON.stringify(body) });
+export const holdAction = (holdId, action, body) => apiFetch('/holds/' + holdId + '/' + action, { method: 'POST', body: JSON.stringify(body || {}) });
 export const fetchMessagesAfter = (id, afterId) => apiFetch('/conversations/' + id + '/messages?after=' + (afterId || 0));
 export const fetchMessagesBefore = (id, beforeId) => apiFetch('/conversations/' + id + '/messages?before=' + beforeId);
 export const startConversation = (postId) => apiFetch('/conversations', { method: 'POST', body: JSON.stringify({ postId }) });

@@ -8,6 +8,8 @@ const mod = require('../lib/moderation');
 const msg = require('../lib/messaging');
 const { publicUser } = require('../lib/people');
 const ratings = require('../lib/ratings');
+const holds = require('../lib/holds');
+const schedule = require('../lib/schedule');
 
 const PERSON = ['id', 'firstName', 'lastName'];
 
@@ -27,10 +29,25 @@ function postSummary(conv, post, me) {
   };
 }
 
-function messageJSON(m, me) {
+// holdMap: Map(holdId -> ItemHold with item) for hold events (see withHolds).
+function messageJSON(m, me, holdMap) {
   // Removed by a moderator: participants get a placeholder, never the text.
   if (m.removedAt) return { id: m.id, body: null, removed: true, senderId: m.senderId, mine: m.senderId === me, createdAt: m.createdAt };
-  return { id: m.id, body: m.body, senderId: m.senderId, mine: m.senderId === me, createdAt: m.createdAt };
+  const out = { id: m.id, body: m.body, senderId: m.senderId, mine: m.senderId === me, createdAt: m.createdAt };
+  if (m.kind === 'hold') {
+    const h = holdMap && m.holdId ? holdMap.get(m.holdId) : null;
+    out.kind = 'hold';
+    out.hold = { id: m.holdId, event: m.holdEvent, itemName: h && h.item ? h.item.name : null, pickupAt: h ? h.pickupAt : null, expiresAt: h ? h.expiresAt : null, status: h ? h.status : null, endedReason: h ? h.endedReason : null };
+  }
+  return out;
+}
+
+// Holds referenced by hold-event messages, with their items.
+async function withHolds(messages) {
+  const ids = Array.from(new Set(messages.filter((m) => m && m.kind === 'hold' && m.holdId).map((m) => m.holdId)));
+  if (!ids.length) return new Map();
+  const rows = await models.ItemHold.findAll({ where: { id: ids }, include: [{ model: models.SaleItem, as: 'item', attributes: ['id', 'name'] }] });
+  return new Map(rows.map((h) => [h.id, h]));
 }
 
 const BANNED_MSG = 'A moderator has turned off messaging for your account. You can still read your conversations.';
@@ -51,7 +68,7 @@ async function summarize(conv, user, post, unread, blocks, last) {
     post: postSummary(conv, post, user),
     other: publicUser(other),
     otherRating: other ? (await ratings.summaries([other.id])).get(other.id) : null,
-    lastMessage: last ? messageJSON(last, me) : null,
+    lastMessage: last ? messageJSON(last, me, await withHolds([last])) : null,
     lastMessageAt: conv.lastMessageAt,
     unreadCount: unread || 0,
     blocked: blocks,
@@ -112,6 +129,8 @@ router.get('/', async (req, res) => {
 // GET /conversations/unread : { count, conversations } for the nav badge.
 router.get('/unread', async (req, res) => {
   try {
+    // The badge is polled, so overdue holds end (and notify) here too.
+    await holds.sweep();
     const counts = await msg.unreadCounts(req.user.id, null);
     let count = 0;
     counts.forEach((n) => { count += n; });
@@ -171,6 +190,7 @@ router.get('/:id', loadConversation, async (req, res) => {
   const me = req.user.id;
   const conv = req.conversation;
   try {
+    await holds.sweep();
     const rows = await models.Message.findAll({ where: { conversationId: conv.id }, order: [['id', 'DESC']], limit: msg.PAGE_SIZE + 1 });
     const hasMore = rows.length > msg.PAGE_SIZE;
     const messages = rows.slice(0, msg.PAGE_SIZE).reverse();
@@ -182,7 +202,8 @@ router.get('/:id', loadConversation, async (req, res) => {
     summary.canSend = !blocks.byMe && !blocks.byThem && !summary.messagingBanned;
     // Only *your own* open report is ever mentioned to a participant.
     summary.reportedByMe = !!(await models.ConversationReport.count({ where: { conversationId: conv.id, reporterId: me, status: 'open' } }));
-    return res.json({ conversation: summary, messages: messages.map((m) => messageJSON(m, me)), hasMore });
+    const hm = await withHolds(messages);
+    return res.json({ conversation: summary, messages: messages.map((m) => messageJSON(m, me, hm)), hasMore });
   } catch (err) {
     return serverError(res, err);
   }
@@ -207,7 +228,8 @@ router.get('/:id/messages', loadConversation, async (req, res) => {
     if (after === undefined) messages = messages.reverse();
     else await markRead(conv, me, messages);
     if (before === undefined && after === undefined) await markRead(conv, me, messages);
-    return res.json({ messages: messages.map((m) => messageJSON(m, me)), hasMore });
+    const hm = await withHolds(messages);
+    return res.json({ messages: messages.map((m) => messageJSON(m, me, hm)), hasMore });
   } catch (err) {
     return serverError(res, err);
   }
@@ -272,7 +294,7 @@ router.post('/:id/report', loadConversation, async (req, res) => {
       return sendError(res, 429, 'rate_limited', 'You have sent a lot of reports. Please try again later.');
     }
     const report = await models.ConversationReport.create({ conversationId: conv.id, reporterId: me, reportedUserId: other, reason: body.reason, note });
-    if (body.block) await models.UserBlock.findOrCreate({ where: { blockerId: me, blockedId: other } });
+    if (body.block) { await models.UserBlock.findOrCreate({ where: { blockerId: me, blockedId: other } }); await holds.endBetween(me, other); }
     return res.status(201).json({
       id: report.id, conversationId: conv.id, reason: report.reason, status: report.status, createdAt: report.createdAt,
       blocked: await msg.blockState(me, other),
@@ -290,6 +312,7 @@ router.post('/:id/block', loadConversation, async (req, res) => {
   const other = req.conversation.otherId(me);
   try {
     await models.UserBlock.findOrCreate({ where: { blockerId: me, blockedId: other } });
+    await holds.endBetween(me, other);
     return res.json({ blocked: await msg.blockState(me, other) });
   } catch (err) {
     if (err && err.name === 'SequelizeUniqueConstraintError') return res.json({ blocked: await msg.blockState(me, other) });
@@ -306,6 +329,86 @@ router.delete('/:id/block', loadConversation, async (req, res) => {
   } catch (err) {
     return serverError(res, err);
   }
+});
+
+// ---- item holds ----------------------------------------------------------
+// GET /conversations/:id/holds : holds in this conversation (newest first) and
+// the items the buyer could ask to hold.
+router.get('/:id/holds', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  const conv = req.conversation;
+  try {
+    await holds.sweep();
+    const rows = await models.ItemHold.findAll({ where: { conversationId: conv.id }, include: [{ model: models.SaleItem, as: 'item' }], order: [['id', 'DESC']], limit: 50 });
+    const post = await models.Post.findByPk(conv.postId, { include: [{ model: models.SaleDay, as: 'saleDays' }] });
+    let holdable = [];
+    let canRequest = false;
+    if (me === conv.buyerId && post && mod.canSee(req.user, post) && !post.hidden && !schedule.isEnded(post)) {
+      const t = holds.now();
+      const mineOpen = new Set(rows.filter((h) => models.ItemHold.ACTIVE.includes(h.status)).map((h) => h.itemId));
+      const items = await models.SaleItem.findAll({ where: { postId: post.id, sold: false }, order: [['position', 'ASC'], ['id', 'ASC']] });
+      holdable = items.filter((i) => !(i.reservedUntil && new Date(i.reservedUntil) > t) && !mineOpen.has(i.id)).map((i) => i.toJSON());
+      // The sale still has unsold items; holdable may be empty when they are all
+      // reserved or already requested (the UI says so).
+      canRequest = items.length > 0;
+    }
+    const end = post ? holds.saleEnd(post) : null;
+    return res.json({
+      results: rows.map((h) => holds.holdJSON(h, me)),
+      holdable, canRequest,
+      saleEndsAt: end === null ? null : new Date(end),
+      limits: { requestHours: holds.requestHours(), holdHours: holds.holdHours(), maxHours: holds.ACCEPT_HOURS_MAX, pickupMaxDays: holds.PICKUP_MAX_DAYS },
+    });
+  } catch (err) { return serverError(res, err); }
+});
+
+// POST /conversations/:id/holds { itemId, pickupAt? } : the buyer asks to hold
+// one unsold, unreserved item of this sale. See lib/holds.js for the limits.
+router.post('/:id/holds', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  const conv = req.conversation;
+  const body = req.body || {};
+  if (me !== conv.buyerId) return sendError(res, 403, 'forbidden', 'Only the buyer can ask to hold an item.');
+  if (req.user.messagingBanned) return sendError(res, 403, 'messaging_banned', BANNED_MSG);
+  const itemId = parseId(body.itemId);
+  if (!itemId) return badRequest(res, 'Invalid hold.', { itemId: 'Choose an item.' });
+  try {
+    await holds.sweep();
+    const blocks = await msg.blockState(me, conv.sellerId);
+    if (blocks.byMe || blocks.byThem) return sendError(res, 403, 'blocked', "You can't message this person.");
+    const post = await models.Post.findByPk(conv.postId, { include: [{ model: models.SaleDay, as: 'saleDays' }] });
+    if (!post || !mod.canSee(req.user, post)) return notFound(res, 'Post not found.');
+    if (post.hidden) return sendError(res, 403, 'post_unavailable', "This sale is unavailable, so you can't hold items from it.");
+    if (schedule.isEnded(post)) return sendError(res, 409, 'sale_ended', 'This sale has ended.');
+    const t = holds.now();
+    const pickup = holds.parsePickup(body.pickupAt, post, t);
+    if (pickup.error) return badRequest(res, 'Invalid hold.', { pickupAt: pickup.error });
+    const item = await models.SaleItem.findOne({ where: { id: itemId, postId: post.id } });
+    if (!item) return notFound(res, 'Item not found.');
+    if (item.sold) return sendError(res, 409, 'item_unavailable', 'This item is no longer available.');
+    if (item.reservedUntil && new Date(item.reservedUntil) > t) return sendError(res, 409, 'item_reserved', 'This item is already reserved.');
+    const H = models.ItemHold;
+    if (await H.count({ where: { itemId, buyerId: me, status: H.ACTIVE } })) return sendError(res, 409, 'already_requested', 'You already asked to hold this item.');
+    const declined = await H.findOne({ where: { itemId, buyerId: me, status: 'declined', endedReason: null, decidedAt: { [Op.gt]: new Date(t - holds.DECLINE_COOLDOWN_MS) } } });
+    if (declined) return sendError(res, 429, 'declined_recently', 'The seller declined this hold. You can ask again tomorrow.');
+    if (await H.count({ where: { buyerId: me, postId: post.id, status: H.ACTIVE } }) >= holds.MAX_PER_SALE) {
+      return sendError(res, 429, 'too_many', 'You can hold up to ' + holds.MAX_PER_SALE + ' items per sale.');
+    }
+    if (await H.count({ where: { buyerId: me, status: H.ACTIVE } }) >= holds.maxActive()) {
+      return sendError(res, 429, 'too_many', 'You can have up to ' + holds.maxActive() + ' open holds. Cancel one first.');
+    }
+    if (await H.count({ where: { buyerId: me, createdAt: { [Op.gt]: new Date(t - 24 * 3600000) } } }) >= holds.maxPerDay()) {
+      res.set('Retry-After', '3600');
+      return sendError(res, 429, 'rate_limited', 'You have asked for a lot of holds today. Please try again tomorrow.');
+    }
+    if (await H.count({ where: { itemId, status: 'pending' } }) >= holds.MAX_PENDING_PER_ITEM) {
+      return sendError(res, 409, 'too_many_requests', 'Several people have already asked to hold this item. Message the seller instead.');
+    }
+    const hold = await H.create({ itemId, postId: post.id, conversationId: conv.id, buyerId: me, sellerId: conv.sellerId, status: 'pending', pickupAt: pickup.value, expiresAt: holds.requestExpiry(post, t) });
+    hold.item = item;
+    await holds.postEvent(hold, 'requested', me, item.name);
+    return res.status(201).json(holds.holdJSON(hold, me));
+  } catch (err) { return serverError(res, err); }
 });
 
 module.exports = router;
