@@ -4,7 +4,14 @@
 import { tIn, intlLocale } from '../i18n';
 import { saleDays } from './schedule';
 
-export const HEADLINE_KEYS = ['garage', 'yard', 'moving', 'estate'];
+// Headline choice -> catalog key (literal keys so the i18n test can see them).
+export const HEADLINES = {
+  garage: 'flyer.headline.garage',
+  yard: 'flyer.headline.yard',
+  moving: 'flyer.headline.moving',
+  estate: 'flyer.headline.estate',
+};
+export const HEADLINE_KEYS = Object.keys(HEADLINES);
 const sp = (s) => s.replace(/[\u00a0\u2009\u202f]/g, ' ');
 const utc = (date) => { const [y, m, d] = date.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
 const fmt = (lang, opts, d) => sp(new Intl.DateTimeFormat(intlLocale(lang), Object.assign({ timeZone: 'UTC' }, opts)).format(d));

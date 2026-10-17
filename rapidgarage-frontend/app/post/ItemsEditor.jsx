@@ -16,7 +16,7 @@ function PhotoChoice({ idPrefix, photos, value, onChange }) {
   return (
     <fieldset className="photo-choice">
       <legend>{t('items.photo')} <span className="muted small">{t('ui.optional')}</span></legend>
-      <label title="No photo">
+      <label title={t('items.noPhoto')}>
         <input type="radio" name={idPrefix + '-photo'} checked={!value} onChange={() => onChange(null)} aria-label={t('items.noPhoto')} />
         <ImageOff size={18} aria-hidden="true" />
       </label>

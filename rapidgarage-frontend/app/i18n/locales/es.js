@@ -864,4 +864,5 @@ export default {
   "flyer.signDay": "{wd} {md}",
   "flyer.join": " y ",
   "flyer.qrAlt": "Código QR de {url}",
+  "auth.or": "o",
 };

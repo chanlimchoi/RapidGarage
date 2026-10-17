@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Download, Printer, Copy, ExternalLink, FileText, Signpost, QrCode, Lock, ArrowRight, Ban } from 'lucide-react';
 import { apiFetch, errorMessage, fetchPrintInfo, printAssetUrl } from '../api';
 import { Alert, EmptyState, SkeletonBlock } from '../components/ui';
-import { HEADLINE_KEYS, flyerLines, signLines, priceIn, centsIn } from '../lib/flyerText';
+import { HEADLINES, HEADLINE_KEYS, flyerLines, signLines, priceIn, centsIn } from '../lib/flyerText';
 import { LOCALES, loadCatalog, t, tIn, locale, intlLocale } from '../i18n';
 import toast from '../components/toast';
 import ScanStats from './ScanStats';
@@ -55,7 +55,7 @@ export default class PrintFlyer extends React.Component {
     const { post, info, layout, photo, items, headline, arrow, lang } = this.state;
     const tl = (key, vars) => tIn(lang, key, vars);
     const qr = printAssetUrl(post.id, 'qr.svg');
-    const head = tl('flyer.headline.' + (HEADLINE_KEYS.indexOf(headline) === -1 ? 'garage' : headline));
+    const head = tl(HEADLINES[headline] || HEADLINES.garage);
     const place = [post.city, [post.state, post.zipCode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
     const price = priceIn(lang, post);
     if (layout === 'sign') {
@@ -165,7 +165,7 @@ export default class PrintFlyer extends React.Component {
                 </select>
                 <label className="field-label" htmlFor="print-headline">{t('pf.headline')}</label>
                 <select id="print-headline" className="select" value={headline} onChange={(e) => this.setState({ headline: e.target.value })}>
-                  {HEADLINE_KEYS.map((v) => <option key={v} value={v}>{tIn(this.state.lang, 'flyer.headline.' + v)}</option>)}
+                  {HEADLINE_KEYS.map((v) => <option key={v} value={v}>{tIn(this.state.lang, HEADLINES[v])}</option>)}
                 </select>
                 {layout === 'sign' ? (
                   <div>

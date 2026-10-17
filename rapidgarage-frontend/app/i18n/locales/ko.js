@@ -864,4 +864,5 @@ export default {
   "flyer.signDay": "{md} ({wd})",
   "flyer.join": "·",
   "flyer.qrAlt": "{url} QR 코드",
+  "auth.or": "또는",
 };

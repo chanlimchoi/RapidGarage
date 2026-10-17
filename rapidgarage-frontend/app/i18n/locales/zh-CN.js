@@ -864,4 +864,5 @@ export default {
   "flyer.signDay": "{md} {wd}",
   "flyer.join": "、",
   "flyer.qrAlt": "{url} 的二维码",
+  "auth.or": "或",
 };
