@@ -17,16 +17,21 @@ export function groupForMap(posts, events) {
 export const pinCount = (g) => Math.max(g.event.saleCount || 0, g.posts.length);
 
 // Area circle and sale dots projected onto a small SVG (no map tiles needed).
+// The view fits the sales (zooming in up to 4x when they sit close together, so
+// dots don't pile up) but never more than the whole circle.
 export function sketch(event, sales, w, h, pad) {
   const W = w || 320;
   const H = h || 200;
   const P = pad || 16;
   const k = Math.cos((event.lat * Math.PI) / 180);
   const r = event.radiusMiles / 69.0; // degrees of latitude
-  const scale = (Math.min(W, H) / 2 - P) / r;
+  const placed = (sales || []).filter((s) => typeof s.lat === 'number' && typeof s.lng === 'number');
+  const far = placed.reduce((m, s) => Math.max(m, Math.hypot(s.lat - event.lat, (s.lng - event.lng) * k)), 0);
+  const view = placed.length ? Math.min(r, Math.max(far * 1.25, r / 4)) : r;
+  const scale = (Math.min(W, H) / 2 - P) / view;
   const at = (lat, lng) => ({ x: W / 2 + (lng - event.lng) * k * scale, y: H / 2 - (lat - event.lat) * scale });
   return {
-    W, H, cx: W / 2, cy: H / 2, r: r * scale,
-    dots: (sales || []).filter((s) => typeof s.lat === 'number' && typeof s.lng === 'number').map((s) => Object.assign({ id: s.id, title: s.title }, at(s.lat, s.lng))),
+    W, H, cx: W / 2, cy: H / 2, r: r * scale, zoomed: view < r,
+    dots: placed.map((s) => Object.assign({ id: s.id, title: s.title }, at(s.lat, s.lng))),
   };
 }

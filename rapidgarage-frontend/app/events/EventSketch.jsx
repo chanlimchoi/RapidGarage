@@ -20,7 +20,7 @@ export default function EventSketch({ event, sales, selectedId, onSelect }) {
           </g>
         ))}
       </svg>
-      <figcaption className="small muted">{t('ev.sketchCaption', { miles: event.radiusMiles })}</figcaption>
+      <figcaption className="small muted">{s.zoomed ? t('ev.sketchCaptionZoomed', { miles: event.radiusMiles }) : t('ev.sketchCaption', { miles: event.radiusMiles })}</figcaption>
     </figure>
   );
 }

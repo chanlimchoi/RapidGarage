@@ -9,8 +9,8 @@ import { t } from '../i18n';
 
 const DONE = {
   get dismiss() { return t('rep.dismissed'); },
-  get hide() { return t('rep.hidden'); },
-  get unhide() { return t('rep.visible'); },
+  get hide() { return t('ev.hiddenToast'); },
+  get unhide() { return t('ev.visibleToast'); },
   get delete() { return t('ev.deleted'); },
 };
 const STATUS = { get upcoming() { return t('ev.statusUpcoming'); }, get live() { return t('ev.statusLive'); }, get ended() { return t('ev.statusEnded'); } };
@@ -92,8 +92,8 @@ export default class EventReports extends React.Component {
                   {e ? (
                     <div className="form-actions">
                       {this.button(e.id, 'dismiss', Check, t('rep.dismiss'))}
-                      {e.hidden ? this.button(e.id, 'unhide', Eye, t('rep.unhide')) : this.button(e.id, 'hide', EyeOff, t('rep.hide'))}
-                      {this.button(e.id, 'delete', Trash2, t('rep.delete'), 'btn-danger')}
+                      {e.hidden ? this.button(e.id, 'unhide', Eye, t('ev.adminUnhide')) : this.button(e.id, 'hide', EyeOff, t('ev.adminHide'))}
+                      {this.button(e.id, 'delete', Trash2, t('ev.adminDelete'), 'btn-danger')}
                     </div>
                   ) : null}
                 </li>
@@ -109,8 +109,8 @@ export default class EventReports extends React.Component {
                 <li key={e.id} className="panel rating-report">
                   {this.head(e)}
                   <div className="form-actions">
-                    {this.button(e.id, 'unhide', Eye, t('rep.unhide'))}
-                    {this.button(e.id, 'delete', Trash2, t('rep.delete'), 'btn-danger')}
+                    {this.button(e.id, 'unhide', Eye, t('ev.adminUnhide'))}
+                    {this.button(e.id, 'delete', Trash2, t('ev.adminDelete'), 'btn-danger')}
                   </div>
                 </li>
               ))}
