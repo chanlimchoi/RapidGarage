@@ -5,6 +5,7 @@ const { validatePost } = require('../lib/validate');
 const { isAdmin } = require('../lib/roles');
 const { removePhotoFiles } = require('./photos');
 const { geocodePost } = require('../lib/geo');
+const mod = require('../lib/moderation');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -18,7 +19,8 @@ function loadPost(req, res, next) {
   if (!id) return badRequest(res, 'Post id must be a positive integer.');
   Post.findByPk(id, { include: [photoInclude], order: photoOrder })
     .then((post) => {
-      if (!post) return notFound(res, 'Post not found.');
+      // Hidden posts look like missing posts to everyone but the owner and admins.
+      if (!post || !mod.canSee(req.user, post)) return notFound(res, 'Post not found.');
       req.post = post;
       return next();
     })
@@ -44,6 +46,8 @@ router.post('/', requireLogin, (req, res) => {
 
 router.use('/:id/photos', requireLogin, loadPost, (req, res, next) => requireOwnerOrAdmin(req, res, next), require('./photos'));
 
+router.use('/:id/report', requireLogin, loadPost, require('./report'));
+
 router.get('/:id', loadPost, (req, res) => res.json(req.post));
 
 router.put('/:id', requireLogin, loadPost, requireOwner, (req, res) => {
@@ -66,7 +70,11 @@ function requireOwnerOrAdmin(req, res, next) {
 router.delete('/:id', requireLogin, loadPost, requireOwnerOrAdmin, (req, res) => {
   // Remove stored files, then the rows (the FK also cascades in Postgres).
   const photos = req.post.photos || [];
+  const byAdmin = isAdmin(req.user) && req.user.id !== req.post.userId;
   removePhotoFiles(photos)
+    // Open reports are closed, not deleted, so the moderation history stays.
+    .then(() => mod.closeOpenReports(req.post.id, { status: 'actioned', action: 'deleted', reviewerId: byAdmin ? req.user.id : null,
+      resolutionNote: byAdmin ? null : 'Deleted by the owner.' }))
     .then(() => models.PostPhoto.destroy({ where: { postId: req.post.id } }))
     .then(() => req.post.destroy())
     .then(() => res.status(204).end())

@@ -28,6 +28,7 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
         <h3 className="post-card-title"><Link to={'/post/' + post.id}>{post.title}</Link></h3>
         <div className="post-card-meta"><MapPin size={14} aria-hidden="true" /><span>{placeLine(post) || 'Location not given'}</span></div>
         <div className="chips">
+          {post.hidden ? <span className="chip chip-warning">Hidden</span> : null}
           {price ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{price}</span> : null}
           {when ? <span className="chip chip-brand"><CalendarDays size={12} aria-hidden="true" />{when}</span> : null}
           {status ? <span className={'chip ' + status[1]}>{status[0]}</span> : null}
