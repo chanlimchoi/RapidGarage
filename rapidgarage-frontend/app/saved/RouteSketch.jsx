@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../i18n';
 
 // A small schematic of the route (no map tiles needed): stops are projected
 // onto an SVG in visiting order. The real map is shown alongside when available.
@@ -24,12 +25,12 @@ export default function RouteSketch({ start, stops }) {
   const d = at.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ');
   return (
     <figure className="route-sketch">
-      <svg viewBox={'0 0 ' + W + ' ' + H} role="img" aria-label={'Route sketch with ' + stops.length + (stops.length === 1 ? ' stop' : ' stops')}>
+      <svg viewBox={'0 0 ' + W + ' ' + H} role="img" aria-label={t('route.label', { count: stops.length })}>
         <path d={d} className="route-sketch-line" />
         {at.map((p, i) => (p.start ? (
           <g key={'s' + i} className="route-sketch-start">
             <circle cx={p.x} cy={p.y} r="7" />
-            <text x={p.x} y={p.y - 12} textAnchor="middle">You</text>
+            <text x={p.x} y={p.y - 12} textAnchor="middle">{t('route.you')}</text>
           </g>
         ) : (
           <g key={p.n} className="route-sketch-stop">
@@ -39,7 +40,7 @@ export default function RouteSketch({ start, stops }) {
           </g>
         )))}
       </svg>
-      <figcaption className="small muted">Straight-line sketch. Not to scale for driving.</figcaption>
+      <figcaption className="small muted">{t('route.caption')}</figcaption>
     </figure>
   );
 }

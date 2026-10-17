@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, Star } from 'lucide-react';
 import { initials, displayName } from '../lib/format';
 import InstallMenuItem from '../pwa/InstallMenuItem';
+import LanguagePicker from './LanguagePicker';
 import { t } from '../i18n';
 
 const badgeText = (n) => (n > 99 ? '99+' : String(n));
@@ -127,6 +128,7 @@ export default class NavBar extends React.Component {
           </nav>
           <div className="nav-spacer" />
           <div className="nav-actions">
+            <span className="hide-mobile"><LanguagePicker id="nav-language" user={user} /></span>
             <Link to="/newpost" className="btn btn-primary hide-mobile"><Plus size={16} aria-hidden="true" />{t('nav.postSale')}</Link>
             <Link to="/newpost" className="btn btn-primary btn-icon show-mobile" aria-label={t('nav.postSale')}><Plus size={20} aria-hidden="true" /></Link>
             {!ready ? null : user ? this.renderUserMenu(user, isAdmin) : (
@@ -147,6 +149,7 @@ export default class NavBar extends React.Component {
             <Link className="menu-item" to="/newpost"><Plus size={18} aria-hidden="true" />{t('nav.postSale')}</Link>
             <Link className="menu-item" to="/about"><Info size={18} aria-hidden="true" />{t('nav.about')}</Link>
             <InstallMenuItem />
+            <div className="menu-item menu-language"><LanguagePicker id="mobile-language" user={user} /></div>
             <div className="menu-sep" role="separator" />
             {user ? (
               <React.Fragment>

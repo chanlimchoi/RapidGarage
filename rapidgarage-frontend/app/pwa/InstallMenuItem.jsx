@@ -1,6 +1,7 @@
 import React from 'react';
 import { Download } from 'lucide-react';
 import * as pwa from './pwa';
+import { t } from '../i18n';
 
 // "Install app" entry for the account/mobile menus; only when the browser offers it.
 export default class InstallMenuItem extends React.Component {
@@ -11,7 +12,7 @@ export default class InstallMenuItem extends React.Component {
     if (!this.state.can) return null;
     return (
       <button type="button" role={this.props.role} className="menu-item menu-install" onClick={() => { if (this.props.onClick) this.props.onClick(); pwa.promptInstall(); }}>
-        <Download size={18} aria-hidden="true" />Install app
+        <Download size={18} aria-hidden="true" />{t('pwa.installApp')}
       </button>
     );
   }

@@ -832,3 +832,19 @@ blockquote.rating-comment { padding: var(--space-2) var(--space-3); border-left:
   .print-sheet { box-shadow: none !important; border-radius: 0 !important; max-width: none !important; width: 100% !important; height: 100vh; aspect-ratio: auto !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; }
   .sheet-sign { border-width: 8px; }
 }
+
+/* Language switcher */
+.language-select { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-muted, #5b6472); }
+.language-select select {
+  appearance: none; border: 1px solid var(--color-border, #d9dee5); border-radius: var(--radius-md, 8px);
+  background: var(--color-surface, #fff); color: var(--color-text, #111827); font: inherit; font-size: var(--text-sm, 14px);
+  padding: 6px 10px; cursor: pointer;
+}
+.language-select select:focus-visible { outline: 2px solid var(--color-brand, #2563eb); outline-offset: 2px; }
+.menu-language .language-select { width: 100%; }
+.menu-language .language-select select { flex: 1; }
+.language-picker { flex-wrap: wrap; }
+/* CJK lines need a little more room; uppercase tracking is meaningless there. */
+html:lang(ko) body, html:lang(zh-CN) body { line-height: 1.6; }
+/* Korean wraps at spaces like English; Chinese may wrap between any characters. */
+html:lang(ko) body { word-break: keep-all; overflow-wrap: anywhere; }

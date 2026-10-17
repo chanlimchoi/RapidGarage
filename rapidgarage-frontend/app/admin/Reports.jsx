@@ -9,14 +9,18 @@ import toast from '../components/toast';
 import ConversationReports from './ConversationReports';
 import RatingReports from './RatingReports';
 import { fetchRatingReportQueue } from '../api';
+import { t } from '../i18n';
 
 const ACTION_TEXT = {
-  dismiss: { done: 'Reports dismissed.', verb: 'Dismiss reports' },
-  hide: { done: 'Post hidden. Its owner will see a notice.', verb: 'Hide post' },
-  unhide: { done: 'Post is visible again.', verb: 'Unhide post' },
-  delete: { done: 'Post deleted.', verb: 'Delete post' },
+  dismiss: { get done() { return t('rep.dismissed'); }, get verb() { return t('rep.dismiss'); } },
+  hide: { get done() { return t('rep.hidden'); }, get verb() { return t('rep.hide'); } },
+  unhide: { get done() { return t('rep.visible'); }, get verb() { return t('rep.unhide'); } },
+  delete: { get done() { return t('rep.deleted'); }, get verb() { return t('rep.delete'); } },
 };
-const OUTCOME = { dismissed: 'Dismissed', hidden: 'Hidden', unhidden: 'Unhidden', deleted: 'Deleted' };
+const OUTCOME = {
+  get dismissed() { return t('rep.outDismissed'); }, get hidden() { return t('rep.outHidden'); },
+  get unhidden() { return t('rep.outUnhidden'); }, get deleted() { return t('rep.outDeleted'); },
+};
 
 // Admin > Reports: open reports grouped by post, plus resolved history.
 export default class Reports extends React.Component {
@@ -31,13 +35,13 @@ export default class Reports extends React.Component {
     this.setState({ loading: true, error: '' });
     return fetchReportQueue()
       .then(({ ok, data }) => {
-        if (!ok) return this.setState({ loading: false, error: errorMessage(data, 'Could not load reports.') });
+        if (!ok) return this.setState({ loading: false, error: errorMessage(data, t('rep.loadFailed')) });
         const postCount = data.groups.reduce((n, g) => n + g.openCount, 0);
         this.setState({ loading: false, groups: data.groups, hidden: data.hidden, threshold: data.autoHideThreshold, postCount, convCount: data.conversationOpenCount || 0 });
         this.reportCount();
         return null;
       })
-      .catch(() => this.setState({ loading: false, error: 'Unable to reach the server.' }));
+      .catch(() => this.setState({ loading: false, error: t('common.networkShort') }));
   }
 
   // Badge total = posts + conversations + ratings.
@@ -53,11 +57,11 @@ export default class Reports extends React.Component {
     this.setState({ loading: true, error: '', page });
     return fetchReportHistory(page)
       .then(({ ok, data }) => {
-        if (!ok) return this.setState({ loading: false, error: errorMessage(data, 'Could not load history.') });
+        if (!ok) return this.setState({ loading: false, error: errorMessage(data, t('rep.historyFailed')) });
         this.setState({ loading: false, history: data });
         return null;
       })
-      .catch(() => this.setState({ loading: false, error: 'Unable to reach the server.' }));
+      .catch(() => this.setState({ loading: false, error: t('common.networkShort') }));
   }
 
   switchView(view) {
@@ -66,19 +70,19 @@ export default class Reports extends React.Component {
   }
 
   act(postId, title, action) {
-    if (action === 'delete' && !window.confirm('Delete "' + title + '" and its photos? This can\'t be undone.')) return;
+    if (action === 'delete' && !window.confirm(t('rep.confirmDelete', { title }))) return;
     const note = (this.state.notes[postId] || '').trim();
     this.setState({ busy: postId + ':' + action });
     moderatePost(postId, action, note)
       .then(({ ok, data }) => {
         this.setState({ busy: null });
-        if (!ok) { toast.error(errorMessage(data, 'Could not apply that action.')); return null; }
+        if (!ok) { toast.error(errorMessage(data, t('rep.actionFailed'))); return null; }
         const notes = Object.assign({}, this.state.notes); delete notes[postId];
         this.setState({ notes });
-        toast.success(ACTION_TEXT[action].done + (data.resolved ? ' ' + data.resolved + ' report' + (data.resolved === 1 ? '' : 's') + ' resolved.' : ''));
+        toast.success(ACTION_TEXT[action].done + (data.resolved ? t('rep.resolved', { count: data.resolved }) : ''));
         return this.loadQueue();
       })
-      .catch(() => { this.setState({ busy: null }); toast.error('Unable to reach the server.'); });
+      .catch(() => { this.setState({ busy: null }); toast.error(t('common.networkShort')); });
   }
 
   renderActions(post, title, actions) {
@@ -87,9 +91,9 @@ export default class Reports extends React.Component {
     return (
       <div className="moderate-row">
         <div className="field">
-          <label className="field-label" htmlFor={noteId}>Resolution note<span className="optional"> (optional)</span></label>
+          <label className="field-label" htmlFor={noteId}>{t('rep.note')}<span className="optional"> {t('ui.optional')}</span></label>
           <input id={noteId} className="input" type="text" maxLength={REPORT_NOTE_MAX} value={this.state.notes[post] || ''}
-            onChange={(e) => this.setState({ notes: Object.assign({}, this.state.notes, { [post]: e.target.value }) })} placeholder="Visible to admins in history" />
+            onChange={(e) => this.setState({ notes: Object.assign({}, this.state.notes, { [post]: e.target.value }) })} placeholder={t('rep.notePlaceholder')} />
         </div>
         {actions.map((a) => {
           const Icon = { dismiss: Check, hide: EyeOff, unhide: Eye, delete: Trash2 }[a];
@@ -118,20 +122,20 @@ export default class Reports extends React.Component {
         <div>
           <h3 id={'rg-' + g.postId}>{p ? <Link to={'/post/' + g.postId}>{title}</Link> : title}</h3>
           <div className="muted" style={{ fontSize: 'var(--text-sm)' }}>
-            {p ? [p.city, p.state].filter(Boolean).join(', ') + (formatPrice(p) ? ' · ' + formatPrice(p) : '') : 'Post no longer exists'}
-            {g.owner ? <> · by {displayName(g.owner)} ({g.owner.email})</> : null}
+            {p ? [p.city, p.state].filter(Boolean).join(', ') + (formatPrice(p) ? ' · ' + formatPrice(p) : '') : t('rep.postGone')}
+            {g.owner ? t('rep.by', { name: displayName(g.owner), email: g.owner.email }) : null}
           </div>
           <div className="chips">
-            <span className="chip chip-danger"><Flag size={12} aria-hidden="true" />{g.openCount} open report{g.openCount === 1 ? '' : 's'}</span>
+            <span className="chip chip-danger"><Flag size={12} aria-hidden="true" />{t('rep.openReports', { count: g.openCount })}</span>
             {Object.keys(g.reasons).map((r) => <span key={r} className="chip">{reasonLabel(r)} × {g.reasons[r]}</span>)}
-            {p && p.hidden ? <span className="chip chip-warning"><EyeOff size={12} aria-hidden="true" />{p.hiddenSource === 'auto' ? 'Auto-hidden' : 'Hidden'}</span> : null}
-            <span className="chip">Last {timeAgo(g.lastReportedAt)}</span>
+            {p && p.hidden ? <span className="chip chip-warning"><EyeOff size={12} aria-hidden="true" />{p.hiddenSource === 'auto' ? t('rep.autoHidden') : t('card.hidden')}</span> : null}
+            <span className="chip">{t('rep.last', { when: timeAgo(g.lastReportedAt) })}</span>
           </div>
           {p && p.description ? <p className="muted" style={{ margin: 0 }}>{p.description}</p> : null}
           <ul className="report-list">
             {g.reports.map((r) => (
               <li key={r.id}>
-                <strong>{reasonLabel(r.reason)}</strong> · {r.reporter ? r.reporter.email : 'deleted user'} · {timeAgo(r.createdAt)}
+                <strong>{reasonLabel(r.reason)}</strong> · {r.reporter ? r.reporter.email : t('rep.deletedUser')} · {timeAgo(r.createdAt)}
                 {r.note ? <div><q>{r.note}</q></div> : null}
               </li>
             ))}
@@ -147,19 +151,19 @@ export default class Reports extends React.Component {
     return (
       <div className="stack">
         <p className="muted" style={{ margin: 0 }}>
-          {threshold ? 'Posts are hidden automatically once ' + threshold + ' different people report them.' : 'Auto-hide is off; reported posts stay visible until you act.'}
+          {threshold ? t('rep.threshold', { n: threshold }) : t('rep.noAutoHide')}
         </p>
-        {groups.length ? groups.map((g) => this.renderGroup(g)) : <EmptyState icon={Inbox} title="No open reports">Nothing needs review right now.</EmptyState>}
+        {groups.length ? groups.map((g) => this.renderGroup(g)) : <EmptyState icon={Inbox} title={t('rep.noneOpen')}>{t('rep.nothing')}</EmptyState>}
         {hidden.length ? (
           <section aria-labelledby="hidden-heading" className="stack">
-            <h3 id="hidden-heading" className="h4">Hidden posts without open reports</h3>
+            <h3 id="hidden-heading" className="h4">{t('rep.hiddenNoReports')}</h3>
             {hidden.map((p) => (
               <article key={p.id} className="panel report-group">
                 {this.renderThumb(p)}
                 <div>
                   <h3><Link to={'/post/' + p.id}>{p.title}</Link></h3>
                   <div className="chips">
-                    <span className="chip chip-warning"><EyeOff size={12} aria-hidden="true" />{p.hiddenSource === 'auto' ? 'Auto-hidden' : 'Hidden'} {p.hiddenAt ? timeAgo(p.hiddenAt) : ''}</span>
+                    <span className="chip chip-warning"><EyeOff size={12} aria-hidden="true" />{p.hiddenSource === 'auto' ? t('rep.autoHidden') : t('card.hidden')} {p.hiddenAt ? timeAgo(p.hiddenAt) : ''}</span>
                     {p.owner ? <span className="chip">{p.owner.email}</span> : null}
                   </div>
                   {this.renderActions(p.id, p.title, ['unhide', 'delete'])}
@@ -175,20 +179,20 @@ export default class Reports extends React.Component {
   renderHistory() {
     const h = this.state.history;
     if (!h) return null;
-    if (!h.results.length) return <EmptyState icon={History} title="No resolved reports yet" />;
+    if (!h.results.length) return <EmptyState icon={History} title={t('rep.noneResolved')} />;
     return (
       <div className="stack">
         <div className="table-wrap">
           <table className="table report-history">
-            <thead><tr><th scope="col">Post</th><th scope="col">Reason</th><th scope="col">Reporter</th><th scope="col">Outcome</th><th scope="col">Reviewed</th></tr></thead>
+            <thead><tr><th scope="col">{t('rep.post')}</th><th scope="col">{t('rep.reason')}</th><th scope="col">{t('rep.reporter')}</th><th scope="col">{t('rep.outcome')}</th><th scope="col">{t('rep.reviewed')}</th></tr></thead>
             <tbody>
               {h.results.map((r) => (
                 <tr key={r.id}>
-                  <td>{r.postExists ? <Link to={'/post/' + r.postId}>{r.postTitle || 'Post #' + r.postId}</Link> : <span>{r.postTitle || 'Post #' + r.postId} <small className="muted">(deleted)</small></span>}</td>
+                  <td>{r.postExists ? <Link to={'/post/' + r.postId}>{r.postTitle || t('rep.postN', { id: r.postId })}</Link> : <span>{r.postTitle || t('rep.postN', { id: r.postId })} <small className="muted">{t('rep.deletedTag')}</small></span>}</td>
                   <td>{reasonLabel(r.reason)}{r.note ? <small className="muted" style={{ display: 'block' }}>{r.note}</small> : null}</td>
                   <td>{r.reporter ? r.reporter.email : '—'}</td>
                   <td><span className={'chip ' + (r.status === 'actioned' ? 'chip-warning' : '')}>{OUTCOME[r.action] || r.status}</span>{r.resolutionNote ? <small className="muted" style={{ display: 'block' }}>{r.resolutionNote}</small> : null}</td>
-                  <td>{r.reviewer ? r.reviewer.email : (r.action === 'deleted' ? 'Owner' : '—')}<small className="muted" style={{ display: 'block' }}>{r.reviewedAt ? timeAgo(r.reviewedAt) : ''}</small></td>
+                  <td>{r.reviewer ? r.reviewer.email : (r.action === 'deleted' ? t('rep.owner') : '—')}<small className="muted" style={{ display: 'block' }}>{r.reviewedAt ? timeAgo(r.reviewedAt) : ''}</small></td>
                 </tr>
               ))}
             </tbody>
@@ -196,9 +200,9 @@ export default class Reports extends React.Component {
         </div>
         {h.totalPages > 1 ? (
           <div className="form-actions">
-            <button type="button" className="btn btn-secondary btn-sm" disabled={h.page <= 1} onClick={() => this.loadHistory(h.page - 1)}>Newer</button>
-            <span className="muted">Page {h.page} of {h.totalPages}</span>
-            <button type="button" className="btn btn-secondary btn-sm" disabled={h.page >= h.totalPages} onClick={() => this.loadHistory(h.page + 1)}>Older</button>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={h.page <= 1} onClick={() => this.loadHistory(h.page - 1)}>{t('rep.newer')}</button>
+            <span className="muted">{t('common.pageOf', { page: h.page, total: h.totalPages })}</span>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={h.page >= h.totalPages} onClick={() => this.loadHistory(h.page + 1)}>{t('rep.older')}</button>
           </div>
         ) : null}
       </div>
@@ -207,15 +211,15 @@ export default class Reports extends React.Component {
 
   render() {
     const { view, loading, error, kind, postCount, convCount, ratingCount } = this.state;
-    const count = (n) => (n ? <span className="count" aria-label={n + ' open'}>{n}</span> : null);
+    const count = (n) => (n ? <span className="count" aria-label={t('admin.open', { count: n })}>{n}</span> : null);
     return (
       <section className="rg-admin-reports stack" aria-labelledby="admin-reports-heading">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <h2 id="admin-reports-heading" className="h4" style={{ margin: 0 }}><Flag size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />Reports</h2>
-          <div className="segmented admin-tabs report-kind" role="group" aria-label="Report type" style={{ margin: 0 }}>
-            <button type="button" aria-pressed={kind === 'posts'} onClick={() => this.setState({ kind: 'posts' })}>Posts{count(postCount)}</button>
-            <button type="button" aria-pressed={kind === 'conversations'} onClick={() => this.setState({ kind: 'conversations' })}>Conversations{count(convCount)}</button>
-            <button type="button" aria-pressed={kind === 'ratings'} onClick={() => this.setState({ kind: 'ratings' })}>Ratings{count(ratingCount)}</button>
+          <h2 id="admin-reports-heading" className="h4" style={{ margin: 0 }}><Flag size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('admin.reports')}</h2>
+          <div className="segmented admin-tabs report-kind" role="group" aria-label={t('rep.type')} style={{ margin: 0 }}>
+            <button type="button" aria-pressed={kind === 'posts'} onClick={() => this.setState({ kind: 'posts' })}>{t('rep.posts')}{count(postCount)}</button>
+            <button type="button" aria-pressed={kind === 'conversations'} onClick={() => this.setState({ kind: 'conversations' })}>{t('msg.conversations')}{count(convCount)}</button>
+            <button type="button" aria-pressed={kind === 'ratings'} onClick={() => this.setState({ kind: 'ratings' })}>{t('rep.ratings')}{count(ratingCount)}</button>
           </div>
         </div>
         {kind === 'ratings' ? (
@@ -226,9 +230,9 @@ export default class Reports extends React.Component {
         ) : (
         <React.Fragment>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <div className="segmented" role="group" aria-label="Report view">
-            <button type="button" aria-pressed={view === 'open'} onClick={() => this.switchView('open')}>Open</button>
-            <button type="button" aria-pressed={view === 'history'} onClick={() => this.switchView('history')}><History size={14} aria-hidden="true" />History</button>
+          <div className="segmented" role="group" aria-label={t('rep.view')}>
+            <button type="button" aria-pressed={view === 'open'} onClick={() => this.switchView('open')}>{t('rep.openTab')}</button>
+            <button type="button" aria-pressed={view === 'history'} onClick={() => this.switchView('history')}><History size={14} aria-hidden="true" />{t('rep.history')}</button>
           </div>
         </div>
         {error ? <Alert tone="danger">{error}</Alert> : null}

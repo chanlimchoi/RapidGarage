@@ -8,16 +8,30 @@ import {
 import { Alert, EmptyState, SkeletonBlock, Spinner } from '../components/ui';
 import { timeAgo } from '../lib/format';
 import toast from '../components/toast';
+import { t, intlLocale } from '../i18n';
+import { tx } from '../i18n/rich';
 
-const fullTime = (v) => (v ? new Date(v).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
-const who = (p) => (p ? p.name + (p.email ? ' (' + p.email + ')' : '') : 'Former user');
-const OUTCOME = { dismissed: 'Dismissed', warned: 'Warned', banned: 'Messaging ban' };
+const fullTime = (v) => (v ? new Date(v).toLocaleString(intlLocale(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
+const who = (p) => (p ? p.name + (p.email ? ' (' + p.email + ')' : '') : t('msg.formerUser'));
+const OUTCOME = {
+  get dismissed() { return t('rep.outDismissed'); },
+  get warned() { return t('cr.warned'); },
+  get banned() { return t('cr.ban'); },
+};
 const EVENT = {
-  read: 'Read the conversation', dismiss: 'Dismissed reports', warn: 'Warned', ban: 'Banned from messaging',
-  unban: 'Lifted messaging ban', remove_message: 'Removed a message',
+  get read() { return t('cr.evRead'); },
+  get dismiss() { return t('cr.evDismiss'); },
+  get warn() { return t('cr.warned'); },
+  get ban() { return t('cr.evBan'); },
+  get unban() { return t('cr.evUnban'); },
+  get remove_message() { return t('cr.evRemove'); },
 };
 const DONE = {
-  dismiss: 'Reports dismissed.', warn: 'Warning recorded.', ban: 'Messaging ban applied.', unban: 'Messaging ban lifted.', remove_message: 'Message removed.',
+  get dismiss() { return t('rep.dismissed'); },
+  get warn() { return t('cr.warnDone'); },
+  get ban() { return t('cr.banDone'); },
+  get unban() { return t('cr.unbanDone'); },
+  get remove_message() { return t('cr.removeDone'); },
 };
 
 // Admin > Reports > Conversations. Message text is only fetched from the
@@ -34,23 +48,23 @@ export default class ConversationReports extends React.Component {
     this.setState({ loading: true, error: '' });
     return fetchConversationReportQueue()
       .then(({ ok, data }) => {
-        if (!ok) return this.setState({ loading: false, error: errorMessage(data, 'Could not load conversation reports.') });
+        if (!ok) return this.setState({ loading: false, error: errorMessage(data, t('cr.loadFailed')) });
         this.setState({ loading: false, groups: data.groups });
         if (this.props.onCount) this.props.onCount(data.openCount);
         return null;
       })
-      .catch(() => this.setState({ loading: false, error: 'Unable to reach the server.' }));
+      .catch(() => this.setState({ loading: false, error: t('common.networkShort') }));
   }
 
   loadHistory(page) {
     this.setState({ loading: true, error: '' });
     return fetchConversationReportHistory(page)
       .then(({ ok, data }) => {
-        if (!ok) return this.setState({ loading: false, error: errorMessage(data, 'Could not load history.') });
+        if (!ok) return this.setState({ loading: false, error: errorMessage(data, t('rep.historyFailed')) });
         this.setState({ loading: false, history: data });
         return null;
       })
-      .catch(() => this.setState({ loading: false, error: 'Unable to reach the server.' }));
+      .catch(() => this.setState({ loading: false, error: t('common.networkShort') }));
   }
 
   switchView(view) {
@@ -66,10 +80,10 @@ export default class ConversationReports extends React.Component {
   reloadDetail(id) {
     return fetchReportedConversation(id)
       .then(({ ok, data }) => {
-        if (!ok) { this.setState({ error: errorMessage(data, 'Conversation not found.') }); return; }
+        if (!ok) { this.setState({ error: errorMessage(data, t('msg.notFound')) }); return; }
         this.setState({ detail: data });
       })
-      .catch(() => this.setState({ error: 'Unable to reach the server.' }));
+      .catch(() => this.setState({ error: t('common.networkShort') }));
   }
 
   back() {
@@ -85,13 +99,13 @@ export default class ConversationReports extends React.Component {
     moderateConversation(id, body)
       .then(({ ok, data }) => {
         this.setState({ busy: null });
-        if (!ok) { toast.error(errorMessage(data, 'Could not apply that action.')); return null; }
+        if (!ok) { toast.error(errorMessage(data, t('rep.actionFailed'))); return null; }
         this.setState({ note: '' });
-        toast.success(DONE[action] + (data.resolved ? ' ' + data.resolved + ' report' + (data.resolved === 1 ? '' : 's') + ' resolved.' : ''));
+        toast.success(DONE[action] + (data.resolved ? t('rep.resolved', { count: data.resolved }) : ''));
         if (this.props.onChanged) this.props.onChanged();
         return this.reloadDetail(id);
       })
-      .catch(() => { this.setState({ busy: null }); toast.error('Unable to reach the server.'); });
+      .catch(() => { this.setState({ busy: null }); toast.error(t('common.networkShort')); });
   }
 
   renderPeople(people) {
@@ -99,7 +113,7 @@ export default class ConversationReports extends React.Component {
       <div className="admin-convo-people">
         {people.map((p) => (
           <span key={p.id} className={'chip' + (p.messagingBanned ? ' chip-danger' : '')}>
-            {p.role === 'buyer' ? 'Buyer' : p.role === 'seller' ? 'Seller' : ''}{p.role ? ': ' : ''}{who(p)}{p.messagingBanned ? ' · banned' : ''}
+            {p.role ? t('msg.speaker', { name: p.role === 'buyer' ? t('msg.buyer') : t('post.seller') }) + ' ' : ''}{who(p)}{p.messagingBanned ? t('cr.bannedTag') : ''}
           </span>
         ))}
       </div>
@@ -108,31 +122,31 @@ export default class ConversationReports extends React.Component {
 
   renderOpen() {
     const { groups } = this.state;
-    if (!groups.length) return <EmptyState icon={Inbox} title="No reported conversations">Nothing needs review right now.</EmptyState>;
+    if (!groups.length) return <EmptyState icon={Inbox} title={t('cr.none')}>{t('rep.nothing')}</EmptyState>;
     return (
       <div className="stack">
         {groups.map((g) => (
           <article key={g.conversationId} className="panel stack convo-report" aria-labelledby={'cr-' + g.conversationId}>
             <div>
               <h3 id={'cr-' + g.conversationId} style={{ margin: 0 }}><MessageCircle size={16} aria-hidden="true" style={{ verticalAlign: '-2px', marginRight: 6 }} />
-                Conversation about {g.post.status === 'deleted' ? g.post.title + ' (deleted)' : <Link to={'/post/' + g.post.id}>{g.post.title}</Link>}
+                {tx('cr.about', { title: g.post.status === 'deleted' ? t('cr.deletedTitle', { title: g.post.title }) : <Link to={'/post/' + g.post.id}>{g.post.title}</Link> })}
               </h3>
               <div className="chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-                <span className="chip chip-danger">{g.openCount} open report{g.openCount === 1 ? '' : 's'}</span>
+                <span className="chip chip-danger">{t('rep.openReports', { count: g.openCount })}</span>
                 {Object.keys(g.reasons).map((r) => <span key={r} className="chip">{conversationReasonLabel(r)} × {g.reasons[r]}</span>)}
-                <span className="chip">Last {timeAgo(g.lastReportedAt)}</span>
+                <span className="chip">{t('rep.last', { when: timeAgo(g.lastReportedAt) })}</span>
               </div>
             </div>
             {this.renderPeople(g.participants)}
             <ul className="report-list">
               {g.reports.map((r) => (
-                <li key={r.id}><strong>{conversationReasonLabel(r.reason)}</strong> · reported by {who(r.reporter)} · {timeAgo(r.createdAt)}
+                <li key={r.id}><strong>{conversationReasonLabel(r.reason)}</strong>{t('cr.reportedBy', { name: who(r.reporter) })}{timeAgo(r.createdAt)}
                   {r.note ? <div><q>{r.note}</q></div> : null}</li>
               ))}
             </ul>
             <div className="form-actions">
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => this.openDetail(g.conversationId)}><Eye size={14} aria-hidden="true" />Review conversation</button>
-              <span className="field-hint">Opening it is recorded in the audit log.</span>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => this.openDetail(g.conversationId)}><Eye size={14} aria-hidden="true" />{t('cr.review')}</button>
+              <span className="field-hint">{t('cr.logged')}</span>
             </div>
           </article>
         ))}
@@ -143,20 +157,20 @@ export default class ConversationReports extends React.Component {
   renderHistory() {
     const h = this.state.history;
     if (!h) return null;
-    if (!h.results.length) return <EmptyState icon={History} title="No resolved conversation reports yet" />;
+    if (!h.results.length) return <EmptyState icon={History} title={t('cr.noneResolved')} />;
     return (
       <div className="table-wrap">
         <table className="table convo-report-history">
-          <thead><tr><th scope="col">Conversation</th><th scope="col">Reason</th><th scope="col">Reporter → reported</th><th scope="col">Outcome</th><th scope="col">Reviewed</th><th scope="col"><span className="sr-only">Open</span></th></tr></thead>
+          <thead><tr><th scope="col">{t('cr.conversation')}</th><th scope="col">{t('rep.reason')}</th><th scope="col">{t('cr.reporterReported')}</th><th scope="col">{t('rep.outcome')}</th><th scope="col">{t('rep.reviewed')}</th><th scope="col"><span className="sr-only">{t('rep.openTab')}</span></th></tr></thead>
           <tbody>
             {h.results.map((r) => (
               <tr key={r.id}>
-                <td>{r.postTitle || 'Conversation #' + r.conversationId}</td>
+                <td>{r.postTitle || t('cr.convN', { id: r.conversationId })}</td>
                 <td>{conversationReasonLabel(r.reason)}{r.note ? <small className="muted" style={{ display: 'block' }}>{r.note}</small> : null}</td>
                 <td><small>{who(r.reporter)}<br />→ {who(r.reportedUser)}</small></td>
                 <td><span className={'chip ' + (r.status === 'actioned' ? 'chip-warning' : '')}>{OUTCOME[r.action] || r.status}</span>{r.resolutionNote ? <small className="muted" style={{ display: 'block' }}>{r.resolutionNote}</small> : null}</td>
                 <td><small>{r.reviewer ? r.reviewer.email : '—'}<br />{fullTime(r.reviewedAt)}</small></td>
-                <td><button type="button" className="btn btn-ghost btn-sm" onClick={() => this.openDetail(r.conversationId)}>View</button></td>
+                <td><button type="button" className="btn btn-ghost btn-sm" onClick={() => this.openDetail(r.conversationId)}>{t('common.viewShort')}</button></td>
               </tr>
             ))}
           </tbody>
@@ -167,7 +181,7 @@ export default class ConversationReports extends React.Component {
 
   renderDetail() {
     const { detail, busy, note, error } = this.state;
-    const backBtn = <button type="button" className="btn btn-ghost btn-sm" onClick={() => this.back()}><ArrowLeft size={14} aria-hidden="true" />Back to {this.state.view === 'open' ? 'open reports' : 'history'}</button>;
+    const backBtn = <button type="button" className="btn btn-ghost btn-sm" onClick={() => this.back()}><ArrowLeft size={14} aria-hidden="true" />{this.state.view === 'open' ? t('cr.backOpen') : t('cr.backHistory')}</button>;
     if (error) return <div className="stack">{backBtn}<Alert tone="danger">{error}</Alert></div>;
     if (!detail) return <div className="stack">{backBtn}<SkeletonBlock height={160} lines={3} /></div>;
     const c = detail.conversation;
@@ -180,29 +194,29 @@ export default class ConversationReports extends React.Component {
       <div className="admin-convo">
         {backBtn}
         <header>
-          <h3 style={{ margin: '0 0 8px' }}>Conversation about {c.post.status === 'deleted' ? c.post.title + ' (deleted)' : <Link to={'/post/' + c.post.id}>{c.post.title}</Link>}</h3>
+          <h3 style={{ margin: '0 0 8px' }}>{tx('cr.about', { title: c.post.status === 'deleted' ? t('cr.deletedTitle', { title: c.post.title }) : <Link to={'/post/' + c.post.id}>{c.post.title}</Link> })}</h3>
           {this.renderPeople(c.participants)}
         </header>
         <Alert tone={open ? 'info' : 'warning'}>
           {open
-            ? <p>This conversation has an open report, so you can read every message, before and after the report. Read-only. Your access is logged.</p>
-            : <p>All reports are resolved. Showing messages up to {fullTime(detail.access.until)}.{detail.access.hiddenLaterMessages ? ' ' + detail.access.hiddenLaterMessages + ' later message' + (detail.access.hiddenLaterMessages === 1 ? ' stays' : 's stay') + ' private unless someone reports again.' : ''}</p>}
+            ? <p>{t('cr.openAccess')}</p>
+            : <p>{t('cr.closedAccess', { time: fullTime(detail.access.until) })}{detail.access.hiddenLaterMessages ? t('cr.laterPrivate', { count: detail.access.hiddenLaterMessages }) : ''}</p>}
         </Alert>
         <section aria-labelledby="admin-convo-msgs">
-          <h4 id="admin-convo-msgs" className="h4" style={{ margin: '0 0 8px' }}>Messages</h4>
-          <ol className="admin-log" aria-label="Messages (read-only)">
-            {timeline.map((t) => (t.marker ? (
-              <li key={t.id} className="report-marker">Reported by {t.report.reporter.name} · {conversationReasonLabel(t.report.reason)} · {fullTime(t.createdAt)}</li>
+          <h4 id="admin-convo-msgs" className="h4" style={{ margin: '0 0 8px' }}>{t('nav.messages')}</h4>
+          <ol className="admin-log" aria-label={t('cr.messagesRO')}>
+            {timeline.map((ev) => (ev.marker ? (
+              <li key={ev.id} className="report-marker">{t('cr.markerBy', { name: ev.report.reporter.name })} · {conversationReasonLabel(ev.report.reason)} · {fullTime(ev.createdAt)}</li>
             ) : (
-              <li key={t.id} className={'admin-msg' + (t.removed ? ' removed' : '')}>
+              <li key={ev.id} className={'admin-msg' + (ev.removed ? ' removed' : '')}>
                 <div>
-                  <div className="admin-msg-meta"><strong>{t.sender.name}</strong> · {fullTime(t.createdAt)}{t.removed ? ' · removed by moderator' : ''}</div>
-                  <p className="admin-msg-body">{t.body}</p>
+                  <div className="admin-msg-meta"><strong>{ev.sender.name}</strong> · {fullTime(ev.createdAt)}{ev.removed ? t('cr.removedTag') : ''}</div>
+                  <p className="admin-msg-body">{ev.body}</p>
                 </div>
-                {!t.removed ? (
-                  <button type="button" className="btn btn-ghost btn-sm" disabled={!!busy} aria-label={'Remove message from ' + t.sender.name + ' sent ' + fullTime(t.createdAt)}
-                    onClick={() => this.act('remove_message', { messageId: t.id }, 'Remove this message? Participants will see "Removed by moderator".')}>
-                    {busy === 'remove_message' + t.id ? <Spinner /> : <Trash2 size={14} aria-hidden="true" />}Remove
+                {!ev.removed ? (
+                  <button type="button" className="btn btn-ghost btn-sm" disabled={!!busy} aria-label={t('cr.removeFrom', { name: ev.sender.name, time: fullTime(ev.createdAt) })}
+                    onClick={() => this.act('remove_message', { messageId: ev.id }, t('cr.confirmRemoveMsg', { label: t('msg.removedShort') }))}>
+                    {busy === 'remove_message' + ev.id ? <Spinner /> : <Trash2 size={14} aria-hidden="true" />}{t('common.remove')}
                   </button>
                 ) : null}
               </li>
@@ -210,45 +224,45 @@ export default class ConversationReports extends React.Component {
           </ol>
         </section>
         <section className="card-form stack" aria-labelledby="admin-convo-actions">
-          <h4 id="admin-convo-actions" className="h4" style={{ margin: 0 }}>Actions</h4>
+          <h4 id="admin-convo-actions" className="h4" style={{ margin: 0 }}>{t('admin.actions')}</h4>
           <div className="field">
-            <label className="field-label" htmlFor="convo-mod-note">Note<span className="optional"> (optional, admins only)</span></label>
-            <input id="convo-mod-note" className="input" type="text" maxLength={REPORT_NOTE_MAX} value={note} onChange={(e) => this.setState({ note: e.target.value })} placeholder="Recorded in history and the audit log" />
+            <label className="field-label" htmlFor="convo-mod-note">{t('cr.note')}<span className="optional">{t('cr.noteOptional')}</span></label>
+            <input id="convo-mod-note" className="input" type="text" maxLength={REPORT_NOTE_MAX} value={note} onChange={(e) => this.setState({ note: e.target.value })} placeholder={t('cr.notePlaceholder')} />
           </div>
           <div className="form-actions" style={{ flexWrap: 'wrap' }}>
-            <button type="button" className="btn btn-secondary btn-sm" disabled={!!busy || !open} onClick={() => this.act('dismiss')}><Check size={14} aria-hidden="true" />Dismiss</button>
-            <button type="button" className="btn btn-secondary btn-sm" disabled={!!busy || !open} onClick={() => this.act('warn')}><AlertTriangle size={14} aria-hidden="true" />Warn (note only)</button>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={!!busy || !open} onClick={() => this.act('dismiss')}><Check size={14} aria-hidden="true" />{t('rr.dismiss')}</button>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={!!busy || !open} onClick={() => this.act('warn')}><AlertTriangle size={14} aria-hidden="true" />{t('cr.warn')}</button>
             {c.participants.map((p) => (p.messagingBanned ? (
-              <button key={p.id} type="button" className="btn btn-secondary btn-sm" disabled={!!busy} onClick={() => this.act('unban', { userId: p.id })}><Undo2 size={14} aria-hidden="true" />Lift ban on {p.name}</button>
+              <button key={p.id} type="button" className="btn btn-secondary btn-sm" disabled={!!busy} onClick={() => this.act('unban', { userId: p.id })}><Undo2 size={14} aria-hidden="true" />{t('cr.lift', { name: p.name })}</button>
             ) : (
               <button key={p.id} type="button" className="btn btn-danger btn-sm" disabled={!!busy}
-                onClick={() => this.act('ban', { userId: p.id }, 'Ban ' + p.name + ' (' + p.email + ') from messaging? They can still read conversations but not send or start them.')}>
-                <Ban size={14} aria-hidden="true" />Ban {p.name} from messaging
+                onClick={() => this.act('ban', { userId: p.id }, t('cr.confirmBan', { name: p.name, email: p.email }))}>
+                <Ban size={14} aria-hidden="true" />{t('cr.banNamed', { name: p.name })}
               </button>
             )))}
           </div>
-          {!open ? <p className="field-hint" style={{ margin: 0 }}>Dismiss and warn apply to open reports; there are none.</p> : null}
+          {!open ? <p className="field-hint" style={{ margin: 0 }}>{t('cr.noneOpenHint')}</p> : null}
         </section>
         <section aria-labelledby="admin-convo-reports">
-          <h4 id="admin-convo-reports" className="h4" style={{ margin: '0 0 8px' }}>Reports</h4>
+          <h4 id="admin-convo-reports" className="h4" style={{ margin: '0 0 8px' }}>{t('admin.reports')}</h4>
           <ul className="audit-list">
             {detail.reports.map((r) => (
               <li key={r.id}>
                 <strong>#{r.id} {conversationReasonLabel(r.reason)}</strong> · {who(r.reporter)} → {who(r.reportedUser)} · {fullTime(r.createdAt)}
-                {' '}<span className={'chip ' + (r.status === 'open' ? 'chip-danger' : r.status === 'actioned' ? 'chip-warning' : '')}>{r.status === 'open' ? 'Open' : OUTCOME[r.action] || r.status}</span>
+                {' '}<span className={'chip ' + (r.status === 'open' ? 'chip-danger' : r.status === 'actioned' ? 'chip-warning' : '')}>{r.status === 'open' ? t('rep.openTab') : OUTCOME[r.action] || r.status}</span>
                 {r.note ? <div><q>{r.note}</q></div> : null}
-                {r.reviewer ? <div className="muted"><small>Reviewed by {r.reviewer.email} {fullTime(r.reviewedAt)}{r.resolutionNote ? ': ' + r.resolutionNote : ''}</small></div> : null}
+                {r.reviewer ? <div className="muted"><small>{t('cr.reviewedBy', { email: r.reviewer.email, time: fullTime(r.reviewedAt) })}{r.resolutionNote ? ': ' + r.resolutionNote : ''}</small></div> : null}
               </li>
             ))}
           </ul>
         </section>
         <section aria-labelledby="admin-convo-audit">
-          <h4 id="admin-convo-audit" className="h4" style={{ margin: '0 0 8px' }}><ShieldCheck size={16} aria-hidden="true" style={{ verticalAlign: '-2px', marginRight: 6 }} />Audit trail</h4>
+          <h4 id="admin-convo-audit" className="h4" style={{ margin: '0 0 8px' }}><ShieldCheck size={16} aria-hidden="true" style={{ verticalAlign: '-2px', marginRight: 6 }} />{t('cr.audit')}</h4>
           <ul className="audit-list audit-trail">
             {detail.events.map((e) => (
               <li key={e.id}>
-                <strong>{EVENT[e.type] || e.type}</strong>{e.targetUser ? ' · ' + e.targetUser.name : ''}{e.messageId ? ' · message #' + e.messageId : ''}
-                {' '}· {e.admin ? e.admin.email : 'former admin'} · {fullTime(e.createdAt)}{e.reportId ? ' · report #' + e.reportId : ''}
+                <strong>{EVENT[e.type] || e.type}</strong>{e.targetUser ? ' · ' + e.targetUser.name : ''}{e.messageId ? t('cr.messageN', { id: e.messageId }) : ''}
+                {' '}· {e.admin ? e.admin.email : t('cr.formerAdmin')} · {fullTime(e.createdAt)}{e.reportId ? t('cr.reportN', { id: e.reportId }) : ''}
                 {e.note ? <div className="muted"><small>{e.note}</small></div> : null}
               </li>
             ))}
@@ -264,10 +278,10 @@ export default class ConversationReports extends React.Component {
       <div className="stack">
         {!detailId ? (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <p className="muted" style={{ margin: 0 }}>Admins can read a conversation only after a participant reports it.</p>
-            <div className="segmented" role="group" aria-label="Conversation report view">
-              <button type="button" aria-pressed={view === 'open'} onClick={() => this.switchView('open')}>Open</button>
-              <button type="button" aria-pressed={view === 'history'} onClick={() => this.switchView('history')}><History size={14} aria-hidden="true" />History</button>
+            <p className="muted" style={{ margin: 0 }}>{t('cr.lead')}</p>
+            <div className="segmented" role="group" aria-label={t('cr.view')}>
+              <button type="button" aria-pressed={view === 'open'} onClick={() => this.switchView('open')}>{t('rep.openTab')}</button>
+              <button type="button" aria-pressed={view === 'history'} onClick={() => this.switchView('history')}><History size={14} aria-hidden="true" />{t('rep.history')}</button>
             </div>
           </div>
         ) : null}

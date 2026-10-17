@@ -59,13 +59,29 @@ const plural = (entry, vars, code) => {
 
 // t('post.days', { count: 3 }) -> "3 days"; missing keys fall back to English, then the key.
 export function t(key, vars) {
-  let entry = catalog[key];
-  let code = current;
+  return lookup(catalog, current, key, vars);
+}
+
+function lookup(cat, code, key, vars) {
+  let entry = cat[key];
   if (entry === undefined) { entry = en[key]; code = 'en'; }
   if (entry === undefined) return key;
   const s = plural(entry, vars, code);
   const v = vars && typeof vars.count === 'number' ? Object.assign({}, vars, { count: formatNumber(vars.count, code) }) : vars;
   return interpolate(String(s), v);
+}
+
+// Catalogs in use other than the UI language (e.g. a flyer printed in Korean
+// while the site is in English). loadCatalog() first; tIn() falls back to English.
+const loaded = { en };
+export function loadCatalog(code) {
+  const c = normalize(code) || 'en';
+  if (loaded[c]) return Promise.resolve(c);
+  return LOADERS[c]().then((m) => { loaded[c] = Object.assign({}, en, m.default); return c; });
+}
+export function tIn(code, key, vars) {
+  const c = normalize(code) || 'en';
+  return lookup(loaded[c] || (c === current ? catalog : en), loaded[c] || c === current ? c : 'en', key, vars);
 }
 
 export function formatNumber(n, code) {
@@ -84,7 +100,8 @@ function applyDocument(code) {
 // language" without overwriting this device's choice.
 export async function setLocale(code, opts) {
   const c = normalize(code) || 'en';
-  const next = c === 'en' ? en : Object.assign({}, en, (await LOADERS[c]()).default);
+  await loadCatalog(c);
+  const next = loaded[c];
   const changed = c !== current;
   current = c;
   catalog = next;
