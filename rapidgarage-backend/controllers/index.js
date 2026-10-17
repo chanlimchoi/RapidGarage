@@ -16,6 +16,7 @@ router.use('/events', require('./events'));
 router.use('/alerts', require('./alerts'));
 router.use('/saved', require('./saved'));
 router.use('/ratings', require('./ratings'));
+router.use('/dashboard', require('./dashboard'));
 router.use('/s', require('./shortlinks'));
 router.use('/', require('./home'));
 

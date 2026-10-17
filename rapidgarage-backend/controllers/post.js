@@ -11,6 +11,7 @@ const schedule = require('../lib/schedule');
 const ratings = require('../lib/ratings');
 const { publicUser } = require('../lib/people');
 const events = require('../lib/events');
+const scans = require('../lib/scans');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -78,6 +79,20 @@ router.use('/:id/items', loadPost, require('./items'));
 router.use('/:id/print', requireLogin, loadPost, require('./print'));
 
 router.use('/:id/report', requireLogin, loadPost, require('./report'));
+
+// Sale page view beacon (seller dashboard). Always 204, whether or not it was
+// counted: counted like QR scans (lib/scans.js kind 'view'), never for hidden
+// sales, bots, prefetches, the seller or admins.
+router.post('/:id/view', async (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return badRequest(res, 'Post id must be a positive integer.');
+  try {
+    const post = await Post.findByPk(id, { attributes: ['id', 'userId', 'timeZone', 'hidden'] });
+    if (!post) return notFound(res, 'Post not found.');
+    if (!post.hidden) await scans.record(req, post, 'view');
+    return res.status(204).end();
+  } catch (err) { return serverError(res, err); }
+});
 
 // The seller is shown as "First L." with their rating summary; never an email.
 router.get('/:id', loadPost, async (req, res) => {
