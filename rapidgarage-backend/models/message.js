@@ -6,6 +6,9 @@ module.exports = (sequelize, DataTypes) => {
     conversationId: { type: DataTypes.INTEGER, allowNull: false },
     senderId: { type: DataTypes.INTEGER, allowNull: false },
     body: { type: DataTypes.TEXT, allowNull: false, validate: { len: [1, BODY_MAX] } },
+    // Soft delete by a moderator: participants see "removed by moderator".
+    removedAt: { type: DataTypes.DATE, allowNull: true },
+    removedBy: { type: DataTypes.INTEGER, allowNull: true },
   }, {
     updatedAt: false,
     indexes: [

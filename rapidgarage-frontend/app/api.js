@@ -108,3 +108,22 @@ export function fetchUnreadCount() {
     .then(({ ok, data }) => (ok && data ? data.count : null))
     .catch(() => null);
 }
+
+// ---- Conversation reports --------------------------------------------------
+export const CONVERSATION_REPORT_REASONS = [
+  { value: 'harassment', label: 'Harassment' },
+  { value: 'scam', label: 'Scam or fraud' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'offensive', label: 'Offensive content' },
+  { value: 'other', label: 'Something else' },
+];
+export function conversationReasonLabel(value) {
+  const r = CONVERSATION_REPORT_REASONS.filter((x) => x.value === value)[0];
+  return r ? r.label : value;
+}
+export const reportConversation = (id, reason, note, block) =>
+  apiFetch('/conversations/' + id + '/report', { method: 'POST', body: JSON.stringify({ reason, note: note || undefined, block: !!block }) });
+export const fetchConversationReportQueue = () => apiFetch('/admin/conversation-reports');
+export const fetchConversationReportHistory = (page) => apiFetch('/admin/conversation-reports/history?page=' + (page || 1));
+export const fetchReportedConversation = (id) => apiFetch('/admin/conversations/' + id);
+export const moderateConversation = (id, body) => apiFetch('/admin/conversations/' + id + '/moderate', { method: 'POST', body: JSON.stringify(body) });

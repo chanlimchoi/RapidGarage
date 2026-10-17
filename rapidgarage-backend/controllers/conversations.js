@@ -27,8 +27,12 @@ function postSummary(conv, post, me) {
 }
 
 function messageJSON(m, me) {
+  // Removed by a moderator: participants get a placeholder, never the text.
+  if (m.removedAt) return { id: m.id, body: null, removed: true, senderId: m.senderId, mine: m.senderId === me, createdAt: m.createdAt };
   return { id: m.id, body: m.body, senderId: m.senderId, mine: m.senderId === me, createdAt: m.createdAt };
 }
+
+const BANNED_MSG = 'A moderator has turned off messaging for your account. You can still read your conversations.';
 
 async function loadPosts(ids) {
   if (!ids.length) return new Map();
@@ -125,6 +129,7 @@ router.post('/', async (req, res) => {
     const post = await models.Post.findByPk(postId);
     if (!post) return notFound(res, 'Post not found.');
     if (post.userId === me) return forbidden(res, "You can't message yourself.");
+    if (req.user.messagingBanned) return sendError(res, 403, 'messaging_banned', BANNED_MSG);
     // An existing conversation stays reachable even if the post was hidden since.
     const existing = await models.Conversation.findOne({ where: { postId, buyerId: me, sellerId: post.userId } });
     if (existing) return res.status(200).json({ id: existing.id, created: false });
@@ -171,7 +176,10 @@ router.get('/:id', loadConversation, async (req, res) => {
     const posts = await loadPosts([conv.postId]);
     const blocks = await msg.blockState(me, conv.otherId(me));
     const summary = await summarize(conv, req.user, posts.get(conv.postId), 0, blocks, messages[messages.length - 1]);
-    summary.canSend = !blocks.byMe && !blocks.byThem;
+    summary.messagingBanned = !!req.user.messagingBanned;
+    summary.canSend = !blocks.byMe && !blocks.byThem && !summary.messagingBanned;
+    // Only *your own* open report is ever mentioned to a participant.
+    summary.reportedByMe = !!(await models.ConversationReport.count({ where: { conversationId: conv.id, reporterId: me, status: 'open' } }));
     return res.json({ conversation: summary, messages: messages.map((m) => messageJSON(m, me)), hasMore });
   } catch (err) {
     return serverError(res, err);
@@ -210,6 +218,7 @@ router.post('/:id/messages', loadConversation, async (req, res) => {
   const conv = req.conversation;
   const { text, error } = msg.validateBody((req.body || {}).body);
   if (error) return badRequest(res, 'Invalid message.', { body: error });
+  if (req.user.messagingBanned) return sendError(res, 403, 'messaging_banned', BANNED_MSG);
   try {
     const blocks = await msg.blockState(me, conv.otherId(me));
     if (blocks.byMe) return sendError(res, 403, 'blocked', 'You blocked this person. Unblock them to send messages.');
@@ -225,6 +234,49 @@ router.post('/:id/messages', loadConversation, async (req, res) => {
     await conv.update({ lastMessageAt: m.createdAt, [conv.lastReadField(me)]: m.createdAt });
     return res.status(201).json(messageJSON(m, me));
   } catch (err) {
+    return serverError(res, err);
+  }
+});
+
+// POST /conversations/:id/report { reason, note?, block? } : either participant
+// may report the conversation (one open report each; shares the hourly report
+// limit with post reports). With block: true the other person is blocked too.
+router.post('/:id/report', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  const conv = req.conversation;
+  const body = req.body || {};
+  const errors = {};
+  const REASONS = models.ConversationReport.REASONS;
+  if (REASONS.indexOf(body.reason) === -1) errors.reason = 'Choose a reason: ' + REASONS.join(', ') + '.';
+  let note = null;
+  if (body.note !== undefined && body.note !== null) {
+    if (typeof body.note !== 'string') errors.note = 'Note must be text.';
+    else if (body.note.trim().length > mod.NOTE_MAX) errors.note = 'Keep the note under ' + mod.NOTE_MAX + ' characters.';
+    else note = body.note.trim() || null;
+  }
+  if (body.block !== undefined && typeof body.block !== 'boolean') errors.block = 'block must be true or false.';
+  if (Object.keys(errors).length) return badRequest(res, 'Invalid report.', errors);
+  const other = conv.otherId(me);
+  try {
+    const existing = await models.ConversationReport.findOne({ where: { conversationId: conv.id, reporterId: me, status: 'open' } });
+    if (existing) return sendError(res, 409, 'conflict', 'You already reported this conversation. A moderator will review it.');
+    const since = new Date(Date.now() - 3600 * 1000);
+    const [p, c] = await Promise.all([
+      models.Report.count({ where: { reporterId: me, createdAt: { [Op.gte]: since } } }),
+      models.ConversationReport.count({ where: { reporterId: me, createdAt: { [Op.gte]: since } } }),
+    ]);
+    if (p + c >= mod.reportsPerHour()) {
+      res.set('Retry-After', '3600');
+      return sendError(res, 429, 'rate_limited', 'You have sent a lot of reports. Please try again later.');
+    }
+    const report = await models.ConversationReport.create({ conversationId: conv.id, reporterId: me, reportedUserId: other, reason: body.reason, note });
+    if (body.block) await models.UserBlock.findOrCreate({ where: { blockerId: me, blockedId: other } });
+    return res.status(201).json({
+      id: report.id, conversationId: conv.id, reason: report.reason, status: report.status, createdAt: report.createdAt,
+      blocked: await msg.blockState(me, other),
+    });
+  } catch (err) {
+    if (err && err.name === 'SequelizeUniqueConstraintError') return sendError(res, 409, 'conflict', 'You already reported this conversation. A moderator will review it.');
     return serverError(res, err);
   }
 });

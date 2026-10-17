@@ -245,6 +245,55 @@ Settings (optional): `MESSAGE_MAX_PER_MINUTE` (messages per user per minute, def
 `GET /profile/:id` now returns the full profile (including email) only to that user and to
 admins; everyone else gets `{ id, name, createdAt }`.
 
+### Conversation reports and admin access
+
+Migration `20261017060000-conversation-reports` adds `ConversationReports` (separate from the
+post `Reports` table, so post reports and their history are untouched),
+`ConversationModerationEvents` (append-only audit log), `Users.messagingBanned` /
+`messagingBannedAt` and `Messages.removedAt` / `removedBy`.
+
+**Reporting** — `POST /conversations/:id/report { reason, note?, block? }`, participants only
+(404 for anyone else). `reason`: `harassment`, `scam`, `spam`, `offensive`, `other`; `note` up
+to 500 characters; `block: true` also blocks the other participant. One open report per
+participant per conversation (409; unique partial index `conv_reports_one_open_per_user`). Post
+and conversation reports share one hourly budget, `REPORT_MAX_PER_HOUR` (429). The thread
+response includes `reportedByMe` (your own open report only); participants never see other
+reports, reporters or admin notes.
+
+**Admin read rule** (server-enforced in `controllers/adminConversations.js`; the participant
+API stays 404 for admins):
+
+| Conversation state | `GET /admin/conversations/:id` |
+|---|---|
+| never reported | 404, identical to any non-participant |
+| has an open report | every message, before and after the report (`access.mode: "open"`) |
+| only resolved reports | messages up to the latest resolution time (`access.mode: "history"`); later messages stay private (`access.hiddenLaterMessages` counts them) until someone reports again |
+
+Every successful read writes a `read` event with the admin, time and report id (the newest open
+report, or the newest resolved one in history mode). The detail response returns participants
+as name + email (admins already see emails on Users), every report, the messages (removed ones
+keep their text for admins, flagged `removed`) and the audit trail (`events`).
+
+**Admin routes** (403 for non-admins):
+
+- `GET /admin/conversation-reports` — open reports grouped by conversation, with post context,
+  participants, reasons and reporters. No message text; reading needs the logged detail view.
+- `GET /admin/conversation-reports/history?page=` — resolved reports.
+- `GET /admin/reports` also returns `conversationOpenCount` for the tab badge.
+- `POST /admin/conversations/:id/moderate { action, userId?, messageId?, note? }` (404 unless
+  the read rule allows access; actions only touch messages the admin may see):
+
+| action | effect | open reports |
+|---|---|---|
+| `dismiss` | none | `dismissed` |
+| `warn` | none (a note in history only; optional `userId`) | `actioned` / warned |
+| `ban` | `userId` (a participant) can't send or start conversations anywhere; reading still works | `actioned` / banned |
+| `unban` | lifts the ban | unchanged |
+| `remove_message` | soft-deletes `messageId`; participants get `{ removed: true, body: null }` | unchanged |
+
+Every action is logged as an event with its note. Banned users get 403 `messaging_banned` on
+send and start, and `/me` reports `messagingBanned: true`.
+
 ## Optional
 
 - If you want to add views and handlebars to your server side

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, ArrowLeft, Send, Ban, ImageOff, LogIn, Inbox, AlertTriangle } from 'lucide-react';
+import { MessageCircle, ArrowLeft, Send, Ban, ImageOff, LogIn, Inbox, AlertTriangle, Flag, MoreHorizontal, ShieldOff } from 'lucide-react';
 import {
   errorMessage, fetchConversations, fetchConversation, fetchMessagesAfter, fetchMessagesBefore,
-  sendMessage, setBlocked, MESSAGE_MAX,
+  sendMessage, setBlocked, MESSAGE_MAX, reportConversation, CONVERSATION_REPORT_REASONS, REPORT_NOTE_MAX,
 } from '../api';
-import { Alert, EmptyState, SkeletonBlock, Spinner } from '../components/ui';
+import { Alert, EmptyState, SkeletonBlock, Spinner, Dialog, Field } from '../components/ui';
 import { timeAgo } from '../lib/format';
 import toast from '../components/toast';
 import linkify from './linkify';
@@ -43,7 +43,10 @@ export default class Messages extends React.Component {
       list: null, listError: '',
       conv: null, messages: [], hasMore: false, threadError: '', loadingThread: false, loadingOlder: false,
       draft: '', sending: false, sendError: '',
+      menuOpen: false, reportOpen: false, reason: '', note: '', alsoBlock: false, reportError: '', reporting: false,
     };
+    this.menuRef = React.createRef();
+    this.onDocClick = this.onDocClick.bind(this);
     this.logRef = React.createRef();
     this.inputRef = React.createRef();
     this.poll = this.poll.bind(this);
@@ -52,10 +55,97 @@ export default class Messages extends React.Component {
   componentDidMount() {
     if (this.props.user) this.init();
     this.timer = setInterval(() => { if (!document.hidden) this.poll(); }, POLL_MS);
+    document.addEventListener('mousedown', this.onDocClick);
+  }
+
+  onDocClick(e) {
+    if (this.state.menuOpen && this.menuRef.current && !this.menuRef.current.contains(e.target)) this.setState({ menuOpen: false });
+  }
+
+  onMenuKey(e) {
+    if (e.key === 'Escape') { this.setState({ menuOpen: false }); return; }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const items = Array.prototype.slice.call(this.menuRef.current.querySelectorAll('[role="menuitem"]:not(:disabled)'));
+    const i = items.indexOf(document.activeElement);
+    items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
+  }
+
+  toggleMenu() {
+    this.setState({ menuOpen: !this.state.menuOpen }, () => {
+      const first = this.state.menuOpen && this.menuRef.current && this.menuRef.current.querySelector('[role="menuitem"]:not(:disabled)');
+      if (first) first.focus();
+    });
+  }
+
+  openReport() {
+    this.setState({ menuOpen: false, reportOpen: true, reason: '', note: '', alsoBlock: false, reportError: '' });
+  }
+
+  submitReport(e) {
+    e.preventDefault();
+    const { conv, reason, note, alsoBlock } = this.state;
+    if (!reason) { this.setState({ reportError: 'Choose a reason.' }); return; }
+    if (note.length > REPORT_NOTE_MAX) { this.setState({ reportError: 'Keep the note under ' + REPORT_NOTE_MAX + ' characters.' }); return; }
+    this.setState({ reporting: true, reportError: '' });
+    reportConversation(conv.id, reason, note.trim(), alsoBlock)
+      .then(({ ok, status, data }) => {
+        if (this.unmounted) return;
+        if (ok || status === 409) {
+          const patch = { reporting: false, reportOpen: false, conv: Object.assign({}, this.state.conv, { reportedByMe: true }) };
+          if (ok && data.blocked) Object.assign(patch.conv, { blocked: data.blocked, canSend: false });
+          this.setState(patch);
+          if (ok) toast.success('Thanks. A moderator will review this conversation.' + (alsoBlock ? ' ' + endSentence(conv.other ? conv.other.name : 'They') + ' is blocked.' : ''));
+          else toast.info("You've already reported this conversation.");
+          return;
+        }
+        if (status === 429) { this.setState({ reporting: false, reportOpen: false }); toast.error("You've sent a lot of reports recently. Please try again later."); return; }
+        this.setState({ reporting: false, reportError: errorMessage(data, 'Could not send the report.') });
+      })
+      .catch(() => { if (!this.unmounted) this.setState({ reporting: false, reportError: 'Unable to reach the server. Please try again.' }); });
+  }
+
+  renderReportDialog() {
+    const { conv, reason, note, alsoBlock, reportError, reporting } = this.state;
+    const name = conv.other ? conv.other.name : 'this person';
+    const left = REPORT_NOTE_MAX - note.length;
+    return (
+      <Dialog id="convreport-dialog" title="Report conversation" onClose={() => !reporting && this.setState({ reportOpen: false })}
+        description={'A moderator will be able to read this conversation to review your report. ' + name + " won't be told who reported it."}>
+        <form onSubmit={(e) => this.submitReport(e)} noValidate>
+          <fieldset className="field report-reasons">
+            <legend className="field-label">What's wrong?</legend>
+            {CONVERSATION_REPORT_REASONS.map((r) => (
+              <label key={r.value} className="radio-row">
+                <input type="radio" name="convreport-reason" value={r.value} checked={reason === r.value}
+                  onChange={() => this.setState({ reason: r.value, reportError: '' })} />
+                <span>{r.label}</span>
+              </label>
+            ))}
+          </fieldset>
+          <Field id="convreport-note" label="Details" optional hint={left >= 0 ? left + ' characters left' : 'Too long by ' + (-left)}>
+            <textarea className="textarea" rows={3} maxLength={REPORT_NOTE_MAX} value={note} onChange={(e) => this.setState({ note: e.target.value })}
+              placeholder="What happened? This goes to moderators only." />
+          </Field>
+          {!(conv.blocked && conv.blocked.byMe) ? (
+            <label className="checkbox-row" htmlFor="convreport-block">
+              <input id="convreport-block" type="checkbox" checked={alsoBlock} onChange={(e) => this.setState({ alsoBlock: e.target.checked })} />
+              <span><strong>Also block {name}</strong><span className="field-hint" style={{ display: 'block' }}>Neither of you will be able to send messages.</span></span>
+            </label>
+          ) : null}
+          {reportError ? <Alert tone="danger">{reportError}</Alert> : null}
+          <div className="dialog-footer">
+            <button type="button" className="btn btn-ghost" disabled={reporting} onClick={() => this.setState({ reportOpen: false })}>Cancel</button>
+            <button type="submit" className="btn btn-danger" disabled={reporting}>{reporting ? <Spinner /> : <Flag size={16} aria-hidden="true" />}Send report</button>
+          </div>
+        </form>
+      </Dialog>
+    );
   }
 
   componentWillUnmount() {
     clearInterval(this.timer);
+    document.removeEventListener('mousedown', this.onDocClick);
     this.unmounted = true;
   }
 
@@ -85,7 +175,7 @@ export default class Messages extends React.Component {
         const patch = { list: data.results, listError: '' };
         // Keep the open thread's block / post state in sync with the list.
         const open = this.state.conv && data.results.filter((c) => c.id === this.state.conv.id)[0];
-        if (open) patch.conv = Object.assign({}, this.state.conv, { blocked: open.blocked, post: open.post, canSend: !open.blocked.byMe && !open.blocked.byThem });
+        if (open) patch.conv = Object.assign({}, this.state.conv, { blocked: open.blocked, post: open.post, canSend: !open.blocked.byMe && !open.blocked.byThem && !this.state.conv.messagingBanned });
         this.setState(patch);
       })
       .catch(() => { if (!this.unmounted) this.setState({ listError: 'Unable to reach the server.' }); });
@@ -177,7 +267,11 @@ export default class Messages extends React.Component {
           const msg = errorMessage(data, 'Could not send your message.');
           this.setState({ sending: false, sendError: msg });
           // Blocked: say so, then refresh so the composer is replaced by the notice.
-          if (status === 403) { toast.error(msg); this.loadList(); }
+          if (status === 403) {
+            toast.error(msg);
+            if (data && data.error && data.error.code === 'messaging_banned') this.setState({ conv: Object.assign({}, this.state.conv, { messagingBanned: true, canSend: false }) });
+            this.loadList();
+          }
           return;
         }
         this.setState({ sending: false, draft: '' }, () => { if (this.inputRef.current) this.inputRef.current.focus(); });
@@ -202,7 +296,7 @@ export default class Messages extends React.Component {
       .then(({ ok, data }) => {
         if (!ok) { toast.error(errorMessage(data, 'Could not update the block.')); return; }
         const blocked = data.blocked;
-        this.setState({ conv: Object.assign({}, this.state.conv, { blocked, canSend: !blocked.byMe && !blocked.byThem }) });
+        this.setState({ menuOpen: false, conv: Object.assign({}, this.state.conv, { blocked, canSend: !blocked.byMe && !blocked.byThem && !this.state.conv.messagingBanned }) });
         toast.success(block ? conv.other.name + ' is blocked.' : conv.other.name + ' is unblocked.');
         this.loadList();
       })
@@ -230,7 +324,7 @@ export default class Messages extends React.Component {
       <ul className="convo-list">
         {list.map((c) => {
           const label = postLabel(c.post);
-          const preview = c.lastMessage ? (c.lastMessage.mine ? 'You: ' : '') + c.lastMessage.body : 'No messages yet';
+          const preview = !c.lastMessage ? 'No messages yet' : c.lastMessage.removed ? 'Message removed by moderator' : (c.lastMessage.mine ? 'You: ' : '') + c.lastMessage.body;
           return (
             <li key={c.id}>
               <Link to={'/messages/' + c.id} className={'convo-item' + (c.id === activeId ? ' active' : '') + (c.unreadCount ? ' unread' : '')}
@@ -276,9 +370,20 @@ export default class Messages extends React.Component {
               {label ? <span className="chip chip-warning">{label}</span> : null}
             </div>
           </div>
-          <button type="button" className={'btn btn-sm ' + (blocked.byMe ? 'btn-secondary' : 'btn-ghost')} onClick={() => this.toggleBlock()}>
-            <Ban size={14} aria-hidden="true" />{blocked.byMe ? 'Unblock' : 'Block'}
-          </button>
+          <div className="menu thread-menu" ref={this.menuRef}>
+            <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-haspopup="menu" aria-expanded={this.state.menuOpen}
+              aria-label="Conversation options" onClick={() => this.toggleMenu()}><MoreHorizontal size={18} aria-hidden="true" /></button>
+            {this.state.menuOpen ? (
+              <div className="menu-panel" role="menu" aria-label="Conversation options" onKeyDown={(e) => this.onMenuKey(e)}>
+                <button type="button" role="menuitem" className="menu-item" onClick={() => this.toggleBlock()}>
+                  <Ban size={18} aria-hidden="true" />{blocked.byMe ? 'Unblock ' : 'Block '}{conv.other ? conv.other.name : ''}
+                </button>
+                <button type="button" role="menuitem" className="menu-item menu-item-danger" disabled={conv.reportedByMe} onClick={() => this.openReport()}>
+                  <Flag size={18} aria-hidden="true" />{conv.reportedByMe ? 'Reported' : 'Report conversation'}
+                </button>
+              </div>
+            ) : null}
+          </div>
         </header>
         {label && !conv.post.canView ? <Alert tone="warning">This post is no longer available. You can still read this conversation.</Alert> : null}
         <div className="thread-log" ref={this.logRef} role="log" aria-live="polite" aria-label={'Messages with ' + (conv.other ? conv.other.name : 'former user')} tabIndex="0">
@@ -292,8 +397,10 @@ export default class Messages extends React.Component {
             <div key={m.id} className={'bubble-row' + (m.mine ? ' mine' : '')}>
               <span className="sr-only">{m.mine ? 'You' : (conv.other ? conv.other.name : 'Them')}: </span>
               {!m.mine ? <span className="avatar avatar-sm" aria-hidden="true">{initialsOf(conv.other && conv.other.name)}</span> : null}
-              <div className="bubble">
-                <p className="bubble-text">{linkify(m.body)}</p>
+              <div className={'bubble' + (m.removed ? ' bubble-removed' : '')}>
+                {m.removed
+                  ? <p className="bubble-text"><ShieldOff size={14} aria-hidden="true" /> Removed by moderator</p>
+                  : <p className="bubble-text">{linkify(m.body)}</p>}
                 <time className="bubble-time" dateTime={m.createdAt}>{clock(m.createdAt)}</time>
               </div>
             </div>
@@ -315,9 +422,10 @@ export default class Messages extends React.Component {
           </form>
         ) : (
           <Alert tone="info" className="composer-blocked">
-            {blocked.byMe ? <p>You blocked {endSentence(conv.other ? conv.other.name : 'this person')} Unblock them to send messages.</p> : <p>You can't reply to this conversation.</p>}
+            {conv.messagingBanned ? <p>A moderator has turned off messaging for your account. You can still read your conversations.</p> : blocked.byMe ? <p>You blocked {endSentence(conv.other ? conv.other.name : 'this person')} Unblock them to send messages.</p> : <p>You can't reply to this conversation.</p>}
           </Alert>
         )}
+        {this.state.reportOpen ? this.renderReportDialog() : null}
       </section>
     );
   }

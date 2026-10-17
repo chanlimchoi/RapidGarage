@@ -13,7 +13,7 @@ function requireAdmin(req, res, next) {
 router.use(requireLogin, requireAdmin);
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
-const USER_FIELDS = ['id', 'email', 'firstName', 'lastName', 'role', 'createdAt'];
+const USER_FIELDS = ['id', 'email', 'firstName', 'lastName', 'role', 'messagingBanned', 'createdAt'];
 
 router.get('/users', (req, res) => {
   models.User.findAll({ attributes: USER_FIELDS, order: [['id', 'ASC']] })
@@ -122,7 +122,8 @@ router.get('/reports', async (req, res) => {
     groups.forEach((g) => { g.reporterCount = new Set(g.reports.map((r) => r.reporter && r.reporter.id)).size; });
     const list = Array.from(groups.values()).sort((a, b) => b.openCount - a.openCount || new Date(a.firstReportedAt) - new Date(b.firstReportedAt));
     const hidden = posts.filter((p) => p.hidden && !groups.has(p.id)).map((p) => Object.assign(preview(p), { owner: person(p.User) }));
-    return res.json({ groups: list, hidden, reasons: mod.REASON_LABELS, autoHideThreshold: mod.autoHideThreshold() });
+    const conversationOpenCount = await models.ConversationReport.count({ where: { status: 'open' } });
+    return res.json({ groups: list, hidden, reasons: mod.REASON_LABELS, autoHideThreshold: mod.autoHideThreshold(), conversationOpenCount });
   } catch (err) {
     return serverError(res, err);
   }
@@ -200,6 +201,9 @@ router.post('/posts/:id/moderate', async (req, res) => {
     return serverError(res, err);
   }
 });
+
+// Conversation reports (reported conversations only; see the file header).
+router.use(require('./adminConversations'));
 
 module.exports = router;
 module.exports.requireAdmin = requireAdmin;
