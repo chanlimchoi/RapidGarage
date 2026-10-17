@@ -9,6 +9,8 @@
 // salt a hash can't be linked back to an IP, even by brute force over IPv4.
 // Not counted: non-GET (HEAD), empty or bot/preview user agents, prefetches,
 // and the post's owner or an admin (testing their own flyer).
+// Neighborhood sales (kind 'event') are counted the same way in EventScanDays;
+// their dedupe input is prefixed, so an event and a post never share a hash.
 const crypto = require('crypto');
 const { Op } = require('sequelize');
 const schedule = require('./schedule');
@@ -70,21 +72,29 @@ function visitorHash(postId, ip, ua) {
   return { day: s.day, hash };
 }
 
-function skipReason(req, post) {
+// What is counted: a post (default) or a neighborhood sale.
+const KINDS = {
+  post: { model: 'PostScanDay', key: 'postId', owner: (s) => s.userId, tag: (id) => String(id) },
+  event: { model: 'EventScanDay', key: 'eventId', owner: (s) => s.organizerId, tag: (id) => 'event:' + id },
+};
+const kindOf = (k) => KINDS[k || 'post'];
+
+function skipReason(req, post, kind) {
   if (req.method !== 'GET') return 'method';
   const ua = req.get('user-agent') || '';
   if (isBot(ua)) return 'bot';
   if (isPrefetch(req)) return 'prefetch';
-  if (req.user && (req.user.id === post.userId || isAdmin(req.user))) return 'owner';
+  if (req.user && (req.user.id === kindOf(kind).owner(post) || isAdmin(req.user))) return 'owner';
   return null;
 }
 
 // Count one scan of `post` unless skipped or a repeat. -> { counted, reason }
-async function record(req, post) {
-  const reason = skipReason(req, post);
+async function record(req, post, kind) {
+  const K = kindOf(kind);
+  const reason = skipReason(req, post, kind);
   if (reason) return { counted: false, reason };
   const M = models();
-  const { day, hash } = visitorHash(post.id, clientIp(req), req.get('user-agent') || '');
+  const { day, hash } = visitorHash(K.tag(post.id), clientIp(req), req.get('user-agent') || '');
   if (purging) { await purging; purging = null; }
   try {
     await M.ScanDedupe.create({ day, hash });
@@ -93,15 +103,15 @@ async function record(req, post) {
     throw err;
   }
   const local = schedule.localDate(clock(), post.timeZone || schedule.defaultTimeZone());
-  const where = { postId: post.id, day: local };
-  let row = await M.PostScanDay.findOne({ where });
+  const where = { [K.key]: post.id, day: local };
+  let row = await M[K.model].findOne({ where });
   if (!row) {
     try {
-      await M.PostScanDay.create(Object.assign({ count: 1 }, where));
+      await M[K.model].create(Object.assign({ count: 1 }, where));
       return { counted: true, reason: null };
     } catch (err) {
       if (!err || err.name !== 'SequelizeUniqueConstraintError') throw err;
-      row = await M.PostScanDay.findOne({ where });
+      row = await M[K.model].findOne({ where });
     }
   }
   await row.increment('count'); // SET count = count + 1 (atomic)
@@ -109,15 +119,16 @@ async function record(req, post) {
 }
 
 // { total, today, days: [{ date, count }] } for the last `n` local days (oldest first).
-async function stats(post, n) {
+async function stats(post, n, kind) {
+  const K = kindOf(kind);
   const span = n || 30;
   const tz = post.timeZone || schedule.defaultTimeZone();
   const today = schedule.localDate(clock(), tz);
   const first = schedule.addDays(today, -(span - 1));
   const M = models();
   const [rows, total] = await Promise.all([
-    M.PostScanDay.findAll({ where: { postId: post.id, day: { [Op.gte]: first } }, raw: true }),
-    M.PostScanDay.sum('count', { where: { postId: post.id } }),
+    M[K.model].findAll({ where: { [K.key]: post.id, day: { [Op.gte]: first } }, raw: true }),
+    M[K.model].sum('count', { where: { [K.key]: post.id } }),
   ]);
   const by = new Map(rows.map((r) => [String(r.day).slice(0, 10), r.count]));
   const days = [];
