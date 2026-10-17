@@ -14,6 +14,8 @@ const SETTINGS = {
   userMapsKeys: { type: 'boolean', default: () => envFlag('ENABLE_USER_MAPS_KEYS', true) },
   // Email alerts for new nearby sales (admin kill switch).
   saleAlerts: { type: 'boolean', default: () => envFlag('ENABLE_SALE_ALERTS', true) },
+  // Wanted posts: the board, new posts, contacting and match notifications.
+  wantedPosts: { type: 'boolean', default: () => envFlag('ENABLE_WANTED_POSTS', true) },
 };
 
 function models() {
@@ -44,5 +46,6 @@ function setSetting(name, value) {
 
 const userMapsKeysEnabled = () => getSetting('userMapsKeys');
 const saleAlertsEnabled = () => getSetting('saleAlerts');
+const wantedEnabled = () => getSetting('wantedPosts');
 
-module.exports = { envFlag, SETTINGS, getSetting, getAllSettings, setSetting, userMapsKeysEnabled, saleAlertsEnabled };
+module.exports = { envFlag, SETTINGS, getSetting, getAllSettings, setSetting, userMapsKeysEnabled, saleAlertsEnabled, wantedEnabled };

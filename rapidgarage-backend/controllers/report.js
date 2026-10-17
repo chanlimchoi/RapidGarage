@@ -1,7 +1,6 @@
 // POST /post/:id/report  { reason, note? }  (logged in; mounted by controllers/post.js
 // after loadPost, so req.post is set and already visibility-checked)
 const router = require('express').Router({ mergeParams: true });
-const { Op } = require('sequelize');
 const models = require('../models');
 const { badRequest, forbidden, conflict, sendError, serverError } = require('../lib/http');
 const mod = require('../lib/moderation');
@@ -22,11 +21,8 @@ router.post('/', async (req, res) => {
   try {
     const existing = await models.Report.findOne({ where: { postId: post.id, reporterId: req.user.id, status: 'open' } });
     if (existing) return conflict(res, 'You already reported this post. A moderator will review it.');
-    const since = new Date(Date.now() - 3600 * 1000);
-    // One hourly budget for post and conversation reports together.
-    const recentWhere = { where: { reporterId: req.user.id, createdAt: { [Op.gte]: since } } };
-    const recent = (await models.Report.count(recentWhere)) + (await models.ConversationReport.count(recentWhere));
-    if (recent >= mod.reportsPerHour()) {
+    // One hourly budget for every kind of report.
+    if ((await mod.recentReportCount(req.user.id)) >= mod.reportsPerHour()) {
       res.set('Retry-After', '3600');
       return sendError(res, 429, 'rate_limited', 'You have sent a lot of reports. Please try again later.');
     }

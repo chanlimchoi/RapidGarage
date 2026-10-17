@@ -275,11 +275,8 @@ router.post('/:id/report', requireLogin, loadEvent, async (req, res) => {
   try {
     const dupe = 'You already reported this neighborhood sale. A moderator will review it.';
     if (await models.EventReport.count({ where: { eventId: e.id, reporterId: req.user.id, status: 'open' } })) return conflict(res, dupe);
-    const since = new Date(Date.now() - 3600 * 1000);
-    const w = { where: { reporterId: req.user.id, createdAt: { [Op.gte]: since } } };
     // One hourly budget for every kind of report.
-    const recent = (await models.Report.count(w)) + (await models.ConversationReport.count(w)) + (await models.EventReport.count(w));
-    if (recent >= mod.reportsPerHour()) {
+    if ((await mod.recentReportCount(req.user.id)) >= mod.reportsPerHour()) {
       res.set('Retry-After', '3600');
       return sendError(res, 429, 'rate_limited', 'You have sent a lot of reports. Please try again later.');
     }

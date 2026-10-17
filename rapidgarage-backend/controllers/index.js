@@ -14,6 +14,7 @@ router.use('/conversations', require('./conversations'));
 router.use('/holds', require('./holds'));
 router.use('/events', require('./events'));
 router.use('/alerts', require('./alerts'));
+router.use('/wanted', require('./wanted'));
 router.use('/saved', require('./saved'));
 router.use('/ratings', require('./ratings'));
 router.use('/dashboard', require('./dashboard'));
