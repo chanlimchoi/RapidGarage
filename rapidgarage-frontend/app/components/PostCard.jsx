@@ -4,6 +4,7 @@ import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag } from '
 import { formatMiles, placeLine, timeAgo } from '../lib/format';
 import { shortWhen, saleBadge } from '../lib/schedule';
 import { formatPrice } from '../lib/price';
+import SaveButton from '../saved/SaveButton';
 
 export const BADGE_CLASS = { open: 'chip-success', upcoming: 'chip-info', ended: 'chip-muted' };
 
@@ -25,6 +26,7 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
           ? <img className="post-thumb" src={photos[0].thumbUrl} alt="" loading="lazy" />
           : <div className="post-card-placeholder"><ImageOff size={28} aria-hidden="true" /><span className="sr-only">No photos</span></div>}
         {distance ? <span className="chip post-card-distance post-distance"><Navigation size={12} aria-hidden="true" />{distance}</span> : null}
+        <SaveButton post={post} variant="card" />
         {photos.length > 1 ? <span className="post-card-badge"><Images size={12} aria-hidden="true" />{photos.length} photos</span> : null}
       </div>
       <div className="post-card-body">

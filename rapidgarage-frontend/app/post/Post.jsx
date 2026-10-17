@@ -8,6 +8,7 @@ import { BADGE_CLASS } from '../components/PostCard';
 import { formatPrice } from '../lib/price';
 import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../components/ui';
 import toast from '../components/toast';
+import SaveButton from '../saved/SaveButton';
 
 // GET /post/:id with a photo gallery and a details sidebar.
 class Post extends Component {
@@ -238,6 +239,7 @@ class Post extends Component {
                     {this.state.starting ? <Spinner /> : <MessageCircle size={16} aria-hidden="true" />}Message seller
                   </button>
                 ) : null}
+                {!isOwner ? <SaveButton post={post} /> : null}
                 {canEditPost(this.props.user, post) ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/edit'}><Pencil size={16} aria-hidden="true" />Edit post &amp; photos</Link> : null}
               </div>
             </div>

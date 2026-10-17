@@ -110,3 +110,15 @@ alerts. Its owner and admins still see it in the seller's list, and the direct l
 working (with a "This sale has ended" note), so shared links and conversations don't break.
 Sales without dates never end on their own.
 
+## Saved sales & weekend route
+
+Logged-in buyers tap the **star** on a sale card (or **Save** on the sale page) to keep it in
+**Saved** (nav bar). The Saved page lists them (sales that ended move to an **Ended**
+section; sales a moderator hid since disappear, with a count), and plans a **route** through
+the saved sales that are still coming up: **This weekend · Today · All upcoming**. The order
+is a simple nearest-neighbor walk, starting from your location if you tap **Start from my
+location** (asked only then, never stored) or else from the sale that opens first. The route
+shows as numbered stops with straight-line distances, a sketch, the Google Map (when a Maps
+key is available) and an **Open in Google Maps** link with the stops as waypoints (up to 10
+stops, Google's limit). Your saved list is private to you.
+

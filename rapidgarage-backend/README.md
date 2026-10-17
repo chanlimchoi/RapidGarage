@@ -392,6 +392,27 @@ local today; `weekend` = a remaining window on the coming Saturday/Sunday (on Sa
 today + tomorrow; on Sunday: today). Sales without dates don't match these filters. The search
 response echoes it as `filter.when`.
 
+## Saved sales & route
+
+All under `/saved`, login required, `Cache-Control: no-store`; nobody sees anyone else's list.
+
+| | |
+|---|---|
+| `PUT /saved/:postId` | Save (201; 200 if already saved). 404 for missing or hidden sales, 400 `own_post` for your own, 400 `too_many` past 200. |
+| `DELETE /saved/:postId` | Unsave (idempotent; also works for sales hidden since). |
+| `GET /saved` | `{ results: [post + status], unavailable, limit }`: newest save first; `status` is `open\|upcoming\|ended\|null`. Sales you can no longer see (hidden) are left out and counted in `unavailable`. |
+| `GET /saved/ids` | `{ ids }` for star buttons. |
+| `GET /saved/route?when=weekend\|today\|all&lat=&lng=` | Route through saved sales that haven't ended and match `when` (default `all`; same rules as the search filter). |
+
+The route answer is `{ when, start, stops: [{ order, legMiles, status, post }], totalMiles,
+googleMapsUrl, skipped: { ended, notInWindow, noLocation, overLimit, unavailable }, maxStops }`.
+Ordering is greedy nearest-neighbor (haversine) from `lat,lng`, or, without a location,
+from the sale that is open or opens first (ties: the one closing first). At most 10 stops
+(Google Maps URLs take 9 waypoints + a destination). `googleMapsUrl` is a
+[Maps URLs](https://developers.google.com/maps/documentation/urls/get-started#directions-action)
+directions link using the sales' public addresses; without `lat,lng` it has no origin so
+Google Maps starts from the phone's location. The location is only used for that request.
+
 ## Optional
 
 - If you want to add views and handlebars to your server side

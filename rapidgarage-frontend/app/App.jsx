@@ -18,6 +18,8 @@ import Settings from './user/Settings';
 import Admin from './admin/Admin';
 import Messages from './messages/Messages';
 import Unsubscribe from './user/Unsubscribe';
+import Saved from './saved/Saved';
+import * as savedStore from './lib/saved';
 
 const UNREAD_POLL_MS = 15000;
 
@@ -80,7 +82,10 @@ class App extends Component {
   }
 
   refreshUser() {
-    return fetchMe().then((user) => this.setState({ user, ready: true }, this.refreshUnread));
+    return fetchMe().then((user) => {
+      savedStore.setUser(user);
+      this.setState({ user, ready: true }, this.refreshUnread);
+    });
   }
 
   render() {
@@ -103,6 +108,7 @@ class App extends Component {
             <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
             <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
             <Route path='/alerts/unsubscribe' component={Unsubscribe} />
+            <Route path='/saved' render={(props) => <Saved {...props} {...common} config={config} />} />
             <Route path='/profile' render={(props) => <Profile {...props} {...common} />} />
             <Route component={NotFound} />
           </Switch>

@@ -82,7 +82,7 @@ class Map extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.posts !== this.props.posts || prevProps.center !== this.props.center || prevProps.radius !== this.props.radius) this.renderMarkers();
+    if (prevProps.posts !== this.props.posts || prevProps.center !== this.props.center || prevProps.radius !== this.props.radius || prevProps.start !== this.props.start) this.renderMarkers();
     else if (prevProps.selectedId !== this.props.selectedId) this.showSelected();
     // Logging in/out or saving a key in Settings can change which key applies.
     const sig = (u) => (u ? u.id + ':' + (u.mapsKeyLast4 || '') : '');
@@ -101,6 +101,7 @@ class Map extends React.Component {
     this.markers = [];
     this.markerById = {};
     if (this.circle) { this.circle.setMap(null); this.circle = null; }
+    if (this.line) { this.line.setMap(null); this.line = null; }
   }
 
   openInfo(post, marker) {
@@ -137,9 +138,11 @@ class Map extends React.Component {
     if (post) this.openInfo(post, marker);
   }
 
-  addMarker(post, loc, bounds) {
+  addMarker(post, loc, bounds, label) {
     const maps = this.maps;
-    const marker = new maps.Marker({ position: loc, title: post.title || '' });
+    const opts = { position: loc, title: post.title || '' };
+    if (label) Object.assign(opts, { label: { text: label, color: '#fff', fontWeight: '700' }, map: this.map });
+    const marker = new maps.Marker(opts);
     // Map -> list: tell the parent which post was clicked.
     marker.addListener('click', () => {
       this.openInfo(post, marker);
@@ -147,7 +150,7 @@ class Map extends React.Component {
     });
     this.markers.push(marker);
     this.markerById[post.id] = marker;
-    this.clusterer.addMarker(marker);
+    if (!label) this.clusterer.addMarker(marker);
     bounds.extend(loc);
   }
 
@@ -173,6 +176,27 @@ class Map extends React.Component {
       });
     }
     const all = this.props.posts || [];
+    // Route mode: numbered pins in visiting order, joined by a line (no clustering, no geocoding).
+    if (this.props.route) {
+      const path = [];
+      const { start } = this.props;
+      if (start) {
+        path.push(start);
+        bounds.extend(start);
+        const you = new maps.Marker({ position: start, map: this.map, title: 'Start', label: { text: '•', color: '#fff' } });
+        this.markers.push(you);
+      }
+      all.filter(hasCoords).forEach((p, i) => {
+        const loc = { lat: p.lat, lng: p.lng };
+        path.push(loc);
+        this.addMarker(p, loc, bounds, String(i + 1));
+      });
+      if (path.length > 1) {
+        this.line = new maps.Polyline({ map: this.map, path, strokeColor: accentColor(), strokeOpacity: 0.85, strokeWeight: 4, clickable: false });
+        this.map.fitBounds(bounds);
+      } else this.fit(bounds);
+      return;
+    }
     // Posts with stored coordinates need no geocoding.
     all.filter(hasCoords).forEach((p) => this.addMarker(p, { lat: p.lat, lng: p.lng }, bounds));
     this.fit(bounds);
@@ -190,6 +214,8 @@ class Map extends React.Component {
   }
 
   render() {
+    // quiet: the parent shows its own fallback (e.g. the route sketch), so render nothing on errors.
+    if (this.props.quiet && this.state.error) return null;
     const byok = !this.props.config || this.props.config.userMapsKeys !== false;
     if (this.state.error === 'no_key' && !byok) {
       // Users can't add keys on this server, so don't tell them to.
@@ -216,7 +242,7 @@ class Map extends React.Component {
     if (this.state.error) {
       return <Fallback title="Map unavailable">{MESSAGES[this.state.error]}</Fallback>;
     }
-    return <div className="map-box rg-map" ref={(el) => { this.container = el; }} role="region" aria-label="Map of garage sales" />;
+    return <div className="map-box rg-map" ref={(el) => { this.container = el; }} role="region" aria-label={this.props.label || 'Map of garage sales'} />;
   }
 }
 
