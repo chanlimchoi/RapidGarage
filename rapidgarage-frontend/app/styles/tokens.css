@@ -1,0 +1,123 @@
+/* RapidGarage design tokens. Every color, space, radius, shadow and type
+   value in the app comes from here. Dark mode swaps the color tokens only. */
+:root {
+  color-scheme: light dark;
+
+  /* Type */
+  --font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
+  --leading-tight: 1.25;
+  --leading-normal: 1.55;
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Spacing (4px scale) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* Layout */
+  --nav-height: 64px;
+  --container: 1280px;
+  --container-narrow: 720px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+
+  /* Colors: light (all text pairs meet WCAG AA, 4.5:1) */
+  --color-bg: #fafaf9;
+  --color-surface: #ffffff;
+  --color-surface-2: #f4f4f3;
+  --color-surface-3: #e9e9e7;
+  --color-border: #e2e2df;
+  --color-border-strong: #c9c9c4;
+  --color-text: #1c1b19;
+  --color-text-muted: #57534e;
+  --color-text-subtle: #6b6660;
+  --color-brand: #c2410c;          /* text/links on surface: 5.2:1 */
+  --color-brand-hover: #9a3412;
+  --color-brand-bg: #c2410c;       /* button fill */
+  --color-on-brand: #ffffff;
+  --color-brand-soft: #fff1e7;
+  --color-brand-soft-text: #9a3412;
+  --color-success: #15803d;
+  --color-success-soft: #e8f7ee;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fdecec;
+  --color-warning: #92400e;
+  --color-warning-soft: #fdf5e1;
+  --color-info: #1d4ed8;
+  --color-info-soft: #eaf0fe;
+  --color-focus: #2563eb;
+  --color-overlay: rgba(20, 18, 16, 0.45);
+  --color-skeleton: #ecebe8;
+  --color-skeleton-shine: #f6f5f3;
+  --color-map-accent: #c2410c;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(28, 27, 25, 0.06), 0 1px 1px rgba(28, 27, 25, 0.04);
+  --shadow-md: 0 4px 14px rgba(28, 27, 25, 0.08), 0 1px 3px rgba(28, 27, 25, 0.06);
+  --shadow-lg: 0 14px 40px rgba(28, 27, 25, 0.14), 0 2px 6px rgba(28, 27, 25, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #121110;
+    --color-surface: #1b1a18;
+    --color-surface-2: #242320;
+    --color-surface-3: #2f2d2a;
+    --color-border: #34322e;
+    --color-border-strong: #4a4742;
+    --color-text: #f5f4f2;
+    --color-text-muted: #b8b3ac;
+    --color-text-subtle: #a19b93;
+    --color-brand: #fb923c;
+    --color-brand-hover: #fdba74;
+    --color-brand-bg: #fb923c;
+    --color-on-brand: #1c1208;
+    --color-brand-soft: #3a2414;
+    --color-brand-soft-text: #fdba74;
+    --color-success: #4ade80;
+    --color-success-soft: #13291b;
+    --color-danger: #f87171;
+    --color-danger-soft: #331617;
+    --color-warning: #fbbf24;
+    --color-warning-soft: #2e2410;
+    --color-info: #93c5fd;
+    --color-info-soft: #172338;
+    --color-focus: #93c5fd;
+    --color-overlay: rgba(0, 0, 0, 0.6);
+    --color-skeleton: #262421;
+    --color-skeleton-shine: #302e2a;
+    --color-map-accent: #fb923c;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 14px 40px rgba(0, 0, 0, 0.55);
+  }
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
+import { MapPinOff as MapOff, KeyRound, RefreshCw } from 'lucide-react';
 import { resolveMapsKey, loadGoogleMaps, onAuthFailure, geocode, addressOf } from './googleMaps';
 
 const MILE_M = 1609.344;
@@ -8,11 +9,26 @@ const hasCoords = (p) => typeof p.lat === 'number' && typeof p.lng === 'number';
 
 const NYC = { lat: 40.73061, lng: -73.935242 };
 const MAX_GEOCODE = 25; // cap geocoding calls per render of the list
-const boxStyle = { height: '400px', width: '100%' };
-const fallbackStyle = Object.assign({}, boxStyle, {
-  display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
-  background: '#f5f5f5', color: '#555', padding: '1em', boxSizing: 'border-box',
-});
+// Circle/pin accent follows the theme (light/dark) via the design tokens.
+function accentColor() {
+  try {
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--color-map-accent').trim();
+    return v || '#c2410c';
+  } catch (e) { return '#c2410c'; }
+}
+
+function Fallback({ title, children, icon }) {
+  const Icon = icon || MapOff;
+  return (
+    <div className="map-box rg-map-fallback" role="status">
+      <div className="fallback-inner">
+        <span className="fallback-icon"><Icon size={26} aria-hidden="true" /></span>
+        {title ? <strong>{title}</strong> : null}
+        <div>{children}</div>
+      </div>
+    </div>
+  );
+}
 
 const MESSAGES = {
   key_changed: 'Your Maps key changed. Reload the page to use the new key.',
@@ -145,7 +161,7 @@ class Map extends React.Component {
     if (center && radius) {
       this.circle = new maps.Circle({
         map: this.map, center, radius: radius * MILE_M,
-        strokeColor: '#31b0d5', strokeWeight: 1, fillColor: '#31b0d5', fillOpacity: 0.06, clickable: false,
+        strokeColor: accentColor(), strokeWeight: 1.5, fillColor: accentColor(), fillOpacity: 0.08, clickable: false,
       });
     }
     const all = this.props.posts || [];
@@ -169,31 +185,30 @@ class Map extends React.Component {
     const byok = !this.props.config || this.props.config.userMapsKeys !== false;
     if (this.state.error === 'no_key' && !byok) {
       // Users can't add keys on this server, so don't tell them to.
-      return <div className="rg-map-fallback" role="status" style={fallbackStyle}>The map is unavailable right now.</div>;
+      return <Fallback title="Map unavailable">The map is unavailable right now.</Fallback>;
     }
     if (this.state.error === 'no_key') {
       return (
-        <div className="rg-map-fallback" role="status" style={fallbackStyle}>
-          <div>
-            Map unavailable: no Google Maps API key.{' '}
-            {this.props.user
-              ? <span><Link to="/settings">Add your own key in Settings</Link> to see the map.</span>
-              : <span><Link to="/login">Log in</Link> and add your own key in Settings to see the map.</span>}
-          </div>
-        </div>
+        <Fallback title="Map unavailable" icon={KeyRound}>
+          Map unavailable: no Google Maps API key.{' '}
+          {this.props.user
+            ? <span><Link to="/settings">Add your own key in Settings</Link> to see the map.</span>
+            : <span><Link to="/login">Log in</Link> and add your own key in Settings to see the map.</span>}
+        </Fallback>
       );
     }
     if (this.state.error === 'key_changed') {
       return (
-        <div className="rg-map-fallback" role="status" style={fallbackStyle}>
-          <div>{MESSAGES.key_changed} <button type="button" className="btn btn-default btn-xs" onClick={() => window.location.reload()}>Reload</button></div>
-        </div>
+        <Fallback title="Reload needed" icon={RefreshCw}>
+          <p>{MESSAGES.key_changed}</p>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => window.location.reload()}><RefreshCw size={14} aria-hidden="true" />Reload</button>
+        </Fallback>
       );
     }
     if (this.state.error) {
-      return <div className="rg-map-fallback" role="status" style={fallbackStyle}>{MESSAGES[this.state.error]}</div>;
+      return <Fallback title="Map unavailable">{MESSAGES[this.state.error]}</Fallback>;
     }
-    return <div className="rg-map" style={boxStyle} ref={(el) => { this.container = el; }} aria-label="Map of garage sales" />;
+    return <div className="map-box rg-map" ref={(el) => { this.container = el; }} role="region" aria-label="Map of garage sales" />;
   }
 }
 
