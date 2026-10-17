@@ -4,6 +4,9 @@ import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { MapPinOff as MapOff, KeyRound, RefreshCw } from 'lucide-react';
 import { resolveMapsKey, loadGoogleMaps, onAuthFailure, geocode, addressOf } from './googleMaps';
 import { saleBadge } from '../lib/schedule';
+import { formatMiles } from '../lib/format';
+import { t } from '../i18n';
+import { tx } from '../i18n/rich';
 
 const MILE_M = 1609.344;
 const hasCoords = (p) => typeof p.lat === 'number' && typeof p.lng === 'number';
@@ -32,9 +35,9 @@ function Fallback({ title, children, icon }) {
 }
 
 const MESSAGES = {
-  key_changed: 'Your Maps key changed. Reload the page to use the new key.',
-  auth: 'Map unavailable: the Google Maps API key was rejected. Check that the key is valid, the Maps JavaScript API is enabled, and this site is allowed.',
-  load_failed: 'Map unavailable: could not load Google Maps. Check your connection and try again.',
+  key_changed: 'map.keyChanged',
+  auth: 'map.authFailed',
+  load_failed: 'map.loadFailed',
 };
 
 // Shows the given posts as markers on a Google Map. Falls back to a plain
@@ -107,7 +110,7 @@ class Map extends React.Component {
   openInfo(post, marker) {
     const el = document.createElement('div');
     const strong = document.createElement('strong');
-    strong.textContent = post.title || 'Garage sale'; // textContent: no HTML injection
+    strong.textContent = post.title || t('common.garageSale'); // textContent: no HTML injection
     const addr = document.createElement('div');
     addr.textContent = addressOf(post);
     el.appendChild(strong);
@@ -121,7 +124,7 @@ class Map extends React.Component {
     }
     if (typeof post.distanceMiles === 'number') {
       const d = document.createElement('div');
-      d.textContent = post.distanceMiles + ' mi away';
+      d.textContent = t('map.away', { distance: formatMiles(post.distanceMiles) });
       el.appendChild(d);
     }
     this.info.setContent(el);
@@ -183,7 +186,7 @@ class Map extends React.Component {
       if (start) {
         path.push(start);
         bounds.extend(start);
-        const you = new maps.Marker({ position: start, map: this.map, title: 'Start', label: { text: '•', color: '#fff' } });
+        const you = new maps.Marker({ position: start, map: this.map, title: t('map.start'), label: { text: '•', color: '#fff' } });
         this.markers.push(you);
       }
       all.filter(hasCoords).forEach((p, i) => {
@@ -219,30 +222,30 @@ class Map extends React.Component {
     const byok = !this.props.config || this.props.config.userMapsKeys !== false;
     if (this.state.error === 'no_key' && !byok) {
       // Users can't add keys on this server, so don't tell them to.
-      return <Fallback title="Map unavailable">The map is unavailable right now.</Fallback>;
+      return <Fallback title={t('map.unavailable')}>{t('map.unavailableNow')}</Fallback>;
     }
     if (this.state.error === 'no_key') {
       return (
-        <Fallback title="Map unavailable" icon={KeyRound}>
-          Map unavailable: no Google Maps API key.{' '}
+        <Fallback title={t('map.unavailable')} icon={KeyRound}>
+          {t('map.noKey')}{' '}
           {this.props.user
-            ? <span><Link to="/settings">Add your own key in Settings</Link> to see the map.</span>
-            : <span><Link to="/login">Log in</Link> and add your own key in Settings to see the map.</span>}
+            ? <span>{tx('map.noKeyUser', { link: <Link to="/settings">{t('map.addKeyLink')}</Link> })}</span>
+            : <span>{tx('map.noKeyGuest', { link: <Link to="/login">{t('map.logInLink')}</Link> })}</span>}
         </Fallback>
       );
     }
     if (this.state.error === 'key_changed') {
       return (
-        <Fallback title="Reload needed" icon={RefreshCw}>
-          <p>{MESSAGES.key_changed}</p>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => window.location.reload()}><RefreshCw size={14} aria-hidden="true" />Reload</button>
+        <Fallback title={t('map.reloadNeeded')} icon={RefreshCw}>
+          <p>{t(MESSAGES.key_changed)}</p>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => window.location.reload()}><RefreshCw size={14} aria-hidden="true" />{t('map.reload')}</button>
         </Fallback>
       );
     }
     if (this.state.error) {
-      return <Fallback title="Map unavailable">{MESSAGES[this.state.error]}</Fallback>;
+      return <Fallback title={t('map.unavailable')}>{t(MESSAGES[this.state.error] || 'map.loadFailed')}</Fallback>;
     }
-    return <div className="map-box rg-map" ref={(el) => { this.container = el; }} role="region" aria-label={this.props.label || 'Map of garage sales'} />;
+    return <div className="map-box rg-map" ref={(el) => { this.container = el; }} role="region" aria-label={this.props.label || t('map.label')} />;
   }
 }
 

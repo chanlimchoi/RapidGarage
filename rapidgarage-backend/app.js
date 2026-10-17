@@ -8,6 +8,7 @@ const { createSessionStore, sessionMaxAgeMs } = require('./lib/sessionStore');
 const runtime = require('./lib/runtime');
 const security = require('./lib/security');
 const { createHealthRouter } = require('./lib/health');
+const { sendError } = require('./lib/http');
 
 const PORT = process.env.PORT || 8000;
 
@@ -92,7 +93,7 @@ function createApp(env) {
   if (frontendDir) {
     app.use('/api', api);
     app.use('/s', require('./controllers/shortlinks')); // printed QR codes
-    app.use('/api', (req, res) => res.status(404).json({ error: { code: 'not_found', message: 'Not found.' } }));
+    app.use('/api', (req, res) => sendError(res, 404, 'not_found', 'Not found.'));
     require('./lib/frontend').mountFrontend(app, frontendDir, e);
   } else {
     app.use(api);
@@ -101,10 +102,10 @@ function createApp(env) {
   // Consistent JSON error handler for anything passed to next(err).
   app.use((err, req, res, next) => {
     if (err && err.type === 'entity.parse.failed') {
-      return res.status(400).json({ error: { code: 'bad_request', message: 'Malformed JSON body.' } });
+      return sendError(res, 400, 'bad_request', 'Malformed JSON body.');
     }
     console.error(err);
-    res.status(500).json({ error: { code: 'server_error', message: 'Something went wrong.' } });
+    sendError(res, 500, 'server_error', 'Something went wrong.');
   });
   return app;
 }

@@ -6,6 +6,8 @@ import { Alert, EmptyState, SkeletonBlock, Spinner, Dialog, Field } from '../com
 import { timeAgo } from '../lib/format';
 import toast from '../components/toast';
 import { Stars } from './Stars';
+import { t } from '../i18n';
+import { tx } from '../i18n/rich';
 
 // Public page: /people/:id. Name is "First L."; no email anywhere.
 export default class PersonRatings extends React.Component {
@@ -20,39 +22,39 @@ export default class PersonRatings extends React.Component {
   load(page) {
     this.setState({ loading: true, error: '', page });
     return fetchPersonRatings(this.props.match.params.id, page).then(({ ok, status, data }) => {
-      if (!ok) return this.setState({ loading: false, error: status === 404 ? 'not_found' : errorMessage(data, 'Could not load ratings.') });
-      document.title = data.user.name + ' · Ratings · RapidGarage';
+      if (!ok) return this.setState({ loading: false, error: status === 404 ? 'not_found' : errorMessage(data, t('pr.loadFailed')) });
+      document.title = t('pr.docTitle', { name: data.user.name });
       return this.setState({ loading: false, data });
-    }).catch(() => this.setState({ loading: false, error: 'Unable to reach the server.' }));
+    }).catch(() => this.setState({ loading: false, error: t('common.networkShort') }));
   }
 
   sendReport(e) {
     e.preventDefault();
     const { reporting, reason, note } = this.state;
-    if (!reason) { this.setState({ reportError: 'Choose a reason.' }); return; }
+    if (!reason) { this.setState({ reportError: t('report.chooseReason') }); return; }
     this.setState({ sending: true, reportError: '' });
     reportRating(reporting.id, reason, note.trim()).then(({ ok, status, data }) => {
-      if (!ok && status !== 409) { this.setState({ sending: false, reportError: errorMessage(data, 'Could not send the report.') }); return; }
+      if (!ok && status !== 409) { this.setState({ sending: false, reportError: errorMessage(data, t('report.sendFailed')) }); return; }
       const ratings = this.state.data.ratings.map((r) => (r.id === reporting.id ? Object.assign({}, r, { reportedByMe: true }) : r));
       this.setState({ sending: false, reporting: null, data: Object.assign({}, this.state.data, { ratings }) });
-      toast.success('Thanks. A moderator will review this rating.');
-    }).catch(() => this.setState({ sending: false, reportError: 'Unable to reach the server.' }));
+      toast.success(t('pr.thanks'));
+    }).catch(() => this.setState({ sending: false, reportError: t('common.networkShort') }));
   }
 
   renderReport() {
     const { reason, note, sending, reportError } = this.state;
     return (
-      <Dialog id="ratingreport" title="Report this rating" onClose={() => this.setState({ reporting: null })}
-        description="Moderators can remove abusive comments or ratings. The person who wrote it won't see who reported it."
+      <Dialog id="ratingreport" title={t('pr.reportTitle')} onClose={() => this.setState({ reporting: null })}
+        description={t('pr.reportDesc')}
         footer={(
           <React.Fragment>
-            <button type="button" className="btn btn-secondary" onClick={() => this.setState({ reporting: null })}>Cancel</button>
-            <button type="submit" form="ratingreport-form" className="btn btn-danger" disabled={sending}>{sending ? <Spinner /> : null}Send report</button>
+            <button type="button" className="btn btn-secondary" onClick={() => this.setState({ reporting: null })}>{t('common.cancel')}</button>
+            <button type="submit" form="ratingreport-form" className="btn btn-danger" disabled={sending}>{sending ? <Spinner /> : null}{t('report.send')}</button>
           </React.Fragment>
         )}>
         <form id="ratingreport-form" className="stack" onSubmit={(e) => this.sendReport(e)} noValidate>
           <fieldset className="report-reasons">
-            <legend className="field-label">What's wrong?</legend>
+            <legend className="field-label">{t('msg.whatsWrong')}</legend>
             {RATING_REPORT_REASONS.map((r) => (
               <label key={r.value} className="radio-row">
                 <input type="radio" name="ratingreport-reason" value={r.value} checked={reason === r.value} onChange={() => this.setState({ reason: r.value, reportError: '' })} />
@@ -60,7 +62,7 @@ export default class PersonRatings extends React.Component {
               </label>
             ))}
           </fieldset>
-          <Field id="ratingreport-note" label="Anything else?" optional>
+          <Field id="ratingreport-note" label={t('pr.anythingElse')} optional>
             <textarea id="ratingreport-note" className="textarea textarea-short" rows={2} maxLength={REPORT_NOTE_MAX} value={note} onChange={(e) => this.setState({ note: e.target.value })} />
           </Field>
           {reportError ? <p className="field-error" role="alert">{reportError}</p> : null}
@@ -73,7 +75,7 @@ export default class PersonRatings extends React.Component {
     const { loading, error, data, page } = this.state;
     const user = this.props.user;
     if (loading && !data) return <div className="container container-narrow"><SkeletonBlock lines={5} /></div>;
-    if (error === 'not_found') return <div className="container container-narrow"><EmptyState icon={UserX} title="Person not found">They may have deleted their account.</EmptyState></div>;
+    if (error === 'not_found') return <div className="container container-narrow"><EmptyState icon={UserX} title={t('pr.notFound')}>{t('pr.deletedAccount')}</EmptyState></div>;
     if (error) return <div className="container container-narrow"><Alert tone="danger">{error}</Alert></div>;
     const { summary, distribution, ratings } = data;
     const max = Math.max(1, ...Object.values(distribution));
@@ -81,43 +83,43 @@ export default class PersonRatings extends React.Component {
       <div className="container container-narrow person-ratings">
         <header className="person-header">
           <h1>{data.user.name}</h1>
-          <p className="muted">Ratings from people they've chatted with on RapidGarage.</p>
+          <p className="muted">{t('pr.lead')}</p>
         </header>
-        <section className="panel rating-summary" aria-label="Rating summary">
+        <section className="panel rating-summary" aria-label={t('pr.summary')}>
           <div className="rating-summary-score">
             <span className="rating-summary-big">{summary.count ? summary.average.toFixed(1) : '–'}</span>
             <Stars value={summary.average || 0} size={18} />
-            <span className="small muted">{summary.count ? summary.count + (summary.count === 1 ? ' rating' : ' ratings') : 'No ratings yet'}</span>
+            <span className="small muted">{summary.count ? t('pr.count', { count: summary.count }) : t('stars.none')}</span>
           </div>
-          <ol className="rating-bars" aria-label="Ratings by stars">
+          <ol className="rating-bars" aria-label={t('pr.byStars')}>
             {[5, 4, 3, 2, 1].map((n) => (
               <li key={n}>
                 <span className="rating-bars-label">{n}<Star size={11} aria-hidden="true" /></span>
                 <span className="rating-bars-track"><span className="rating-bars-fill" style={{ width: (distribution[n] / max * 100) + '%' }} /></span>
-                <span className="rating-bars-count">{distribution[n]}<span className="sr-only"> with {n} stars</span></span>
+                <span className="rating-bars-count">{distribution[n]}<span className="sr-only">{t('pr.withN', { n })}</span></span>
               </li>
             ))}
           </ol>
         </section>
         {!ratings.length ? (
-          <EmptyState icon={Star} title="No ratings yet">After a chat, buyers and sellers can rate each other.</EmptyState>
+          <EmptyState icon={Star} title={t('stars.none')}>{t('pr.emptyText')}</EmptyState>
         ) : (
           <ul className="rating-list">
             {ratings.map((r) => (
               <li key={r.id} className="rating-item panel">
                 <div className="rating-item-head">
                   <Stars value={r.stars} /><span className="sr-only">{r.stars} out of 5</span>
-                  <strong>{r.rater ? r.rater.name : 'Former user'}</strong>
-                  <span className="chip">{r.raterRole === 'buyer' ? 'Buyer' : 'Seller'}</span>
-                  <span className="small muted">{timeAgo(r.updatedAt)}{r.edited ? ' · edited' : ''}</span>
+                  <strong>{r.rater ? r.rater.name : t('msg.formerUser')}</strong>
+                  <span className="chip">{r.raterRole === 'buyer' ? t('msg.buyer') : t('post.seller')}</span>
+                  <span className="small muted">{timeAgo(r.updatedAt)}{r.edited ? t('pr.edited') : ''}</span>
                 </div>
                 {r.comment ? <p className="rating-comment">{r.comment}</p> : null}
-                {r.commentRemoved ? <p className="small muted rating-comment-removed">Comment removed by a moderator.</p> : null}
+                {r.commentRemoved ? <p className="small muted rating-comment-removed">{t('pr.removed')}</p> : null}
                 {user && !r.mine && user.id !== undefined ? (
                   <div className="rating-item-actions">
                     {r.reportedByMe
-                      ? <span className="small muted"><Flag size={12} aria-hidden="true" /> Reported</span>
-                      : <button type="button" className="btn btn-ghost btn-sm report-btn" onClick={() => this.setState({ reporting: r, reason: '', note: '', reportError: '' })}><Flag size={12} aria-hidden="true" />Report</button>}
+                      ? <span className="small muted"><Flag size={12} aria-hidden="true" /> {t('msg.reported')}</span>
+                      : <button type="button" className="btn btn-ghost btn-sm report-btn" onClick={() => this.setState({ reporting: r, reason: '', note: '', reportError: '' })}><Flag size={12} aria-hidden="true" />{t('pr.report')}</button>}
                   </div>
                 ) : null}
               </li>
@@ -126,12 +128,12 @@ export default class PersonRatings extends React.Component {
         )}
         {data.totalPages > 1 ? (
           <div className="pager">
-            <button type="button" className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => this.load(page - 1)}>Newer</button>
-            <span className="small muted">Page {page} of {data.totalPages}</span>
-            <button type="button" className="btn btn-secondary btn-sm" disabled={page >= data.totalPages} onClick={() => this.load(page + 1)}>Older</button>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => this.load(page - 1)}>{t('rep.newer')}</button>
+            <span className="small muted">{t('common.pageOf', { page, total: data.totalPages })}</span>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={page >= data.totalPages} onClick={() => this.load(page + 1)}>{t('rep.older')}</button>
           </div>
         ) : null}
-        {!user ? <p className="small muted"><Link to="/login">Log in</Link> to report a rating.</p> : null}
+        {!user ? <p className="small muted">{tx('pr.loginToReport', { link: <Link to="/login">{t('map.logInLink')}</Link> })}</p> : null}
         {this.state.reporting ? this.renderReport() : null}
       </div>
     );

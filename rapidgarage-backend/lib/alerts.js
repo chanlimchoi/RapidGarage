@@ -3,7 +3,9 @@
 const crypto = require('crypto');
 const { Op } = require('sequelize');
 const geo = require('./geo');
-const { matchesPrice, formatPrice } = require('./price');
+const { matchesPrice } = require('./price');
+const i18n = require('./i18n');
+const { priceIn } = require('./flyerText');
 const { publicName } = require('./people');
 const { saleAlertsEnabled } = require('./features');
 const mailer = require('./mailer');
@@ -125,54 +127,59 @@ const idle = () => Promise.all(Array.from(inflight));
 const esc = (s) => String(s === null || s === undefined ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-function alertName(alert) {
+function alertName(alert, lang) {
   if (alert.label) return alert.label;
-  return 'within ' + alert.radiusMiles + ' mi';
+  return i18n.t(lang || 'en', 'mail.within', { distance: i18n.formatNumber(lang || 'en', alert.radiusMiles) });
 }
 
 // items: [{ post, seller, alert, distanceMiles }]. Returns { subject, text, html, headers }.
+// Written in the recipient's saved language (User.locale), English if none.
 function renderEmail(user, items) {
+  const lang = i18n.normalize(user.locale) || 'en';
+  const L = (key, vars) => i18n.t(lang, key, vars);
+  const name = (a) => alertName(a, lang);
   const base = baseUrl();
   const manage = base + '/settings#alerts';
   const alerts = Array.from(new Map(items.map((i) => [i.alert.id, i.alert])).values());
   const first = items[0];
   const subject = items.length === 1
-    ? 'New garage sale near you: ' + first.post.title
-    : items.length + ' new garage sales near you';
+    ? L('mail.subjectOne', { title: first.post.title })
+    : L('mail.subjectMany', { count: items.length });
   const lines = items.map((i) => {
-    const price = formatPrice(i.post);
+    const price = priceIn(lang, i.post);
     const where = [i.post.city, i.post.state].filter(Boolean).join(', ');
     return {
       title: i.post.title,
       url: base + '/post/' + i.post.id,
-      meta: [price, i.distanceMiles !== null && i.distanceMiles !== undefined ? i.distanceMiles + ' mi away' : null, where, 'by ' + publicName(i.seller)].filter(Boolean).join(' · '),
-      alert: alertName(i.alert),
+      meta: [price, i.distanceMiles !== null && i.distanceMiles !== undefined ? L('mail.away', { distance: i18n.formatNumber(lang, i.distanceMiles) }) : null, where, L('mail.by', { name: publicName(i.seller) })].filter(Boolean).join(' · '),
+      alert: name(i.alert),
     };
   });
-  const hello = user.firstName ? 'Hi ' + user.firstName + ',' : 'Hi,';
+  const hello = user.firstName ? L('mail.hi', { name: user.firstName }) : L('mail.hiAnon');
   const text = [
     hello, '',
-    (items.length === 1 ? 'A new sale matches' : items.length + ' new sales match') + ' your RapidGarage alerts:', '',
+    items.length === 1 ? L('mail.introOne') : L('mail.introMany', { count: items.length }), '',
     ...lines.map((l) => '* ' + l.title + '\n  ' + l.meta + '\n  ' + l.url + '\n'),
-    'Manage your alerts: ' + manage,
-    ...alerts.map((a) => 'Turn off the alert "' + alertName(a) + '": ' + unsubscribeUrl(a)),
+    L('mail.manageText', { url: manage }),
+    ...alerts.map((a) => L('mail.turnOffText', { name: name(a), url: unsubscribeUrl(a) })),
   ].join('\n');
-  const html = `<!doctype html><html><body style="margin:0;padding:24px;background:#f6f5f2;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1c1b19">
+  const html = `<!doctype html><html lang="${esc(lang)}"><body style="margin:0;padding:24px;background:#f6f5f2;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,'Apple SD Gothic Neo','Malgun Gothic','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif;color:#1c1b19">
 <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e7e4dd;border-radius:16px;padding:24px">
 <p style="margin:0 0 4px;font-weight:700;color:#c2410c;font-size:14px">RapidGarage</p>
-<h1 style="margin:0 0 16px;font-size:20px">${esc(items.length === 1 ? 'A new sale near you' : items.length + ' new sales near you')}</h1>
+<h1 style="margin:0 0 16px;font-size:20px">${esc(items.length === 1 ? L('mail.headOne') : L('mail.headMany', { count: items.length }))}</h1>
 <p style="margin:0 0 16px">${esc(hello)}</p>
 ${lines.map((l) => `<div style="border:1px solid #e7e4dd;border-radius:12px;padding:12px 14px;margin:0 0 10px">
 <a href="${esc(l.url)}" style="color:#c2410c;font-weight:600;font-size:16px;text-decoration:none">${esc(l.title)}</a>
 <div style="color:#5f5b53;font-size:13px;margin-top:4px">${esc(l.meta)}</div>
-<div style="color:#8a857b;font-size:12px;margin-top:2px">Alert: ${esc(l.alert)}</div></div>`).join('\n')}
-<p style="margin:16px 0 0;font-size:13px"><a href="${esc(manage)}" style="color:#c2410c">Manage your alerts</a></p>
-<p style="margin:8px 0 0;font-size:12px;color:#8a857b">${alerts.map((a) => `<a href="${esc(unsubscribeUrl(a))}" style="color:#8a857b">Turn off “${esc(alertName(a))}”</a>`).join(' · ')}</p>
+<div style="color:#8a857b;font-size:12px;margin-top:2px">${esc(L('mail.alert', { name: l.alert }))}</div></div>`).join('\n')}
+<p style="margin:16px 0 0;font-size:13px"><a href="${esc(manage)}" style="color:#c2410c">${esc(L('mail.manage'))}</a></p>
+<p style="margin:8px 0 0;font-size:12px;color:#8a857b">${alerts.map((a) => `<a href="${esc(unsubscribeUrl(a))}" style="color:#8a857b">${esc(L('mail.turnOff', { name: name(a) }))}</a>`).join(' · ')}</p>
 </div></body></html>`;
   // RFC 8058 one-click unsubscribe (mail clients POST to this URL).
   const headers = {
     'List-Unsubscribe': '<' + oneClickUrl(alerts[0]) + '>',
     'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    'Content-Language': lang,
   };
   return { subject, text, html, headers };
 }

@@ -6,12 +6,13 @@ import { Field, Alert, Spinner } from '../components/ui';
 import { rules, validateAll, serverFieldErrors, focusFirstError } from '../lib/validate';
 import PasswordInput from './PasswordInput';
 import toast from '../components/toast';
+import { t, locale } from '../i18n';
 
 const SCHEMA = {
   email: rules.email,
   password: rules.password,
-  passwordConfirm: (v, all) => (!v ? 'Re-type your password.' : v !== all.password ? 'Passwords do not match.' : ''),
-  firstName: rules.required('First name'),
+  passwordConfirm: (v, all) => (!v ? t('signup.retype') : v !== all.password ? t('signup.mismatch') : ''),
+  firstName: rules.required(() => t('form.firstName')),
 };
 
 class SignUp extends React.Component {
@@ -46,24 +47,24 @@ class SignUp extends React.Component {
     this.setState({ busy: true, error: '' });
     fetch('/api/signup', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Accept-Language': locale() },
       credentials: 'same-origin',
-      body: JSON.stringify({ firstName: v.firstName.trim(), lastName: v.lastName.trim(), email: v.email.trim(), password: v.password }),
+      body: JSON.stringify({ firstName: v.firstName.trim(), lastName: v.lastName.trim(), email: v.email.trim(), password: v.password, locale: locale() }),
     })
       .then((response) => response.json().catch(() => null).then((data) => ({ ok: response.ok, data })))
       .then(({ ok, data }) => {
         if (!ok) {
           const serverErrors = serverFieldErrors(data);
-          this.setState({ busy: false, serverErrors, error: errorMessage(data, 'Could not create your account.') });
+          this.setState({ busy: false, serverErrors, error: errorMessage(data, t('signup.failed')) });
           focusFirstError(this.formRef.current, serverErrors);
           return;
         }
         // The signup endpoint logs the user in, so reflect that in the UI.
         if (this.props.onAuthChange) this.props.onAuthChange();
-        toast.success('Welcome to RapidGarage, ' + v.firstName.trim() + '!');
+        toast.success(t('signup.welcome', { name: v.firstName.trim() }));
         this.setState({ redirectToNewPage: true, error: '' });
       })
-      .catch(() => this.setState({ busy: false, error: 'Unable to reach the server. Please try again.' }));
+      .catch(() => this.setState({ busy: false, error: t('common.network') }));
   }
 
   render() {
@@ -77,34 +78,34 @@ class SignUp extends React.Component {
     return (
       <div className="container container-auth">
         <div className="card-form auth-card">
-          <h1>Create your account</h1>
-          <p className="lead">Post sales, save your Maps key and manage your listings.</p>
+          <h1>{t('signup.title')}</h1>
+          <p className="lead">{t('signup.lead')}</p>
           <form ref={this.formRef} onSubmit={this.handleSubmit} noValidate className="form-grid">
             <div className="form-grid form-grid-2">
-              <Field id="firstname" label="First name" error={shown('firstName')}>
+              <Field id="firstname" label={t('form.firstName')} error={shown('firstName')}>
                 {input('firstName', { type: 'text', autoComplete: 'given-name', required: true, autoFocus: true })}
               </Field>
-              <Field id="lastname" label="Last name" optional>
+              <Field id="lastname" label={t('form.lastName')} optional>
                 {input('lastName', { type: 'text', autoComplete: 'family-name' })}
               </Field>
             </div>
-            <Field id="email" label="Email" error={shown('email')}>
-              {input('email', { type: 'email', autoComplete: 'email', placeholder: 'you@example.com', required: true })}
+            <Field id="email" label={t('form.email')} error={shown('email')}>
+              {input('email', { type: 'email', autoComplete: 'email', placeholder: t('form.emailPlaceholder'), required: true })}
             </Field>
-            <Field id="password" label="Password" error={shown('password')} hint="At least 8 characters.">
+            <Field id="password" label={t('form.password')} error={shown('password')} hint={t('signup.passwordHint')}>
               <PasswordInput name="password" autoComplete="new-password" minLength={8} value={v.password}
                 onChange={this.set('password')} onBlur={this.touch('password')} required />
             </Field>
-            <Field id="passwordConfirm" label="Confirm password" error={shown('passwordConfirm')}>
+            <Field id="passwordConfirm" label={t('signup.confirm')} error={shown('passwordConfirm')}>
               <PasswordInput name="passwordConfirm" autoComplete="new-password" value={v.passwordConfirm}
                 onChange={this.set('passwordConfirm')} onBlur={this.touch('passwordConfirm')} required />
             </Field>
             {this.state.error ? <Alert tone="danger">{this.state.error}</Alert> : null}
             <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={this.state.busy}>
-              {this.state.busy ? <Spinner /> : null}Sign Up
+              {this.state.busy ? <Spinner /> : null}{t('signup.submit')}
             </button>
           </form>
-          <p className="auth-switch">Already have an account? <Link to="/login">Log in</Link></p>
+          <p className="auth-switch">{t('signup.haveAccount')} <Link to="/login">{t('nav.logIn')}</Link></p>
         </div>
       </div>
     );

@@ -10,6 +10,7 @@
 // Without a usable geocoding key, q falls back to a plain text/zip match
 // (no distances) and the response says so in `notice`.
 const router = require('express').Router();
+const i18n = require('../lib/i18n');
 const { Op } = require('sequelize');
 const models = require('../models');
 const { badRequest, sendError, serverError } = require('../lib/http');
@@ -172,7 +173,7 @@ router.get('/', async (req, res) => {
         return sendError(res, 404, 'location_not_found', 'Could not find that address or zip code.');
       } else {
         const items = await textMatch(values.q, values, req.user);
-        return res.json(Object.assign({ mode: 'text', center: null, radius: values.radius, filter: filterOf(values), notice: { code: r.status, message: NOTICES[r.status] || NOTICES.error } },
+        return res.json(Object.assign({ mode: 'text', center: null, radius: values.radius, filter: filterOf(values), notice: { code: r.status, message: i18n.translate(i18n.requestLang(req), NOTICES[r.status] || NOTICES.error) } },
           paginate(items, values.page, values.pageSize)));
       }
     }

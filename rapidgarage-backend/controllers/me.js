@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const models = require('../models');
 const secretBox = require('../lib/secretBox');
+const i18n = require('../lib/i18n');
 const { userMapsKeysEnabled } = require('../lib/features');
 const { badRequest, unauthorized, notFound, sendError, serverError, requireLogin } = require('../lib/http');
 
@@ -62,6 +63,20 @@ router.delete('/maps-key', requireLogin, (req, res) => {
     .then((user) => {
       if (!user) return notFound(res, 'User not found.');
       return user.update({ mapsKeyEncrypted: null, mapsKeyLast4: null }).then(() => res.status(204).end());
+    })
+    .catch((err) => serverError(res, err));
+});
+
+// The account's language (also sent as Accept-Language by the web app, which
+// wins per request). Alert emails use this one.
+router.put('/locale', requireLogin, (req, res) => {
+  noStore(res);
+  const code = req.body && typeof req.body.locale === 'string' ? i18n.CODES.find((c) => c.toLowerCase() === req.body.locale.trim().toLowerCase()) : null;
+  if (!code) return badRequest(res, 'Choose a language: ' + i18n.CODES.join(', ') + '.');
+  models.User.findByPk(req.user.id)
+    .then((user) => {
+      if (!user) return notFound(res, 'User not found.');
+      return user.update({ locale: code }).then((u) => res.json({ locale: u.locale }));
     })
     .catch((err) => serverError(res, err));
 });

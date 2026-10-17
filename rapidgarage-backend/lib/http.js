@@ -1,8 +1,14 @@
+const i18n = require('./i18n');
+
 // Shared helpers so every endpoint answers with the same error shape:
 //   { "error": { "code": "<machine_code>", "message": "<human text>" } }
+// Messages are written in English and translated here into the request's
+// language (Accept-Language, else the account's language); see lib/i18n.js.
 function sendError(res, status, code, message, details) {
-  const error = { code, message };
-  if (details) error.details = details;
+  const lang = i18n.requestLang(res.req);
+  res.vary('Accept-Language');
+  const error = { code, message: i18n.translate(lang, message) };
+  if (details) error.details = i18n.translateDetails(lang, details);
   return res.status(status).json({ error });
 }
 

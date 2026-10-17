@@ -6,6 +6,7 @@ import { apiFetch, errorMessage } from '../api';
 import { Alert, EmptyState, SkeletonBlock } from '../components/ui';
 import { initials, displayName } from '../lib/format';
 import toast from '../components/toast';
+import { t } from '../i18n';
 
 // Admin-only page. The server enforces this (403 for non-admins); the UI
 // check below just avoids showing an empty page.
@@ -36,12 +37,12 @@ export default class Admin extends React.Component {
     Promise.all([apiFetch('/admin/settings'), apiFetch('/admin/users')])
       .then(([s, u]) => {
         if (!s.ok || !u.ok) {
-          this.setState({ loading: false, error: errorMessage(s.ok ? u.data : s.data, 'Could not load admin data.') });
+          this.setState({ loading: false, error: errorMessage(s.ok ? u.data : s.data, t('admin.loadFailed')) });
           return;
         }
         this.setState({ loading: false, settings: s.data, users: u.data, error: '' });
       })
-      .catch(() => this.setState({ loading: false, error: 'Unable to reach the server.' }));
+      .catch(() => this.setState({ loading: false, error: t('common.networkShort') }));
   }
 
   toggleSaleAlerts() {
@@ -49,13 +50,13 @@ export default class Admin extends React.Component {
     this.setState({ busy: true, error: '' });
     apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify({ saleAlerts: next }) })
       .then(({ ok, data }) => {
-        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, 'Could not save the setting.')); return null; }
+        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, t('admin.settingFailed'))); return null; }
         this.setState({ busy: false, settings: data });
-        toast.success(data.saleAlerts ? 'Sale alert emails are on.' : 'Sale alert emails are off. Saved alerts are kept.');
+        toast.success(data.saleAlerts ? t('admin.alertsOn') : t('admin.alertsOff'));
         if (this.props.onConfigChange) this.props.onConfigChange();
         return null;
       })
-      .catch(() => { this.setState({ busy: false }); toast.error('Unable to reach the server.'); });
+      .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
   }
 
   toggleMapsKeys() {
@@ -63,51 +64,51 @@ export default class Admin extends React.Component {
     this.setState({ busy: true, error: '' });
     apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify({ userMapsKeys: next }) })
       .then(({ ok, data }) => {
-        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, 'Could not save the setting.')); return null; }
+        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, t('admin.settingFailed'))); return null; }
         this.setState({ busy: false, settings: data });
-        toast.success('Setting saved. Users ' + (data.userMapsKeys ? 'can' : 'can no longer') + ' add their own Maps key.');
+        toast.success(data.userMapsKeys ? t('admin.keysOn') : t('admin.keysOff'));
         if (this.props.onConfigChange) this.props.onConfigChange();
         return null;
       })
-      .catch(() => { this.setState({ busy: false }); toast.error('Unable to reach the server.'); });
+      .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
   }
 
   setRole(u, role) {
-    if (!window.confirm((role === 'admin' ? 'Make ' : 'Remove admin from ') + u.email + '?')) return;
+    if (!window.confirm(t(role === 'admin' ? 'admin.confirmMake' : 'admin.confirmRemove', { email: u.email }))) return;
     this.setState({ busy: true, error: '' });
     apiFetch('/admin/users/' + u.id + '/role', { method: 'PUT', body: JSON.stringify({ role }) })
       .then(({ ok, data }) => {
-        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, 'Could not change the role.')); return null; }
+        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, t('admin.roleFailed'))); return null; }
         this.setState({ busy: false, users: this.state.users.map((x) => (x.id === u.id ? data : x)) });
-        toast.success('Role updated: ' + u.email + ' is now ' + (role === 'admin' ? 'an admin' : 'a regular user') + '.');
+        toast.success(t(role === 'admin' ? 'admin.nowAdmin' : 'admin.nowUser', { email: u.email }));
         // Demoting yourself drops your access; refresh who we are.
         if (u.id === this.props.user.id && this.props.onAuthChange) this.props.onAuthChange();
         return null;
       })
-      .catch(() => { this.setState({ busy: false }); toast.error('Unable to reach the server.'); });
+      .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
   }
 
   render() {
     if (!this.props.user) {
       if (!this.props.ready) return <div className="container"><SkeletonBlock lines={4} /></div>;
-      return <div className="container container-narrow"><EmptyState icon={LogIn} title="Log in first" action={<Link className="btn btn-primary" to="/login">Log in</Link>}>The admin area needs an admin account.</EmptyState></div>;
+      return <div className="container container-narrow"><EmptyState icon={LogIn} title={t('admin.loginFirst')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('admin.needAdmin')}</EmptyState></div>;
     }
-    if (!this.isAdmin()) return <div className="container container-narrow"><EmptyState icon={Lock} title="Admins only">You don't have access to this page.</EmptyState></div>;
+    if (!this.isAdmin()) return <div className="container container-narrow"><EmptyState icon={Lock} title={t('admin.only')}>{t('admin.noAccess')}</EmptyState></div>;
     const s = this.state;
     const admins = s.users.filter((u) => u.role === 'admin').length;
     return (
       <div className="container rg-admin">
         <header className="page-header">
           <div>
-            <h1><ShieldCheck size={26} aria-hidden="true" style={{ verticalAlign: '-4px', marginRight: 8, color: 'var(--color-brand)' }} />Admin</h1>
-            <p>{s.loading ? 'Loading…' : s.users.length + ' user' + (s.users.length === 1 ? '' : 's') + ' · ' + admins + ' admin' + (admins === 1 ? '' : 's')}</p>
+            <h1><ShieldCheck size={26} aria-hidden="true" style={{ verticalAlign: '-4px', marginRight: 8, color: 'var(--color-brand)' }} />{t('nav.admin')}</h1>
+            <p>{s.loading ? t('ui.loadingDots') : t('admin.users', { count: s.users.length }) + ' · ' + t('admin.admins', { count: admins })}</p>
           </div>
         </header>
         {s.error ? <Alert tone="danger">{s.error}</Alert> : null}
-        <div className="segmented admin-tabs" role="group" aria-label="Admin sections">
-          <button type="button" aria-pressed={s.tab === 'reports'} onClick={() => this.setState({ tab: 'reports' })}><Flag size={14} aria-hidden="true" />Reports{s.openReports ? <span className="count" aria-label={s.openReports + ' open'}>{s.openReports}</span> : null}</button>
-          <button type="button" aria-pressed={s.tab === 'users'} onClick={() => this.setState({ tab: 'users' })}><Users size={14} aria-hidden="true" />Users</button>
-          <button type="button" aria-pressed={s.tab === 'settings'} onClick={() => this.setState({ tab: 'settings' })}><SlidersHorizontal size={14} aria-hidden="true" />Settings</button>
+        <div className="segmented admin-tabs" role="group" aria-label={t('admin.sections')}>
+          <button type="button" aria-pressed={s.tab === 'reports'} onClick={() => this.setState({ tab: 'reports' })}><Flag size={14} aria-hidden="true" />{t('admin.reports')}{s.openReports ? <span className="count" aria-label={t('admin.open', { count: s.openReports })}>{s.openReports}</span> : null}</button>
+          <button type="button" aria-pressed={s.tab === 'users'} onClick={() => this.setState({ tab: 'users' })}><Users size={14} aria-hidden="true" />{t('admin.usersTab')}</button>
+          <button type="button" aria-pressed={s.tab === 'settings'} onClick={() => this.setState({ tab: 'settings' })}><SlidersHorizontal size={14} aria-hidden="true" />{t('nav.settings')}</button>
         </div>
         {s.tab === 'reports' ? <Reports onCount={(n) => this.setState({ openReports: n })} /> : null}
         {s.tab !== 'reports' && s.loading ? <SkeletonBlock height={120} lines={4} /> : null}
@@ -116,8 +117,8 @@ export default class Admin extends React.Component {
             {s.settings ? (
               <section className="settings-section card-form rg-admin-settings" aria-labelledby="admin-settings-heading">
                 <header>
-                  <h2 id="admin-settings-heading"><SlidersHorizontal size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />Settings</h2>
-                  <p>Site-wide options.</p>
+                  <h2 id="admin-settings-heading"><SlidersHorizontal size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('nav.settings')}</h2>
+                  <p>{t('admin.siteWide')}</p>
                 </header>
                 <div className="stack">
                   <label className="checkbox-row" htmlFor="toggleUserMapsKeys">
@@ -127,8 +128,8 @@ export default class Admin extends React.Component {
                       <span className="switch-track" aria-hidden="true" />
                     </span>
                     <span>
-                      <strong>Let users add their own Google Maps key</strong>
-                      <span id="toggleUserMapsKeys-hint" className="field-hint" style={{ display: 'block' }}>When off, the map uses only the server's key. Saved user keys are kept but not used.</span>
+                      <strong>{t('admin.letKeys')}</strong>
+                      <span id="toggleUserMapsKeys-hint" className="field-hint" style={{ display: 'block' }}>{t('admin.letKeysHint')}</span>
                     </span>
                   </label>
                   <label className="checkbox-row" htmlFor="toggleSaleAlerts">
@@ -138,8 +139,8 @@ export default class Admin extends React.Component {
                       <span className="switch-track" aria-hidden="true" />
                     </span>
                     <span>
-                      <strong>Email sale alerts</strong>
-                      <span id="toggleSaleAlerts-hint" className="field-hint" style={{ display: 'block' }}>When off, no alert emails are sent and nobody can create new alerts. Saved alerts are kept.</span>
+                      <strong>{t('admin.emailAlerts')}</strong>
+                      <span id="toggleSaleAlerts-hint" className="field-hint" style={{ display: 'block' }}>{t('admin.emailAlertsHint')}</span>
                     </span>
                   </label>
                 </div>
@@ -150,11 +151,11 @@ export default class Admin extends React.Component {
         {s.tab === 'users' && !s.loading ? (
           <div className="stack">
             <section className="rg-admin-users" aria-labelledby="admin-users-heading">
-              <h2 id="admin-users-heading" className="h4" style={{ margin: '8px 0 12px' }}><Users size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />Users</h2>
+              <h2 id="admin-users-heading" className="h4" style={{ margin: '8px 0 12px' }}><Users size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('admin.usersTab')}</h2>
               {s.users.length ? (
                 <div className="table-wrap">
                   <table className="table">
-                    <thead><tr><th scope="col">User</th><th scope="col">Role</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead>
+                    <thead><tr><th scope="col">{t('admin.user')}</th><th scope="col">{t('admin.role')}</th><th scope="col"><span className="sr-only">{t('admin.actions')}</span></th></tr></thead>
                     <tbody>
                       {s.users.map((u) => (
                         <tr key={u.id}>
@@ -164,18 +165,18 @@ export default class Admin extends React.Component {
                               <span><strong>{displayName(u)}</strong><small>{u.email}</small></span>
                             </div>
                           </td>
-                          <td className="cell-role"><span className={'chip badge-role ' + (u.role === 'admin' ? 'chip-brand' : '')}>{u.role}</span>{u.messagingBanned ? <span className="chip chip-danger" style={{ marginLeft: 6 }}>Messaging banned</span> : null}</td>
+                          <td className="cell-role"><span className={'chip badge-role ' + (u.role === 'admin' ? 'chip-brand' : '')}>{u.role === 'admin' ? t('admin.roleAdmin') : t('admin.roleUser')}</span>{u.messagingBanned ? <span className="chip chip-danger" style={{ marginLeft: 6 }}>{t('admin.banned')}</span> : null}</td>
                           <td>
                             {u.role === 'admin'
-                              ? <button type="button" className="btn btn-secondary btn-sm" disabled={s.busy} onClick={() => this.setRole(u, 'user')}>Remove admin</button>
-                              : <button type="button" className="btn btn-primary btn-sm" disabled={s.busy} onClick={() => this.setRole(u, 'admin')}>Make admin</button>}
+                              ? <button type="button" className="btn btn-secondary btn-sm" disabled={s.busy} onClick={() => this.setRole(u, 'user')}>{t('admin.removeAdmin')}</button>
+                              : <button type="button" className="btn btn-primary btn-sm" disabled={s.busy} onClick={() => this.setRole(u, 'admin')}>{t('admin.makeAdmin')}</button>}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              ) : <EmptyState icon={Users} title="No users yet" />}
+              ) : <EmptyState icon={Users} title={t('admin.noUsers')} />}
             </section>
           </div>
         ) : null}

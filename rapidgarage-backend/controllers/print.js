@@ -4,12 +4,14 @@
 //   GET /qr.png      ?size=256..2048&download=1                                         owner
 //   GET /qr.svg      ?download=1                                                        owner
 //   GET /flyer.pdf   ?layout=letter|half|sign&arrow=none|left|right&headline=garage|yard|moving|estate
+//                    &lang=en|es|ko|zh-CN (default: Accept-Language, then the account's language)
 //                    &photo=0|1&items=0|1&download=1                                    owner
 // Print assets are refused (409) while a moderator has the post hidden: the
 // short link would only show "not available".
 const router = require('express').Router();
 const sharp = require('sharp');
 const { badRequest, forbidden, sendError, serverError } = require('../lib/http');
+const i18n = require('../lib/i18n');
 const { isAdmin } = require('../lib/roles');
 const links = require('../lib/shortlinks');
 const scans = require('../lib/scans');
@@ -73,17 +75,20 @@ router.get('/flyer.pdf', ownerOnly, async (req, res) => {
   const layout = q.layout === undefined ? 'letter' : q.layout;
   const arrow = q.arrow === undefined ? 'none' : q.arrow;
   const headline = q.headline === undefined ? 'garage' : q.headline;
+  // Flyer language: ?lang= (the print page's choice), else the request's language.
+  const lang = q.lang === undefined ? i18n.requestLang(req) : i18n.normalize(q.lang);
   const errors = {};
   if (flyer.LAYOUTS.indexOf(layout) === -1) errors.layout = 'layout must be one of: ' + flyer.LAYOUTS.join(', ') + '.';
   if (flyer.ARROWS.indexOf(arrow) === -1) errors.arrow = 'arrow must be one of: ' + flyer.ARROWS.join(', ') + '.';
   if (!flyer.HEADLINES[headline]) errors.headline = 'headline must be one of: ' + Object.keys(flyer.HEADLINES).join(', ') + '.';
+  if (!lang) errors.lang = 'lang must be one of: ' + i18n.CODES.join(', ') + '.';
   ['photo', 'items'].forEach((k) => { if (q[k] !== undefined && q[k] !== '0' && q[k] !== '1') errors[k] = k + ' must be 0 or 1.'; });
   if (Object.keys(errors).length) return badRequest(res, 'Invalid print options.', errors);
   try {
     const url = links.shortUrl(await links.ensureCode(req.post));
     const post = req.post;
     const photo = layout !== 'sign' && q.photo !== '0' ? await firstPhoto(post) : null;
-    const pdf = await flyer.buildPdf(post, { layout, arrow, headline, photo, url, noItems: q.items === '0' });
+    const pdf = await flyer.buildPdf(post, { layout, arrow, headline, photo, url, lang, noItems: q.items === '0' });
     const kind = layout === 'sign' ? 'sign' : layout === 'half' ? 'half-page-flyer' : 'flyer';
     return sendFile(req, res, 'application/pdf', 'rapidgarage-' + slug(post) + '-' + kind + '.pdf', pdf);
   } catch (err) { return serverError(res, err); }

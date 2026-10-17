@@ -1,5 +1,6 @@
 import React from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { t } from '../i18n';
 
 // Password input with a show/hide toggle. Extra props go to the <input>.
 export default class PasswordInput extends React.Component {
@@ -14,7 +15,7 @@ export default class PasswordInput extends React.Component {
     return (
       <div className="input-wrap">
         <input {...props} className="input" type={visible ? 'text' : 'password'} />
-        <button type="button" className="btn btn-ghost btn-icon btn-sm input-action" aria-label={visible ? 'Hide password' : 'Show password'}
+        <button type="button" className="btn btn-ghost btn-icon btn-sm input-action" aria-label={visible ? t('pw.hide') : t('pw.show')}
           aria-pressed={visible} aria-controls={props.id} onClick={() => this.setState({ visible: !visible })}>
           {visible ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
         </button>

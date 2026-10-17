@@ -1,14 +1,16 @@
+import { t } from '../i18n';
 // Client-side mirrors of the server's rules (rapidgarage-backend/lib/validate.js),
 // used for inline, as-you-go form errors. The server still has the final say.
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const ZIP_RE = /^\d{5}(-\d{4})?$/;
 
 export const rules = {
-  email: (v) => (!v || !v.trim() ? 'Enter your email address.' : !EMAIL_RE.test(v.trim()) ? 'Enter a valid email, like name@example.com.' : ''),
-  required: (label) => (v) => (!v || !String(v).trim() ? label + ' is required.' : ''),
-  password: (v) => (!v ? 'Enter a password.' : v.length < 8 ? 'Use at least 8 characters.' : ''),
-  zip: (v) => (!v || !v.trim() ? 'Zip code is required.' : !ZIP_RE.test(v.trim()) ? 'Use a 5-digit zip code, like 10001.' : ''),
-  title: (v) => (!v || !v.trim() ? 'Give your sale a title.' : v.trim().length > 255 ? 'Keep the title under 255 characters.' : ''),
+  email: (v) => (!v || !v.trim() ? t('val.emailEmpty') : !EMAIL_RE.test(v.trim()) ? t('val.emailBad') : ''),
+  // label may be a function so module-level schemas pick up the current language.
+  required: (label) => (v) => (!v || !String(v).trim() ? t('val.required', { label: typeof label === 'function' ? label() : label }) : ''),
+  password: (v) => (!v ? t('val.passwordEmpty') : v.length < 8 ? t('val.passwordShort') : ''),
+  zip: (v) => (!v || !v.trim() ? t('val.zipEmpty') : !ZIP_RE.test(v.trim()) ? t('val.zipBad') : ''),
+  title: (v) => (!v || !v.trim() ? t('val.titleEmpty') : v.trim().length > 255 ? t('val.titleLong') : ''),
 };
 
 // Run { field: validator } over values. Returns { field: message } for failures.

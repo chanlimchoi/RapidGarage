@@ -24,6 +24,7 @@ import PersonRatings from './ratings/PersonRatings';
 import Saved from './saved/Saved';
 import ItemsEditor from './post/ItemsEditor';
 import * as savedStore from './lib/saved';
+import * as i18n from './i18n';
 
 const UNREAD_POLL_MS = 15000;
 
@@ -39,6 +40,8 @@ class App extends Component {
       config: { googleLogin: false, userMapsKeys: true, saleAlerts: true },
       // Unread messages, for the nav badge (polled while logged in).
       unread: 0,
+      // Changing it re-mounts the page so every component re-renders its text.
+      locale: i18n.locale(),
     };
     this.refreshUnread = this.refreshUnread.bind(this);
     this.onVisible = this.onVisible.bind(this);
@@ -51,11 +54,13 @@ class App extends Component {
     this.refreshConfig();
     this.unreadTimer = setInterval(() => { if (!document.hidden) this.refreshUnread(); }, UNREAD_POLL_MS);
     document.addEventListener('visibilitychange', this.onVisible);
+    this.offLocale = i18n.onChange((locale) => this.setState({ locale }));
   }
 
   componentWillUnmount() {
     clearInterval(this.unreadTimer);
     document.removeEventListener('visibilitychange', this.onVisible);
+    if (this.offLocale) this.offLocale();
   }
 
   onVisible() {
@@ -88,15 +93,29 @@ class App extends Component {
   refreshUser() {
     return fetchMe().then((user) => {
       savedStore.setUser(user);
+      this.syncLocale(user);
       this.setState({ user, ready: true }, this.refreshUnread);
     });
+  }
+
+  // Choosing a language always saves it to the account, so when logged in the
+  // account's language wins (it follows you to new devices). Accounts from
+  // before languages existed get this device's language.
+  // Only once per login, so a language picked a moment ago is never undone by
+  // a /me answer that raced the save.
+  syncLocale(user) {
+    if (!user) { this.localeSyncedFor = null; return; }
+    if (this.localeSyncedFor === user.id) return;
+    this.localeSyncedFor = user.id;
+    if (user.locale && user.locale !== i18n.locale()) i18n.setLocale(user.locale).catch(() => null);
+    else if (!user.locale) apiFetch('/me/locale', { method: 'PUT', body: JSON.stringify({ locale: i18n.locale() }) }).catch(() => null);
   }
 
   render() {
     const { user, ready, config } = this.state;
     const common = { user, ready };
     return (
-      <div className="app">
+      <div className="app" key={this.state.locale}>
         <NavBar user={user} ready={ready} unread={this.state.unread} location={this.props.location} />
         <main id="main" className="app-main" tabIndex="-1">
           <Switch>

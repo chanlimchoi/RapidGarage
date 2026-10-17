@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertCircle, AlertTriangle, Info, CheckCircle2, Loader2, X } from 'lucide-react';
+import { t } from '../i18n';
 
 // Labeled form field with hint and inline error, wired up for screen readers.
 export function Field({ id, label, optional, hint, error, children }) {
@@ -10,7 +11,7 @@ export function Field({ id, label, optional, hint, error, children }) {
   return (
     <div className="field">
       <label className="field-label" htmlFor={id}>
-        {label}{optional ? <span className="optional"> (optional)</span> : null}
+        {label}{optional ? <span className="optional"> {t('ui.optional')}</span> : null}
       </label>
       {React.cloneElement(control, { id, 'aria-invalid': error ? 'true' : undefined, 'aria-describedby': describedBy })}
       {error ? <span className="field-error" id={errId}><AlertCircle size={14} aria-hidden="true" />{error}</span> : null}
@@ -22,11 +23,11 @@ export function Field({ id, label, optional, hint, error, children }) {
 const ALERT_ICONS = { danger: AlertCircle, warning: AlertTriangle, info: Info, success: CheckCircle2 };
 
 export function Alert({ tone, children, className, live }) {
-  const t = tone || 'info';
-  const Icon = ALERT_ICONS[t];
-  const role = live === false ? undefined : t === 'danger' ? 'alert' : 'status';
+  const tn = tone || 'info';
+  const Icon = ALERT_ICONS[tn];
+  const role = live === false ? undefined : tn === 'danger' ? 'alert' : 'status';
   return (
-    <div className={'alert alert-' + t + (className ? ' ' + className : '')} role={role}>
+    <div className={'alert alert-' + tn + (className ? ' ' + className : '')} role={role}>
       <Icon size={18} aria-hidden="true" />
       <div>{children}</div>
     </div>
@@ -64,21 +65,21 @@ export function SkeletonCard() {
 export function SkeletonGrid({ count, className }) {
   const n = count || 4;
   return (
-    <div className={'card-grid ' + (className || '')} role="status" aria-label="Loading">
+    <div className={'card-grid ' + (className || '')} role="status" aria-label={t('ui.loading')}>
       {Array.from({ length: n }).map((_, i) => <SkeletonCard key={i} />)}
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t('ui.loadingDots')}</span>
     </div>
   );
 }
 
 export function SkeletonBlock({ lines, height }) {
   return (
-    <div className="stack" role="status" aria-label="Loading">
+    <div className="stack" role="status" aria-label={t('ui.loading')}>
       {height ? <div className="skeleton" style={{ height }} aria-hidden="true" /> : null}
       {Array.from({ length: lines || 3 }).map((_, i) => (
         <div key={i} className="skeleton skeleton-line" style={{ width: (90 - i * 15) + '%' }} aria-hidden="true" />
       ))}
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t('ui.loadingDots')}</span>
     </div>
   );
 }
@@ -123,7 +124,7 @@ export class Dialog extends React.Component {
         <div className="dialog" role="dialog" aria-modal="true" aria-labelledby={id + '-title'} aria-describedby={description ? id + '-desc' : undefined} ref={this.ref}>
           <header className="dialog-header">
             <h2 id={id + '-title'}>{title}</h2>
-            <button type="button" className="btn btn-ghost btn-icon btn-sm dialog-close" aria-label="Close" onClick={onClose}><X size={18} aria-hidden="true" /></button>
+            <button type="button" className="btn btn-ghost btn-icon btn-sm dialog-close" aria-label={t('ui.close')} onClick={onClose}><X size={18} aria-hidden="true" /></button>
           </header>
           {description ? <p id={id + '-desc'} className="dialog-desc">{description}</p> : null}
           <div className="dialog-body">{children}</div>

@@ -1,3 +1,4 @@
+import { t, locale } from './i18n';
 // Small fetch helpers shared by the components.
 // The backend answers errors as { error: { code, message, details? } }.
 export function errorMessage(data, fallback) {
@@ -15,7 +16,7 @@ export function errorMessage(data, fallback) {
 // Resolves to { ok, status, data }; data is null for empty bodies (e.g. 204).
 export function apiFetch(path, options) {
   const opts = Object.assign({ credentials: 'same-origin' }, options || {});
-  opts.headers = Object.assign({ 'Accept': 'application/json' }, opts.body ? { 'Content-Type': 'application/json' } : {}, opts.headers || {});
+  opts.headers = Object.assign({ 'Accept': 'application/json', 'Accept-Language': locale() }, opts.body ? { 'Content-Type': 'application/json' } : {}, opts.headers || {});
   return fetch('/api' + path, opts).then((response) =>
     response.text().then((text) => {
       let data = null;
@@ -41,7 +42,7 @@ export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export function uploadPhotos(postId, files) {
   const form = new FormData();
   files.forEach((f) => form.append('photos', f, f.name));
-  return fetch('/api/post/' + postId + '/photos', { method: 'POST', body: form, credentials: 'same-origin' })
+  return fetch('/api/post/' + postId + '/photos', { method: 'POST', body: form, credentials: 'same-origin', headers: { 'Accept-Language': locale() } })
     .then((response) => response.text().then((text) => {
       let data = null;
       try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
@@ -70,12 +71,12 @@ export function searchPosts(params) {
 
 // ---- Reports & moderation ----------------------------------------------
 export const REPORT_REASONS = [
-  { value: 'spam', label: 'Spam' },
-  { value: 'scam', label: 'Scam or fraud' },
-  { value: 'prohibited', label: 'Prohibited item' },
-  { value: 'offensive', label: 'Offensive content' },
-  { value: 'wrong_info', label: 'Wrong information' },
-  { value: 'other', label: 'Something else' },
+  { value: 'spam', get label() { return t('reason.spam'); } },
+  { value: 'scam', get label() { return t('reason.scam'); } },
+  { value: 'prohibited', get label() { return t('reason.prohibited'); } },
+  { value: 'offensive', get label() { return t('reason.offensive'); } },
+  { value: 'wrong_info', get label() { return t('reason.wrongInfo'); } },
+  { value: 'other', get label() { return t('reason.other'); } },
 ];
 export const REPORT_NOTE_MAX = 500;
 export function reasonLabel(value) {
@@ -111,11 +112,11 @@ export function fetchUnreadCount() {
 
 // ---- Conversation reports --------------------------------------------------
 export const CONVERSATION_REPORT_REASONS = [
-  { value: 'harassment', label: 'Harassment' },
-  { value: 'scam', label: 'Scam or fraud' },
-  { value: 'spam', label: 'Spam' },
-  { value: 'offensive', label: 'Offensive content' },
-  { value: 'other', label: 'Something else' },
+  { value: 'harassment', get label() { return t('reason.harassment'); } },
+  { value: 'scam', get label() { return t('reason.scam'); } },
+  { value: 'spam', get label() { return t('reason.spam'); } },
+  { value: 'offensive', get label() { return t('reason.offensive'); } },
+  { value: 'other', get label() { return t('reason.other'); } },
 ];
 export function conversationReasonLabel(value) {
   const r = CONVERSATION_REPORT_REASONS.filter((x) => x.value === value)[0];
@@ -139,11 +140,11 @@ export const unsubscribeAlert = (a, t) => apiFetch('/alerts/unsubscribe', { meth
 // ---- Ratings ------------------------------------------------------------
 export const RATING_COMMENT_MAX = 280;
 export const RATING_REPORT_REASONS = [
-  { value: 'harassment', label: 'Harassment or insults' },
-  { value: 'offensive', label: 'Offensive language' },
-  { value: 'spam', label: 'Spam or advertising' },
-  { value: 'fake', label: "Fake: we didn't really deal" },
-  { value: 'other', label: 'Something else' },
+  { value: 'harassment', get label() { return t('reason.harassmentInsults'); } },
+  { value: 'offensive', get label() { return t('reason.offensiveLanguage'); } },
+  { value: 'spam', get label() { return t('reason.spamAds'); } },
+  { value: 'fake', get label() { return t('reason.fake'); } },
+  { value: 'other', get label() { return t('reason.other'); } },
 ];
 export const ratingReasonLabel = (v) => (RATING_REPORT_REASONS.find((r) => r.value === v) || { label: v }).label;
 export const fetchConversationRating = (id) => apiFetch('/ratings/conversations/' + id);

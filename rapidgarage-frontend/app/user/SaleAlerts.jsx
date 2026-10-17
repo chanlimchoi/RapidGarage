@@ -4,14 +4,15 @@ import { fetchAlerts, createAlert, updateAlert, deleteAlert, errorMessage, ALERT
 import { Field, Alert, EmptyState, SkeletonBlock, Spinner } from '../components/ui';
 import { priceFieldError, formatUSD } from '../lib/price';
 import toast from '../components/toast';
+import { t } from '../i18n';
 
 const LABEL_MAX = 80;
 const EMPTY_FORM = { id: null, label: '', where: 'address', address: '', coords: null, radiusMiles: '10', maxPrice: '', freeOnly: false };
 
 export function alertSummary(a) {
-  const parts = ['Within ' + a.radiusMiles + ' mi'];
-  if (a.freeOnly) parts.push('free only');
-  else if (a.maxPrice !== null && a.maxPrice !== undefined) parts.push('items ' + formatUSD(a.maxPrice) + ' or less');
+  const parts = [t('list.withinMi', { miles: a.radiusMiles })];
+  if (a.freeOnly) parts.push(t('alerts.free'));
+  else if (a.maxPrice !== null && a.maxPrice !== undefined) parts.push(t('alerts.maxPrice', { price: formatUSD(a.maxPrice) }));
   return parts.join(' · ');
 }
 
@@ -30,11 +31,11 @@ export default class SaleAlerts extends React.Component {
   load() {
     fetchAlerts().then(({ ok, data }) => {
       if (!this.mounted) return;
-      if (!ok) return this.setState({ loading: false, error: errorMessage(data, 'Could not load your alerts.') });
+      if (!ok) return this.setState({ loading: false, error: errorMessage(data, t('alerts.loadFailed')) });
       this.setState({ loading: false, error: '', alerts: data.results, limit: data.limit, globallyEnabled: data.globallyEnabled });
       // Deep link from emails: /settings#alerts
       if (window.location.hash === '#alerts' && this.ref && this.ref.scrollIntoView) this.ref.scrollIntoView({ block: 'start' });
-    }).catch(() => this.mounted && this.setState({ loading: false, error: 'Unable to reach the server.' }));
+    }).catch(() => this.mounted && this.setState({ loading: false, error: t('common.networkShort') }));
   }
 
   openNew() { this.setState({ form: Object.assign({}, EMPTY_FORM), errors: {} }); }
@@ -45,23 +46,23 @@ export default class SaleAlerts extends React.Component {
   setForm(patch) { this.setState((s) => ({ form: Object.assign({}, s.form, patch), errors: {} })); }
 
   locate() {
-    if (!navigator.geolocation) return this.setState({ errors: { location: 'Your browser cannot share its location.' } });
+    if (!navigator.geolocation) return this.setState({ errors: { location: t('list.noGeo') } });
     this.setState({ locating: true });
     navigator.geolocation.getCurrentPosition(
       (pos) => { this.setState({ locating: false }); this.setForm({ where: 'here', coords: { lat: pos.coords.latitude, lng: pos.coords.longitude } }); },
-      () => this.setState({ locating: false, errors: { location: 'Could not get your location. Allow location access or type an address.' } }),
+      () => this.setState({ locating: false, errors: { location: t('list.geoFailed') } }),
       { timeout: 10000, maximumAge: 300000 }
     );
   }
 
   validate(f) {
     const errors = {};
-    if (f.label.trim().length > LABEL_MAX) errors.label = 'Keep the name under ' + LABEL_MAX + ' characters.';
-    if (f.where === 'address' && !f.address.trim()) errors.location = 'Enter an address or zip code.';
-    if (f.where === 'here' && !f.coords) errors.location = 'Use your current location first.';
+    if (f.label.trim().length > LABEL_MAX) errors.label = t('alerts.nameLong', { max: LABEL_MAX });
+    if (f.where === 'address' && !f.address.trim()) errors.location = t('alerts.needAddress');
+    if (f.where === 'here' && !f.coords) errors.location = t('alerts.needLocation');
     const r = Number(f.radiusMiles);
-    if (!/^\d+$/.test(String(f.radiusMiles).trim()) || r < ALERT_RADIUS.min || r > ALERT_RADIUS.max) errors.radiusMiles = 'Radius must be a whole number from ' + ALERT_RADIUS.min + ' to ' + ALERT_RADIUS.max + ' miles.';
-    const pe = f.freeOnly ? '' : priceFieldError(f.maxPrice, 'Max price');
+    if (!/^\d+$/.test(String(f.radiusMiles).trim()) || r < ALERT_RADIUS.min || r > ALERT_RADIUS.max) errors.radiusMiles = t('alerts.radiusRange', { min: ALERT_RADIUS.min, max: ALERT_RADIUS.max });
+    const pe = f.freeOnly ? '' : priceFieldError(f.maxPrice, t('list.maxPrice'));
     if (pe) errors.maxPrice = pe;
     return errors;
   }
@@ -80,33 +81,33 @@ export default class SaleAlerts extends React.Component {
       if (!this.mounted) return;
       if (!ok) {
         const d = (data && data.error && data.error.details) || {};
-        return this.setState({ saving: false, errors: Object.keys(d).length ? d : { form: errorMessage(data, 'Could not save the alert.') } });
+        return this.setState({ saving: false, errors: Object.keys(d).length ? d : { form: errorMessage(data, t('list.alertFailed')) } });
       }
       this.setState((s) => ({ saving: false, form: null,
         alerts: f.id ? s.alerts.map((a) => (a.id === data.id ? data : a)) : s.alerts.concat(data) }));
-      toast.success(f.id ? 'Alert updated.' : "Alert saved. We'll email you about new sales nearby.");
-    }).catch(() => this.mounted && this.setState({ saving: false, errors: { form: 'Unable to reach the server.' } }));
+      toast.success(f.id ? t('alerts.updated') : t('alerts.savedNearby'));
+    }).catch(() => this.mounted && this.setState({ saving: false, errors: { form: t('common.networkShort') } }));
   }
 
   toggle(a) {
     this.setState({ busyId: a.id });
     updateAlert(a.id, { enabled: !a.enabled }).then(({ ok, data }) => {
       if (!this.mounted) return;
-      if (!ok) { this.setState({ busyId: null }); return toast.error(errorMessage(data, 'Could not update the alert.')); }
+      if (!ok) { this.setState({ busyId: null }); return toast.error(errorMessage(data, t('alerts.updateFailed'))); }
       this.setState((s) => ({ busyId: null, alerts: s.alerts.map((x) => (x.id === data.id ? data : x)) }));
-      toast.success(data.enabled ? 'Alert turned on.' : 'Alert paused.');
-    }).catch(() => { this.setState({ busyId: null }); toast.error('Unable to reach the server.'); });
+      toast.success(data.enabled ? t('alerts.on') : t('alerts.paused'));
+    }).catch(() => { this.setState({ busyId: null }); toast.error(t('common.networkShort')); });
   }
 
   remove(a) {
-    if (!window.confirm('Delete the alert "' + (a.label || alertSummary(a)) + '"?')) return;
+    if (!window.confirm(t('alerts.confirmDelete', { name: a.label || alertSummary(a) }))) return;
     this.setState({ busyId: a.id });
     deleteAlert(a.id).then(({ ok, data }) => {
       if (!this.mounted) return;
-      if (!ok) { this.setState({ busyId: null }); return toast.error(errorMessage(data, 'Could not delete the alert.')); }
+      if (!ok) { this.setState({ busyId: null }); return toast.error(errorMessage(data, t('alerts.deleteFailed'))); }
       this.setState((s) => ({ busyId: null, alerts: s.alerts.filter((x) => x.id !== a.id), form: s.form && s.form.id === a.id ? null : s.form }));
-      toast.success('Alert deleted.');
-    }).catch(() => { this.setState({ busyId: null }); toast.error('Unable to reach the server.'); });
+      toast.success(t('alerts.deleted'));
+    }).catch(() => { this.setState({ busyId: null }); toast.error(t('common.networkShort')); });
   }
 
   renderForm() {
@@ -115,34 +116,34 @@ export default class SaleAlerts extends React.Component {
     const s = this.state;
     return (
       <form className="alert-form panel stack" onSubmit={this.submit} noValidate aria-labelledby="alert-form-heading">
-        <h3 id="alert-form-heading">{f.id ? 'Edit alert' : 'New alert'}</h3>
-        <Field id="alert-label" label="Name" optional error={e.label} hint="Shown in emails, e.g. “Near home”.">
+        <h3 id="alert-form-heading">{f.id ? t('alerts.edit') : t('alerts.new')}</h3>
+        <Field id="alert-label" label={t('alerts.name')} optional error={e.label} hint={t('alerts.nameHint')}>
           <input className="input" type="text" maxLength={LABEL_MAX} value={f.label} onChange={(ev) => this.setForm({ label: ev.target.value })} />
         </Field>
         <div className="field">
-          <span className="field-label" id="alert-where-label">Location</span>
+          <span className="field-label" id="alert-where-label">{t('alerts.location')}</span>
           <div className="segmented" role="group" aria-labelledby="alert-where-label">
-            {f.id ? <button type="button" aria-pressed={f.where === 'keep'} onClick={() => this.setForm({ where: 'keep' })}><MapPin size={14} aria-hidden="true" />Keep current</button> : null}
-            <button type="button" aria-pressed={f.where === 'address'} onClick={() => this.setForm({ where: 'address' })}>Address</button>
+            {f.id ? <button type="button" aria-pressed={f.where === 'keep'} onClick={() => this.setForm({ where: 'keep' })}><MapPin size={14} aria-hidden="true" />{t('alerts.keep')}</button> : null}
+            <button type="button" aria-pressed={f.where === 'address'} onClick={() => this.setForm({ where: 'address' })}>{t('alerts.address')}</button>
             <button type="button" aria-pressed={f.where === 'here'} onClick={() => this.locate()} disabled={s.locating}>
-              {s.locating ? <Spinner size={14} /> : <LocateFixed size={14} aria-hidden="true" />}My location
+              {s.locating ? <Spinner size={14} /> : <LocateFixed size={14} aria-hidden="true" />}{t('alerts.myLocation')}
             </button>
           </div>
-          {f.where === 'here' && f.coords ? <span className="field-hint">Using your current location.</span> : null}
+          {f.where === 'here' && f.coords ? <span className="field-hint">{t('alerts.usingLocation')}</span> : null}
           {e.location && f.where !== 'address' ? <span className="field-error" role="alert">{e.location}</span> : null}
         </div>
         {f.where === 'address' ? (
-          <Field id="alert-address" label="Address or zip code" error={e.location}>
+          <Field id="alert-address" label={t('list.whereLabel')} error={e.location}>
             <input className="input" type="text" maxLength={200} autoComplete="street-address" value={f.address} onChange={(ev) => this.setForm({ address: ev.target.value })} />
           </Field>
         ) : null}
         <div className="alert-form-row">
-          <Field id="alert-radius" label="Radius (miles)" error={e.radiusMiles} hint={ALERT_RADIUS.min + '–' + ALERT_RADIUS.max + ' mi'}>
+          <Field id="alert-radius" label={t('alerts.radius')} error={e.radiusMiles} hint={t('alerts.radiusHint', { min: ALERT_RADIUS.min, max: ALERT_RADIUS.max })}>
             <input className="input" type="number" inputMode="numeric" min={ALERT_RADIUS.min} max={ALERT_RADIUS.max} step={1}
               value={f.radiusMiles} onChange={(ev) => this.setForm({ radiusMiles: ev.target.value })} />
           </Field>
-          <Field id="alert-max-price" label="Max price ($)" optional error={e.maxPrice} hint="Sales with something at or under this price.">
-            <input className="input" type="text" inputMode="numeric" maxLength={7} placeholder="Any" disabled={f.freeOnly}
+          <Field id="alert-max-price" label={t('alerts.maxPriceLabel')} optional error={e.maxPrice} hint={t('list.maxPriceHint')}>
+            <input className="input" type="text" inputMode="numeric" maxLength={7} placeholder={t('list.any')} disabled={f.freeOnly}
               value={f.freeOnly ? '' : f.maxPrice} onChange={(ev) => this.setForm({ maxPrice: ev.target.value })} />
           </Field>
         </div>
@@ -151,12 +152,12 @@ export default class SaleAlerts extends React.Component {
             <input id="alert-free" type="checkbox" role="switch" checked={f.freeOnly} onChange={(ev) => this.setForm({ freeOnly: ev.target.checked })} />
             <span className="switch-track" aria-hidden="true" />
           </span>
-          <span><strong>Free only</strong><span className="field-hint" style={{ display: 'block' }}>Only sales marked free.</span></span>
+          <span><strong>{t('list.freeOnly')}</strong><span className="field-hint" style={{ display: 'block' }}>{t('alerts.freeHint')}</span></span>
         </label>
         {e.form ? <Alert tone="danger">{e.form}</Alert> : null}
         <div className="form-actions">
-          <button type="submit" className="btn btn-primary" disabled={s.saving}>{s.saving ? <Spinner /> : null}{f.id ? 'Save changes' : 'Create alert'}</button>
-          <button type="button" className="btn btn-secondary" onClick={() => this.setState({ form: null, errors: {} })} disabled={s.saving}>Cancel</button>
+          <button type="submit" className="btn btn-primary" disabled={s.saving}>{s.saving ? <Spinner /> : null}{f.id ? t('edit.saveChanges') : t('alerts.create')}</button>
+          <button type="button" className="btn btn-secondary" onClick={() => this.setState({ form: null, errors: {} })} disabled={s.saving}>{t('common.cancel')}</button>
         </div>
       </form>
     );
@@ -168,12 +169,12 @@ export default class SaleAlerts extends React.Component {
     return (
       <section id="alerts" ref={(el) => { this.ref = el; }} className="settings-section card-form rg-sale-alerts" aria-labelledby="alerts-heading">
         <header>
-          <h2 id="alerts-heading"><BellRing size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />Sale alerts</h2>
-          <p>Get an email when a new garage sale is posted near a place you care about. Emails are bundled so you won't get flooded.</p>
+          <h2 id="alerts-heading"><BellRing size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('alerts.title')}</h2>
+          <p>{t('alerts.lead')}</p>
         </header>
         <div className="stack">
           {!s.loading && !s.globallyEnabled ? (
-            <Alert tone="warning" live={false}><p>Sale alerts are turned off on this site right now. Your alerts are saved but no emails are sent.</p></Alert>
+            <Alert tone="warning" live={false}><p>{t('alerts.siteOff')}</p></Alert>
           ) : null}
           {s.loading ? <SkeletonBlock lines={2} height={44} /> : (
             <React.Fragment>
@@ -184,31 +185,31 @@ export default class SaleAlerts extends React.Component {
                       <label className="checkbox-row" htmlFor={'alert-on-' + a.id}>
                         <span className="switch">
                           <input id={'alert-on-' + a.id} type="checkbox" role="switch" checked={a.enabled} disabled={s.busyId === a.id}
-                            onChange={() => this.toggle(a)} aria-label={(a.enabled ? 'Pause ' : 'Turn on ') + (a.label || 'alert')} />
+                            onChange={() => this.toggle(a)} aria-label={t(a.enabled ? 'alerts.pauseNamed' : 'alerts.turnOnNamed', { name: a.label || t('alerts.alert') })} />
                           <span className="switch-track" aria-hidden="true" />
                         </span>
                         <span className="alert-item-text">
-                          <strong>{a.label || 'Unnamed alert'}</strong>
+                          <strong>{a.label || t('alerts.unnamed')}</strong>
                           <span className="chips">
                             <span className="chip chip-brand">{alertSummary(a)}</span>
-                            {a.enabled ? null : <span className="chip"><BellOff size={12} aria-hidden="true" />Paused</span>}
+                            {a.enabled ? null : <span className="chip"><BellOff size={12} aria-hidden="true" />{t('alerts.pausedChip')}</span>}
                           </span>
                         </span>
                       </label>
                       <div className="row alert-item-actions">
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => this.openEdit(a)} disabled={s.busyId === a.id}><Pencil size={14} aria-hidden="true" />Edit</button>
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => this.remove(a)} disabled={s.busyId === a.id}><Trash2 size={14} aria-hidden="true" />Delete</button>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => this.openEdit(a)} disabled={s.busyId === a.id}><Pencil size={14} aria-hidden="true" />{t('common.edit')}</button>
+                        <button type="button" className="btn btn-danger btn-sm" onClick={() => this.remove(a)} disabled={s.busyId === a.id}><Trash2 size={14} aria-hidden="true" />{t('common.delete')}</button>
                       </div>
                     </li>
                   ))}
                 </ul>
               ) : (s.form ? null : (
-                <EmptyState icon={BellRing} title="No alerts yet">Create one here, or search the map and choose “Alert me about sales here”.</EmptyState>
+                <EmptyState icon={BellRing} title={t('alerts.none')}>{t('alerts.noneText', { cta: t('list.alertMe') })}</EmptyState>
               ))}
               {s.form ? this.renderForm() : (
                 <div className="row">
-                  <button type="button" className="btn btn-primary" onClick={() => this.openNew()} disabled={full || !s.globallyEnabled}><Plus size={16} aria-hidden="true" />New alert</button>
-                  <span className="small muted">{s.alerts.length} of {s.limit} alerts{full ? ' — delete one to add another' : ''}</span>
+                  <button type="button" className="btn btn-primary" onClick={() => this.openNew()} disabled={full || !s.globallyEnabled}><Plus size={16} aria-hidden="true" />{t('alerts.new')}</button>
+                  <span className="small muted">{t('alerts.count', { n: s.alerts.length, limit: s.limit })}{full ? t('alerts.fullNote') : ''}</span>
                 </div>
               )}
             </React.Fragment>

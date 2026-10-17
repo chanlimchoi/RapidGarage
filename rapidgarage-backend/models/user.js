@@ -17,6 +17,8 @@ module.exports = (sequelize, DataTypes) => {
     // Set by a moderator: can still read conversations but not send or start them.
     messagingBanned: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     messagingBannedAt: { type: DataTypes.DATE, allowNull: true },
+    // UI, email and flyer language: 'en' | 'es' | 'ko' | 'zh-CN' (lib/i18n.js); null = not chosen.
+    locale: { type: DataTypes.STRING(8), allowNull: true, validate: { isIn: [['en', 'es', 'ko', 'zh-CN']] } },
   }, {
     // Never load the password hash unless explicitly asked for (login only).
     // The encrypted Maps key is excluded too; load it only via scope('withMapsKey').

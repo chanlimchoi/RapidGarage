@@ -5,12 +5,27 @@
 //   sign    bold yard sign (11x8.5 in, landscape) with an optional arrow
 // The QR is drawn as vector squares (crisp at any size) with error correction
 // "Q" (25%), so a bit of rain, tape or a staple doesn't stop it scanning.
-// Fonts are the PDF built-ins (Helvetica), so no font files ship with the app;
-// text is limited to Windows-1252, and anything outside it (e.g. emoji) is dropped.
+// Text is localized (lib/flyerText.js). Each string is drawn in Helvetica when
+// it fits Windows-1252 (the PDF built-in fonts, nothing embedded), otherwise in
+// a subset of Noto Sans CJK SC (assets/fonts, OFL) covering Latin, Hangul,
+// kana and GB2312 Chinese; pdfkit embeds only the glyphs a flyer uses. The CJK
+// face has no bold here, so bold CJK text is drawn with a thin outline.
+// Characters neither font has (e.g. emoji) are dropped.
+const fs = require('fs');
+const path = require('path');
+const fontkit = require('fontkit');
 const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
 const schedule = require('./schedule');
-const { formatPrice } = require('./price');
+const i18n = require('./i18n');
+const ft = require('./flyerText');
+
+const CJK_FONT = path.join(__dirname, '..', 'assets', 'fonts', 'RapidGarageCJK-Regular.otf');
+let cjk = null; // { buf, font } loaded on first use
+function cjkFont() {
+  if (!cjk) { const buf = fs.readFileSync(CJK_FONT); cjk = { buf, font: fontkit.create(buf) }; }
+  return cjk;
+}
 
 const BRAND = '#c2410c';
 const INK = '#1c1917';
@@ -18,29 +33,48 @@ const MUTED = '#57534e';
 const EC = 'Q';
 const LAYOUTS = ['letter', 'half', 'sign'];
 const ARROWS = ['none', 'left', 'right'];
-const HEADLINES = { garage: 'Garage sale', yard: 'Yard sale', moving: 'Moving sale', estate: 'Estate sale' };
+const HEADLINES = ft.HEADLINES; // choice -> catalog key
 
 // ---- text -----------------------------------------------------------------
 const CP1252_EXTRA = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
+const winAnsiChar = (ch) => { const c = ch.charCodeAt(0); return (c >= 0x20 && c <= 0x7e) || (c >= 0xa0 && c <= 0xff) || CP1252_EXTRA.indexOf(ch) !== -1; };
+const tidy = (s) => String(s == null ? '' : s)
+  .replace(/[\u2010-\u2012]/g, '-').replace(/\u2212/g, '-').replace(/[\u00a0\u2007\u2009\u202f]/g, ' ');
+// Windows-1252 only (what Helvetica can show).
 function pdfText(s) {
-  return String(s == null ? '' : s)
-    .replace(/[\u2010-\u2012]/g, '-').replace(/\u2212/g, '-').replace(/[\u00a0\u2007\u202f]/g, ' ')
-    .split('').filter((ch) => {
-      const c = ch.charCodeAt(0);
-      return (c >= 0x20 && c <= 0x7e) || (c >= 0xa0 && c <= 0xff) || CP1252_EXTRA.indexOf(ch) !== -1;
-    }).join('').replace(/\s+/g, ' ').trim();
+  return Array.from(tidy(s)).filter(winAnsiChar).join('').replace(/\s+/g, ' ').trim();
+}
+const isWinAnsi = (s) => Array.from(String(s)).every((ch) => ch === '\n' || winAnsiChar(ch));
+// Anything either font can draw.
+function flyerText(s) {
+  const t = tidy(s);
+  if (isWinAnsi(t)) return t.replace(/\s+/g, ' ').trim();
+  const f = cjkFont().font;
+  return Array.from(t).filter((ch) => winAnsiChar(ch) || /\s/.test(ch) || f.hasGlyphForCodePoint(ch.codePointAt(0))).join('').replace(/\s+/g, ' ').trim();
+}
+// Keeps line breaks (address block).
+
+// Pick the face for `text` and return extra text() options (outline for bold CJK).
+function face(doc, text, bold, size, color) {
+  doc.fontSize(size);
+  if (isWinAnsi(text)) { doc.font(bold ? 'Helvetica-Bold' : 'Helvetica'); return {}; }
+  if (!doc._rgCjk) { doc.registerFont('RG-CJK', cjkFont().buf); doc._rgCjk = true; }
+  doc.font('RG-CJK');
+  if (!bold) return {};
+  doc.lineWidth(Math.max(0.2, size * 0.035)).strokeColor(color || INK);
+  return { fill: true, stroke: true };
+}
+// Draw text in the face it needs.
+function put(doc, text, x, y, o) {
+  const opts = Object.assign({}, o);
+  const extra = face(doc, text, opts.bold, opts.size, opts.color);
+  ['bold', 'size', 'color'].forEach((k) => delete opts[k]);
+  if (!isWinAnsi(text)) delete opts.characterSpacing; // letter-spacing reads badly in Hangul/Chinese
+  doc.fillColor(o.color || INK);
+  doc.text(text, x, y, Object.assign(opts, extra));
 }
 
 // ---- schedule -------------------------------------------------------------
-const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-function clock12(hhmm, compact) {
-  const [h, m] = String(hhmm).split(':').map(Number);
-  const ap = h >= 12 ? 'PM' : 'AM';
-  const hh = h % 12 || 12;
-  const t = m ? hh + ':' + String(m).padStart(2, '0') : String(hh);
-  return compact ? t + ap : t + ' ' + ap;
-}
 // Upcoming (not ended) days, sorted; all days marked ended if none are left.
 function saleDays(post, at) {
   const t = +(at || schedule.now());
@@ -49,47 +83,41 @@ function saleDays(post, at) {
   const live = all.filter((d) => d.endsAt > t);
   return { days: live.length ? live : all, ended: all.length > 0 && !live.length };
 }
-function dayParts(date) {
-  const [y, m, d] = date.split('-').map(Number);
-  return { wd: WD[schedule.weekdayOf(date)], mon: MON[m - 1], d, y };
-}
-function scheduleLines(days) {
-  return days.map((x) => { const p = dayParts(x.date); return p.wd + ', ' + p.mon + ' ' + p.d + '  ·  ' + clock12(x.start) + ' – ' + clock12(x.end); });
-}
-// Big-sign wording: "SAT & SUN  8AM–2PM" when the hours match, else one line per day.
-function signWhen(days) {
-  if (!days.length) return [];
-  const sameHours = days.every((x) => x.start === days[0].start && x.end === days[0].end);
-  const hours = (x) => clock12(x.start, true) + '–' + clock12(x.end, true);
-  if (sameHours && days.length <= 3) return [days.map((x) => dayParts(x.date).wd).join(' & ').toUpperCase(), hours(days[0])];
-  return days.slice(0, 2).map((x) => (dayParts(x.date).wd + ' ' + dayParts(x.date).mon + ' ' + dayParts(x.date).d + '  ' + hours(x)).toUpperCase())
-    .concat(days.length > 2 ? ['+ ' + (days.length - 2) + ' MORE DAYS'] : []);
-}
-
-function cents(c) {
-  if (c == null) return '';
-  if (c === 0) return 'Free';
-  return '$' + (c % 100 ? (c / 100).toFixed(2) : String(c / 100));
-}
+const scheduleLines = (days, lang) => ft.dayLines(lang || 'en', days);
+const signWhen = (days, lang) => ft.signLines(lang || 'en', days);
 
 // What goes on the flyer (also used by tests and the HTML print view).
+// opts.lang: 'en' | 'es' | 'ko' | 'zh-CN' (default English).
 function flyerData(post, opts) {
   const o = opts || {};
+  const lang = i18n.CODES.includes(o.lang) ? o.lang : 'en';
+  const L = (key, vars) => i18n.t(lang, key, vars);
   const { days, ended } = saleDays(post, o.now);
   const unsold = (o.noItems ? [] : post.items || []).filter((i) => !i.sold).sort((a, b) => a.position - b.position || a.id - b.id);
   const cityLine = [post.city, [post.state, post.zipCode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
   return {
-    title: pdfText(post.title) || 'Garage sale',
-    headline: HEADLINES[o.headline] || HEADLINES.garage,
-    street: pdfText(post.street),
-    cityLine: pdfText(cityLine),
-    price: pdfText(formatPrice(post) || ''),
-    when: scheduleLines(days),
-    signWhen: signWhen(days),
+    lang,
+    title: flyerText(post.title) || L(HEADLINES.garage),
+    headline: L(HEADLINES[o.headline] || HEADLINES.garage),
+    street: flyerText(post.street),
+    cityLine: flyerText(cityLine),
+    price: flyerText(ft.priceIn(lang, post)),
+    // Built from Intl and the catalog (not user text), spacing kept as designed.
+    when: scheduleLines(days, lang),
+    signWhen: signWhen(days, lang),
     ended,
-    items: unsold.slice(0, o.itemCount || 6).map((i) => ({ name: pdfText(i.name), price: cents(i.priceCents) })),
+    items: unsold.slice(0, o.itemCount || 6).map((i) => ({ name: flyerText(i.name), price: ft.centsIn(lang, i.priceCents) })).filter((i) => i.name),
     unsoldCount: unsold.length,
     url: o.url,
+    text: {
+      brand: 'RapidGarage',
+      tagline: L('flyer.tagline'), when: L('flyer.when'), where: L('flyer.where'), prices: L('flyer.prices'), featured: L('flyer.featured'),
+      ended: L('flyer.ended'), seeDates: L('flyer.seeDates'), seeAddress: L('flyer.seeAddress'),
+      scanTitle: L('flyer.scanTitle'), scanHint: L('flyer.scanHint'), listed: L('flyer.listed'),
+      seeListing: L('flyer.seeListing'), scanForItems: L('flyer.scanForItems'),
+      moreWhen: (n) => L('flyer.moreWhen', { count: n }), moreItems: (n) => L('flyer.more', { count: n }),
+      upper: (str) => ft.upper(lang, str),
+    },
   };
 }
 
@@ -120,14 +148,18 @@ function drawQr(doc, url, x, y, size) {
 
 // ---- layout helpers ---------------------------------------------------------
 // Largest size (<= max, >= min) at which `text` fits `width` on `lines` lines.
-function fit(doc, text, font, max, min, width, lines) {
-  doc.font(font);
+function fit(doc, text, bold, max, min, width, lines) {
   for (let s = max; s > min; s -= 1) {
-    doc.fontSize(s);
-    if (doc.heightOfString(text, { width, lineGap: 0 }) <= s * 1.2 * (lines || 1) + 0.5) return s;
+    face(doc, text, bold, s);
+    // Measured in the face's own line height (CJK lines are taller than Helvetica's).
+    if (doc.heightOfString(text, { width, lineGap: 0 }) <= Math.max(s * 1.2, doc.currentLineHeight(true)) * (lines || 1) + 0.5) return s;
   }
   return min;
 }
+const widthOf = (doc, text, bold, size) => { face(doc, text, bold, size); return doc.widthOfString(text); };
+// Line box height per point of font size: ~1.15 for Helvetica (the layout's
+// original numbers), ~1.45 for the CJK face.
+const lineRatio = (doc, text) => { if (isWinAnsi(text)) return 1.15; face(doc, text, false, 100); return doc.currentLineHeight(true) / 100; };
 
 function coverImage(doc, buf, x, y, w, h) {
   doc.save();
@@ -138,6 +170,7 @@ function coverImage(doc, buf, x, y, w, h) {
 
 // ---- flyers (letter / half) ---------------------------------------------
 function drawFlyer(doc, d, photo, half) {
+  const T = d.text;
   const W = doc.page.width;
   const H = doc.page.height;
   const s = half ? 0.68 : 1;
@@ -146,29 +179,29 @@ function drawFlyer(doc, d, photo, half) {
   // Brand band.
   const band = 54 * s;
   doc.rect(0, 0, W, band).fill(BRAND);
-  doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(22 * s).text('RapidGarage', m, band / 2 - 11 * s, { lineBreak: false });
-  doc.font('Helvetica').fontSize(10 * s).text('Garage & yard sales near you', m, band / 2 - 5 * s, { width: inner, align: 'right', lineBreak: false });
+  put(doc, T.brand, m, band / 2 - 11 * s, { bold: true, size: 22 * s, color: '#ffffff', lineBreak: false });
+  put(doc, T.tagline, m, band / 2 - 5 * s, { size: 10 * s, color: '#ffffff', width: inner, align: 'right', lineBreak: false });
   let y = band + 26 * s;
-  doc.fillColor(BRAND).font('Helvetica-Bold').fontSize(13 * s).text(d.headline.toUpperCase(), m, y, { characterSpacing: 2 * s, lineBreak: false });
+  put(doc, T.upper(d.headline), m, y, { bold: true, size: 13 * s, color: BRAND, characterSpacing: 2 * s, lineBreak: false });
   y += 22 * s;
-  const tSize = fit(doc, d.title, 'Helvetica-Bold', 44 * s, 18 * s, inner, 2);
-  doc.fillColor(INK).font('Helvetica-Bold').fontSize(tSize).text(d.title, m, y, { width: inner, height: tSize * 2.5, ellipsis: true, lineGap: 0 });
+  const tSize = fit(doc, d.title, true, 44 * s, 18 * s, inner, 2);
+  put(doc, d.title, m, y, { bold: true, size: tSize, width: inner, height: tSize * 2.5, ellipsis: true, lineGap: 0 });
   y = doc.y + 18 * s;
   // Details (left) and photo (right).
   const photoW = photo ? (half ? 130 : 220) : 0;
   const leftW = photo ? inner - photoW - 20 * s : inner;
   const top = y;
-  const label = (t) => { doc.fillColor(BRAND).font('Helvetica-Bold').fontSize(10 * s).text(t.toUpperCase(), m, y, { width: leftW, characterSpacing: 1 }); y = doc.y + 3 * s; };
-  const body = (t, size, bold) => { doc.fillColor(INK).font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(size * s).text(t, m, y, { width: leftW, lineGap: 2 * s }); y = doc.y + 12 * s; };
-  label('When');
+  const label = (t) => { put(doc, T.upper(t), m, y, { bold: true, size: 10 * s, color: BRAND, width: leftW, characterSpacing: 1 }); y = doc.y + 3 * s; };
+  const body = (t, size, bold) => { put(doc, t, m, y, { bold, size: size * s, width: leftW, lineGap: 2 * s }); y = doc.y + 12 * s; };
+  label(T.when);
   if (d.when.length) {
     const shown = d.when.slice(0, half ? 3 : 4);
-    shown.forEach((l, i) => body(l + (i === shown.length - 1 && d.when.length > shown.length ? '  (+' + (d.when.length - shown.length) + ' more)' : ''), 16, true));
-    if (d.ended) body('This sale has ended.', 12, false);
-  } else body('See the listing for dates and times.', 14, false);
-  label('Where');
-  body([d.street, d.cityLine].filter(Boolean).join('\n') || 'See the listing for the address.', 15, false);
-  if (d.price) { label('Prices'); body(d.price, 15, true); }
+    shown.forEach((l, i) => body(l + (i === shown.length - 1 && d.when.length > shown.length ? '  ' + T.moreWhen(d.when.length - shown.length) : ''), 16, true));
+    if (d.ended) body(T.ended, 12, false);
+  } else body(T.seeDates, 14, false);
+  label(T.where);
+  body([d.street, d.cityLine].filter(Boolean).join('\n') || T.seeAddress, 15, false);
+  if (d.price) { label(T.prices); body(d.price, 15, true); }
   if (photo) coverImage(doc, photo, W - m - photoW, top, photoW, photoW * 0.75);
   y = Math.max(y, photo ? top + photoW * 0.75 + 16 * s : y);
   // Featured items.
@@ -176,7 +209,7 @@ function drawFlyer(doc, d, photo, half) {
   const qrTop = H - m - qrSize - 18 * s;
   const items = d.items.slice(0, half ? 4 : 6);
   if (items.length) {
-    label('Featured items');
+    label(T.featured);
     const colW = half ? inner : (inner - 24) / 2;
     const rows = half ? items.length : Math.ceil(items.length / 2);
     const rowH = 19 * s;
@@ -187,24 +220,27 @@ function drawFlyer(doc, d, photo, half) {
       const ix = m + col * (colW + 24);
       const iy = startY + row * rowH;
       if (iy + rowH > qrTop - 10) return;
-      doc.fillColor(BRAND).font('Helvetica-Bold').fontSize(12 * s).text('•', ix, iy, { lineBreak: false });
-      const priceW = it.price ? doc.font('Helvetica-Bold').fontSize(12 * s).widthOfString(it.price) : 0;
-      doc.fillColor(INK).font('Helvetica').fontSize(12 * s).text(it.name, ix + 12 * s, iy, { width: colW - 12 * s - priceW - 8, height: rowH, ellipsis: true, lineBreak: false });
-      if (it.price) doc.font('Helvetica-Bold').text(it.price, ix + colW - priceW, iy, { lineBreak: false });
+      put(doc, '•', ix, iy, { bold: true, size: 12 * s, color: BRAND, lineBreak: false });
+      const priceW = it.price ? widthOf(doc, it.price, true, 12 * s) : 0;
+      put(doc, it.name, ix + 12 * s, iy, { size: 12 * s, width: colW - 12 * s - priceW - 8, height: rowH, ellipsis: true, lineBreak: false });
+      if (it.price) put(doc, it.price, ix + colW - priceW, iy, { bold: true, size: 12 * s, lineBreak: false });
     });
     y = startY + rows * rowH;
     const more = d.unsoldCount - items.length;
-    if (more > 0 && y + 14 * s < qrTop - 6) { doc.fillColor(MUTED).font('Helvetica').fontSize(10 * s).text('…and ' + more + ' more on the listing', m + 12 * s, y); }
+    if (more > 0 && y + 14 * s < qrTop - 6) put(doc, T.moreItems(more), m + 12 * s, y, { size: 10 * s, color: MUTED });
   }
   // QR block.
   doc.save().roundedRect(m, qrTop - 12 * s, inner, qrSize + 24 * s, 12 * s).lineWidth(1.5).stroke('#e7e5e4').restore();
   drawQr(doc, d.url, m + 12 * s, qrTop, qrSize);
   const tx = m + qrSize + 32 * s;
   const tw = inner - qrSize - 44 * s;
-  doc.fillColor(INK).font('Helvetica-Bold').fontSize(20 * s).text('Scan for photos, items & directions', tx, qrTop + 14 * s, { width: tw });
-  doc.fillColor(MUTED).font('Helvetica').fontSize(11 * s).text('Point your phone camera at the code, or type:', tx, doc.y + 8 * s, { width: tw });
-  doc.fillColor(BRAND).font('Courier-Bold').fontSize(fit(doc, d.url, 'Courier-Bold', 15 * s, 7, tw, 1)).text(d.url, tx, doc.y + 4 * s, { width: tw, lineBreak: false });
-  doc.fillColor(MUTED).font('Helvetica').fontSize(8 * s).text('Listed on RapidGarage', m, H - m + 4 * s, { width: inner, align: 'center', lineBreak: false });
+  put(doc, T.scanTitle, tx, qrTop + 14 * s, { bold: true, size: 20 * s, width: tw });
+  put(doc, T.scanHint, tx, doc.y + 8 * s, { size: 11 * s, color: MUTED, width: tw });
+  const urlY = doc.y + 4 * s;
+  doc.font('Courier-Bold');
+  const us = (() => { for (let z = 15 * s; z > 7; z -= 1) { doc.fontSize(z); if (doc.widthOfString(d.url) <= tw) return z; } return 7; })();
+  doc.fillColor(BRAND).font('Courier-Bold').fontSize(us).text(d.url, tx, urlY, { width: tw, lineBreak: false });
+  put(doc, T.listed, m, H - m + 4 * s, { size: 8 * s, color: MUTED, width: inner, align: 'center', lineBreak: false });
 }
 
 // ---- yard sign ------------------------------------------------------------
@@ -218,6 +254,7 @@ function drawArrow(doc, dir, x, y, w, h) {
 }
 
 function drawSign(doc, d, arrow) {
+  const T = d.text;
   const W = doc.page.width;
   const H = doc.page.height;
   const m = 30;
@@ -225,10 +262,10 @@ function drawSign(doc, d, arrow) {
   const inner = W - 2 * m - 20;
   const x0 = m + 10;
   let y = m + 22;
-  const head = d.headline.toUpperCase();
-  const hs = fit(doc, head, 'Helvetica-Bold', 120, 40, inner, 1);
-  doc.fillColor(INK).font('Helvetica-Bold').fontSize(hs).text(head, x0, y, { width: inner, align: 'center', lineBreak: false });
-  y += hs * 1.05;
+  const head = T.upper(d.headline);
+  const hs = fit(doc, head, true, 120, 40, inner, 1);
+  put(doc, head, x0, y, { bold: true, size: hs, width: inner, align: 'center', lineBreak: false });
+  y += hs * (isWinAnsi(head) ? 1.05 : lineRatio(doc, head) * 0.92);
   // Arrow + when.
   const rowH = 150;
   const qrSize = 150;
@@ -240,36 +277,37 @@ function drawSign(doc, d, arrow) {
     ww = inner - aw - 20;
     wx = arrow === 'left' ? x0 + aw + 20 : x0;
   }
-  const when = d.signWhen.length ? d.signWhen : ['SEE LISTING'];
+  const when = d.signWhen.length ? d.signWhen : [T.seeListing];
   const lines = when.slice(0, 3);
   const per = (rowH - 6) / lines.length;
   lines.forEach((l, i) => {
-    const sz = Math.min(fit(doc, l, 'Helvetica-Bold', 96, 22, ww, 1), per / 1.15);
-    doc.fillColor(BRAND).font('Helvetica-Bold').fontSize(sz).text(l, wx, y + i * per + (per - sz) / 2, { width: ww, align: 'center', lineBreak: false });
+    const r = lineRatio(doc, l);
+    const sz = Math.min(fit(doc, l, true, 96, 22, ww, 1), per / r);
+    put(doc, l, wx, y + i * per + (per - sz * (r === 1.15 ? 1 : r)) / 2, { bold: true, size: sz, color: BRAND, width: ww, align: 'center', lineBreak: false });
   });
   y += rowH + 14;
   // Address (left) + QR (right).
   const aw2 = inner - qrSize - 24;
-  const street = (d.street || '').toUpperCase();
+  const street = T.upper(d.street || '');
   if (street) {
-    const ss = fit(doc, street, 'Helvetica-Bold', 54, 22, aw2, 1);
-    doc.fillColor(INK).font('Helvetica-Bold').fontSize(ss).text(street, x0, y + 6, { width: aw2, lineBreak: false, ellipsis: true });
+    const ss = fit(doc, street, true, 54, 22, aw2, 1);
+    put(doc, street, x0, y + 6, { bold: true, size: ss, width: aw2, lineBreak: false, ellipsis: true });
     y = y + 6 + ss * 1.15;
   }
-  if (d.cityLine) doc.fillColor(MUTED).font('Helvetica').fontSize(fit(doc, d.cityLine, 'Helvetica', 26, 12, aw2, 1)).text(d.cityLine, x0, y + 2, { width: aw2, lineBreak: false });
+  if (d.cityLine) put(doc, d.cityLine, x0, y + 2, { size: fit(doc, d.cityLine, false, 26, 12, aw2, 1), color: MUTED, width: aw2, lineBreak: false });
   const qy = H - m - 10 - qrSize - 16;
   drawQr(doc, d.url, x0 + inner - qrSize, qy, qrSize);
-  doc.fillColor(INK).font('Helvetica-Bold').fontSize(12).text('SCAN FOR ITEMS', x0 + inner - qrSize, qy + qrSize + 2, { width: qrSize, align: 'center', lineBreak: false });
-  if (d.price) doc.fillColor(INK).font('Helvetica-Bold').fontSize(fit(doc, d.price, 'Helvetica-Bold', 30, 12, aw2, 1)).text(d.price, x0, H - m - 10 - 46, { width: aw2, lineBreak: false });
+  put(doc, T.scanForItems, x0 + inner - qrSize - 20, qy + qrSize + 2, { bold: true, size: fit(doc, T.scanForItems, true, 12, 7, qrSize + 40, 1), width: qrSize + 40, align: 'center', lineBreak: false });
+  if (d.price) put(doc, d.price, x0, H - m - 10 - 46, { bold: true, size: fit(doc, d.price, true, 30, 12, aw2, 1), width: aw2, lineBreak: false });
 }
 
-// -> Promise<Buffer>
+// -> Promise<Buffer>. opts.lang picks the flyer's language (default English).
 function buildPdf(post, opts) {
   const o = Object.assign({ layout: 'letter', arrow: 'none', photo: null }, opts);
   const d = flyerData(post, o);
   const size = o.layout === 'half' ? [396, 612] : o.layout === 'sign' ? [792, 612] : [612, 792];
-  const doc = new PDFDocument({ size, margin: 0, autoFirstPage: true, compress: true,
-    info: { Title: d.title + (o.layout === 'sign' ? ' (sign)' : ' (flyer)'), Author: 'RapidGarage', Creator: 'RapidGarage', Producer: 'RapidGarage' } });
+  const doc = new PDFDocument({ size, margin: 0, autoFirstPage: true, compress: true, lang: d.lang,
+    info: { Title: i18n.t(d.lang, o.layout === 'sign' ? 'flyer.docSign' : 'flyer.docFlyer', { title: d.title }), Author: 'RapidGarage', Creator: 'RapidGarage', Producer: 'RapidGarage' } });
   const chunks = [];
   doc.on('data', (c) => chunks.push(c));
   const done = new Promise((resolve, reject) => { doc.on('end', () => resolve(Buffer.concat(chunks))); doc.on('error', reject); });
@@ -278,4 +316,4 @@ function buildPdf(post, opts) {
   return done;
 }
 
-module.exports = { LAYOUTS, ARROWS, HEADLINES, pdfText, flyerData, scheduleLines, signWhen, qrPng, qrSvg, buildPdf, EC };
+module.exports = { LAYOUTS, ARROWS, HEADLINES, pdfText, flyerText, isWinAnsi, flyerData, scheduleLines, signWhen, qrPng, qrSvg, buildPdf, EC };

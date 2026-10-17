@@ -4,11 +4,12 @@ import { rules, validateAll, serverFieldErrors, focusFirstError } from '../lib/v
 import { browserTimeZone, formDays, validateDays } from '../lib/schedule';
 import ScheduleEditor from './ScheduleEditor';
 import { priceErrors, toPriceNumber, formatPrice } from '../lib/price';
+import { t } from '../i18n';
 
 const SCHEMA = {
   title: rules.title,
-  street: rules.required('Street address'),
-  city: rules.required('City'),
+  street: rules.required(() => t('form.street')),
+  city: rules.required(() => t('form.city')),
   zipCode: rules.zip,
 };
 
@@ -121,23 +122,23 @@ export default class PostForm extends React.Component {
     return (
       <form ref={this.formRef} onSubmit={this.submit} noValidate className="stack">
         <section className="card-form">
-          <h2 className="h4">Sale details</h2>
-          {textDisabled ? <Alert tone="info">Only the seller can change the text. As an admin you can manage the photos below.</Alert> : null}
+          <h2 className="h4">{t('post.details')}</h2>
+          {textDisabled ? <Alert tone="info">{t('form.textDisabled')}</Alert> : null}
           <fieldset disabled={textDisabled} style={{ border: 0, padding: 0, margin: 0 }} className="form-grid">
-            <Field id="title" label="Title" error={this.shown('title', errors)} hint="For example: “Moving sale: furniture, books and kitchenware”">
+            <Field id="title" label={t('form.title')} error={this.shown('title', errors)} hint={t('form.titleHint')}>
               {this.input('title', 'title', { maxLength: 255, autoFocus: this.props.autoFocus, required: true })}
             </Field>
-            <Field id="address" label="Street address" error={this.shown('street', errors)}>
+            <Field id="address" label={t('form.street')} error={this.shown('street', errors)}>
               {this.input('street', 'address', { autoComplete: 'street-address', required: true })}
             </Field>
             <div className="form-grid form-grid-3">
-              <Field id="city" label="City" error={this.shown('city', errors)}>
+              <Field id="city" label={t('form.city')} error={this.shown('city', errors)}>
                 {this.input('city', 'city', { autoComplete: 'address-level2', required: true })}
               </Field>
-              <Field id="state" label="State" optional>
+              <Field id="state" label={t('form.state')} optional>
                 {this.input('state', 'state', { autoComplete: 'address-level1', maxLength: 32, placeholder: 'NY' })}
               </Field>
-              <Field id="zipcode" label="Zip code" error={this.shown('zipCode', errors)}>
+              <Field id="zipcode" label={t('form.zip')} error={this.shown('zipCode', errors)}>
                 {this.input('zipCode', 'zipcode', { inputMode: 'numeric', autoComplete: 'postal-code', maxLength: 10, placeholder: '10001', required: true })}
               </Field>
             </div>
@@ -145,30 +146,30 @@ export default class PostForm extends React.Component {
               shownFor={(k) => this.state.submitted || this.state.touched[k] || !!this.state.serverErrors[k]}
               onChange={(days) => this.changeDays(days)} onBlurRow={(i) => this.blur('days.' + i)()} />
             <fieldset className="price-fieldset" aria-describedby="price-hint">
-              <legend className="field-label">Prices <span className="optional"> (optional)</span></legend>
+              <legend className="field-label">{t('form.prices')} <span className="optional"> {t('ui.optional')}</span></legend>
               <label className="checkbox-row" htmlFor="isFree">
                 <span className="switch">
                   <input id="isFree" name="isFree" type="checkbox" role="switch" checked={v.isFree} onChange={(e) => this.toggleFree(e)}
                     aria-invalid={this.shown('isFree', errors) ? 'true' : undefined} />
                   <span className="switch-track" aria-hidden="true" />
                 </span>
-                <span><strong>Everything is free</strong></span>
+                <span><strong>{t('form.allFree')}</strong></span>
               </label>
               {this.shown('isFree', errors) ? <span className="field-error" id="isFree-error">{errors.isFree}</span> : null}
               <div className="form-grid form-grid-2">
-                <Field id="priceMin" label="Lowest price ($)" optional error={this.shown('priceMin', errors)}>
+                <Field id="priceMin" label={t('form.lowest')} optional error={this.shown('priceMin', errors)}>
                   {this.input('priceMin', 'priceMin', { inputMode: 'numeric', placeholder: '1', disabled: v.isFree, maxLength: 7 })}
                 </Field>
-                <Field id="priceMax" label="Highest price ($)" optional error={this.shown('priceMax', errors)}>
+                <Field id="priceMax" label={t('form.highest')} optional error={this.shown('priceMax', errors)}>
                   {this.input('priceMax', 'priceMax', { inputMode: 'numeric', placeholder: '50', disabled: v.isFree, maxLength: 7 })}
                 </Field>
               </div>
               <span className="field-hint" id="price-hint">
-                Whole dollars. Use the same number twice for one price, or fill in just the highest for “Up to”.
-                {preview ? <span className="price-preview"> Shows as: <span className="chip chip-price">{preview}</span></span> : null}
+                {t('form.priceHint')}
+                {preview ? <span className="price-preview">{t('form.showsAs')}<span className="chip chip-price">{preview}</span></span> : null}
               </span>
             </fieldset>
-            <Field id="description" label="Description" optional hint="What's for sale, payment options, parking, early birds…">
+            <Field id="description" label={t('form.description')} optional hint={t('form.descriptionHint')}>
               <textarea className="textarea" name="description" rows="6" value={v.description} onChange={this.change('description')} />
             </Field>
           </fieldset>
@@ -177,7 +178,7 @@ export default class PostForm extends React.Component {
         {error ? <Alert tone="danger">{error}</Alert> : null}
         {footer || null}
         <div className="form-actions">
-          <button type="submit" className="btn btn-primary btn-lg" disabled={saving}>{saving ? <Spinner /> : null}{saving ? 'Saving…' : submitLabel}</button>
+          <button type="submit" className="btn btn-primary btn-lg" disabled={saving}>{saving ? <Spinner /> : null}{saving ? t('common.saving') : submitLabel}</button>
           {this.props.cancel || null}
         </div>
       </form>

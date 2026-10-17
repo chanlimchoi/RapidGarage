@@ -9,6 +9,7 @@ import toast from './toast';
 import { priceFieldError, formatUSD } from '../lib/price';
 import { WHEN_FILTERS } from '../lib/schedule';
 import { KEYWORD_MAX } from '../lib/items';
+import { t } from '../i18n';
 
 const PAGE_SIZE = 10;
 
@@ -41,15 +42,15 @@ class PostList extends React.Component {
     if (this.state.activeKeyword) q.push('keyword=' + encodeURIComponent(this.state.activeKeyword));
     apiFetch('/allPosts' + (q.length ? '?' + q.join('&') : ''))
       .then(({ ok, data }) => this.mounted && this.setState({ loading: false, results: ok && Array.isArray(data) ? data : [],
-        error: ok ? '' : errorMessage(data, 'Could not load recent sales.') }))
-      .catch(() => this.mounted && this.setState({ loading: false, results: [], error: 'Unable to reach the server. Please try again.' }));
+        error: ok ? '' : errorMessage(data, t('list.loadFailed')) }))
+      .catch(() => this.mounted && this.setState({ loading: false, results: [], error: t('common.network') }));
   }
 
   componentWillUnmount() { this.mounted = false; }
 
   // where: { coords } or { q }
   runSearch(where, page) {
-    if (priceFieldError(this.state.maxPrice, 'Max price')) return Promise.resolve();
+    if (priceFieldError(this.state.maxPrice, t('list.maxPrice'))) return Promise.resolve();
     const params = Object.assign({ radius: this.state.radius, page: page || 1, pageSize: PAGE_SIZE },
       where.coords ? { lat: where.coords.lat, lng: where.coords.lng } : { q: where.q },
       this.state.freeOnly ? { free: 'true' } : {},
@@ -61,14 +62,14 @@ class PostList extends React.Component {
       if (!this.mounted) return;
       if (!ok) {
         return this.setState({ loading: false, results: [], total: 0, mode: 'error', center: null,
-          error: errorMessage(data, 'Search failed.') });
+          error: errorMessage(data, t('list.searchFailed')) });
       }
       this.setState({
         loading: false, results: data.results, mode: data.mode, page: data.page, totalPages: data.totalPages,
         total: data.total, resultRadius: data.radius, center: data.center ? { lat: data.center.lat, lng: data.center.lng } : null,
         notice: data.notice ? data.notice.message : '', selectedId: null, lastWhere: where, resultFilter: data.filter || null,
       });
-    }).catch(() => this.mounted && this.setState({ loading: false, error: 'Unable to reach the server. Please try again.' }));
+    }).catch(() => this.mounted && this.setState({ loading: false, error: t('common.network') }));
   }
 
   handleSubmit(e) {
@@ -83,7 +84,7 @@ class PostList extends React.Component {
         this.setState({ loading: true, error: '', mode: 'recent', lastWhere: null, center: null });
         return this.loadRecent();
       }
-      this.setState({ error: 'Type an address or zip code, or use your location.' });
+      this.setState({ error: t('list.needWhere') });
       if (this.qInput) this.qInput.focus();
       return null;
     });
@@ -98,7 +99,7 @@ class PostList extends React.Component {
   }
 
   useMyLocation() {
-    if (!navigator.geolocation) return this.setState({ error: 'Your browser cannot share its location.' });
+    if (!navigator.geolocation) return this.setState({ error: t('list.noGeo') });
     this.setState({ locating: true, error: '' });
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -106,14 +107,14 @@ class PostList extends React.Component {
         this.setState({ coords, q: '', locating: false });
         this.runSearch({ coords }, 1);
       },
-      () => this.setState({ locating: false, error: 'Could not get your location. Allow location access or type an address.' }),
+      () => this.setState({ locating: false, error: t('list.geoFailed') }),
       { timeout: 10000, maximumAge: 300000 }
     );
   }
 
   // Price filters re-run the current search (they need a center or text).
   changeFilter(patch) {
-    this.setState(patch, () => { if (this.state.lastWhere && !priceFieldError(this.state.maxPrice, 'Max price')) this.runSearch(this.state.lastWhere, 1); });
+    this.setState(patch, () => { if (this.state.lastWhere && !priceFieldError(this.state.maxPrice, t('list.maxPrice'))) this.runSearch(this.state.lastWhere, 1); });
   }
 
   // When filter works on the recent list too (server-side ?when=).
@@ -142,7 +143,7 @@ class PostList extends React.Component {
     const f = s.resultFilter || {};
     const q = s.lastWhere && s.lastWhere.q;
     const body = {
-      label: (q ? 'Near ' + q : 'Near my location').slice(0, 80),
+      label: (q ? t('list.alertNear', { place: q }) : t('list.alertNearMe')).slice(0, 80),
       lat: s.center.lat, lng: s.center.lng, radiusMiles: s.resultRadius,
       freeOnly: !!f.freeOnly, maxPrice: !f.freeOnly && f.maxPrice !== null && f.maxPrice !== undefined ? f.maxPrice : null,
     };
@@ -151,9 +152,9 @@ class PostList extends React.Component {
     createAlert(body).then(({ ok, data }) => {
       if (!this.mounted) return;
       this.setState({ alertBusy: false, alertSavedFor: ok ? key : this.state.alertSavedFor });
-      if (ok) toast.success("Alert saved. We'll email you about new sales within " + body.radiusMiles + ' mi. Manage it in Settings.');
-      else toast.error(errorMessage(data, 'Could not save the alert.'));
-    }).catch(() => { if (this.mounted) this.setState({ alertBusy: false }); toast.error('Unable to reach the server.'); });
+      if (ok) toast.success(t('list.alertSaved', { miles: body.radiusMiles }));
+      else toast.error(errorMessage(data, t('list.alertFailed')));
+    }).catch(() => { if (this.mounted) this.setState({ alertBusy: false }); toast.error(t('common.networkShort')); });
   }
 
   renderAlertCta() {
@@ -162,14 +163,14 @@ class PostList extends React.Component {
     // Alerts match by area and price only, so don't offer one for a keyword search.
     if (config.saleAlerts === false || s.loading || s.mode !== 'distance' || !s.center || s.activeKeyword) return null;
     if (!this.props.user) {
-      return <Link className="btn btn-secondary btn-sm search-alert-cta" to="/login"><BellRing size={16} aria-hidden="true" />Log in to get alerts for this area</Link>;
+      return <Link className="btn btn-secondary btn-sm search-alert-cta" to="/login"><BellRing size={16} aria-hidden="true" />{t('list.loginForAlerts')}</Link>;
     }
     if (s.alertSavedFor && s.alertSavedFor === this.searchKey()) {
-      return <Link className="btn btn-secondary btn-sm search-alert-cta" to="/settings#alerts"><Check size={16} aria-hidden="true" />Alert saved</Link>;
+      return <Link className="btn btn-secondary btn-sm search-alert-cta" to="/settings#alerts"><Check size={16} aria-hidden="true" />{t('list.alertSavedBtn')}</Link>;
     }
     return (
       <button type="button" className="btn btn-secondary btn-sm search-alert-cta" onClick={this.alertHere} disabled={s.alertBusy}>
-        {s.alertBusy ? <Spinner /> : <BellRing size={16} aria-hidden="true" />}Alert me about sales here
+        {s.alertBusy ? <Spinner /> : <BellRing size={16} aria-hidden="true" />}{t('list.alertMe')}
       </button>
     );
   }
@@ -197,35 +198,35 @@ class PostList extends React.Component {
     if (!s.results.length) {
       if (s.activeKeyword && !s.error) {
         return (
-          <EmptyState icon={SearchX} title={'No sales with “' + s.activeKeyword + '”'}
-            action={<button type="button" className="btn btn-secondary" onClick={() => this.clearKeyword()}>Show all sales</button>}>
-            {s.mode === 'distance' ? 'Nothing matching within ' + s.resultRadius + ' miles. Try fewer words or a bigger radius.' : 'Try fewer or different words.'}
+          <EmptyState icon={SearchX} title={t('list.noKeyword', { keyword: s.activeKeyword })}
+            action={<button type="button" className="btn btn-secondary" onClick={() => this.clearKeyword()}>{t('list.showAll')}</button>}>
+            {s.mode === 'distance' ? t('list.noKeywordNear', { miles: s.resultRadius }) : t('list.tryFewer')}
           </EmptyState>
         );
       }
       if (s.mode === 'recent' && !s.error && s.when) {
-        const label = WHEN_FILTERS.filter((w) => w.value === s.when)[0].label.toLowerCase();
+        const noneTitle = { now: 'list.noneOpenNow', today: 'list.noneToday', weekend: 'list.noneWeekend' }[s.when] || 'list.noneFound';
         return (
-          <EmptyState icon={SearchX} title={'No sales ' + (s.when === 'now' ? 'open right now' : label)}
-            action={<button type="button" className="btn btn-secondary" onClick={() => this.changeWhen('')}>Show all dates</button>}>
-            Try another day, or search near you.
+          <EmptyState icon={SearchX} title={t(noneTitle)}
+            action={<button type="button" className="btn btn-secondary" onClick={() => this.changeWhen('')}>{t('list.showAllDates')}</button>}>
+            {t('list.tryAnotherDay')}
           </EmptyState>
         );
       }
       if (s.mode === 'recent' && !s.error) {
         return (
-          <EmptyState icon={Store} title="No sales posted yet"
-            action={<Link to="/newpost" className="btn btn-primary"><Plus size={16} aria-hidden="true" />Post the first sale</Link>}>
-            Be the first to list a garage or yard sale in your area.
+          <EmptyState icon={Store} title={t('list.noneYet')}
+            action={<Link to="/newpost" className="btn btn-primary"><Plus size={16} aria-hidden="true" />{t('list.postFirst')}</Link>}>
+            {t('list.beFirst')}
           </EmptyState>
         );
       }
       return (
-        <EmptyState icon={SearchX} title="No sales found"
+        <EmptyState icon={SearchX} title={t('list.noneFound')}
           action={s.mode === 'distance' && s.resultRadius < 50
-            ? <button type="button" className="btn btn-secondary" onClick={() => this.changeRadius(50)}>Search within 50 mi</button>
-            : <button type="button" className="btn btn-secondary" onClick={() => this.clearSearch()}>Show recent sales</button>}>
-          {s.mode === 'distance' ? 'Nothing within ' + s.resultRadius + ' miles of there. Try a bigger radius.' : 'Try a different address or zip code.'}
+            ? <button type="button" className="btn btn-secondary" onClick={() => this.changeRadius(50)}>{t('list.within50')}</button>
+            : <button type="button" className="btn btn-secondary" onClick={() => this.clearSearch()}>{t('list.showRecent')}</button>}>
+          {s.mode === 'distance' ? t('list.nothingWithin', { miles: s.resultRadius }) : t('list.tryOtherAddress')}
         </EmptyState>
       );
     }
@@ -235,12 +236,12 @@ class PostList extends React.Component {
           {s.results.map((post) => <PostCard key={post.id} post={post} selected={post.id === s.selectedId} onShowOnMap={this.showOnMap} />)}
         </div>
         {s.mode !== 'recent' && s.totalPages > 1 ? (
-          <nav className="pager search-pager" aria-label="Search results pages">
+          <nav className="pager search-pager" aria-label={t('list.pages')}>
             <button type="button" className="btn btn-secondary btn-sm" disabled={s.page <= 1 || s.loading}
-              onClick={() => this.runSearch(s.lastWhere, s.page - 1)}><ChevronLeft size={16} aria-hidden="true" />Prev</button>
-            <span className="small muted">Page {s.page} of {s.totalPages}</span>
+              onClick={() => this.runSearch(s.lastWhere, s.page - 1)}><ChevronLeft size={16} aria-hidden="true" />{t('common.prev')}</button>
+            <span className="small muted">{t('common.pageOf', { page: s.page, total: s.totalPages })}</span>
             <button type="button" className="btn btn-secondary btn-sm" disabled={s.page >= s.totalPages || s.loading}
-              onClick={() => this.runSearch(s.lastWhere, s.page + 1)}>Next<ChevronRight size={16} aria-hidden="true" /></button>
+              onClick={() => this.runSearch(s.lastWhere, s.page + 1)}>{t('common.next')}<ChevronRight size={16} aria-hidden="true" /></button>
           </nav>
         ) : null}
       </React.Fragment>
@@ -250,53 +251,53 @@ class PostList extends React.Component {
   render() {
     const s = this.state;
     const heading = s.mode === 'distance'
-      ? s.total + ' sale' + (s.total === 1 ? '' : 's') + ' within ' + s.resultRadius + ' mi'
-      : s.mode === 'text' ? s.total + ' matching sale' + (s.total === 1 ? '' : 's') : 'Recent sales';
+      ? t('list.withinHeading', { count: s.total, miles: s.resultRadius })
+      : s.mode === 'text' ? t('list.matchingHeading', { count: s.total }) : t('list.recent');
     const f = s.mode !== 'recent' ? s.resultFilter : null;
-    const priceNote = f && f.freeOnly ? ' · free only' : f && f.maxPrice !== null && f.maxPrice !== undefined ? ' · items ' + formatUSD(f.maxPrice) + ' or less' : '';
+    const priceNote = f && f.freeOnly ? t('list.noteFree') : f && f.maxPrice !== null && f.maxPrice !== undefined ? t('list.noteMax', { price: formatUSD(f.maxPrice) }) : '';
     const whenItem = WHEN_FILTERS.filter((w) => w.value && w.value === s.when)[0];
-    const filterNote = priceNote + (whenItem ? ' · ' + whenItem.label.toLowerCase() : '') + (s.activeKeyword ? ' · “' + s.activeKeyword + '”' : '');
-    const maxPriceError = priceFieldError(s.maxPrice, 'Max price');
+    const filterNote = priceNote + (whenItem ? ' · ' + t(whenItem.labelKey).toLocaleLowerCase() : '') + (s.activeKeyword ? ' · “' + s.activeKeyword + '”' : '');
+    const maxPriceError = priceFieldError(s.maxPrice, t('list.maxPrice'));
     return (
       <div className="container">
         <section className="hero">
-          <h1>Find garage sales near you</h1>
-          <p>Browse yard sales, estate sales and moving sales in your neighborhood.</p>
-          <form className="search-bar map-search" onSubmit={this.handleSubmit} role="search" aria-label="Search sales">
+          <h1>{t('list.heroTitle')}</h1>
+          <p>{t('list.heroLead')}</p>
+          <form className="search-bar map-search" onSubmit={this.handleSubmit} role="search" aria-label={t('list.searchSales')}>
             <div className="search-field search-field-what">
               <Package size={18} aria-hidden="true" />
-              <label htmlFor="search-keyword" className="sr-only">What are you looking for?</label>
+              <label htmlFor="search-keyword" className="sr-only">{t('list.whatLabel')}</label>
               <input id="search-keyword" name="keyword" type="search" value={s.keyword} maxLength={KEYWORD_MAX}
-                onChange={(e) => this.setState({ keyword: e.target.value })} placeholder="What? e.g. bike, lamp" autoComplete="off" />
-              {s.activeKeyword ? <button type="button" className="btn btn-ghost btn-icon btn-sm keyword-clear" aria-label="Clear what you're looking for" onClick={() => this.clearKeyword()}><X size={14} aria-hidden="true" /></button> : null}
+                onChange={(e) => this.setState({ keyword: e.target.value })} placeholder={t('list.whatPlaceholder')} autoComplete="off" />
+              {s.activeKeyword ? <button type="button" className="btn btn-ghost btn-icon btn-sm keyword-clear" aria-label={t('list.clearWhat')} onClick={() => this.clearKeyword()}><X size={14} aria-hidden="true" /></button> : null}
             </div>
             <div className="search-field">
               <Search size={18} aria-hidden="true" />
-              <label htmlFor="search-q" className="sr-only">Address or zip code</label>
+              <label htmlFor="search-q" className="sr-only">{t('list.whereLabel')}</label>
               <input id="search-q" name="q" type="search" value={s.q} maxLength={200} ref={(el) => { this.qInput = el; }}
-                onChange={(e) => this.setState({ q: e.target.value })} placeholder="Address or zip code" autoComplete="postal-code" />
+                onChange={(e) => this.setState({ q: e.target.value })} placeholder={t('list.whereLabel')} autoComplete="postal-code" />
             </div>
             <div className="search-field search-field-radius">
               <Ruler size={18} aria-hidden="true" />
-              <label htmlFor="search-radius" className="sr-only">Radius</label>
+              <label htmlFor="search-radius" className="sr-only">{t('list.radius')}</label>
               <select id="search-radius" name="radius" value={s.radius} onChange={(e) => this.changeRadius(Number(e.target.value))}>
-                {SEARCH_RADII.map((r) => <option key={r} value={r}>Within {r} mi</option>)}
+                {SEARCH_RADII.map((r) => <option key={r} value={r}>{t('list.withinMi', { miles: r })}</option>)}
               </select>
             </div>
             <div className="search-buttons">
               <button type="button" className="btn btn-secondary" onClick={this.useMyLocation} disabled={s.locating}>
-                {s.locating ? <Spinner /> : <LocateFixed size={16} aria-hidden="true" />} {s.locating ? 'Locating…' : 'Use my location'}
+                {s.locating ? <Spinner /> : <LocateFixed size={16} aria-hidden="true" />} {s.locating ? t('list.locating') : t('list.useLocation')}
               </button>
               <button type="submit" className="btn btn-primary" disabled={s.loading && s.mode !== 'recent'}>
-                <Search size={16} aria-hidden="true" />Search
+                <Search size={16} aria-hidden="true" />{t('common.search')}
               </button>
             </div>
           </form>
-          <div className="search-filters" role="group" aria-label="Price filters">
+          <div className="search-filters" role="group" aria-label={t('list.priceFilters')}>
             <div className="search-field">
               <Tag size={16} aria-hidden="true" />
-              <label htmlFor="search-max-price" className="small muted">Max price $</label>
-              <input id="search-max-price" name="maxPrice" type="text" inputMode="numeric" maxLength={7} placeholder="Any"
+              <label htmlFor="search-max-price" className="small muted">{t('list.maxPriceLabel')}</label>
+              <input id="search-max-price" name="maxPrice" type="text" inputMode="numeric" maxLength={7} placeholder={t('list.any')}
                 value={s.maxPrice} disabled={s.freeOnly} aria-invalid={maxPriceError ? 'true' : undefined}
                 aria-describedby={maxPriceError ? 'search-max-price-error' : 'search-max-price-hint'}
                 onChange={(e) => this.setState({ maxPrice: e.target.value })}
@@ -305,16 +306,16 @@ class PostList extends React.Component {
             </div>
             <label className="chip-toggle" htmlFor="search-free">
               <input id="search-free" name="free" type="checkbox" checked={s.freeOnly} onChange={(e) => this.changeFilter({ freeOnly: e.target.checked })} />
-              Free only
+              {t('list.freeOnly')}
             </label>
-            <div className="segmented when-filter" role="group" aria-label="When">
+            <div className="segmented when-filter" role="group" aria-label={t('list.when')}>
               {WHEN_FILTERS.map((w) => (
-                <button key={w.value || 'any'} type="button" aria-pressed={s.when === w.value} onClick={() => this.changeWhen(w.value)}>{w.label}</button>
+                <button key={w.value || 'any'} type="button" aria-pressed={s.when === w.value} onClick={() => this.changeWhen(w.value)}>{t(w.labelKey)}</button>
               ))}
             </div>
             {maxPriceError
               ? <span className="field-error" id="search-max-price-error">{maxPriceError}</span>
-              : <span className="field-hint" id="search-max-price-hint">Sales with something at or under this price.</span>}
+              : <span className="field-hint" id="search-max-price-hint">{t('list.maxPriceHint')}</span>}
           </div>
         </section>
 
@@ -322,17 +323,17 @@ class PostList extends React.Component {
         {s.error ? <Alert tone="danger" className="search-error">{s.error}</Alert> : null}
 
         <div className="browse-toolbar">
-          <h2 className="search-heading" aria-live="polite">{s.loading ? 'Searching…' : heading + filterNote}</h2>
+          <h2 className="search-heading" aria-live="polite">{s.loading ? t('list.searching') : heading + filterNote}</h2>
           {this.renderAlertCta()}
-          <div className="segmented view-toggle" role="group" aria-label="View">
-            <button type="button" aria-pressed={s.view === 'list'} onClick={() => this.setState({ view: 'list' })}><List size={16} aria-hidden="true" />List</button>
-            <button type="button" aria-pressed={s.view === 'map'} onClick={() => this.setState({ view: 'map' })}><MapIcon size={16} aria-hidden="true" />Map</button>
+          <div className="segmented view-toggle" role="group" aria-label={t('list.view')}>
+            <button type="button" aria-pressed={s.view === 'list'} onClick={() => this.setState({ view: 'list' })}><List size={16} aria-hidden="true" />{t('list.list')}</button>
+            <button type="button" aria-pressed={s.view === 'map'} onClick={() => this.setState({ view: 'map' })}><MapIcon size={16} aria-hidden="true" />{t('card.map')}</button>
           </div>
         </div>
 
         <div className={'browse' + (s.view === 'map' ? ' show-map' : '')}>
-          <section className="browse-list" aria-label="Sales">{this.renderResults()}</section>
-          <section className="browse-map" aria-label="Map">
+          <section className="browse-list" aria-label={t('list.sales')}>{this.renderResults()}</section>
+          <section className="browse-map" aria-label={t('card.map')}>
             <Map posts={s.results} user={this.props.user} config={this.props.config}
               center={s.mode === 'distance' ? s.center : null} radius={s.mode === 'distance' ? s.resultRadius : null}
               selectedId={s.selectedId} onSelect={this.select} />

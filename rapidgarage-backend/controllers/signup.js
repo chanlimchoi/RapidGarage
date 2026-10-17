@@ -3,6 +3,7 @@ const models = require('../models');
 const { badRequest, conflict, serverError } = require('../lib/http');
 const { validateSignup } = require('../lib/validate');
 const { applyAdminBootstrap } = require('../lib/roles');
+const i18n = require('../lib/i18n');
 
 const User = models.User;
 
@@ -20,6 +21,8 @@ router.post('/', (req, res, next) => {
         lastName: typeof body.lastName === 'string' ? body.lastName.trim() : null,
         email,
         password: body.password,
+        // The language the person signed up in (web app sends it), else their browser's.
+        locale: i18n.normalize(body.locale) || i18n.fromAcceptLanguage(req.get('Accept-Language')),
       }).then((created) => applyAdminBootstrap(created, false)).then((user) => {
         req.login(user, (err) => {
           if (err) return next(err);

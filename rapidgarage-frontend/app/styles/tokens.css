@@ -121,3 +121,12 @@
     --shadow-lg: 0 14px 40px rgba(0, 0, 0, 0.55);
   }
 }
+
+/* CJK: Inter has no Hangul/Han glyphs, so name the platform fonts per language
+   (Han glyph shapes differ between Korean and Chinese). No web fonts download. */
+html:lang(ko) {
+  --font-sans: 'Inter Variable', Inter, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'Noto Sans CJK KR', system-ui, sans-serif;
+}
+html:lang(zh-CN) {
+  --font-sans: 'Inter Variable', Inter, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', system-ui, sans-serif;
+}

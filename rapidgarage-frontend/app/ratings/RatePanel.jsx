@@ -4,6 +4,7 @@ import { errorMessage, fetchConversationRating, saveRating, deleteRating, RATING
 import { Dialog, Field, Spinner } from '../components/ui';
 import toast from '../components/toast';
 import { Stars, StarInput, STAR_WORDS } from './Stars';
+import { t } from '../i18n';
 
 // Strip shown in a conversation: invites a rating once both sides have
 // written, shows mine (editable) and theirs. `refreshKey` changes when the
@@ -34,25 +35,25 @@ export default class RatePanel extends React.Component {
   save(e) {
     e.preventDefault();
     const { stars, comment } = this.state;
-    if (!stars) { this.setState({ error: 'Choose 1 to 5 stars.' }); return; }
+    if (!stars) { this.setState({ error: t('rate.choose') }); return; }
     const locked = this.state.data.mine && this.state.data.mine.commentLocked;
     this.setState({ saving: true, error: '' });
     saveRating(this.props.conversationId, stars, locked ? null : comment.trim() || null).then(({ ok, data }) => {
-      if (!ok) { this.setState({ saving: false, error: errorMessage(data, 'Could not save your rating.') }); return; }
+      if (!ok) { this.setState({ saving: false, error: errorMessage(data, t('rate.saveFailed')) }); return; }
       const first = !this.state.data.mine;
       this.setState({ saving: false, open: false, data });
-      toast.success(first ? 'Thanks for rating ' + data.other.name : 'Rating updated.');
-    }).catch(() => this.setState({ saving: false, error: 'Unable to reach the server.' }));
+      toast.success(first ? t('rate.thanks', { name: data.other.name }) : t('rate.updated'));
+    }).catch(() => this.setState({ saving: false, error: t('common.networkShort') }));
   }
 
   remove() {
-    if (!window.confirm('Delete your rating? You can rate again later.')) return;
+    if (!window.confirm(t('rate.confirmDelete'))) return;
     this.setState({ saving: true });
     deleteRating(this.props.conversationId).then(({ ok, data }) => {
       this.setState({ saving: false, open: false });
-      if (!ok) { toast.error(errorMessage(data, 'Could not delete your rating.')); return; }
+      if (!ok) { toast.error(errorMessage(data, t('rate.deleteFailed'))); return; }
       this.setState({ data });
-      toast.success('Rating deleted.');
+      toast.success(t('rate.deleted'));
     }).catch(() => this.setState({ saving: false }));
   }
 
@@ -61,24 +62,24 @@ export default class RatePanel extends React.Component {
     const locked = data.mine && data.mine.commentLocked;
     const left = RATING_COMMENT_MAX - comment.length;
     return (
-      <Dialog id="rate" title={(data.mine ? 'Edit your rating of ' : 'Rate ') + data.other.name} onClose={() => this.setState({ open: false })}
-        description="Your rating and comment are public on their profile, with your first name and last initial."
+      <Dialog id="rate" title={t(data.mine ? 'rate.editTitle' : 'rate.title', { name: data.other.name })} onClose={() => this.setState({ open: false })}
+        description={t('rate.public')}
         footer={(
           <React.Fragment>
-            {data.mine ? <button type="button" className="btn btn-ghost btn-danger-text" disabled={saving} onClick={() => this.remove()}><Trash2 size={16} aria-hidden="true" />Delete</button> : null}
+            {data.mine ? <button type="button" className="btn btn-ghost btn-danger-text" disabled={saving} onClick={() => this.remove()}><Trash2 size={16} aria-hidden="true" />{t('common.delete')}</button> : null}
             <span style={{ flex: 1 }} />
-            <button type="button" className="btn btn-secondary" onClick={() => this.setState({ open: false })}>Cancel</button>
-            <button type="submit" form="rate-form" className="btn btn-primary" disabled={saving}>{saving ? <Spinner /> : null}{data.mine ? 'Save changes' : 'Post rating'}</button>
+            <button type="button" className="btn btn-secondary" onClick={() => this.setState({ open: false })}>{t('common.cancel')}</button>
+            <button type="submit" form="rate-form" className="btn btn-primary" disabled={saving}>{saving ? <Spinner /> : null}{data.mine ? t('edit.saveChanges') : t('rate.post')}</button>
           </React.Fragment>
         )}>
         <form id="rate-form" className="stack" onSubmit={(e) => this.save(e)} noValidate>
           <StarInput value={stars} onChange={(v) => this.setState({ stars: v, error: '' })} />
           {locked ? (
-            <p className="small muted">A moderator removed your comment, so this rating can't have one. You can still change the stars.</p>
+            <p className="small muted">{t('rate.commentRemoved')}</p>
           ) : (
-            <Field id="rate-comment" label="Comment" optional hint={left < 60 ? left + ' characters left' : 'What was it like to deal with them?'}>
+            <Field id="rate-comment" label={t('rate.comment')} optional hint={left < 60 ? t('common.charsLeft', { count: left }) : t('rate.commentHint')}>
               <textarea id="rate-comment" className="textarea textarea-short" rows={3} maxLength={RATING_COMMENT_MAX} value={comment} onChange={(e) => this.setState({ comment: e.target.value })}
-                placeholder="Friendly, showed up on time…" />
+                placeholder={t('rate.commentPlaceholder')} />
             </Field>
           )}
           {error ? <p className="field-error" role="alert">{error}</p> : null}
@@ -94,28 +95,28 @@ export default class RatePanel extends React.Component {
     if (!mine && !theirs && !d.canRate) {
       // Nothing to show yet; a quiet hint once the user has written but the other side hasn't.
       return d.reason === 'needs_messages' && this.props.iWrote
-        ? <div className="rate-strip rate-strip-quiet small muted"><Star size={14} aria-hidden="true" />You can rate each other once {d.other.name} replies.</div>
+        ? <div className="rate-strip rate-strip-quiet small muted"><Star size={14} aria-hidden="true" />{t('rate.afterReply', { name: d.other.name })}</div>
         : null;
     }
     return (
-      <div className="rate-strip" aria-label="Ratings">
+      <div className="rate-strip" aria-label={t('rep.ratings')}>
         <div className="rate-strip-main">
           {mine ? (
-            <span className="rate-mine"><span className="small muted">You rated {d.other.name}</span>
-              <Stars value={mine.stars} /><span className="sr-only">{mine.stars} out of 5, {STAR_WORDS[mine.stars]}</span>
-              {mine.commentRemoved ? <span className="chip chip-warning">Comment removed by a moderator</span> : null}
+            <span className="rate-mine"><span className="small muted">{t('rate.youRated', { name: d.other.name })}</span>
+              <Stars value={mine.stars} /><span className="sr-only">{t('rate.outOf5', { n: mine.stars, word: STAR_WORDS[mine.stars] })}</span>
+              {mine.commentRemoved ? <span className="chip chip-warning">{t('rate.removedChip')}</span> : null}
             </span>
           ) : d.canRate ? (
-            <span className="small"><strong>How was dealing with {d.other.name}?</strong> <span className="muted">Rate them once you've met up.</span></span>
+            <span className="small"><strong>{t('rate.how', { name: d.other.name })}</strong> <span className="muted">{t('rate.once')}</span></span>
           ) : null}
-          {theirs ? <span className="rate-theirs small muted">{d.other.name} rated you <Stars value={theirs.stars} /><span className="sr-only">{theirs.stars} out of 5</span></span> : null}
+          {theirs ? <span className="rate-theirs small muted">{t('rate.theyRated', { name: d.other.name })} <Stars value={theirs.stars} /><span className="sr-only">{t('rate.nOutOf5', { n: theirs.stars })}</span></span> : null}
         </div>
         <div className="rate-strip-actions">
           {d.canRate ? (
             <button type="button" className={'btn btn-sm ' + (mine ? 'btn-ghost' : 'btn-primary')} onClick={() => this.openEditor()}>
-              {mine ? <Pencil size={14} aria-hidden="true" /> : <Star size={14} aria-hidden="true" />}{mine ? 'Edit rating' : 'Rate ' + d.other.name}
+              {mine ? <Pencil size={14} aria-hidden="true" /> : <Star size={14} aria-hidden="true" />}{mine ? t('rate.edit') : t('rate.title', { name: d.other.name })}
             </button>
-          ) : d.reason === 'blocked' ? <span className="small muted">Ratings are off while one of you is blocked.</span> : null}
+          ) : d.reason === 'blocked' ? <span className="small muted">{t('rate.blocked')}</span> : null}
         </div>
         {this.state.open ? this.renderDialog() : null}
       </div>
