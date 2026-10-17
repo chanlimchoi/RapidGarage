@@ -4,6 +4,9 @@ const { badRequest, forbidden, notFound, serverError, requireLogin, parseId } = 
 const { validatePost } = require('../lib/validate');
 const { isAdmin } = require('../lib/roles');
 const { removePhotoFiles } = require('./photos');
+const { geocodePost } = require('../lib/geo');
+
+const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
 const Post = models.Post;
 const photoInclude = { model: models.PostPhoto, as: 'photos' };
@@ -32,6 +35,8 @@ router.post('/', requireLogin, (req, res) => {
   const { errors, values } = validatePost(req.body || {}, false);
   if (Object.keys(errors).length) return badRequest(res, 'Invalid post.', errors);
   Post.create(Object.assign({}, values, { userId: req.user.id }))
+    // Geocoding never fails the request; without a key the post just has no coordinates.
+    .then((post) => geocodePost(post, req.user))
     .then((post) => res.status(201).json(post))
     .catch((err) => serverError(res, err));
 });
@@ -44,7 +49,9 @@ router.put('/:id', requireLogin, loadPost, requireOwner, (req, res) => {
   const { errors, values } = validatePost(req.body || {}, true);
   if (Object.keys(errors).length) return badRequest(res, 'Invalid post.', errors);
   if (!Object.keys(values).length) return badRequest(res, 'Nothing to update.');
+  const moved = ADDRESS_FIELDS.some((f) => values[f] !== undefined && values[f] !== req.post[f]);
   req.post.update(values)
+    .then((post) => (moved ? geocodePost(post, req.user) : post))
     .then((post) => res.json(post))
     .catch((err) => serverError(res, err));
 });

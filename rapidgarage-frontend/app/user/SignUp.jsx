@@ -55,24 +55,24 @@ class SignUp extends React.Component{
       <div className="col-lg-4 col-lg-offset-4" >
           <form onSubmit={this.handleSubmit}>
           <div className="input-group">
-            <span className="input-group-addon" style={spanstyle}>Email:</span>
-            <input id="email" type="text" className="form-control" ref="email" placeholder="Email address" required autoFocus/>
+            <label htmlFor="email" className="input-group-addon" style={spanstyle}>Email:</label>
+            <input id="email" name="email" type="email" autoComplete="email" className="form-control" ref="email" placeholder="Email address" required autoFocus/>
           </div>
           <div className="input-group">
-          <span className="input-group-addon" style={spanstyle}>Password:</span>
-          <input id="password" type="password" className="form-control" ref="password" placeholder="Password" required/>
+          <label htmlFor="password" className="input-group-addon" style={spanstyle}>Password:</label>
+          <input id="password" name="password" type="password" autoComplete="new-password" minLength={8} className="form-control" ref="password" placeholder="Password" required/>
           </div>
           <div className="input-group">
-          <span className="input-group-addon" style={spanstyle}>Re-type:</span>
-          <input id="passwordConfirm" type="password" className="form-control" ref="passwordConfirm" placeholder="Confirm Password" required/>
+          <label htmlFor="passwordConfirm" className="input-group-addon" style={spanstyle}>Re-type:</label>
+          <input id="passwordConfirm" name="passwordConfirm" type="password" autoComplete="new-password" className="form-control" ref="passwordConfirm" placeholder="Confirm Password" required/>
           </div>
           <div className="input-group">
-            <span className="input-group-addon" style={spanstyle}>First Name</span>
-            <input id="firstname" type="text" className="form-control" ref="firstName" placeholder="first name" required />
+            <label htmlFor="firstname" className="input-group-addon" style={spanstyle}>First Name</label>
+            <input id="firstname" name="firstName" type="text" autoComplete="given-name" className="form-control" ref="firstName" placeholder="first name" required />
           </div>
           <div className="input-group">
-          <span className="input-group-addon" style={spanstyle}>Last Name</span>
-            <input id="lastname" type="text" className="form-control" ref="lastName" placeholder="last name" required />
+          <label htmlFor="lastname" className="input-group-addon" style={spanstyle}>Last Name</label>
+            <input id="lastname" name="lastName" type="text" autoComplete="family-name" className="form-control" ref="lastName" placeholder="last name" required />
           </div>
             { this.state.error ? <p className="text-danger">{this.state.error}</p> : null }
             <button type="submit" className="btn btn-info">Sign Up</button>

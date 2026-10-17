@@ -9,7 +9,8 @@
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",
     "db:precheck": "node scripts/db-precheck.js precheck",
-    "db:cleanup": "node scripts/db-precheck.js cleanup"
+    "db:cleanup": "node scripts/db-precheck.js cleanup",
+    "geocode:backfill": "node scripts/geocode-backfill.js"
   },
   "author": "Edgardo Molina",
   "license": "ISC",

@@ -74,12 +74,12 @@ export default class Login extends React.Component{
       <div className="col-lg-4 col-lg-offset-4">
         <form onSubmit={this.handleSubmit}>
         <div className="input-group">
-          <span className="input-group-addon"><i className="glyphicon glyphicon-user"></i></span>
-          <input id="email" type="text" className="form-control" ref="email" placeholder="Email address"/>
+          <label htmlFor="email" className="input-group-addon"><i className="glyphicon glyphicon-user" aria-hidden="true"></i><span className="sr-only">Email</span></label>
+          <input id="email" name="email" type="email" autoComplete="username" className="form-control" ref="email" placeholder="Email address" required/>
         </div>
         <div className="input-group">
-          <span className="input-group-addon"><i className="glyphicon glyphicon-lock"></i></span>
-          <input id="password" type="password" className="form-control" ref="password" placeholder="Password"/>
+          <label htmlFor="password" className="input-group-addon"><i className="glyphicon glyphicon-lock" aria-hidden="true"></i><span className="sr-only">Password</span></label>
+          <input id="password" name="password" type="password" autoComplete="current-password" className="form-control" ref="password" placeholder="Password" required/>
         </div>
         { this.state.error ? <p className="text-danger">{this.state.error}</p> : null }
         <br />

@@ -81,6 +81,47 @@ Settings (`.env`):
 | `PHOTO_STORAGE` | `local` | Storage driver. `lib/storage/` has a small `put/remove/read` interface so an S3 driver can be added. |
 | `PHOTO_PUBLIC_BASE` | `/api/uploads` | URL prefix returned to browsers (matches the Vite `/api` proxy). Use e.g. `https://api.example.com/uploads` or a CDN in production. |
 
+## Map search
+
+Posts store `lat` / `lng` (migration `20261017010000-post-coordinates`), filled by server-side
+geocoding of street, city, state and zip when a post is created or its address changes.
+Clients cannot set coordinates. `geocodeStatus` records the outcome: `ok`, `no_key`, `not_found`
+or `error`. A post without coordinates is still saved and listed normally; it is only left out
+of distance results.
+
+Which key geocodes: `GOOGLE_GEOCODING_API_KEY`, else `GOOGLE_MAPS_API_KEY`, else the post
+owner's (or searching user's) own key when BYOK is enabled. Keys are never sent to clients or
+logged. Geocoding is rate-limited (`GEOCODE_MAX_PER_SECOND`, default 10, global;
+`GEOCODE_SEARCH_PER_MINUTE`, default 20, per user/IP for typed searches) and cached in memory.
+
+`GET /search` (public):
+
+| Param | Meaning |
+| --- | --- |
+| `lat`, `lng` | Center point (e.g. the browser's location). Needs no key. |
+| `q` | Address or zip to geocode as the center (200 chars max). Used when lat/lng are absent. |
+| `radius` | Miles: `5`, `10` (default), `25` or `50`. |
+| `page`, `pageSize` | Default 1 and 20; pageSize max 50. |
+
+Response: `{ mode, center, radius, notice, page, pageSize, total, totalPages, results }`. With
+`mode: "distance"`, results are sorted nearest first and carry `distanceMiles`. If `q` can't be
+geocoded (no key, rate limit or lookup error) the response is `mode: "text"`: posts whose zip
+equals `q`, or whose address or title contains it, with `distanceMiles: null` and a `notice`
+explaining why. An address Google can't find returns `404 location_not_found`. Invalid input
+returns `400 bad_request` with per-field details.
+
+Distance math: a lat/lng bounding box in SQL (indexed, and handles the antimeridian), then
+exact haversine in Node, so no PostGIS is needed.
+
+Backfill existing posts (back up first):
+
+```sh
+npm run geocode:backfill -- --dry-run      # list what would be geocoded
+npm run geocode:backfill                   # never geocoded, or failed with no_key / error
+npm run geocode:backfill -- --retry        # also retry addresses that were not_found
+npm run geocode:backfill -- --limit 500
+```
+
 ## Optional
 
 - If you want to add views and handlebars to your server side

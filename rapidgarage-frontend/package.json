@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@googlemaps/markerclusterer": "^2.6.2",
     "history": "^4.10.1",
     "react": "^16.14.0",
     "react-country-region-selector": "^1.4.7",
