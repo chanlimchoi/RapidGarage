@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Route, Switch, withRouter } from 'react-router-dom';
-import { fetchMe, apiFetch, fetchUnreadCount } from './api';
+import { fetchMe, apiFetch, fetchBadges } from './api';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import Toaster from './components/Toaster';
@@ -27,6 +27,9 @@ import EventsIndex from './events/EventsIndex';
 import EventForm from './events/EventForm';
 import EventPage from './events/EventPage';
 import EventPrint from './events/EventPrint';
+import WantedBoard from './wanted/WantedBoard';
+import WantedForm from './wanted/WantedForm';
+import WantedPage from './wanted/WantedPage';
 import Dashboard from './dashboard/Dashboard';
 import DashboardSale from './dashboard/DashboardSale';
 import * as savedStore from './lib/saved';
@@ -46,6 +49,8 @@ class App extends Component {
       config: { googleLogin: false, userMapsKeys: true, saleAlerts: true },
       // Unread messages, for the nav badge (polled while logged in).
       unread: 0,
+      // New sales matching my wanted posts (same poll).
+      wantedNew: 0,
       // Changing it re-mounts the page so every component re-renders its text.
       locale: i18n.locale(),
     };
@@ -75,10 +80,12 @@ class App extends Component {
 
   refreshUnread() {
     if (!this.state.user) {
-      if (this.state.unread) this.setState({ unread: 0 });
+      if (this.state.unread || this.state.wantedNew) this.setState({ unread: 0, wantedNew: 0 });
       return Promise.resolve();
     }
-    return fetchUnreadCount().then((n) => { if (n !== null && n !== this.state.unread) this.setState({ unread: n }); });
+    return fetchBadges().then((b) => {
+      if (b && (b.count !== this.state.unread || b.wantedMatches !== this.state.wantedNew)) this.setState({ unread: b.count, wantedNew: b.wantedMatches });
+    });
   }
 
   componentDidUpdate(prevProps) {
@@ -122,7 +129,7 @@ class App extends Component {
     const common = { user, ready };
     return (
       <div className="app" key={this.state.locale}>
-        <NavBar user={user} ready={ready} unread={this.state.unread} location={this.props.location} />
+        <NavBar user={user} ready={ready} unread={this.state.unread} wantedNew={this.state.wantedNew} location={this.props.location} />
         <main id="main" className="app-main" tabIndex="-1">
           <Switch>
             <Route exact path='/' render={(props) => <PostList {...props} {...common} config={config} />} />
@@ -144,6 +151,10 @@ class App extends Component {
             <Route path='/events/:id/edit' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
             <Route path='/events/:id/print' render={(props) => <EventPrint {...props} {...common} />} />
             <Route path='/events/:id' render={(props) => <EventPage {...props} {...common} />} />
+            <Route exact path='/wanted' render={(props) => <WantedBoard {...props} {...common} />} />
+            <Route path='/wanted/new' render={(props) => <WantedForm key='new' {...props} {...common} />} />
+            <Route path='/wanted/:id/edit' render={(props) => <WantedForm key={props.match.params.id} {...props} {...common} />} />
+            <Route path='/wanted/:id' render={(props) => <WantedPage {...props} {...common} onSeen={this.refreshUnread} />} />
             <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
             <Route path='/alerts/unsubscribe' component={Unsubscribe} />
             <Route path='/saved' render={(props) => <Saved {...props} {...common} config={config} />} />

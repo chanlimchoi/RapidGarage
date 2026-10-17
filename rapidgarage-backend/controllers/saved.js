@@ -5,6 +5,7 @@ const { badRequest, notFound, sendError, serverError, requireLogin, parseId } = 
 const { canSee } = require('../lib/moderation');
 const { isLat, isLng } = require('../lib/geo');
 const schedule = require('../lib/schedule');
+const curbside = require('../lib/curbside');
 const route = require('../lib/route');
 
 const MAX_SAVED = 200;
@@ -45,7 +46,7 @@ router.get('/', async (req, res) => {
   try {
     const { posts, unavailable } = await savedPosts(req.user);
     const at = schedule.now();
-    const results = posts.map((p) => Object.assign(p.toJSON(), { status: schedule.statusOf(p, at) }));
+    const results = await curbside.annotate(posts.map((p) => Object.assign(p.toJSON(), { status: schedule.statusOf(p, at) })), req.user);
     return res.json({ results, unavailable, limit: MAX_SAVED });
   } catch (err) { return serverError(res, err); }
 });

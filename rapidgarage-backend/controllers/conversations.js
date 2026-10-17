@@ -10,13 +10,23 @@ const { publicUser } = require('../lib/people');
 const ratings = require('../lib/ratings');
 const holds = require('../lib/holds');
 const schedule = require('../lib/schedule');
+const wanted = require('../lib/wanted');
+const { wantedEnabled } = require('../lib/features');
 
 const PERSON = ['id', 'firstName', 'lastName'];
 
 router.use(requireLogin);
 
-// How the post looks from inside a conversation.
+// How the post looks from inside a conversation. Conversations about a
+// wanted post (conv.wantedId) describe it the same way, with wanted: true.
+function wantedSummary(conv, w, me) {
+  if (!w) return { id: conv.wantedId, wanted: true, title: conv.postTitle, status: 'deleted', canView: false, thumbUrl: null };
+  const st = wanted.statusOf(w);
+  return { id: w.id, wanted: true, title: w.title, status: w.hidden ? 'hidden' : st === 'active' ? 'available' : 'closed', canView: wanted.canSee(me, w), thumbUrl: null };
+}
+
 function postSummary(conv, post, me) {
+  if (conv.wantedId) return wantedSummary(conv, post, me);
   if (!post) return { id: conv.postId, title: conv.postTitle, status: 'deleted', canView: false, thumbUrl: null };
   const canView = mod.canSee(me, post);
   const photos = post.photos || [];
@@ -53,11 +63,22 @@ async function withHolds(messages) {
 const BANNED_MSG = 'A moderator has turned off messaging for your account. You can still read your conversations.';
 
 async function loadPosts(ids) {
+  ids = ids.filter(Boolean);
   if (!ids.length) return new Map();
   const posts = await models.Post.findAll({ where: { id: ids }, include: [{ model: models.PostPhoto, as: 'photos' }] });
   posts.forEach((p) => (p.photos || []).sort((a, b) => a.position - b.position));
   return new Map(posts.map((p) => [p.id, p]));
 }
+
+async function loadWanteds(ids) {
+  ids = ids.filter(Boolean);
+  if (!ids.length) return new Map();
+  const rows = await models.WantedPost.findAll({ where: { id: ids } });
+  return new Map(rows.map((w) => [w.id, w]));
+}
+
+// The sale or wanted post a conversation is about.
+const subjectOf = (conv, posts, wanteds) => (conv.wantedId ? wanteds.get(conv.wantedId) : posts.get(conv.postId));
 
 async function summarize(conv, user, post, unread, blocks, last) {
   const me = user.id;
@@ -93,19 +114,26 @@ async function loadConversation(req, res, next) {
 }
 
 // GET /conversations : my conversations, most recent activity first.
-// The seller only sees a conversation once the buyer has sent something.
+// The person who didn't start it only sees it once something was sent: the
+// seller for sale conversations, the buyer (the wanted post's author) for
+// conversations about a wanted post.
 router.get('/', async (req, res) => {
   const me = req.user.id;
   try {
+    const sent = { lastMessageAt: { [Op.ne]: null } };
     const convs = await models.Conversation.findAll({
-      where: { [Op.or]: [{ buyerId: me }, { sellerId: me, lastMessageAt: { [Op.ne]: null } }] },
+      where: { [Op.or]: [
+        { wantedId: null, buyerId: me }, Object.assign({ wantedId: null, sellerId: me }, sent),
+        { wantedId: { [Op.ne]: null }, sellerId: me }, Object.assign({ wantedId: { [Op.ne]: null }, buyerId: me }, sent),
+      ] },
       include: [{ model: models.User, as: 'buyer', attributes: PERSON }, { model: models.User, as: 'seller', attributes: PERSON }],
       order: [['lastMessageAt', 'DESC'], ['createdAt', 'DESC']],
       limit: 200,
     });
     const ids = convs.map((c) => c.id);
-    const [posts, unread, blocks, lasts] = await Promise.all([
+    const [posts, wanteds, unread, blocks, lasts] = await Promise.all([
       loadPosts(Array.from(new Set(convs.map((c) => c.postId)))),
+      loadWanteds(Array.from(new Set(convs.map((c) => c.wantedId)))),
       msg.unreadCounts(me, ids),
       models.UserBlock.findAll({ where: { [Op.or]: [{ blockerId: me }, { blockedId: me }] }, raw: true }),
       ids.length ? models.Message.findAll({
@@ -116,7 +144,7 @@ router.get('/', async (req, res) => {
     const results = await Promise.all(convs.map((c) => {
       const other = c.otherId(me);
       const b = { byMe: blocks.some((x) => x.blockerId === me && x.blockedId === other), byThem: blocks.some((x) => x.blockerId === other && x.blockedId === me) };
-      return summarize(c, req.user, posts.get(c.postId), unread.get(c.id), b, lastBy.get(c.id));
+      return summarize(c, req.user, subjectOf(c, posts, wanteds), unread.get(c.id), b, lastBy.get(c.id));
     }));
     // Nulls (no messages yet) sort last regardless of DB null ordering.
     results.sort((a, b) => new Date(b.lastMessageAt || b.createdAt) - new Date(a.lastMessageAt || a.createdAt));
@@ -134,17 +162,65 @@ router.get('/unread', async (req, res) => {
     const counts = await msg.unreadCounts(req.user.id, null);
     let count = 0;
     counts.forEach((n) => { count += n; });
-    return res.json({ count, conversations: counts.size });
+    // New wanted-post matches ride along for the "Wanted" nav badge.
+    return res.json({ count, conversations: counts.size, wantedMatches: await wanted.newMatchCount(req.user.id) });
   } catch (err) {
     return serverError(res, err);
   }
 });
 
+// Conversations started in the last hour by `me` (as the buyer of a sale or
+// the seller answering a wanted post): one budget for both.
+const startedSince = (me, since) => models.Conversation.count({ where: { createdAt: { [Op.gte]: since }, [Op.or]: [{ wantedId: null, buyerId: me }, { wantedId: { [Op.ne]: null }, sellerId: me }] } });
+
+async function rateLimited(res, me) {
+  if ((await startedSince(me, new Date(Date.now() - 3600 * 1000))) < msg.conversationsPerHour()) return false;
+  res.set('Retry-After', '3600');
+  sendError(res, 429, 'rate_limited', 'You have started a lot of conversations. Please try again later.');
+  return true;
+}
+
+// POST /conversations { wantedId } : a seller answers a wanted post; the
+// wanted post's author is the buyer. Only open (active, unexpired, visible)
+// wanted posts take new conversations; an existing one stays reachable.
+async function startAboutWanted(req, res, wantedId) {
+  const me = req.user.id;
+  try {
+    const w = await models.WantedPost.findByPk(wantedId);
+    if (!w || !wanted.canSee(req.user, w)) return notFound(res, 'Wanted post not found.');
+    if (w.userId === me) return forbidden(res, "You can't message yourself.");
+    if (req.user.messagingBanned) return sendError(res, 403, 'messaging_banned', BANNED_MSG);
+    const where = { wantedId, buyerId: w.userId, sellerId: me };
+    const existing = await models.Conversation.findOne({ where });
+    if (existing) return res.status(200).json({ id: existing.id, created: false });
+    if (!(await wantedEnabled())) return sendError(res, 403, 'feature_disabled', 'Wanted posts are turned off on this site right now.');
+    if (w.hidden) return sendError(res, 403, 'wanted_unavailable', "This wanted post is unavailable, so you can't start a new conversation about it.");
+    if (wanted.statusOf(w) !== 'active') return sendError(res, 409, 'wanted_closed', "This wanted post has expired or was marked found, so you can't start a new conversation about it.");
+    const blocks = await msg.blockState(me, w.userId);
+    if (blocks.byMe || blocks.byThem) return sendError(res, 403, 'blocked', "You can't message this person.");
+    if (await rateLimited(res, me)) return undefined;
+    const [conv, created] = await models.Conversation.findOrCreate({ where, defaults: { postId: null, postTitle: w.title } });
+    return res.status(created ? 201 : 200).json({ id: conv.id, created });
+  } catch (err) {
+    if (err && err.name === 'SequelizeUniqueConstraintError') {
+      const conv = await models.Conversation.findOne({ where: { wantedId, sellerId: me } });
+      if (conv) return res.status(200).json({ id: conv.id, created: false });
+    }
+    return serverError(res, err);
+  }
+}
+
 // POST /conversations { postId } : start (201) or reuse (200) my conversation
-// with the seller of postId.
+// with the seller of postId. { wantedId } instead: see startAboutWanted.
 router.post('/', async (req, res) => {
   const me = req.user.id;
-  const postId = parseId((req.body || {}).postId);
+  const body = req.body || {};
+  if (body.wantedId !== undefined && body.postId === undefined) {
+    const wantedId = parseId(body.wantedId);
+    if (!wantedId) return badRequest(res, 'wantedId must be a positive integer.', { wantedId: 'Choose a wanted post.' });
+    return startAboutWanted(req, res, wantedId);
+  }
+  const postId = parseId(body.postId);
   if (!postId) return badRequest(res, 'postId must be a positive integer.', { postId: 'Choose a post.' });
   try {
     const post = await models.Post.findByPk(postId);
@@ -158,12 +234,7 @@ router.post('/', async (req, res) => {
     if (post.hidden) return sendError(res, 403, 'post_unavailable', 'This post is unavailable, so you can\'t start a new conversation about it.');
     const blocks = await msg.blockState(me, post.userId);
     if (blocks.byMe || blocks.byThem) return sendError(res, 403, 'blocked', "You can't message this person.");
-    const since = new Date(Date.now() - 3600 * 1000);
-    const recent = await models.Conversation.count({ where: { buyerId: me, createdAt: { [Op.gte]: since } } });
-    if (recent >= msg.conversationsPerHour()) {
-      res.set('Retry-After', '3600');
-      return sendError(res, 429, 'rate_limited', 'You have started a lot of conversations. Please try again later.');
-    }
+    if (await rateLimited(res, me)) return undefined;
     const [conv, created] = await models.Conversation.findOrCreate({
       where: { postId, buyerId: me, sellerId: post.userId },
       defaults: { postTitle: post.title },
@@ -195,9 +266,9 @@ router.get('/:id', loadConversation, async (req, res) => {
     const hasMore = rows.length > msg.PAGE_SIZE;
     const messages = rows.slice(0, msg.PAGE_SIZE).reverse();
     await markRead(conv, me, messages);
-    const posts = await loadPosts([conv.postId]);
+    const [posts, wanteds] = await Promise.all([loadPosts([conv.postId]), loadWanteds([conv.wantedId])]);
     const blocks = await msg.blockState(me, conv.otherId(me));
-    const summary = await summarize(conv, req.user, posts.get(conv.postId), 0, blocks, messages[messages.length - 1]);
+    const summary = await summarize(conv, req.user, subjectOf(conv, posts, wanteds), 0, blocks, messages[messages.length - 1]);
     summary.messagingBanned = !!req.user.messagingBanned;
     summary.canSend = !blocks.byMe && !blocks.byThem && !summary.messagingBanned;
     // Only *your own* open report is ever mentioned to a participant.
@@ -284,12 +355,7 @@ router.post('/:id/report', loadConversation, async (req, res) => {
   try {
     const existing = await models.ConversationReport.findOne({ where: { conversationId: conv.id, reporterId: me, status: 'open' } });
     if (existing) return sendError(res, 409, 'conflict', 'You already reported this conversation. A moderator will review it.');
-    const since = new Date(Date.now() - 3600 * 1000);
-    const [p, c] = await Promise.all([
-      models.Report.count({ where: { reporterId: me, createdAt: { [Op.gte]: since } } }),
-      models.ConversationReport.count({ where: { reporterId: me, createdAt: { [Op.gte]: since } } }),
-    ]);
-    if (p + c >= mod.reportsPerHour()) {
+    if ((await mod.recentReportCount(me)) >= mod.reportsPerHour()) {
       res.set('Retry-After', '3600');
       return sendError(res, 429, 'rate_limited', 'You have sent a lot of reports. Please try again later.');
     }

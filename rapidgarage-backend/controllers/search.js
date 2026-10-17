@@ -7,10 +7,13 @@
 //   when=today|weekend|now: sales open in that window (sale's local time)
 //   keyword: words that must each match the title, description or an unsold item
 //   neighborhood=true: only sales that are part of a neighborhood sale
+//   curbside=true: only sales with leftovers free on the curb right now
+//     (lib/curbside.js). Those also show without the filter, even after the
+//     sale ended, and count as free for free=true and any maxPrice.
 // Results carry `event: { id, name }` for sales in a neighborhood sale, and a
 // distance search also returns `events`: neighborhood sales centered within
 // the radius (with at least one sale), so the map can show one pin for each.
-// Ended sales never show up.
+// Ended sales never show up, unless their leftovers are free on the curb.
 // Without a usable geocoding key, q falls back to a plain text/zip match
 // (no distances) and the response says so in `notice`.
 const router = require('express').Router();
@@ -20,11 +23,12 @@ const models = require('../models');
 const { badRequest, sendError, serverError } = require('../lib/http');
 const { ZIP_RE } = require('../lib/validate');
 const geo = require('../lib/geo');
-const { PRICE_CAP, priceWhere } = require('../lib/price');
+const { PRICE_CAP, priceWhere, matchesPrice } = require('../lib/price');
 const { visibleWhere } = require('../lib/moderation');
 const schedule = require('../lib/schedule');
 const itemsLib = require('../lib/items');
 const eventsLib = require('../lib/events');
+const curbside = require('../lib/curbside');
 
 const MAX_PAGE_SIZE = 50;
 const MAX_CANDIDATES = 5000; // hard cap on rows pulled by the bounding box
@@ -80,6 +84,11 @@ function parseQuery(query) {
     if (nb === 'true' || nb === '1') out.neighborhood = true;
     else if (nb !== 'false' && nb !== '0') errors.neighborhood = 'neighborhood must be true or false.';
   }
+  const cs = query.curbside;
+  if (cs !== undefined && cs !== '') {
+    if (cs === 'true' || cs === '1') out.curbside = true;
+    else if (cs !== 'false' && cs !== '0') errors.curbside = 'curbside must be true or false.';
+  }
   const k = itemsLib.parseKeyword(query.keyword);
   if (k.error) errors.keyword = k.error;
   else if (k.words) { out.words = k.words; out.keyword = k.keyword; }
@@ -99,21 +108,47 @@ function paginate(items, page, pageSize) {
 // Combine where clauses with AND (each may contain its own Op.or).
 const and = (...parts) => ({ [Op.and]: parts.filter(Boolean) });
 
+// Which sales a filter admits: scheduled sales (price filter, not ended) or a
+// live curbside offer (free, so it passes any price filter).
+function saleWhere(filter, user) {
+  const now = schedule.now();
+  if (filter.curbside) return and(curbside.activeWhere(now), { hidden: false });
+  return { [Op.or]: [and(priceWhere(Op, filter), schedule.notEndedWhere(now)), and(curbside.activeWhere(now), { hidden: false })] };
+}
+
+// Does row `r` pass the filter as a scheduled sale (not via a curbside offer)?
+// schedOk: ids that passed the `when` filter on their sale days.
+function passesAsSale(r, filter, schedOk, now) {
+  if (filter.curbside) return false;
+  if (schedule.isEnded({ startDate: r.startDate, endDate: r.endDate, saleDays: r.saleDays }, now)) return false;
+  if (!matchesPrice(r, filter)) return false;
+  return !filter.when || schedOk.has(r.id);
+}
+
+// Apply `when` (live curbside offers count as open now / today), then drop
+// rows listed only because of an offer that can't show (open report).
+async function curbsideRows(rows, filter) {
+  const now = schedule.now();
+  const schedOk = filter.when ? new Set((await schedule.filterWhen(models, rows, filter.when)).map((r) => r.id)) : new Set();
+  const viaOffer = (r) => !r.hidden && curbside.rawState(r, now) === 'active' && (!filter.when || curbside.countsForWhen(r, filter.when, now));
+  const kept = rows.filter((r) => passesAsSale(r, filter, schedOk, now) || viaOffer(r));
+  return curbside.dropReportedLeftovers(kept, (r) => !passesAsSale(r, filter, schedOk, now), now);
+}
+
 async function nearbyRanked(center, radius, filter, user) {
   const box = geo.boundingBox(center, radius);
   const rows = await models.Post.findAll({
-    attributes: ['id', 'lat', 'lng', 'createdAt', 'startDate', 'endDate', 'timeZone'],
+    attributes: ['id', 'lat', 'lng', 'createdAt', 'startDate', 'endDate', 'timeZone', 'hidden', 'isFree', 'priceMin', 'priceMax', 'curbsideUntil', 'curbsideGoneAt'],
     where: and(
       { lat: { [Op.between]: [box.minLat, box.maxLat] } },
       { [Op.or]: box.lngRanges.map(([a, b]) => ({ lng: { [Op.between]: [a, b] } })) },
-      priceWhere(Op, filter),
-      visibleWhere(user),
-      schedule.notEndedWhere()
+      saleWhere(filter, user),
+      visibleWhere(user)
     ),
     limit: MAX_CANDIDATES,
     raw: true,
   });
-  let kept = await schedule.filterWhen(models, rows, filter.when);
+  let kept = await curbsideRows(rows, filter);
   if (filter.words) {
     const ids = await itemsLib.keywordPostIds(models, filter.words, kept.map((r) => r.id));
     kept = kept.filter((r) => ids.has(r.id));
@@ -147,8 +182,8 @@ async function textMatch(q, filter, user) {
   const where = ZIP_RE.test(q)
     ? { zipCode: q.slice(0, 5) }
     : { [Op.or]: ['street', 'city', 'state', 'zipCode', 'title'].map((f) => ({ [f]: { [op]: like } })) };
-  const found = await models.Post.findAll({ where: and(where, priceWhere(Op, filter), visibleWhere(user), schedule.notEndedWhere()), include: [photoInclude, daysInclude], order: [['createdAt', 'DESC'], photoOrder] });
-  let posts = filter.when ? found.filter((p) => schedule.matchesWhen(p, filter.when)) : found;
+  const found = await models.Post.findAll({ where: and(where, saleWhere(filter, user), visibleWhere(user)), include: [photoInclude, daysInclude], order: [['createdAt', 'DESC'], photoOrder] });
+  let posts = await curbsideRows(found, filter);
   if (filter.neighborhood) {
     const inEvent = await eventsLib.eventsForPosts(posts.map((p) => p.id), user);
     posts = posts.filter((p) => inEvent.has(p.id));
@@ -167,6 +202,7 @@ function filterOf(v) {
   if (v.when) out.when = v.when;
   if (v.keyword) out.keyword = v.keyword;
   if (v.neighborhood) out.neighborhood = true;
+  if (v.curbside) out.curbside = true;
   return out;
 }
 
@@ -205,14 +241,14 @@ router.get('/', async (req, res) => {
       } else if (r.status === 'not_found') {
         return sendError(res, 404, 'location_not_found', 'Could not find that address or zip code.');
       } else {
-        const items = await withEvents(await textMatch(values.q, values, req.user), req.user);
+        const items = await curbside.annotate(await withEvents(await textMatch(values.q, values, req.user), req.user), req.user);
         return res.json(Object.assign({ mode: 'text', center: null, radius: values.radius, filter: filterOf(values), notice: { code: r.status, message: i18n.translate(i18n.requestLang(req), NOTICES[r.status] || NOTICES.error) } },
           paginate(items, values.page, values.pageSize), { events: [] }));
       }
     }
     const ranked = await nearbyRanked(center, values.radius, values, req.user);
     const pageInfo = paginate(ranked, values.page, values.pageSize);
-    pageInfo.results = await withEvents(await loadPage(pageInfo.results, values.words), req.user);
+    pageInfo.results = await curbside.annotate(await withEvents(await loadPage(pageInfo.results, values.words), req.user), req.user);
     const events = await nearbyEvents(center, values.radius, req.user);
     return res.json(Object.assign({ mode: 'distance', center, radius: values.radius, filter: filterOf(values), notice: null }, pageInfo, { events }));
   } catch (err) {
