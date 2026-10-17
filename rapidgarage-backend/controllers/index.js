@@ -11,6 +11,7 @@ router.use('/admin', require('./admin'));
 router.use('/post', require('./post'));
 router.use('/search', require('./search'));
 router.use('/conversations', require('./conversations'));
+router.use('/alerts', require('./alerts'));
 router.use('/', require('./home'));
 
 module.exports = router;

@@ -44,6 +44,20 @@ export default class Admin extends React.Component {
       .catch(() => this.setState({ loading: false, error: 'Unable to reach the server.' }));
   }
 
+  toggleSaleAlerts() {
+    const next = !this.state.settings.saleAlerts;
+    this.setState({ busy: true, error: '' });
+    apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify({ saleAlerts: next }) })
+      .then(({ ok, data }) => {
+        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, 'Could not save the setting.')); return null; }
+        this.setState({ busy: false, settings: data });
+        toast.success(data.saleAlerts ? 'Sale alert emails are on.' : 'Sale alert emails are off. Saved alerts are kept.');
+        if (this.props.onConfigChange) this.props.onConfigChange();
+        return null;
+      })
+      .catch(() => { this.setState({ busy: false }); toast.error('Unable to reach the server.'); });
+  }
+
   toggleMapsKeys() {
     const next = !this.state.settings.userMapsKeys;
     this.setState({ busy: true, error: '' });
@@ -105,17 +119,30 @@ export default class Admin extends React.Component {
                   <h2 id="admin-settings-heading"><SlidersHorizontal size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />Settings</h2>
                   <p>Site-wide options.</p>
                 </header>
-                <label className="checkbox-row" htmlFor="toggleUserMapsKeys">
-                  <span className="switch">
-                    <input id="toggleUserMapsKeys" type="checkbox" role="switch" checked={!!s.settings.userMapsKeys} disabled={s.busy}
-                      onChange={() => this.toggleMapsKeys()} aria-describedby="toggleUserMapsKeys-hint" />
-                    <span className="switch-track" aria-hidden="true" />
-                  </span>
-                  <span>
-                    <strong>Let users add their own Google Maps key</strong>
-                    <span id="toggleUserMapsKeys-hint" className="field-hint" style={{ display: 'block' }}>When off, the map uses only the server's key. Saved user keys are kept but not used.</span>
-                  </span>
-                </label>
+                <div className="stack">
+                  <label className="checkbox-row" htmlFor="toggleUserMapsKeys">
+                    <span className="switch">
+                      <input id="toggleUserMapsKeys" type="checkbox" role="switch" checked={!!s.settings.userMapsKeys} disabled={s.busy}
+                        onChange={() => this.toggleMapsKeys()} aria-describedby="toggleUserMapsKeys-hint" />
+                      <span className="switch-track" aria-hidden="true" />
+                    </span>
+                    <span>
+                      <strong>Let users add their own Google Maps key</strong>
+                      <span id="toggleUserMapsKeys-hint" className="field-hint" style={{ display: 'block' }}>When off, the map uses only the server's key. Saved user keys are kept but not used.</span>
+                    </span>
+                  </label>
+                  <label className="checkbox-row" htmlFor="toggleSaleAlerts">
+                    <span className="switch">
+                      <input id="toggleSaleAlerts" type="checkbox" role="switch" checked={!!s.settings.saleAlerts} disabled={s.busy}
+                        onChange={() => this.toggleSaleAlerts()} aria-describedby="toggleSaleAlerts-hint" />
+                      <span className="switch-track" aria-hidden="true" />
+                    </span>
+                    <span>
+                      <strong>Email sale alerts</strong>
+                      <span id="toggleSaleAlerts-hint" className="field-hint" style={{ display: 'block' }}>When off, no alert emails are sent and nobody can create new alerts. Saved alerts are kept.</span>
+                    </span>
+                  </label>
+                </div>
               </section>
             ) : null}
           </div>

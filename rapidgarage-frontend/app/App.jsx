@@ -17,6 +17,7 @@ import EditPost from './post/EditPost';
 import Settings from './user/Settings';
 import Admin from './admin/Admin';
 import Messages from './messages/Messages';
+import Unsubscribe from './user/Unsubscribe';
 
 const UNREAD_POLL_MS = 15000;
 
@@ -28,8 +29,8 @@ class App extends Component {
       user: null,
       // false until the first /me answer, so the nav doesn't flash "Log in".
       ready: false,
-      // Public server config: { googleLogin, userMapsKeys }.
-      config: { googleLogin: false, userMapsKeys: true },
+      // Public server config: { googleLogin, userMapsKeys, saleAlerts }.
+      config: { googleLogin: false, userMapsKeys: true, saleAlerts: true },
       // Unread messages, for the nav badge (polled while logged in).
       unread: 0,
     };
@@ -101,6 +102,7 @@ class App extends Component {
             <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} />} />
             <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
             <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
+            <Route path='/alerts/unsubscribe' component={Unsubscribe} />
             <Route path='/profile' render={(props) => <Profile {...props} {...common} />} />
             <Route component={NotFound} />
           </Switch>

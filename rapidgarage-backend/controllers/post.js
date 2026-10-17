@@ -6,6 +6,7 @@ const { isAdmin } = require('../lib/roles');
 const { removePhotoFiles } = require('./photos');
 const { geocodePost } = require('../lib/geo');
 const mod = require('../lib/moderation');
+const alerts = require('../lib/alerts');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -40,7 +41,11 @@ router.post('/', requireLogin, (req, res) => {
   Post.create(Object.assign({ priceMin: null, priceMax: null, isFree: false }, values, { userId: req.user.id }))
     // Geocoding never fails the request; without a key the post just has no coordinates.
     .then((post) => geocodePost(post, req.user))
-    .then((post) => res.status(201).json(post))
+    .then((post) => {
+      res.status(201).json(post);
+      // Sale alerts: match in the background; never slows or fails the request.
+      alerts.schedulePostMatch(post);
+    })
     .catch((err) => serverError(res, err));
 });
 
@@ -57,7 +62,12 @@ router.put('/:id', requireLogin, loadPost, requireOwner, (req, res) => {
   const moved = ADDRESS_FIELDS.some((f) => values[f] !== undefined && values[f] !== req.post[f]);
   req.post.update(values)
     .then((post) => (moved ? geocodePost(post, req.user) : post))
-    .then((post) => res.json(post))
+    .then((post) => {
+      res.json(post);
+      // A sale that moved (or only now has coordinates) can match alerts;
+      // the (user, post) unique index means nobody is told twice.
+      if (moved) alerts.schedulePostMatch(post);
+    })
     .catch((err) => serverError(res, err));
 });
 

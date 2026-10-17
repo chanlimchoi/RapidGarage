@@ -108,8 +108,12 @@ if (require.main === module) {
       const server = app.listen(PORT, () => {
         console.log(`Server is up and running on port: ${PORT} (session store: ${sessionStore.kind})`);
       });
+      // Sale alert email outbox (set ALERT_WORKER=off to run it elsewhere).
+      const alerts = require('./lib/alerts');
+      if (String(process.env.ALERT_WORKER || '').toLowerCase() !== 'off') alerts.startWorker();
       // Stop the prune timer and close DB pools on shutdown.
       const shutdown = () => server.close(() => {
+        require('./lib/alerts').stopWorker();
         Promise.all([sessionStore.close(), models.sequelize.close()]).finally(() => process.exit(0));
       });
       process.once('SIGTERM', shutdown);

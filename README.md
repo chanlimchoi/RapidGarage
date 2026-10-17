@@ -74,3 +74,23 @@ trail), dismiss, record a warning, remove individual messages (participants then
 by moderator") or ban a participant from messaging (they can still read, but not send or
 start conversations), and lift a ban later. Participants never see who else reported or any
 admin notes.
+
+## Sale alerts (email)
+
+Logged-in users can save up to 5 **sale alerts** in **Settings → Sale alerts** (or press
+**Alert me about sales here** after a distance search on the home page, which saves the
+current search center, radius and price filters). An alert has a name, a center (an address,
+which needs a server geocoding key, or the browser's current location), a radius of 1–50 mi,
+and an optional max price or "free only", with the same meaning as the search filters.
+Alerts can be paused, edited and deleted.
+
+When someone publishes a sale (or changes its address) and it gets coordinates, every
+matching alert's owner is queued for an email, except the seller and anyone who has blocked
+the seller or been blocked by them. Hidden sales never match. Emails are bundled: at most one
+per user every `ALERT_DIGEST_MINUTES` (default 15) and at most `ALERT_DAILY_MAX_EMAILS` (default 6)
+per rolling 24 hours. They list each sale's title, price, distance, city and seller ("First L.",
+never an email address), with links to the sale, to Settings, and a one-click **Turn off** link
+for each alert that works without logging in. Admins can switch alert emails off for the
+whole site in **Admin → Settings**. Email needs SMTP settings; without them the app works
+normally and alerts are just logged and skipped. See the backend README.
+

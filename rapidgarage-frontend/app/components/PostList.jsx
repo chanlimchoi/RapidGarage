@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag } from 'lucide-react';
+import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag, BellRing, Check } from 'lucide-react';
 import Map from './Map';
 import PostCard from './PostCard';
 import { Alert, EmptyState, SkeletonGrid, Spinner } from './ui';
-import { apiFetch, searchPosts, errorMessage, SEARCH_RADII } from '../api';
+import { apiFetch, searchPosts, errorMessage, SEARCH_RADII, createAlert } from '../api';
+import toast from './toast';
 import { priceFieldError, formatUSD } from '../lib/price';
 
 const PAGE_SIZE = 10;
@@ -16,12 +17,13 @@ class PostList extends React.Component {
       results: [], mode: 'recent', notice: '', error: '', loading: true,
       q: '', radius: 10, coords: null, center: null, page: 1, totalPages: 1, total: 0,
       selectedId: null, locating: false, view: 'list',
-      maxPrice: '', freeOnly: false,
+      maxPrice: '', freeOnly: false, alertBusy: false, alertSavedFor: null,
     };
     this.handleSubmit = this.handleSubmit.bind(this);
     this.useMyLocation = this.useMyLocation.bind(this);
     this.select = this.select.bind(this);
     this.showOnMap = this.showOnMap.bind(this);
+    this.alertHere = this.alertHere.bind(this);
   }
 
   componentDidMount() {
@@ -90,6 +92,50 @@ class PostList extends React.Component {
 
   changeRadius(radius) {
     this.setState({ radius }, () => { if (this.state.lastWhere) this.runSearch(this.state.lastWhere, 1); });
+  }
+
+  // Save the current distance search (center, radius, price filters) as an alert.
+  searchKey() {
+    const s = this.state;
+    const f = s.resultFilter || {};
+    return s.center ? [s.center.lat, s.center.lng, s.resultRadius, f.freeOnly ? 1 : 0, f.maxPrice].join('|') : null;
+  }
+
+  alertHere() {
+    const s = this.state;
+    if (!s.center) return;
+    const f = s.resultFilter || {};
+    const q = s.lastWhere && s.lastWhere.q;
+    const body = {
+      label: (q ? 'Near ' + q : 'Near my location').slice(0, 80),
+      lat: s.center.lat, lng: s.center.lng, radiusMiles: s.resultRadius,
+      freeOnly: !!f.freeOnly, maxPrice: !f.freeOnly && f.maxPrice !== null && f.maxPrice !== undefined ? f.maxPrice : null,
+    };
+    const key = this.searchKey();
+    this.setState({ alertBusy: true });
+    createAlert(body).then(({ ok, data }) => {
+      if (!this.mounted) return;
+      this.setState({ alertBusy: false, alertSavedFor: ok ? key : this.state.alertSavedFor });
+      if (ok) toast.success("Alert saved. We'll email you about new sales within " + body.radiusMiles + ' mi. Manage it in Settings.');
+      else toast.error(errorMessage(data, 'Could not save the alert.'));
+    }).catch(() => { if (this.mounted) this.setState({ alertBusy: false }); toast.error('Unable to reach the server.'); });
+  }
+
+  renderAlertCta() {
+    const s = this.state;
+    const config = this.props.config || {};
+    if (config.saleAlerts === false || s.loading || s.mode !== 'distance' || !s.center) return null;
+    if (!this.props.user) {
+      return <Link className="btn btn-secondary btn-sm search-alert-cta" to="/login"><BellRing size={16} aria-hidden="true" />Log in to get alerts for this area</Link>;
+    }
+    if (s.alertSavedFor && s.alertSavedFor === this.searchKey()) {
+      return <Link className="btn btn-secondary btn-sm search-alert-cta" to="/settings#alerts"><Check size={16} aria-hidden="true" />Alert saved</Link>;
+    }
+    return (
+      <button type="button" className="btn btn-secondary btn-sm search-alert-cta" onClick={this.alertHere} disabled={s.alertBusy}>
+        {s.alertBusy ? <Spinner /> : <BellRing size={16} aria-hidden="true" />}Alert me about sales here
+      </button>
+    );
   }
 
   // Map -> list: highlight the card and bring it into view.
@@ -210,6 +256,7 @@ class PostList extends React.Component {
 
         <div className="browse-toolbar">
           <h2 className="search-heading" aria-live="polite">{s.loading ? 'Searching…' : heading + filterNote}</h2>
+          {this.renderAlertCta()}
           <div className="segmented view-toggle" role="group" aria-label="View">
             <button type="button" aria-pressed={s.view === 'list'} onClick={() => this.setState({ view: 'list' })}><List size={16} aria-hidden="true" />List</button>
             <button type="button" aria-pressed={s.view === 'map'} onClick={() => this.setState({ view: 'map' })}><MapIcon size={16} aria-hidden="true" />Map</button>
