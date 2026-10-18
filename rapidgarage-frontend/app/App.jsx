@@ -8,6 +8,7 @@ import PwaBanners from './pwa/PwaBanners';
 import Profile from './components/Profile';
 import PostList from './components/PostList';
 import About from './components/About';
+import SafetyPage from './safety/SafetyPage';
 import NotFound from './components/NotFound';
 import Post from './post/Post';
 import Login from './user/Login';
@@ -138,6 +139,7 @@ class App extends Component {
           <Switch>
             <Route exact path='/' render={(props) => <PostList {...props} {...common} config={config} />} />
             <Route path='/about' component={About} />
+            <Route path='/safety' component={SafetyPage} />
             <Route path='/admin' render={(props) => <Admin {...props} {...common} onAuthChange={this.refreshUser} onConfigChange={this.refreshConfig} />} />
             <Route path='/settings' render={(props) => <Settings {...props} {...common} config={config} onAuthChange={this.refreshUser} />} />
             <Route path='/signup' render={(props) => <SignUp {...props} onAuthChange={this.refreshUser} />} />

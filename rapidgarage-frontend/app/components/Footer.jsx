@@ -10,6 +10,7 @@ export default function Footer() {
         <nav aria-label={t('footer.label')}>
           <Link to="/">{t('nav.browse')}</Link>
           <Link to="/newpost">{t('nav.postSale')}</Link>
+          <Link to="/safety">{t('nav.safety')}</Link>
           <Link to="/about">{t('nav.about')}</Link>
         </nav>
       </div>

@@ -9,6 +9,7 @@ const msg = require('../lib/messaging');
 const { publicUser } = require('../lib/people');
 const ratings = require('../lib/ratings');
 const holds = require('../lib/holds');
+const meetups = require('../lib/meetups');
 const schedule = require('../lib/schedule');
 const wanted = require('../lib/wanted');
 const { wantedEnabled } = require('../lib/features');
@@ -39,7 +40,8 @@ function postSummary(conv, post, me) {
   };
 }
 
-// holdMap: Map(holdId -> ItemHold with item) for hold events (see withHolds).
+// holdMap: Map(holdId -> ItemHold with item) for hold events (see withHolds);
+// holdMap.meetups: Map(meetupId -> MeetupProposal) for meetup events.
 function messageJSON(m, me, holdMap) {
   // Removed by a moderator: participants get a placeholder, never the text.
   if (m.removedAt) return { id: m.id, body: null, removed: true, senderId: m.senderId, mine: m.senderId === me, createdAt: m.createdAt };
@@ -49,15 +51,22 @@ function messageJSON(m, me, holdMap) {
     out.kind = 'hold';
     out.hold = { id: m.holdId, event: m.holdEvent, itemName: h && h.item ? h.item.name : null, pickupAt: h ? h.pickupAt : null, expiresAt: h ? h.expiresAt : null, status: h ? h.status : null, endedReason: h ? h.endedReason : null };
   }
+  if (m.kind === 'meetup') {
+    const p = holdMap && holdMap.meetups && m.meetupId ? holdMap.meetups.get(m.meetupId) : null;
+    out.kind = 'meetup';
+    out.meetup = Object.assign({ event: m.meetupEvent }, p ? meetups.proposalJSON(p, me) : { id: m.meetupId, status: null });
+  }
   return out;
 }
 
 // Holds referenced by hold-event messages, with their items.
 async function withHolds(messages) {
   const ids = Array.from(new Set(messages.filter((m) => m && m.kind === 'hold' && m.holdId).map((m) => m.holdId)));
-  if (!ids.length) return new Map();
-  const rows = await models.ItemHold.findAll({ where: { id: ids }, include: [{ model: models.SaleItem, as: 'item', attributes: ['id', 'name'] }] });
-  return new Map(rows.map((h) => [h.id, h]));
+  const mids = Array.from(new Set(messages.filter((m) => m && m.kind === 'meetup' && m.meetupId).map((m) => m.meetupId)));
+  const rows = ids.length ? await models.ItemHold.findAll({ where: { id: ids }, include: [{ model: models.SaleItem, as: 'item', attributes: ['id', 'name'] }] }) : [];
+  const map = new Map(rows.map((h) => [h.id, h]));
+  map.meetups = new Map(mids.length ? (await models.MeetupProposal.findAll({ where: { id: mids } })).map((p) => [p.id, p]) : []);
+  return map;
 }
 
 const BANNED_MSG = 'A moderator has turned off messaging for your account. You can still read your conversations.';
@@ -157,8 +166,9 @@ router.get('/', async (req, res) => {
 // GET /conversations/unread : { count, conversations } for the nav badge.
 router.get('/unread', async (req, res) => {
   try {
-    // The badge is polled, so overdue holds end (and notify) here too.
+    // The badge is polled, so overdue holds and meetup suggestions end (and notify) here too.
     await holds.sweep();
+    await meetups.sweep();
     const counts = await msg.unreadCounts(req.user.id, null);
     let count = 0;
     counts.forEach((n) => { count += n; });
@@ -264,6 +274,7 @@ router.get('/:id', loadConversation, async (req, res) => {
   const conv = req.conversation;
   try {
     await holds.sweep();
+    await meetups.sweep();
     const rows = await models.Message.findAll({ where: { conversationId: conv.id }, order: [['id', 'DESC']], limit: msg.PAGE_SIZE + 1 });
     const hasMore = rows.length > msg.PAGE_SIZE;
     const messages = rows.slice(0, msg.PAGE_SIZE).reverse();
@@ -362,7 +373,7 @@ router.post('/:id/report', loadConversation, async (req, res) => {
       return sendError(res, 429, 'rate_limited', 'You have sent a lot of reports. Please try again later.');
     }
     const report = await models.ConversationReport.create({ conversationId: conv.id, reporterId: me, reportedUserId: other, reason: body.reason, note });
-    if (body.block) { await models.UserBlock.findOrCreate({ where: { blockerId: me, blockedId: other } }); await holds.endBetween(me, other); }
+    if (body.block) { await models.UserBlock.findOrCreate({ where: { blockerId: me, blockedId: other } }); await holds.endBetween(me, other); await meetups.endBetween(me, other); }
     return res.status(201).json({
       id: report.id, conversationId: conv.id, reason: report.reason, status: report.status, createdAt: report.createdAt,
       blocked: await msg.blockState(me, other),
@@ -381,6 +392,7 @@ router.post('/:id/block', loadConversation, async (req, res) => {
   try {
     await models.UserBlock.findOrCreate({ where: { blockerId: me, blockedId: other } });
     await holds.endBetween(me, other);
+    await meetups.endBetween(me, other);
     return res.json({ blocked: await msg.blockState(me, other) });
   } catch (err) {
     if (err && err.name === 'SequelizeUniqueConstraintError') return res.json({ blocked: await msg.blockState(me, other) });
@@ -479,4 +491,87 @@ router.post('/:id/holds', loadConversation, async (req, res) => {
   } catch (err) { return serverError(res, err); }
 });
 
+// ---- meetup suggestions (see lib/meetups.js) ---------------------------------
+// Can `req.user` act in this conversation? Sends the error and returns false otherwise.
+async function canAct(req, res, conv) {
+  if (req.user.messagingBanned) { sendError(res, 403, 'messaging_banned', BANNED_MSG); return false; }
+  const b = await msg.blockState(req.user.id, conv.otherId(req.user.id));
+  if (b.byMe || b.byThem) { sendError(res, 403, 'blocked', "You can't message this person."); return false; }
+  return true;
+}
+
+// GET /conversations/:id/meetups : suggestions in this conversation, newest first.
+router.get('/:id/meetups', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  const conv = req.conversation;
+  try {
+    await meetups.sweep();
+    const rows = await models.MeetupProposal.findAll({ where: { conversationId: conv.id }, order: [['id', 'DESC']], limit: 30 });
+    const b = await msg.blockState(me, conv.otherId(me));
+    const canSend = !b.byMe && !b.byThem && !req.user.messagingBanned;
+    const pending = rows.filter((p) => p.status === 'pending')[0];
+    return res.json({
+      results: rows.map((p) => meetups.proposalJSON(p, me)),
+      canPropose: canSend && !pending,
+      pendingId: pending ? pending.id : null,
+      limits: { maxDays: meetups.MAX_DAYS, noteMax: meetups.NOTE_MAX, nameMax: meetups.NAME_MAX },
+    });
+  } catch (err) { return serverError(res, err); }
+});
+
+// GET /conversations/:id/meetup-spots : curated public spots nearest the sale's
+// area (never the viewer's location), plus whether nearby search is available.
+router.get('/:id/meetup-spots', loadConversation, async (req, res) => {
+  try {
+    const origin = await meetups.originFor(req.conversation, req.user);
+    const results = await meetups.nearestSpots(origin);
+    return res.json({
+      origin: origin ? { label: origin.label, located: origin.lat !== undefined && origin.lat !== null } : null,
+      results,
+      placesSearch: !!meetups.placesKey() && !!origin && origin.lat !== undefined && origin.lat !== null,
+      maxMiles: meetups.NEAR_MILES,
+    });
+  } catch (err) { return serverError(res, err); }
+});
+
+// GET /conversations/:id/meetup-places?q= : public places near the sale's area
+// via Google Places (only with a server GOOGLE_PLACES_API_KEY).
+router.get('/:id/meetup-places', loadConversation, async (req, res) => {
+  const q = typeof req.query.q === 'string' ? req.query.q.replace(/\s+/g, ' ').trim() : '';
+  if (q.length < 2 || q.length > 80) return badRequest(res, 'Search for 2 to 80 characters.', { q: 'Type what kind of place to look for.' });
+  try {
+    if (!meetups.placesKey()) return sendError(res, 404, 'places_unavailable', 'Nearby place search is not set up on this site. Pick a listed spot or type a place.');
+    const origin = await meetups.originFor(req.conversation, req.user);
+    if (!origin || origin.lat === undefined || origin.lat === null) return sendError(res, 409, 'no_area', "This conversation has no sale area to search near. Type a place instead.");
+    if (!meetups.allowPlacesSearch(req.user.id)) { res.set('Retry-After', '3600'); return sendError(res, 429, 'rate_limited', 'Too many searches. Please try again later.'); }
+    const r = await meetups.searchPlaces(q, origin);
+    if (r.status !== 'ok') return sendError(res, 502, 'places_failed', "Couldn't search nearby places right now. Pick a listed spot or type a place.");
+    return res.json({ results: r.results });
+  } catch (err) { return serverError(res, err); }
+});
+
+// POST /conversations/:id/meetups { spotId | place: { name, address? }, meetAt, note? }
+router.post('/:id/meetups', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  const conv = req.conversation;
+  try {
+    await meetups.sweep();
+    const t = meetups.now();
+    const { errors, values } = await meetups.parseProposal(req.body, t);
+    if (Object.keys(errors).length) return badRequest(res, 'Invalid meetup suggestion.', errors);
+    if (!(await canAct(req, res, conv))) return undefined;
+    const blocker = await meetups.proposalBlocker(conv, me, t);
+    if (blocker === 'pending') return sendError(res, 409, 'meetup_pending', 'There is already a meetup suggestion waiting for an answer. Answer or withdraw it first.');
+    if (blocker === 'too_many') { res.set('Retry-After', '3600'); return sendError(res, 429, 'rate_limited', 'You have made a lot of meetup suggestions today. Please try again tomorrow.'); }
+    const origin = await meetups.originFor(conv, req.user);
+    const p = await models.MeetupProposal.create(Object.assign(values, {
+      conversationId: conv.id, proposerId: me, recipientId: conv.otherId(me), status: 'pending',
+      timeZone: (origin && origin.timeZone) || require('../lib/schedule').defaultTimeZone(),
+    }));
+    await meetups.postEvent(p, 'proposed', me);
+    return res.status(201).json(meetups.proposalJSON(p, me));
+  } catch (err) { return serverError(res, err); }
+});
+
 module.exports = router;
+module.exports.canAct = canAct;

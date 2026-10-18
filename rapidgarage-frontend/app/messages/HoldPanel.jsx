@@ -6,6 +6,7 @@ import { formatCents } from '../lib/items';
 import toast from '../components/toast';
 import { t } from '../i18n';
 import { holdTime } from './holdText';
+import { SafetyLink } from './SafetyTips';
 
 const OPEN = ['pending', 'accepted'];
 const STATUS = {
@@ -134,7 +135,7 @@ export default class HoldPanel extends React.Component {
     const max = data.saleEndsAt ? new Date(data.saleEndsAt) : new Date(now.getTime() + data.limits.pickupMaxDays * 86400000);
     return (
       <form className="hold-form" onSubmit={(e) => this.submit(e)} noValidate>
-        <p className="small muted">{t('hold.askLead')}</p>
+        <p className="small muted">{t('hold.askLead')} <SafetyLink hash="meet" /></p>
         <div className="hold-form-row">
           <label className="field" htmlFor="hold-item">
             <span className="field-label">{t('hold.item')}</span>
@@ -189,6 +190,7 @@ export default class HoldPanel extends React.Component {
           </div>
         ) : null}
         {open.some((h) => h.status === 'accepted') ? <p className="small muted hold-note">{t('hold.capNote')}</p> : null}
+        <p className="small muted hold-note hold-safety">{t('hold.safetyNote')} <SafetyLink hash="meet" /></p>
       </section>
     );
   }

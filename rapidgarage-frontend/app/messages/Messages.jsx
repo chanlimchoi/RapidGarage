@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, ArrowLeft, Send, Ban, ImageOff, LogIn, Inbox, AlertTriangle, Flag, MoreHorizontal, ShieldOff, Bookmark } from 'lucide-react';
+import { MessageCircle, ArrowLeft, Send, Ban, ImageOff, LogIn, Inbox, AlertTriangle, Flag, MoreHorizontal, ShieldOff, Bookmark, MapPin, ExternalLink } from 'lucide-react';
 import {
   errorMessage, fetchConversations, fetchConversation, fetchMessagesAfter, fetchMessagesBefore,
-  sendMessage, setBlocked, MESSAGE_MAX, reportConversation, CONVERSATION_REPORT_REASONS, REPORT_NOTE_MAX,
+  sendMessage, setBlocked, MESSAGE_MAX, reportConversation, CONVERSATION_REPORT_REASONS, REPORT_NOTE_MAX, meetupAction,
 } from '../api';
 import { Alert, EmptyState, SkeletonBlock, Spinner, Dialog, Field } from '../components/ui';
 import { timeAgo } from '../lib/format';
@@ -13,6 +13,11 @@ import RatePanel from '../ratings/RatePanel';
 import { RatingBadge } from '../ratings/Stars';
 import HoldPanel from './HoldPanel';
 import { holdEventText } from './holdText';
+import SafetyTips, { SafetyLink } from './SafetyTips';
+import MeetupDialog from './MeetupDialog';
+import MeetupCard from './MeetupCard';
+import { meetupEventText, meetTime, upcomingAgreed, syncMeetups } from './meetupText';
+import { checkMessage, showTips, hideTips } from '../lib/safety';
 import { t, intlLocale } from '../i18n';
 
 const POLL_MS = 10000;
@@ -52,6 +57,7 @@ export default class Messages extends React.Component {
       conv: null, messages: [], hasMore: false, threadError: '', loadingThread: false, loadingOlder: false,
       draft: '', sending: false, sendError: '',
       menuOpen: false, reportOpen: false, reason: '', note: '', alsoBlock: false, reportError: '', reporting: false,
+      nudge: null, nudgeOk: false, meetDialog: null, meetBusy: null, tipsTick: 0,
     };
     this.menuRef = React.createRef();
     this.onDocClick = this.onDocClick.bind(this);
@@ -160,7 +166,7 @@ export default class Messages extends React.Component {
   componentDidUpdate(prev) {
     if (!prev.user && this.props.user) this.init();
     if (prev.match.params.id !== this.props.match.params.id && this.props.user) {
-      this.setState({ draft: '', sendError: '' });
+      this.setState({ draft: '', sendError: '', nudge: null, nudgeOk: false, meetDialog: null });
       this.loadThread();
     }
   }
@@ -198,7 +204,7 @@ export default class Messages extends React.Component {
       .then(({ ok, data }) => {
         if (this.unmounted || this.currentId() !== id) return;
         if (!ok) { this.setState({ loadingThread: false, threadError: errorMessage(data, t('msg.notFound')) }); return; }
-        this.setState({ loadingThread: false, conv: data.conversation, messages: data.messages, hasMore: data.hasMore }, () => {
+        this.setState({ loadingThread: false, conv: data.conversation, messages: syncMeetups(data.messages), hasMore: data.hasMore }, () => {
           this.scrollToEnd();
           this.markListRead(id);
           if (this.inputRef.current && window.matchMedia && window.matchMedia('(min-width: 900px)').matches) this.inputRef.current.focus();
@@ -235,7 +241,7 @@ export default class Messages extends React.Component {
     if (!fresh.length) return;
     const el = this.logRef.current;
     const nearBottom = !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120;
-    this.setState({ messages: this.state.messages.concat(fresh) }, () => { if (nearBottom || fresh.some((m) => m.mine)) this.scrollToEnd(); });
+    this.setState({ messages: syncMeetups(this.state.messages.concat(fresh)) }, () => { if (nearBottom || fresh.some((m) => m.mine)) this.scrollToEnd(); });
   }
 
   loadOlder() {
@@ -267,7 +273,13 @@ export default class Messages extends React.Component {
     if (!conv || sending) return;
     if (!text) { this.setState({ sendError: t('msg.writeFirst') }); return; }
     if (text.length > MESSAGE_MAX) { this.setState({ sendError: t('msg.tooLong', { max: MESSAGE_MAX }) }); return; }
-    this.setState({ sending: true, sendError: '' });
+    // A gentle check before sending contact details or scam-like wording.
+    // It runs on this device only: nothing is blocked, logged or reported.
+    if (!this.state.nudgeOk) {
+      const c = checkMessage(text);
+      if (c.contact || c.scam) { this.setState({ nudge: c }); return; }
+    }
+    this.setState({ sending: true, sendError: '', nudge: null, nudgeOk: false });
     sendMessage(conv.id, text)
       .then(({ ok, status, data }) => {
         if (this.unmounted) return;
@@ -303,12 +315,65 @@ export default class Messages extends React.Component {
     setBlocked(conv.id, block)
       .then(({ ok, data }) => {
         if (!ok) { toast.error(errorMessage(data, t('msg.blockFailed'))); return; }
+        // Blocking ends open meetup suggestions; reload so their cards say so.
+        if (block) this.loadThreadQuietly();
         const blocked = data.blocked;
         this.setState({ menuOpen: false, conv: Object.assign({}, this.state.conv, { blocked, canSend: !blocked.byMe && !blocked.byThem && !this.state.conv.messagingBanned }) });
         toast.success(tidy(t(block ? 'msg.blocked' : 'msg.unblocked', { name: conv.other.name })));
         this.loadList();
       })
       .catch(() => toast.error(t('common.networkShort')));
+  }
+
+  loadThreadQuietly() {
+    const conv = this.state.conv;
+    if (!conv) return;
+    fetchConversation(conv.id).then(({ ok, data }) => {
+      if (!ok || this.unmounted || !this.state.conv || this.state.conv.id !== conv.id) return;
+      this.setState({ messages: syncMeetups(data.messages), hasMore: data.hasMore });
+    }).catch(() => {});
+  }
+
+  meetupAct(p, action) {
+    this.setState({ meetBusy: p.id });
+    meetupAction(p.id, action)
+      .then(({ ok, data }) => {
+        if (this.unmounted) return;
+        this.setState({ meetBusy: null });
+        if (!ok) { toast.error(errorMessage(data, t('meet.failed'))); this.loadThreadQuietly(); return; }
+        this.patchMeetup(data);
+        toast.success(t({ accept: 'meet.acceptedToast', decline: 'meet.declinedToast', cancel: p.status === 'accepted' ? 'meet.calledOffToast' : 'meet.withdrawnToast' }[action]));
+        this.poll();
+      })
+      .catch(() => { if (!this.unmounted) { this.setState({ meetBusy: null }); toast.error(t('common.networkShort')); } });
+  }
+
+  patchMeetup(p) {
+    this.setState({ messages: this.state.messages.map((m) => (m.kind === 'meetup' && m.meetup && m.meetup.id === p.id ? Object.assign({}, m, { meetup: Object.assign({}, p, { event: m.meetup.event }) }) : m)) });
+  }
+
+  meetupDone(p, counterOf) {
+    this.setState({ meetDialog: null });
+    if (counterOf) this.patchMeetup(Object.assign({}, counterOf, { status: 'countered' }));
+    toast.success(t('meet.sent'));
+    this.poll();
+  }
+
+  renderNudge() {
+    const { nudge } = this.state;
+    return (
+      <div className="send-nudge" role="alert">
+        <p className="send-nudge-title"><AlertTriangle size={16} aria-hidden="true" /><strong>{t('nudge.title')}</strong></p>
+        {nudge.contact ? <p>{t('nudge.contact')}</p> : null}
+        {nudge.scam ? <p>{t('nudge.scam')}</p> : null}
+        <div className="send-nudge-actions">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => { this.setState({ nudge: null }); if (this.inputRef.current) this.inputRef.current.focus(); }}>{t('nudge.edit')}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => this.setState({ nudgeOk: true }, () => this.send())}>{t('nudge.send')}</button>
+          <SafetyLink hash={nudge.scam ? 'pay' : 'privacy'} />
+        </div>
+        <p className="small muted">{t('nudge.private')}</p>
+      </div>
+    );
   }
 
   renderThumb(post, size) {
@@ -334,6 +399,7 @@ export default class Messages extends React.Component {
           const label = postLabel(c.post);
           const preview = !c.lastMessage ? t('msg.noneTitle') : c.lastMessage.removed ? t('msg.removed')
             : c.lastMessage.kind === 'hold' ? holdEventText(c.lastMessage, c.other ? c.other.name : t('msg.formerUser'))
+              : c.lastMessage.kind === 'meetup' ? meetupEventText(c.lastMessage, c.other ? c.other.name : t('msg.formerUser'))
               : c.lastMessage.mine ? t('msg.youPrefix', { text: c.lastMessage.body }) : c.lastMessage.body;
           return (
             <li key={c.id}>
@@ -365,6 +431,10 @@ export default class Messages extends React.Component {
     const label = postLabel(conv.post);
     const blocked = conv.blocked || {};
     const left = MESSAGE_MAX - draft.length;
+    const otherName = conv.other ? conv.other.name : t('msg.formerUser');
+    const agreed = upcomingAgreed(messages);
+    const pendingMeetup = messages.some((m) => m.kind === 'meetup' && m.meetup && m.meetup.status === 'pending');
+    const tips = showTips(conv.id, messages, hasMore);
     return (
       <section className="thread-pane" aria-labelledby="thread-title">
         {back}
@@ -379,6 +449,7 @@ export default class Messages extends React.Component {
                 ? <Link to={subjectPath(conv.post)}>{conv.post.title}</Link>
                 : <span>{conv.post.title}</span>}
               {label ? <span className="chip chip-warning">{label}</span> : null}
+              <SafetyLink className="thread-safety" />
             </div>
           </div>
           <div className="menu thread-menu" ref={this.menuRef}>
@@ -401,14 +472,31 @@ export default class Messages extends React.Component {
         {conv.post.wanted ? null : <HoldPanel conversationId={conv.id} role={conv.role} canAct={conv.canSend}
           refreshKey={messages.filter((m) => m.kind === 'hold').map((m) => m.id).join()} onChange={() => this.poll()} />}
         {label && !conv.post.canView ? <Alert tone="warning">{t('msg.postGone')}</Alert> : null}
+        {agreed ? (
+          <div className="meet-agreed" role="status">
+            <MapPin size={16} aria-hidden="true" />
+            <span>{t('meet.agreedBanner', { place: agreed.place.name, time: meetTime(agreed.meetAt) })}</span>
+            <a href={agreed.place.mapsUrl} target="_blank" rel="noopener noreferrer" className="small"><ExternalLink size={13} aria-hidden="true" /> {t('meet.directions')}</a>
+          </div>
+        ) : null}
         <div className="thread-log" ref={this.logRef} role="log" aria-live="polite" aria-label={t('msg.with', { name: conv.other ? conv.other.name : t('msg.formerUserLower') })} tabIndex="0">
           {hasMore ? (
             <div className="thread-older">
               <button type="button" className="btn btn-ghost btn-sm" disabled={loadingOlder} onClick={() => this.loadOlder()}>{loadingOlder ? <Spinner /> : null}{t('msg.loadOlder')}</button>
             </div>
           ) : null}
+          {tips ? <SafetyTips onDismiss={() => { hideTips(conv.id); this.setState({ tipsTick: this.state.tipsTick + 1 }); }} /> : null}
           {!messages.length ? <p className="thread-empty muted">{t('msg.sayHello')}</p> : null}
-          {messages.map((m) => (m.kind === 'hold' && !m.removed ? (
+          {messages.map((m) => (m.kind === 'meetup' && !m.removed && m.meetup && (m.meetup.event === 'proposed' || m.meetup.event === 'countered') && m.meetup.place ? (
+            <MeetupCard key={m.id} m={m} other={otherName} canAct={conv.canSend} busy={this.state.meetBusy === m.meetup.id} clock={clock}
+              onAction={(p, a) => this.meetupAct(p, a)} onCounter={(p) => this.setState({ meetDialog: { counterOf: p } })} />
+          ) : m.kind === 'meetup' && !m.removed ? (
+            <div key={m.id} className={'thread-event meet-event meet-event-' + (m.meetup && m.meetup.event)}>
+              <MapPin size={14} aria-hidden="true" />
+              <span>{meetupEventText(m, otherName)}</span>
+              <time className="bubble-time" dateTime={m.createdAt}>{clock(m.createdAt)}</time>
+            </div>
+          ) : m.kind === 'hold' && !m.removed ? (
             <div key={m.id} className={'thread-event hold-event hold-event-' + (m.hold && m.hold.event)}>
               <Bookmark size={14} aria-hidden="true" />
               <span>{holdEventText(m, conv.other ? conv.other.name : t('msg.formerUser'))}</span>
@@ -428,11 +516,19 @@ export default class Messages extends React.Component {
           )))}
         </div>
         {conv.canSend ? (
+          <div className="composer-tools">
+            <button type="button" className="btn btn-secondary btn-sm meet-suggest" disabled={pendingMeetup} title={pendingMeetup ? t('meet.pendingExists') : undefined}
+              onClick={() => this.setState({ meetDialog: { counterOf: null } })}><MapPin size={14} aria-hidden="true" />{t('meet.suggest')}</button>
+            {pendingMeetup ? <span className="small muted">{t('meet.pendingExists')}</span> : null}
+          </div>
+        ) : null}
+        {conv.canSend && this.state.nudge ? this.renderNudge() : null}
+        {conv.canSend ? (
           <form className="composer" onSubmit={(e) => this.send(e)}>
             <label htmlFor="composer-input" className="sr-only">{t('msg.messageNamed', { name: conv.other ? conv.other.name : '' }).trim()}</label>
             <textarea id="composer-input" ref={this.inputRef} className="textarea composer-input" rows={1} maxLength={MESSAGE_MAX} value={draft}
               placeholder={t('msg.placeholder')} aria-describedby="composer-hint" aria-invalid={sendError ? 'true' : undefined}
-              onChange={(e) => this.setState({ draft: e.target.value, sendError: '' })} onKeyDown={(e) => this.onComposerKey(e)} />
+              onChange={(e) => this.setState({ draft: e.target.value, sendError: '', nudge: null, nudgeOk: false })} onKeyDown={(e) => this.onComposerKey(e)} />
             <button type="submit" className="btn btn-primary composer-send" disabled={sending || !draft.trim()} aria-label={t('msg.send')}>
               {sending ? <Spinner /> : <Send size={16} aria-hidden="true" />}<span className="hide-mobile">{t('msg.sendShort')}</span>
             </button>
@@ -447,6 +543,10 @@ export default class Messages extends React.Component {
           </Alert>
         )}
         {this.state.reportOpen ? this.renderReportDialog() : null}
+        {this.state.meetDialog ? (
+          <MeetupDialog conversationId={conv.id} otherName={otherName} counterOf={this.state.meetDialog.counterOf}
+            onClose={() => this.setState({ meetDialog: null })} onDone={(p) => this.meetupDone(p, this.state.meetDialog && this.state.meetDialog.counterOf)} />
+        ) : null}
       </section>
     );
   }

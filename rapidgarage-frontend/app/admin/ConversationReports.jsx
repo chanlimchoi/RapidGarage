@@ -210,7 +210,7 @@ export default class ConversationReports extends React.Component {
             ) : (
               <li key={ev.id} className={'admin-msg' + (ev.removed ? ' removed' : '')}>
                 <div>
-                  <div className="admin-msg-meta"><strong>{ev.sender.name}</strong> · {fullTime(ev.createdAt)}{ev.removed ? t('cr.removedTag') : ''}</div>
+                  <div className="admin-msg-meta"><strong>{ev.sender.name}</strong> · {fullTime(ev.createdAt)}{ev.removed ? t('cr.removedTag') : ''}{ev.kind === 'meetup' ? <span className="chip chip-sm" style={{ marginLeft: 6 }}>{t('cr.meetupTag')}</span> : ev.kind === 'hold' ? <span className="chip chip-sm" style={{ marginLeft: 6 }}>{t('cr.holdTag')}</span> : null}</div>
                   <p className="admin-msg-body">{ev.body}</p>
                 </div>
                 {!ev.removed ? (

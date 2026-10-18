@@ -141,7 +141,7 @@ router.get('/conversations/:id', async (req, res) => {
       access: { mode: access.mode, until: access.until, hiddenLaterMessages: laterCount },
       reports: reports.map((r) => reportJSON(r, byId)),
       messages: messages.map((m) => ({
-        id: m.id, body: m.body, sender: byId(m.senderId), createdAt: m.createdAt,
+        id: m.id, body: m.body, kind: m.kind, sender: byId(m.senderId), createdAt: m.createdAt,
         removed: !!m.removedAt, removedAt: m.removedAt,
       })),
       events: events.map((e) => ({

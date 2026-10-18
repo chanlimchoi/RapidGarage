@@ -102,6 +102,16 @@ export const fetchConversation = (id) => apiFetch('/conversations/' + id);
 export const fetchHolds = (conversationId) => apiFetch('/conversations/' + conversationId + '/holds');
 export const requestHold = (conversationId, body) => apiFetch('/conversations/' + conversationId + '/holds', { method: 'POST', body: JSON.stringify(body) });
 export const holdAction = (holdId, action, body) => apiFetch('/holds/' + holdId + '/' + action, { method: 'POST', body: JSON.stringify(body || {}) });
+// Meetup suggestions (see the backend's lib/meetups.js).
+export const fetchMeetups = (conversationId) => apiFetch('/conversations/' + conversationId + '/meetups');
+export const fetchMeetupSpots = (conversationId) => apiFetch('/conversations/' + conversationId + '/meetup-spots');
+export const searchMeetupPlaces = (conversationId, q) => apiFetch('/conversations/' + conversationId + '/meetup-places?q=' + encodeURIComponent(q));
+export const proposeMeetup = (conversationId, body) => apiFetch('/conversations/' + conversationId + '/meetups', { method: 'POST', body: JSON.stringify(body) });
+export const meetupAction = (id, action, body) => apiFetch('/meetups/' + id + '/' + action, { method: 'POST', body: JSON.stringify(body || {}) });
+// Admin: safe meetup spots.
+export const adminSpots = (q) => apiFetch('/admin/meetup-spots' + (q ? '?q=' + encodeURIComponent(q) : ''));
+export const adminSaveSpot = (id, body) => apiFetch('/admin/meetup-spots' + (id ? '/' + id : ''), { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+export const adminDeleteSpot = (id) => apiFetch('/admin/meetup-spots/' + id, { method: 'DELETE' });
 export const fetchMessagesAfter = (id, afterId) => apiFetch('/conversations/' + id + '/messages?after=' + (afterId || 0));
 export const fetchMessagesBefore = (id, beforeId) => apiFetch('/conversations/' + id + '/messages?before=' + beforeId);
 export const startConversation = (postId) => apiFetch('/conversations', { method: 'POST', body: JSON.stringify({ postId }) });

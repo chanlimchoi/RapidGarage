@@ -136,6 +136,7 @@ if (require.main === module) {
       if (String(process.env.ALERT_WORKER || '').toLowerCase() !== 'off') alerts.startWorker();
       // End overdue item holds every minute (reads also sweep; see lib/holds.js).
       setInterval(() => holds.sweep().catch((err) => console.error('hold sweep failed', err && err.message)), 60000).unref();
+      setInterval(() => require('./lib/meetups').sweep().catch((err) => console.error('meetup sweep failed', err && err.message)), 60000).unref();
       // On SIGTERM: report not-ready, stop accepting connections, finish
       // in-flight requests, then close DB pools.
       const shutdown = () => {

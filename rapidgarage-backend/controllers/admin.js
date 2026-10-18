@@ -216,5 +216,8 @@ router.use(require('./adminEvents'));
 // Wanted posts: reports and moderation.
 router.use(require('./adminWanted'));
 
+// Safe meetup spots (curated list).
+router.use(require('./adminMeetupSpots'));
+
 module.exports = router;
 module.exports.requireAdmin = requireAdmin;
