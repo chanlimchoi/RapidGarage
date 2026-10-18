@@ -9,6 +9,7 @@ const { publicUser } = require('../lib/people');
 const schedule = require('../lib/schedule');
 const itemsLib = require('../lib/items');
 const events = require('../lib/events');
+const curbside = require('../lib/curbside');
 
 // Add { event: { id, name } } to posts that are part of a neighborhood sale.
 async function withEvents(list, viewer) {
@@ -18,8 +19,16 @@ async function withEvents(list, viewer) {
 }
 
 // AND a listing filter with the viewer's visibility rule (hidden posts).
-// Ended sales drop out of listings, except the owner's and admins' views of a seller's sales.
-const visible = (req, where, keepEnded) => ({ [Op.and]: [where || {}, visibleWhere(req.user) || {}, keepEnded ? {} : schedule.notEndedWhere()] });
+// Ended sales drop out of listings, except the owner's and admins' views of a
+// seller's sales, and sales whose leftovers are free on the curb right now.
+const visible = (req, where, keepEnded) => ({ [Op.and]: [where || {}, visibleWhere(req.user) || {}, keepEnded ? {} : curbside.listableWhere()] });
+
+// Drop leftovers-only listings that can't show (reported), then add `curbside`.
+async function finish(req, posts, keepEnded) {
+  const kept = keepEnded ? posts : await curbside.dropReportedLeftovers(posts);
+  const json = await withEvents(kept, req.user);
+  return curbside.annotate(json, req.user);
+}
 
 const router = express.Router();
 const newestFirst = {
@@ -47,14 +56,21 @@ router.get('/allPosts', async (req, res) => {
   if (w.error) return badRequest(res, 'Invalid filter.', { when: w.error });
   const k = itemsLib.parseKeyword(req.query.keyword);
   if (k.error) return badRequest(res, 'Invalid filter.', { keyword: k.error });
+  const cs = req.query.curbside;
+  if (cs !== undefined && cs !== '' && ['true', '1', 'false', '0'].indexOf(cs) === -1) return badRequest(res, 'Invalid filter.', { curbside: 'curbside must be true or false.' });
+  const onlyCurb = cs === 'true' || cs === '1';
   try {
-    let posts = await models.Post.findAll(Object.assign({ where: visible(req) }, newestFirst));
-    if (w.when) posts = posts.filter((p) => schedule.matchesWhen(p, w.when));
-    if (!k.words) return res.json(await withEvents(posts, req.user));
+    const where = onlyCurb ? Object.assign({}, curbside.activeWhere()) : null;
+    let posts = await models.Post.findAll(Object.assign({ where: visible(req, where) }, newestFirst));
+    if (w.when) posts = posts.filter((p) => schedule.matchesWhen(p, w.when) || curbside.countsForWhen(p, w.when));
+    if (onlyCurb) posts = posts.filter((p) => !p.hidden);
+    if (!k.words) { const out = await finish(req, posts); return res.json(onlyCurb ? out.filter((p) => p.curbside && p.curbside.state === 'active') : out); }
     const ids = await itemsLib.keywordPostIds(models, k.words, posts.map((p) => p.id));
     posts = posts.filter((p) => ids.has(p.id));
     const matched = await itemsLib.matchedItems(models, k.words, posts.map((p) => p.id));
-    return res.json(await withEvents(posts.map((p) => Object.assign(p.toJSON(), { matchedItems: matched[p.id] || [] })), req.user));
+    const out = await finish(req, posts);
+    out.forEach((p) => { p.matchedItems = matched[p.id] || []; });
+    return res.json(onlyCurb ? out.filter((p) => p.curbside && p.curbside.state === 'active') : out);
   } catch (err) { return serverError(res, err); }
 });
 
@@ -76,6 +92,7 @@ router.get('/all/:zipCode', (req, res) => {
   const zipCode = req.params.zipCode;
   if (!ZIP_RE.test(zipCode)) return badRequest(res, 'Zip code must be 5 digits.');
   models.Post.findAll(Object.assign({ where: visible(req, { zipCode }) }, newestFirst))
+    .then((posts) => finish(req, posts))
     .then((posts) => res.json(posts))
     .catch((err) => serverError(res, err));
 });
@@ -85,6 +102,7 @@ router.get('/allbyuserId/:userId', (req, res) => {
   if (!userId) return badRequest(res, 'User id must be a positive integer.');
   const own = !!req.user && (req.user.id === userId || isAdmin(req.user));
   models.Post.findAll(Object.assign({ where: visible(req, { userId }, own) }, newestFirst))
+    .then((posts) => finish(req, posts, own))
     .then((posts) => res.json(posts))
     .catch((err) => serverError(res, err));
 });

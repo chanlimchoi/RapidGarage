@@ -218,3 +218,10 @@ export function fetchBadges() {
     .then(({ ok, data }) => (ok && data ? { count: data.count, wantedMatches: data.wantedMatches || 0 } : null))
     .catch(() => null);
 }
+
+// ---- Free on the curb (controllers/curbside.js) ------------------------------
+// Each answers { id, items, curbside } for the caller, to merge into the post.
+export const startCurbside = (postId, body) => apiFetch('/post/' + postId + '/curbside', jsonBody('PUT', body));
+export const stopCurbside = (postId) => apiFetch('/post/' + postId + '/curbside', { method: 'DELETE' });
+export const markCurbTaken = (postId, itemId) => apiFetch('/post/' + postId + '/curbside/taken', jsonBody('POST', itemId ? { itemId } : {}));
+export const undoCurbTaken = (postId, itemId) => apiFetch('/post/' + postId + '/curbside/undo', jsonBody('POST', itemId ? { itemId } : {}));

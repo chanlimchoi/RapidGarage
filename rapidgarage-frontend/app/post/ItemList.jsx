@@ -1,15 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Check, ListPlus, Pencil } from 'lucide-react';
+import { Package, Check, ListPlus, Pencil, Gift, Undo2 } from 'lucide-react';
 import { apiFetch, errorMessage } from '../api';
 import { formatCents, itemSummary } from '../lib/items';
 import { Spinner } from '../components/ui';
 import toast from '../components/toast';
 import { t } from '../i18n';
 import { holdTime } from '../messages/holdText';
+import { liveOffer, itemFree } from '../lib/curbside';
 
 // A sale's items on the sale page. Sold items are struck through and
-// dimmed; the seller can mark them sold right here.
+// dimmed; the seller can mark them sold right here. While leftovers are free
+// on the curb, items show Free / Taken, neighbors can say an item was taken
+// (partial offers) and the seller can mark it gone or put it back.
 export default class ItemList extends React.Component {
   constructor(props) {
     super(props);
@@ -29,8 +32,43 @@ export default class ItemList extends React.Component {
       .catch(() => { this.setState({ busy: null }); toast.error(t('common.networkProblem')); });
   }
 
+  curb(item, fn) {
+    if (!fn) return;
+    this.setState({ busy: 'curb' + item.id });
+    Promise.resolve(fn(item)).then(() => this.setState({ busy: null }), () => this.setState({ busy: null }));
+  }
+
+  renderCurb(item, offer) {
+    const { post, owner, onTaken, onUndo } = this.props;
+    if (!offer) return null;
+    const free = itemFree(post, item);
+    const gone = !offer.all && item.curbside && item.curbsideGone && !item.sold;
+    const busy = this.state.busy === 'curb' + item.id;
+    const out = [];
+    if (free) out.push(<span key="f" className="chip chip-free item-curb-chip"><Gift size={12} aria-hidden="true" />{t('curb.freeChip')}</span>);
+    if (gone) out.push(<span key="g" className="chip chip-muted item-curb-gone">{t('curb.goneChip')}</span>);
+    if (!offer.all && free) {
+      out.push(
+        <button key="t" type="button" className="btn btn-secondary btn-sm item-curb-taken" disabled={busy} onClick={() => this.curb(item, onTaken)}
+          aria-label={owner ? t('curb.markGoneNamed', { name: item.name }) : t('curb.takenNamed', { name: item.name })}>
+          {busy ? <Spinner /> : <Check size={14} aria-hidden="true" />}{owner ? t('curb.markGone') : t('curb.taken')}
+        </button>
+      );
+    }
+    if (owner && gone) {
+      out.push(
+        <button key="u" type="button" className="btn btn-ghost btn-sm item-curb-undo" disabled={busy} onClick={() => this.curb(item, onUndo)}
+          aria-label={t('curb.putBackNamed', { name: item.name })}>
+          {busy ? <Spinner /> : <Undo2 size={14} aria-hidden="true" />}{t('curb.putBack')}
+        </button>
+      );
+    }
+    return out;
+  }
+
   render() {
     const { post, owner, onPhoto } = this.props;
+    const offer = liveOffer(post);
     const items = post.items || [];
     if (!items.length) {
       return owner ? (
@@ -67,7 +105,7 @@ export default class ItemList extends React.Component {
             const pi = item.photoId ? photoIndex(item.photoId) : -1;
             const price = formatCents(item.priceCents);
             return (
-              <li key={item.id} className={'item-row' + (item.sold ? ' is-sold' : '')}>
+              <li key={item.id} className={'item-row' + (item.sold ? ' is-sold' : '') + (offer && itemFree(post, item) ? ' is-curb' : '')}>
                 {pi >= 0 ? (
                   <button type="button" className="item-thumb" onClick={() => onPhoto && onPhoto(pi)} aria-label={t('items.showPhotoOf', { name: item.name })}>
                     <img src={photos[pi].thumbUrl} alt="" />
@@ -77,7 +115,8 @@ export default class ItemList extends React.Component {
                 {price ? <span className={'item-price' + (item.priceCents === 0 ? ' is-free' : '')}>{price}</span> : null}
                 {item.sold ? <span className="chip chip-muted item-sold-chip" aria-hidden="true">{t('items.sold')}</span> : null}
                 {item.reserved ? <span className="chip chip-warning item-reserved-chip" aria-hidden="true" title={owner ? t('items.reservedUntil', { time: holdTime(item.reservedUntil) }) : undefined}>{t('items.reserved')}</span> : null}
-                {owner ? (
+                {this.renderCurb(item, offer)}
+                {owner && !(offer && (itemFree(post, item) || (!offer.all && item.curbside))) ? (
                   <button type="button" className={'btn btn-sm item-sold-toggle ' + (item.sold ? 'btn-ghost' : 'btn-secondary')} aria-pressed={item.sold}
                     disabled={this.state.busy === item.id} onClick={() => this.toggleSold(item)}
                     aria-label={item.sold ? t('items.markAvailable', { name: item.name }) : t('items.markSoldNamed', { name: item.name })}>

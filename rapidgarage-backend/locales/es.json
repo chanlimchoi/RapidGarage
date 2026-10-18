@@ -114,7 +114,8 @@
   "wmail.manage": "Gestionar tus búsquedas",
   "wmail.manageText": "Gestionar tus búsquedas: {url}",
   "wmail.turnOff": "Dejar de recibir correos de «{title}»",
-  "wmail.turnOffText": "Dejar de recibir correos de «{title}»: {url}"
+  "wmail.turnOffText": "Dejar de recibir correos de «{title}»: {url}",
+  "wmail.curbside": "Gratis en la acera hasta {time}"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -376,6 +377,30 @@
   "wantedId must be a positive integer.": "wantedId debe ser un número entero positivo.",
   "Choose a wanted post.": "Elige una búsqueda.",
   "This wanted post is unavailable, so you can't start a new conversation about it.": "Esta búsqueda no está disponible, así que no puedes iniciar una conversación nueva sobre ella.",
-  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "Esta búsqueda caducó o se marcó como encontrada, así que no puedes iniciar una conversación nueva sobre ella."
+  "This wanted post has expired or was marked found, so you can't start a new conversation about it.": "Esta búsqueda caducó o se marcó como encontrada, así que no puedes iniciar una conversación nueva sobre ella.",
+  "Invalid curbside offer.": "Oferta en la acera no válida.",
+  "Choose the items that are free, or offer everything that is left.": "Elige los artículos gratis u ofrece todo lo que queda.",
+  "itemIds must be a list of item ids.": "itemIds debe ser una lista de ids de artículos.",
+  "all must be true or false.": "all debe ser true o false.",
+  "Pickup time must be a date and time.": "La hora de recogida debe ser una fecha y hora.",
+  "Pickup time must be at least {n} minutes from now.": "La hora de recogida debe ser al menos dentro de {n} minutos.",
+  "Pickup time can be at most {n} hours from now.": "La hora de recogida puede ser como máximo dentro de {n} horas.",
+  "Only the seller can change the curbside offer.": "Solo quien vende puede cambiar la oferta en la acera.",
+  "This sale is hidden by a moderator, so it can't offer free leftovers.": "Un moderador ocultó esta venta, así que no puede ofrecer sobrantes gratis.",
+  "You can put leftovers on the curb from {n} hours before your sale ends.": "Puedes dejar los sobrantes en la acera desde {n} horas antes de que termine tu venta.",
+  "Some of those items are not on this sale.": "Algunos de esos artículos no son de esta venta.",
+  "Sold items can't go on the curb.": "Los artículos vendidos no pueden ir a la acera.",
+  "Reserved items can't go on the curb. Cancel the hold first.": "Los artículos reservados no pueden ir a la acera. Cancela la reserva primero.",
+  "Say which item was taken.": "Di qué artículo se llevaron.",
+  "That item is not free on the curb.": "Ese artículo no está gratis en la acera.",
+  "This offer is everything that is left; mark the whole offer taken.": "Esta oferta es todo lo que queda; marca toda la oferta como recogida.",
+  "Leave out itemId.": "No incluyas itemId.",
+  "Nothing here is free on the curb right now.": "Ahora no hay nada gratis en la acera aquí.",
+  "Someone already marked that taken.": "Alguien ya lo marcó como recogido.",
+  "You can't do that for this seller.": "No puedes hacer eso con este vendedor.",
+  "You already marked that taken, and the seller says it is still there.": "Ya lo marcaste como recogido y quien vende dice que sigue ahí.",
+  "You have marked a lot of things taken. Please try again later.": "Marcaste muchas cosas como recogidas. Inténtalo más tarde.",
+  "This curbside offer is over. Start a new one instead.": "Esta oferta en la acera terminó. Empieza una nueva.",
+  "curbside must be true or false.": "curbside debe ser true o false."
  }
 }

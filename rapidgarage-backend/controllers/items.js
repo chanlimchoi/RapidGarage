@@ -9,6 +9,7 @@ const items = require('../lib/items');
 const schedule = require('../lib/schedule');
 const holds = require('../lib/holds');
 const wanted = require('../lib/wanted');
+const curbside = require('../lib/curbside');
 
 const sorted = (list) => list.slice().sort((a, b) => a.position - b.position || a.id - b.id);
 const listOf = async (post) => sorted(await models.SaleItem.findAll({ where: { postId: post.id } }));
@@ -33,7 +34,12 @@ async function loadItem(req, res, next) {
 const soldFields = (sold, item) => (sold === undefined || (item && !!item.sold === sold) ? {} : { sold, soldAt: sold ? schedule.now() : null });
 
 router.get('/', async (req, res) => {
-  try { return res.json({ items: await listOf(req.post), max: items.MAX_ITEMS }); } catch (err) { return serverError(res, err); }
+  try {
+    // annotate() clears the curbside item flags unless this viewer can see the offer.
+    const json = { id: req.post.id, items: (await listOf(req.post)).map((i) => i.toJSON()) };
+    await curbside.annotate([json], req.user);
+    return res.json({ items: json.items, max: items.MAX_ITEMS });
+  } catch (err) { return serverError(res, err); }
 });
 
 router.post('/', requireLogin, owner, async (req, res) => {
@@ -83,6 +89,8 @@ router.put('/:itemId', requireLogin, owner, loadItem, async (req, res) => {
     const updated = await req.item.update(Object.assign(value, soldFields(sold, req.item)));
     // Sold: an accepted hold is done; people waiting are told it's gone.
     if (becameSold) await holds.itemSold(updated);
+    // A curbside item sold (or back): the offer may now be all gone (or not).
+    if (sold !== undefined && updated.curbside) await curbside.refreshGone(req.post.id);
     res.json(updated);
     // Renamed, repriced or back on sale: it may match a wanted post now.
     if (!updated.sold && (value.name !== undefined || value.priceCents !== undefined || sold === false)) wanted.schedulePost(req.post.id);
@@ -92,7 +100,9 @@ router.put('/:itemId', requireLogin, owner, loadItem, async (req, res) => {
 
 router.delete('/:itemId', requireLogin, (req, res, next) => (isAdmin(req.user) ? next() : owner(req, res, next)), loadItem, async (req, res) => {
   try {
+    const wasCurbside = req.item.curbside;
     await req.item.destroy();
+    if (wasCurbside) await curbside.refreshGone(req.post.id);
     return res.status(204).end();
   } catch (err) { return serverError(res, err); }
 });

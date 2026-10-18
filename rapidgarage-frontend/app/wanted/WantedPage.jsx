@@ -10,6 +10,7 @@ import toast from '../components/toast';
 import ReportWantedDialog from './ReportWantedDialog';
 import { STATUS_CHIP, statusLabel, categoryLabel, expiryText } from './WantedCard';
 import { t } from '../i18n';
+import { holdTime } from '../messages/holdText';
 
 // /wanted/:id: what a buyer is looking for. Sellers message them; the owner
 // sees the sales that matched and can edit, renew, mark found or delete.
@@ -77,7 +78,8 @@ export default class WantedPage extends React.Component {
                 <div className="wanted-match-body">
                   <Link to={'/post/' + m.post.id} className="wanted-match-title">{m.post.title}</Link>
                   <span className="small muted">{[m.post.city, formatMiles(m.distanceMiles), t('want.by', { name: m.post.seller.name }), timeAgo(m.matchedAt)].filter(Boolean).join(' · ')}</span>
-                  {m.item ? <span className="small">{t('want.matchItem', { name: m.item.name, price: m.item.priceCents === null ? t('want.noPrice') : formatCents(m.item.priceCents) })}</span> : null}
+                  {m.item ? <span className="small">{t('want.matchItem', { name: m.item.name, price: m.item.free ? t('curb.freeChip') : m.item.priceCents === null ? t('want.noPrice') : formatCents(m.item.priceCents) })}</span> : null}
+                  {m.post.curbsideUntil ? <span className="chip chip-free chip-curb wanted-match-curb">{t('curb.until', { time: holdTime(m.post.curbsideUntil) })}</span> : null}
                 </div>
                 {m.isNew ? <span className="chip chip-brand">{t('want.new')}</span> : null}
               </li>
