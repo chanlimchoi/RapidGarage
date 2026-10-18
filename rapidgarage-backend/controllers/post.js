@@ -13,6 +13,7 @@ const { publicUser } = require('../lib/people');
 const events = require('../lib/events');
 const scans = require('../lib/scans');
 const wanted = require('../lib/wanted');
+const follows = require('../lib/follows');
 const curbside = require('../lib/curbside');
 const calendar = require('../lib/calendar');
 
@@ -71,6 +72,8 @@ router.post('/', requireLogin, async (req, res) => {
     // Sale alerts and wanted posts: match in the background; never slows or fails the request.
     alerts.schedulePostMatch(post);
     wanted.schedulePost(post.id);
+    // People who follow the seller hear about new sales (not edits).
+    follows.schedulePost(post);
   } catch (err) {
     serverError(res, err);
   }

@@ -264,6 +264,13 @@ export const fetchTodayReminders = () => apiFetch('/reminders/today');
 export const markReminderSeen = (id) => apiFetch('/reminders/' + id + '/seen', jsonBody('POST', {}));
 export const unsubscribeReminders = (r, token) => apiFetch('/reminders/unsubscribe', jsonBody('POST', { r, t: token }));
 
+// ---- Following sellers (lib/follows.js on the server) ----------------------
+export const fetchFollows = () => apiFetch('/follows');
+export const fetchFollowStatus = (sellerId) => apiFetch('/follows/' + sellerId);
+export const setFollowing = (sellerId, on) => apiFetch('/follows/' + sellerId, on ? jsonBody('PUT', {}) : { method: 'DELETE' });
+export const setFollowEmails = (sellerId, notify) => apiFetch('/follows/' + sellerId, jsonBody('PUT', { notify }));
+export const unsubscribeFollow = (f, token) => apiFetch('/follows/unsubscribe', jsonBody('POST', { f, t: token }));
+
 // ---- Share button (controllers/post.js POST /post/:id/share) ------------------
 // Fire-and-forget; counted once per person per day for the seller dashboard.
 export function recordShare(postId, channel) {

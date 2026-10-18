@@ -6,6 +6,7 @@ import { Alert, EmptyState, SkeletonBlock, Spinner, Dialog, Field } from '../com
 import { timeAgo } from '../lib/format';
 import toast from '../components/toast';
 import { Stars } from './Stars';
+import FollowButton from '../follows/FollowButton';
 import { t } from '../i18n';
 import { tx } from '../i18n/rich';
 
@@ -84,6 +85,7 @@ export default class PersonRatings extends React.Component {
         <header className="person-header">
           <h1>{data.user.name}</h1>
           <p className="muted">{t('pr.lead')}</p>
+          <FollowButton sellerId={data.user.id} user={this.props.user} showCount />
         </header>
         <section className="panel rating-summary" aria-label={t('pr.summary')}>
           <div className="rating-summary-score">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, Star, UsersRound, LayoutDashboard, PackageSearch } from 'lucide-react';
+import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, Star, UsersRound, LayoutDashboard, PackageSearch, UserCheck } from 'lucide-react';
 import { initials, displayName } from '../lib/format';
 import InstallMenuItem from '../pwa/InstallMenuItem';
 import LanguagePicker from './LanguagePicker';
@@ -149,6 +149,7 @@ export default class NavBar extends React.Component {
             <Link role="menuitem" className="menu-item" to="/messages" onClick={close}><MessageCircle size={18} aria-hidden="true" />{t('nav.messages')}
               {unread ? <span className="nav-badge menu-badge" aria-label={unreadLabel(unread)}>{badgeText(unread)}</span> : null}</Link>
             <Link role="menuitem" className="menu-item" to="/saved" onClick={close}><Star size={18} aria-hidden="true" />{t('nav.savedSales')}</Link>
+            <Link role="menuitem" className="menu-item" to="/following" onClick={close}><UserCheck size={18} aria-hidden="true" />{t('nav.following')}</Link>
             <Link role="menuitem" className="menu-item" to="/dashboard" onClick={close}><LayoutDashboard size={18} aria-hidden="true" />{t('nav.sellerDashboard')}</Link>
             <Link role="menuitem" className="menu-item" to="/profile" onClick={close}><User size={18} aria-hidden="true" />{t('nav.profileListings')}</Link>
             <Link role="menuitem" className="menu-item" to="/settings" onClick={close}><SettingsIcon size={18} aria-hidden="true" />{t('nav.settings')}</Link>
@@ -226,6 +227,7 @@ export default class NavBar extends React.Component {
                 <Link className="menu-item" to="/messages"><MessageCircle size={18} aria-hidden="true" />{t('nav.messages')}
                   {this.props.unread ? <span className="nav-badge menu-badge" aria-label={unreadLabel(this.props.unread)}>{badgeText(this.props.unread)}</span> : null}</Link>
                 <Link className="menu-item" to="/saved"><Star size={18} aria-hidden="true" />{t('nav.savedSales')}</Link>
+                <Link className="menu-item" to="/following"><UserCheck size={18} aria-hidden="true" />{t('nav.following')}</Link>
                 <Link className="menu-item" to="/dashboard"><LayoutDashboard size={18} aria-hidden="true" />{t('nav.sellerDashboard')}</Link>
                 <Link className="menu-item" to="/profile"><User size={18} aria-hidden="true" />{t('nav.profileListings')}</Link>
                 <Link className="menu-item" to="/settings"><SettingsIcon size={18} aria-hidden="true" />{t('nav.settings')}</Link>

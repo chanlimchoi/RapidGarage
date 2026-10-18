@@ -26,6 +26,7 @@ import Unsubscribe from './user/Unsubscribe';
 import PrintFlyer from './print/PrintFlyer';
 import PersonRatings from './ratings/PersonRatings';
 import Saved from './saved/Saved';
+import Following from './follows/Following';
 import ItemsEditor from './post/ItemsEditor';
 import EventsIndex from './events/EventsIndex';
 import EventForm from './events/EventForm';
@@ -167,6 +168,7 @@ class App extends Component {
             <Route path='/wanted/:id' render={(props) => <WantedPage {...props} {...common} onSeen={this.refreshUnread} />} />
             <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
             <Route path='/alerts/unsubscribe' component={Unsubscribe} />
+            <Route path='/following' render={(props) => <Following {...props} {...common} />} />
             <Route path='/saved' render={(props) => <Saved {...props} {...common} config={config} />} />
             <Route path='/people/:id' render={(props) => <PersonRatings {...props} {...common} />} />
             <Route path='/profile' render={(props) => <Profile {...props} {...common} />} />

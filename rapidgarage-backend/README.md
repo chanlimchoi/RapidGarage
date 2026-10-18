@@ -481,6 +481,23 @@ from the sale that is open or opens first (ties: the one closing first). At most
 directions link using the sales' public addresses; without `lat,lng` it has no origin so
 Google Maps starts from the phone's location. The location is only used for that request.
 
+## Following sellers
+
+- `GET /follows` → `{ results: [{ seller: { id, name }, notify, currentSales, since }] }`.
+- `GET /follows/:sellerId` → `{ following, notify, followers }` (public; logged out, `following` is false).
+- `PUT /follows/:sellerId` `{ notify? }` follows (idempotent) or changes the email switch.
+  `DELETE` unfollows. Errors: yourself → 400, blocked either way → 403, over `FOLLOWS_MAX_PER_USER` (500) → 409.
+- `GET /allPosts?following=1` (login) → current sales by people you follow, with the same
+  filters and annotations as `/allPosts`.
+- New post → one `FollowNotifications` row per follower with `notify` on (not blocked). The alert
+  worker sends them after sale alerts and wanted matches, in the same digest budget
+  (`AlertDigest.kind = 'follow'`). Rows for posts that got hidden, deleted or ended, or whose follow
+  went away, are skipped.
+- `POST /follows/unsubscribe` `{ f, t }` (no login): HMAC token with its own purpose, like the other
+  unsubscribe links. Turns `notify` off for that follow; the follow itself stays.
+- Blocking (`/conversations/:id/block`, or blocking while reporting) deletes follows in both directions.
+- Migration `20261018020000-follows`.
+
 ## Tests
 
 `npm test` uses in-memory SQLite. `.mocharc.js` loads `test/setup.js` for every mocha run, direct `npx mocha test/x.test.js` runs included. It refuses to start unless `NODE_ENV=test` (unset counts as test) and the database is throwaway:

@@ -20,6 +20,7 @@ import AddToCalendar from '../components/AddToCalendar';
 import ShareButton from '../components/ShareButton';
 import ItemList from './ItemList';
 import JoinEventPanel from '../events/JoinEventPanel';
+import FollowButton from '../follows/FollowButton';
 import { scrollBehavior, photoAlt } from '../lib/a11y';
 import { t } from '../i18n';
 
@@ -309,6 +310,7 @@ class Post extends Component {
                   </button>
                 ) : null}
                 {!isOwner ? <SaveButton post={post} /> : null}
+                {!isOwner && post.seller ? <FollowButton sellerId={post.seller.id} user={this.props.user} /> : null}
                 <AddToCalendar item={post} kind="post" />
                 <ShareButton kind="post" item={post} title={post.title} />
                 {!isOwner ? <RemindToggle post={post} /> : null}

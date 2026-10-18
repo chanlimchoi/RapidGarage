@@ -155,7 +155,23 @@
   "reset.changedSubject": "你的 RapidGarage 密码已更改",
   "reset.changedHeading": "你的密码已更改",
   "reset.changedIntro": "你的 RapidGarage 账户密码刚刚被更改，其他所有设备均已退出登录。",
-  "reset.changedNotYou": "如果这不是你本人操作，请立即重置密码：{url}"
+  "reset.changedNotYou": "如果这不是你本人操作，请立即重置密码：{url}",
+  "follow.subjectOne": "{name} 发布了新的旧货甩卖：{title}",
+  "follow.subjectMany": {
+   "other": "你关注的人有 {count} 场新甩卖"
+  },
+  "follow.headOne": "你关注的人有一场新甩卖",
+  "follow.headMany": {
+   "other": "你关注的人有 {count} 场新甩卖"
+  },
+  "follow.introOne": "你关注的卖家刚刚发布了一场甩卖：",
+  "follow.introMany": {
+   "other": "你关注的卖家发布了 {count} 场新甩卖："
+  },
+  "follow.manage": "查看你关注的人",
+  "follow.manageText": "查看你关注的人：{url}",
+  "follow.turnOff": "不再接收关于 {name} 的邮件",
+  "follow.turnOffText": "不再接收关于 {name} 的邮件：{url}"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -503,6 +519,11 @@
   "Too many failed attempts. Please wait 15 minutes or reset your password.": "失败次数过多，请等待 15 分钟或重置密码。",
   "The server is busy. Please try again in a few seconds.": "服务器繁忙，请几秒后再试。",
   "Cross-site requests are not allowed.": "不允许跨站请求。",
-  "Request body is too large.": "请求内容过大。"
+  "Request body is too large.": "请求内容过大。",
+  "You can't follow yourself.": "你不能关注自己。",
+  "You can't follow this person.": "你无法关注此人。",
+  "You follow the maximum number of people. Unfollow someone first.": "你关注的人数已达上限，请先取消关注一些人。",
+  "notify must be true or false.": "notify 必须为 true 或 false。",
+  "following must be true or false.": "following 必须为 true 或 false。"
  }
 }

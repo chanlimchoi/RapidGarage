@@ -228,6 +228,10 @@ async function processQueue(now) {
   now = now || new Date();
   const summary = await processAlertQueue(now);
   summary.wanted = await require('./wanted').processQueue(now);
+  try { summary.follows = await require('./follows').processQueue(now); } catch (err) {
+    console.error('Follow email pass failed:', err && err.message);
+    summary.follows = { error: true };
+  }
   try { summary.reminders = await require('./reminders').processDue(now); } catch (err) {
     console.error('Sale reminder pass failed:', err && err.message);
     summary.reminders = { error: true };

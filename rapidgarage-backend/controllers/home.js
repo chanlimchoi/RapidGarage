@@ -1,6 +1,6 @@
 const express = require('express');
 const models = require('../models');
-const { badRequest, notFound, serverError, parseId } = require('../lib/http');
+const { badRequest, unauthorized, notFound, serverError, parseId } = require('../lib/http');
 const { ZIP_RE } = require('../lib/validate');
 const { Op } = require('sequelize');
 const { visibleWhere } = require('../lib/moderation');
@@ -10,6 +10,7 @@ const schedule = require('../lib/schedule');
 const itemsLib = require('../lib/items');
 const events = require('../lib/events');
 const curbside = require('../lib/curbside');
+const follows = require('../lib/follows');
 
 // Add { event: { id, name } } to posts that are part of a neighborhood sale.
 async function withEvents(list, viewer) {
@@ -63,8 +64,18 @@ router.get('/allPosts', async (req, res) => {
   const cs = req.query.curbside;
   if (cs !== undefined && cs !== '' && ['true', '1', 'false', '0'].indexOf(cs) === -1) return badRequest(res, 'Invalid filter.', { curbside: 'curbside must be true or false.' });
   const onlyCurb = cs === 'true' || cs === '1';
+  // ?following=1: only sales by people I follow (lib/follows.js).
+  const fl = req.query.following;
+  if (fl !== undefined && fl !== '' && ['true', '1', 'false', '0'].indexOf(fl) === -1) return badRequest(res, 'Invalid filter.', { following: 'following must be true or false.' });
+  const onlyFollowing = fl === 'true' || fl === '1';
+  if (onlyFollowing && !req.user) return unauthorized(res);
   try {
-    const where = onlyCurb ? Object.assign({}, curbside.activeWhere()) : null;
+    let where = onlyCurb ? Object.assign({}, curbside.activeWhere()) : null;
+    if (onlyFollowing) {
+      const sellers = await follows.followedSellerIds(req.user.id);
+      if (!sellers.length) return res.json([]);
+      where = Object.assign({}, where, { userId: sellers });
+    }
     // Capped to the newest ALL_POSTS_MAX so a request's cost can't grow with
     // the data. Ids first: LIMIT plus ordered hasMany includes is unreliable.
     const newest = (await models.Post.findAll({ attributes: ['id'], where: visible(req, where), order: [['createdAt', 'DESC'], ['id', 'DESC']], limit: allPostsMax(), raw: true })).map((r) => r.id);
