@@ -54,7 +54,7 @@ class Profile extends Component {
       if (!this.props.ready) return <div className="container"><SkeletonGrid count={3} className="card-grid-wide" /></div>;
       return (
         <div className="container container-narrow">
-          <EmptyState icon={LogIn} title={t('profile.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>} />
+          <EmptyState level={1} icon={LogIn} title={t('profile.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>} />
         </div>
       );
     }

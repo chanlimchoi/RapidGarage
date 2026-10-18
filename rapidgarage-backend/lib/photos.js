@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const sharp = require('sharp');
 
 const MAX_PHOTOS_PER_POST = 5;
+// Photo descriptions (alt text): short, one line.
+const ALT_MAX = 250;
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const FULL_MAX_PX = 1600;
 const THUMB_PX = 400;
@@ -46,4 +48,15 @@ function newKeys(postId) {
   return { storageKey: `posts/${postId}/${id}.webp`, thumbKey: `posts/${postId}/${id}-thumb.webp` };
 }
 
-module.exports = { MAX_PHOTOS_PER_POST, MAX_FILE_BYTES, FULL_MAX_PX, THUMB_PX, sniffImageType, processImage, newKeys };
+// -> { value } (null clears it) or { error }. Line breaks and control
+// characters become spaces; runs of spaces collapse.
+function parseAlt(raw) {
+  if (raw === undefined || raw === null) return { value: null };
+  if (typeof raw !== 'string') return { error: 'Photo description must be text.' };
+  // eslint-disable-next-line no-control-regex
+  const v = raw.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (v.length > ALT_MAX) return { error: 'Keep it under ' + ALT_MAX + ' characters.' };
+  return { value: v || null };
+}
+
+module.exports = { MAX_PHOTOS_PER_POST, ALT_MAX, parseAlt, MAX_FILE_BYTES, FULL_MAX_PX, THUMB_PX, sniffImageType, processImage, newKeys };

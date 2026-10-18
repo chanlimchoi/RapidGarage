@@ -181,8 +181,8 @@ class ItemsEditor extends Component {
         {item.reserved ? <span className="chip chip-warning item-reserved-chip">{t('items.reservedUntil', { time: holdTime(item.reservedUntil) })}</span> : null}
         <span className="item-actions">
           <button type="button" className={'btn btn-sm item-sold-toggle ' + (item.sold ? 'btn-ghost' : 'btn-secondary')} aria-pressed={item.sold} disabled={busy === item.id}
-            aria-label={item.sold ? t('items.markAvailable', { name: item.name }) : t('items.markSoldNamed', { name: item.name })} onClick={() => this.toggleSold(item)}>
-            <Check size={14} aria-hidden="true" />{item.sold ? t('items.sold') : t('items.markSold')}
+            onClick={() => this.toggleSold(item)}>
+            <Check size={14} aria-hidden="true" />{item.sold ? t('items.sold') : t('items.markSold')}<span className="sr-only">: {item.name}</span>
           </button>
           <button type="button" className="btn btn-ghost btn-icon btn-sm move-up" aria-label={t('items.moveUp', { name: item.name })} disabled={index === 0} onClick={() => this.move(index, -1)}><ArrowUp size={14} aria-hidden="true" /></button>
           <button type="button" className="btn btn-ghost btn-icon btn-sm move-down" aria-label={t('items.moveDown', { name: item.name })} disabled={index === n - 1} onClick={() => this.move(index, 1)}><ArrowDown size={14} aria-hidden="true" /></button>
@@ -195,11 +195,11 @@ class ItemsEditor extends Component {
 
   render() {
     const { post, loadError, draft, draftErrors, adding, confirm, busy } = this.state;
-    if (loadError) return <div className="container container-narrow"><EmptyState icon={SearchX} title={t('edit.cantLoad')} action={<Link className="btn btn-primary" to="/">{t('nav.browseSales')}</Link>}>{loadError}</EmptyState></div>;
+    if (loadError) return <div className="container container-narrow"><EmptyState level={1} icon={SearchX} title={t('edit.cantLoad')} action={<Link className="btn btn-primary" to="/">{t('nav.browseSales')}</Link>}>{loadError}</EmptyState></div>;
     if (!post) return <div className="container container-narrow"><SkeletonBlock height={240} lines={4} /></div>;
     const user = this.props.user;
     if (this.props.ready && (!user || user.id !== post.userId)) {
-      return <div className="container container-narrow"><EmptyState icon={Lock} title={t('items.onlySeller')} action={<Link className="btn btn-secondary" to={'/post/' + post.id}>{t('edit.backToSale')}</Link>}>{t('items.managedBySeller')}</EmptyState></div>;
+      return <div className="container container-narrow"><EmptyState level={1} icon={Lock} title={t('items.onlySeller')} action={<Link className="btn btn-secondary" to={'/post/' + post.id}>{t('edit.backToSale')}</Link>}>{t('items.managedBySeller')}</EmptyState></div>;
     }
     const items = this.items();
     const photos = post.photos || [];

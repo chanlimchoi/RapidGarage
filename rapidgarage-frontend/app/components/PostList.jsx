@@ -10,6 +10,7 @@ import toast from './toast';
 import { priceFieldError, formatUSD } from '../lib/price';
 import { WHEN_FILTERS } from '../lib/schedule';
 import { KEYWORD_MAX } from '../lib/items';
+import { scrollBehavior } from '../lib/a11y';
 import { t } from '../i18n';
 
 const PAGE_SIZE = 10;
@@ -212,7 +213,7 @@ class PostList extends React.Component {
   select(id) {
     this.setState({ selectedId: id });
     const el = document.querySelector('[data-post-id="' + id + '"]');
-    if (el && el.scrollIntoView && this.state.view === 'list') el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (el && el.scrollIntoView && this.state.view === 'list') el.scrollIntoView({ block: 'nearest', behavior: scrollBehavior() });
   }
 
   // List -> map: on phones, switch to the map first.

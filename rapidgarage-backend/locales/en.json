@@ -495,6 +495,7 @@
   "Meetup suggestion not found.": "Meetup suggestion not found.",
   "This meetup suggestion is no longer open.": "This meetup suggestion is no longer open.",
   "Only the person it was suggested to can answer it.": "Only the person it was suggested to can answer it.",
-  "Only the person who suggested it can withdraw it. You can decline it instead.": "Only the person who suggested it can withdraw it. You can decline it instead."
+  "Only the person who suggested it can withdraw it. You can decline it instead.": "Only the person who suggested it can withdraw it. You can decline it instead.",
+  "Photo description must be text.": "Photo description must be text."
  }
 }

@@ -18,6 +18,14 @@ export default class ShareButton extends React.Component {
     this.onKey = this.onKey.bind(this);
   }
 
+  componentDidUpdate(prev, prevState) {
+    // Disclosure popover: move focus into it when it opens.
+    if (this.state.open && !prevState.open && this.root) {
+      const first = this.root.querySelector('.cal-menu-list a[href], .cal-menu-list button');
+      if (first) first.focus();
+    }
+  }
+
   componentWillUnmount() { this.listen(false); clearTimeout(this.copiedTimer); }
 
   listen(on) {
@@ -70,30 +78,31 @@ export default class ShareButton extends React.Component {
     const q = quickLinks(url, title);
     const id = 'share-menu-' + kind + '-' + item.id;
     const out = (key, href, label) => (
-      <a className={'cal-menu-item share-' + key} href={href} target="_blank" rel="noopener noreferrer" role="menuitem"
+      <a className={'cal-menu-item share-' + key} href={href} target="_blank" rel="noopener noreferrer"
         onClick={() => { this.track(key); this.close(); }}>
         <ExternalLink size={14} aria-hidden="true" />{label}
       </a>
     );
     return (
-      <div className={'cal-menu share-menu' + (this.state.open ? ' is-open' : '')} ref={(el) => { this.root = el; }}>
-        <button type="button" className={'btn ' + (compact ? 'btn-ghost btn-sm' : 'btn-secondary') + ' share-btn'} aria-haspopup="true" aria-expanded={this.state.open} aria-controls={id}
+      <div className={'cal-menu share-menu' + (this.state.open ? ' is-open' : '')} ref={(el) => { this.root = el; }}
+        onBlur={(e) => { if (this.state.open && e.relatedTarget && this.root && !this.root.contains(e.relatedTarget)) this.close(); }}>
+        <button type="button" className={'btn ' + (compact ? 'btn-ghost btn-sm' : 'btn-secondary') + ' share-btn'} aria-expanded={this.state.open} aria-controls={id}
           ref={(el) => { this.button = el; }} onClick={() => this.click()}>
           <Share2 size={16} aria-hidden="true" />{t('share.button')}{navigator.share ? null : <ChevronDown size={14} aria-hidden="true" />}
         </button>
         {this.state.open ? (
-          <div className="cal-menu-list share-menu-list" id={id} role="menu" aria-label={t('share.menuLabel')}>
+          <div className="cal-menu-list share-menu-list" id={id} role="group" aria-label={t('share.menuLabel')}>
             <label className="share-link-field">
               <span className="small muted">{t('share.linkLabel')}</span>
               <input type="text" readOnly value={url} ref={(el) => { this.input = el; }} onFocus={(e) => e.target.select()} className="share-link-input" />
             </label>
-            <button type="button" className="cal-menu-item share-copy" role="menuitem" onClick={() => this.copy('copy')}>
+            <button type="button" className="cal-menu-item share-copy" onClick={() => this.copy('copy')}>
               {this.state.copied ? <Check size={14} aria-hidden="true" /> : <Link2 size={14} aria-hidden="true" />}{this.state.copied ? t('share.copiedShort') : t('share.copy')}
             </button>
             {out('facebook', q.facebook, 'Facebook')}
             {out('whatsapp', q.whatsapp, 'WhatsApp')}
             {out('x', q.x, 'X')}
-            <button type="button" className="cal-menu-item share-kakao" role="menuitem" onClick={() => this.copy('kakao')}>
+            <button type="button" className="cal-menu-item share-kakao" onClick={() => this.copy('kakao')}>
               <MessageCircle size={14} aria-hidden="true" />
               <span><strong>{t('share.kakao')}</strong><span className="small muted cal-menu-hint">{t('share.kakaoHint')}</span></span>
             </button>

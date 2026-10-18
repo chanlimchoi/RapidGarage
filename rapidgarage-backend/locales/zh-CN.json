@@ -479,6 +479,7 @@
   "Meetup suggestion not found.": "找不到该见面建议。",
   "This meetup suggestion is no longer open.": "此见面建议已关闭。",
   "Only the person it was suggested to can answer it.": "只有收到建议的人可以回复。",
-  "Only the person who suggested it can withdraw it. You can decline it instead.": "只有提出建议的人可以撤回。你可以选择拒绝。"
+  "Only the person who suggested it can withdraw it. You can decline it instead.": "只有提出建议的人可以撤回。你可以选择拒绝。",
+  "Photo description must be text.": "照片描述必须是文本。"
  }
 }

@@ -51,8 +51,8 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
         {onShowOnMap && hasPin ? (
           <div className="post-card-foot">
             <span className="small muted">{t('card.posted', { when: timeAgo(post.createdAt) })}</span>
-            <button type="button" className="btn btn-ghost btn-sm show-on-map" onClick={() => onShowOnMap(post.id)}
-              aria-label={t('card.showOnMap', { title: post.title })}><MapPin size={14} aria-hidden="true" />{t('card.map')}</button>
+            <button type="button" className="btn btn-ghost btn-sm show-on-map" onClick={() => onShowOnMap(post.id)}>
+              <MapPin size={14} aria-hidden="true" />{t('card.map')}<span className="sr-only">: {post.title}</span></button>
           </div>
         ) : null}
       </div>

@@ -117,10 +117,10 @@ export default class ItemList extends React.Component {
                 {item.reserved ? <span className="chip chip-warning item-reserved-chip" aria-hidden="true" title={owner ? t('items.reservedUntil', { time: holdTime(item.reservedUntil) }) : undefined}>{t('items.reserved')}</span> : null}
                 {this.renderCurb(item, offer)}
                 {owner && !(offer && (itemFree(post, item) || (!offer.all && item.curbside))) ? (
-                  <button type="button" className={'btn btn-sm item-sold-toggle ' + (item.sold ? 'btn-ghost' : 'btn-secondary')} aria-pressed={item.sold}
-                    disabled={this.state.busy === item.id} onClick={() => this.toggleSold(item)}
-                    aria-label={item.sold ? t('items.markAvailable', { name: item.name }) : t('items.markSoldNamed', { name: item.name })}>
+                  <button type="button" className={'btn btn-sm item-sold-toggle ' + (item.sold ? 'btn-ghost' : 'btn-secondary')}
+                    disabled={this.state.busy === item.id} onClick={() => this.toggleSold(item)}>
                     {this.state.busy === item.id ? <Spinner /> : <Check size={14} aria-hidden="true" />}{item.sold ? t('items.undo') : t('items.sold')}
+                    <span className="sr-only">: {item.sold ? t('items.markAvailable', { name: item.name }) : t('items.markSoldNamed', { name: item.name })}</span>
                   </button>
                 ) : null}
               </li>

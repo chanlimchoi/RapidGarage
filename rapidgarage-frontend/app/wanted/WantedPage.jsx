@@ -95,7 +95,7 @@ export default class WantedPage extends React.Component {
     const { wanted: w, error, busy } = this.state;
     const user = this.props.user;
     if (error) {
-      return <div className="container container-narrow"><EmptyState icon={SearchX} title={t('want.notFound')} action={<Link className="btn btn-secondary" to="/wanted">{t('want.board')}</Link>}>{error}</EmptyState></div>;
+      return <div className="container container-narrow"><EmptyState level={1} icon={SearchX} title={t('want.notFound')} action={<Link className="btn btn-secondary" to="/wanted">{t('want.board')}</Link>}>{error}</EmptyState></div>;
     }
     if (!w) return <div className="container container-narrow"><SkeletonBlock lines={6} /></div>;
     const admin = !!(user && user.role === 'admin');

@@ -20,6 +20,7 @@ import AddToCalendar from '../components/AddToCalendar';
 import ShareButton from '../components/ShareButton';
 import ItemList from './ItemList';
 import JoinEventPanel from '../events/JoinEventPanel';
+import { scrollBehavior, photoAlt } from '../lib/a11y';
 import { t } from '../i18n';
 
 // GET /post/:id with a photo gallery and a details sidebar.
@@ -200,8 +201,9 @@ class Post extends Component {
     return (
       <div className="post-gallery" role="group" aria-roledescription="carousel" aria-label={t('post.photos')} onKeyDown={this.onKey}>
         <div className="gallery-stage">
-          <a href={current.url} target="_blank" rel="noopener noreferrer" aria-label={t('post.openPhoto', { n: active + 1 })}>
-            <img src={current.url} alt={t('post.photoAlt', { title: post.title, n: active + 1 })} className="gallery-main" />
+          <a href={current.url} target="_blank" rel="noopener noreferrer">
+            <img src={current.url} alt={photoAlt(current, active, photos.length, post.title, (v) => t('post.photoAltOf', v))} className="gallery-main" />
+            <span className="sr-only"> {t('post.openFullSize')}</span>
           </a>
           {photos.length > 1 ? (
             <React.Fragment>
@@ -229,7 +231,7 @@ class Post extends Component {
     if (error) {
       return (
         <div className="container container-narrow">
-          <EmptyState icon={SearchX} title={t('post.cantFind')} action={<Link className="btn btn-primary" to="/">{t('nav.browseSales')}</Link>}>{error}</EmptyState>
+          <EmptyState level={1} icon={SearchX} title={t('post.cantFind')} action={<Link className="btn btn-primary" to="/">{t('nav.browseSales')}</Link>}>{error}</EmptyState>
         </div>
       );
     }
@@ -282,7 +284,7 @@ class Post extends Component {
               </section>
             ) : <p className="muted">{t('post.noDescription')}</p>}
             <ItemList post={post} owner={isOwner} user={this.props.user} onTaken={(i) => this.curbTaken(i)} onUndo={(i) => this.curbUndo(i)} onItems={(items) => this.setState({ post: Object.assign({}, post, { items }) })}
-              onPhoto={(i) => { this.setState({ active: i }); const g = document.querySelector('.post-gallery'); if (g && g.scrollIntoView) g.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }} />
+              onPhoto={(i) => { this.setState({ active: i }); const g = document.querySelector('.post-gallery'); if (g && g.scrollIntoView) g.scrollIntoView({ block: 'nearest', behavior: scrollBehavior() }); }} />
           </div>
           <aside className="post-aside">
             <CurbsidePanel post={post} user={this.props.user} act={(p, m) => this.curbAct(p, m)} taken={(i) => this.curbTaken(i)} undo={(i) => this.curbUndo(i)} />

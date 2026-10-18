@@ -39,7 +39,8 @@ export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 // Upload File objects to a post (multipart field "photos").
 // Resolves to { ok, status, data } like apiFetch.
-export function uploadPhotos(postId, files) {
+// alts (optional): a description per file, saved right after the upload.
+export function uploadPhotos(postId, files, alts) {
   const form = new FormData();
   files.forEach((f) => form.append('photos', f, f.name));
   return fetch('/api/post/' + postId + '/photos', { method: 'POST', body: form, credentials: 'same-origin', headers: { 'Accept-Language': locale() } })
@@ -47,7 +48,19 @@ export function uploadPhotos(postId, files) {
       let data = null;
       try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
       return { ok: response.ok, status: response.status, data };
-    }));
+    }))
+    .then((up) => {
+      if (!up.ok || !Array.isArray(up.data) || !alts) return up;
+      const todo = up.data.map((p, i) => [p, (alts[i] || '').trim()]).filter(([, a]) => a);
+      return Promise.all(todo.map(([p, a]) => savePhotoAlt(postId, p.id, a).then((r) => { if (r.ok) p.alt = r.data.alt; return r.ok; })))
+        .then((oks) => Object.assign(up, { altFailed: oks.some((x) => !x) }))
+        .catch(() => Object.assign(up, { altFailed: true }));
+    });
+}
+
+// The seller's description of a photo (empty: back to the default text).
+export function savePhotoAlt(postId, photoId, alt) {
+  return apiFetch('/post/' + postId + '/photos/' + photoId, { method: 'PUT', body: JSON.stringify({ alt: alt || null }) });
 }
 
 export function deletePhoto(postId, photoId) {

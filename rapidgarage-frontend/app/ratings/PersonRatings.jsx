@@ -75,7 +75,7 @@ export default class PersonRatings extends React.Component {
     const { loading, error, data, page } = this.state;
     const user = this.props.user;
     if (loading && !data) return <div className="container container-narrow"><SkeletonBlock lines={5} /></div>;
-    if (error === 'not_found') return <div className="container container-narrow"><EmptyState icon={UserX} title={t('pr.notFound')}>{t('pr.deletedAccount')}</EmptyState></div>;
+    if (error === 'not_found') return <div className="container container-narrow"><EmptyState icon={UserX} level={1} title={t('pr.notFound')}>{t('pr.deletedAccount')}</EmptyState></div>;
     if (error) return <div className="container container-narrow"><Alert tone="danger">{error}</Alert></div>;
     const { summary, distribution, ratings } = data;
     const max = Math.max(1, ...Object.values(distribution));

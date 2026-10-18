@@ -26,10 +26,11 @@ export default class RemindToggle extends React.Component {
     return (
       <button type="button" className={'btn ' + (compact ? 'btn-ghost btn-sm' : 'btn-secondary') + ' remind-btn' + (on ? ' is-on' : '')}
         aria-pressed={on} disabled={saved.isPending(post.id)}
-        aria-label={compact ? t(on ? 'rem.turnOffNamed' : 'rem.turnOnNamed', { title: post.title }) : undefined}
         title={t('rem.hint')}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); saved.setReminder(post, !on); }}>
         <Icon size={compact ? 14 : 16} aria-hidden="true" />{compact ? (on ? t('rem.onShort') : t('rem.offShort')) : label}
+        {/* Visible text first, so the accessible name starts with what's shown. */}
+        {compact ? <span className="sr-only">: {post.title}</span> : null}
       </button>
     );
   }

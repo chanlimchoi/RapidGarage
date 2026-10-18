@@ -106,9 +106,9 @@ export default class Admin extends React.Component {
   render() {
     if (!this.props.user) {
       if (!this.props.ready) return <div className="container"><SkeletonBlock lines={4} /></div>;
-      return <div className="container container-narrow"><EmptyState icon={LogIn} title={t('admin.loginFirst')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('admin.needAdmin')}</EmptyState></div>;
+      return <div className="container container-narrow"><EmptyState level={1} icon={LogIn} title={t('admin.loginFirst')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('admin.needAdmin')}</EmptyState></div>;
     }
-    if (!this.isAdmin()) return <div className="container container-narrow"><EmptyState icon={Lock} title={t('admin.only')}>{t('admin.noAccess')}</EmptyState></div>;
+    if (!this.isAdmin()) return <div className="container container-narrow"><EmptyState level={1} icon={Lock} title={t('admin.only')}>{t('admin.noAccess')}</EmptyState></div>;
     const s = this.state;
     const admins = s.users.filter((u) => u.role === 'admin').length;
     return (

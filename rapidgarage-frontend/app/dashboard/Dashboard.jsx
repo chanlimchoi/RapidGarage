@@ -68,7 +68,7 @@ export default class Dashboard extends React.Component {
 
   render() {
     if (!this.props.user) {
-      return <div className="container container-narrow"><EmptyState icon={Lock} title={t('dash.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('dash.loginText')}</EmptyState></div>;
+      return <div className="container container-narrow"><EmptyState level={1} icon={Lock} title={t('dash.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('dash.loginText')}</EmptyState></div>;
     }
     const { loading, error, data, metric, filter } = this.state;
     if (loading) return <div className="container"><SkeletonBlock height={160} lines={6} /></div>;

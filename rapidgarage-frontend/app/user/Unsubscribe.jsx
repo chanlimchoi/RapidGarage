@@ -36,13 +36,13 @@ export default class Unsubscribe extends React.Component {
       : <Link className="btn btn-primary" to="/settings#alerts">{t('unsub.manage')}</Link>;
     let body;
     if (s.status === 'working') body = <SkeletonBlock lines={2} />;
-    else if (s.status === 'error') body = <EmptyState icon={AlertCircle} title={t('unsub.failedTitle')} action={manage}>{s.error} {t('unsub.failedText')}</EmptyState>;
-    else if (s.status === 'gone') body = <EmptyState icon={BellOff} title={t('unsub.goneTitle')} action={manage}>{t('unsub.goneText')}</EmptyState>;
-    else if (isReminder) body = <EmptyState icon={BellOff} title={t('unsub.remindersDoneTitle')} action={manage}>{t('unsub.remindersDoneText')}</EmptyState>;
-    else if (s.isWanted) body = <EmptyState icon={BellOff} title={t('unsub.wantedDoneTitle')} action={manage}>{t('unsub.wantedDoneText', { title: s.wanted ? s.wanted.title : '' })}</EmptyState>;
+    else if (s.status === 'error') body = <EmptyState level={1} icon={AlertCircle} title={t('unsub.failedTitle')} action={manage}>{s.error} {t('unsub.failedText')}</EmptyState>;
+    else if (s.status === 'gone') body = <EmptyState level={1} icon={BellOff} title={t('unsub.goneTitle')} action={manage}>{t('unsub.goneText')}</EmptyState>;
+    else if (isReminder) body = <EmptyState level={1} icon={BellOff} title={t('unsub.remindersDoneTitle')} action={manage}>{t('unsub.remindersDoneText')}</EmptyState>;
+    else if (s.isWanted) body = <EmptyState level={1} icon={BellOff} title={t('unsub.wantedDoneTitle')} action={manage}>{t('unsub.wantedDoneText', { title: s.wanted ? s.wanted.title : '' })}</EmptyState>;
     else {
       const name = s.alert && s.alert.label ? t('unsub.quoted', { label: s.alert.label }) : t('unsub.thisAlert');
-      body = <EmptyState icon={BellOff} title={t('unsub.doneTitle')} action={manage}>{t('unsub.doneText', { name })}</EmptyState>;
+      body = <EmptyState level={1} icon={BellOff} title={t('unsub.doneTitle')} action={manage}>{t('unsub.doneText', { name })}</EmptyState>;
     }
     return <div className="container container-narrow rg-unsubscribe" aria-live="polite">{body}</div>;
   }

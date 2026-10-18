@@ -7,7 +7,7 @@ import { t } from '../i18n';
 export default function NotFound() {
   return (
     <div className="container container-narrow">
-      <EmptyState icon={SearchX} title={t('notFound.title')} action={<Link className="btn btn-primary" to="/">{t('nav.browseSales')}</Link>}>
+      <EmptyState icon={SearchX} level={1} title={t('notFound.title')} action={<Link className="btn btn-primary" to="/">{t('nav.browseSales')}</Link>}>
         {t('notFound.text')}
       </EmptyState>
     </div>
