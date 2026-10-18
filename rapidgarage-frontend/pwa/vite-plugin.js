@@ -3,9 +3,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { shellFiles } from './sw-core.js';
 
-const here = path.dirname(new URL(import.meta.url).pathname);
+// fileURLToPath, not URL.pathname: on Windows the latter gives "/C:/..." and
+// keeps %20 for spaces.
+const here = path.dirname(fileURLToPath(import.meta.url));
 
 function walk(dir, base) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {

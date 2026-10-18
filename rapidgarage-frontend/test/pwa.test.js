@@ -5,12 +5,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
 import { strategyFor, shellFiles } from '../pwa/sw-core.js';
 import { buildServiceWorker } from '../pwa/vite-plugin.js';
 import { checkPwa } from '../scripts/check-pwa.js';
 
 const ORIGIN = 'https://rapidgarage.example';
-const root = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = { origin: ORIGIN, precache: new Set(['/index.html', '/assets/index-abc.js', '/icons/icon-192.png']) };
 const req = (p, extra) => Object.assign({ method: 'GET', url: ORIGIN + p, mode: 'cors' }, extra);
 
