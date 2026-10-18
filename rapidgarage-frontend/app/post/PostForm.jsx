@@ -4,6 +4,8 @@ import { rules, validateAll, serverFieldErrors, focusFirstError } from '../lib/v
 import { browserTimeZone, formDays, validateDays } from '../lib/schedule';
 import ScheduleEditor from './ScheduleEditor';
 import { priceErrors, toPriceNumber, formatPrice } from '../lib/price';
+import { PERCENT_CHOICES, markdownBody, markdownValues } from '../lib/markdown';
+import { markdownErrors, describe as describeMarkdown } from '../lib/markdownText';
 import { t } from '../i18n';
 
 const SCHEMA = {
@@ -15,7 +17,7 @@ const SCHEMA = {
 
 // Price rules span three fields, so they run together (lib/price.js mirrors the server).
 function validateForm(values) {
-  return Object.assign(validateAll(values, SCHEMA), priceErrors(values), validateDays(values.days));
+  return Object.assign(validateAll(values, SCHEMA), priceErrors(values), markdownErrors(values), validateDays(values.days));
 }
 
 export function initialValues(post) {
@@ -26,6 +28,7 @@ export function initialValues(post) {
     isFree: !!p.isFree,
     priceMin: p.priceMin === null || p.priceMin === undefined ? '' : String(p.priceMin),
     priceMax: p.priceMax === null || p.priceMax === undefined ? '' : String(p.priceMax),
+    ...markdownValues(p),
   };
 }
 
@@ -38,6 +41,8 @@ export function toBody(v) {
     isFree: !!v.isFree,
     priceMin: v.isFree ? null : toPriceNumber(v.priceMin),
     priceMax: v.isFree ? null : toPriceNumber(v.priceMax),
+    // A free sale has nothing to mark down.
+    ...markdownBody(v.isFree ? { markdownPercent: '' } : v),
   };
 }
 
@@ -169,6 +174,34 @@ export default class PostForm extends React.Component {
                 {preview ? <span className="price-preview">{t('form.showsAs')}<span className="chip chip-price">{preview}</span></span> : null}
               </span>
             </fieldset>
+            {!v.isFree ? (
+              <fieldset className="markdown-fieldset" aria-describedby="markdown-hint">
+                <legend className="field-label">{t('md.legend')} <span className="optional"> {t('ui.optional')}</span></legend>
+                <div className="form-grid form-grid-2">
+                  <Field id="markdownPercent" label={t('md.percent')} error={this.shown('markdownPercent', errors)}>
+                    <select className="input" name="markdownPercent" value={v.markdownPercent} onChange={this.change('markdownPercent')} onBlur={this.blur('markdownPercent')}>
+                      <option value="">{t('md.none')}</option>
+                      {PERCENT_CHOICES.concat(v.markdownPercent && PERCENT_CHOICES.indexOf(Number(v.markdownPercent)) === -1 ? [Number(v.markdownPercent)] : [])
+                        .map((p) => <option key={p} value={String(p)}>{t('md.percentOption', { percent: p })}</option>)}
+                    </select>
+                  </Field>
+                  <Field id="markdownFrom" label={t('md.from')} error={this.shown('markdownFrom', errors)}>
+                    <input className="input" type="time" name="markdownFrom" step="900" value={v.markdownFrom} disabled={!v.markdownPercent}
+                      onChange={this.change('markdownFrom')} onBlur={this.blur('markdownFrom')} />
+                  </Field>
+                </div>
+                <label className="checkbox-row" htmlFor="markdownLastDay">
+                  <input id="markdownLastDay" name="markdownLastDay" type="checkbox" checked={v.markdownLastDay} disabled={!v.markdownPercent}
+                    onChange={(e) => this.setState({ values: Object.assign({}, this.state.values, { markdownLastDay: e.target.checked }) })} />
+                  <span>{t('md.lastDay')}</span>
+                </label>
+                <span className="field-hint" id="markdown-hint">
+                  {v.markdownPercent && v.markdownFrom && !Object.keys(markdownErrors(v)).length
+                    ? describeMarkdown({ percent: Number(v.markdownPercent), from: v.markdownFrom, lastDayOnly: v.markdownLastDay })
+                    : t('md.hint')}
+                </span>
+              </fieldset>
+            ) : null}
             <Field id="description" label={t('form.description')} optional hint={t('form.descriptionHint')}>
               <textarea className="textarea" name="description" rows="6" value={v.description} onChange={this.change('description')} />
             </Field>

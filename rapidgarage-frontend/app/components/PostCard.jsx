@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag, Package, UsersRound, Gift } from 'lucide-react';
+import { MapPin, CalendarDays, Images, ImageOff, Navigation, Clock, Tag, Package, UsersRound, Gift, Percent } from 'lucide-react';
 import { formatMiles, placeLine, timeAgo } from '../lib/format';
 import { shortWhen, saleBadge } from '../lib/schedule';
 import { formatPrice } from '../lib/price';
 import SaveButton from '../saved/SaveButton';
 import { liveOffer } from '../lib/curbside';
+import { isActive as markdownNow } from '../lib/markdown';
+import { chipLabel as markdownChip } from '../lib/markdownText';
 import { holdTime } from '../messages/holdText';
 import { t } from '../i18n';
 
@@ -40,6 +42,7 @@ export default function PostCard({ post, selected, onShowOnMap, actions }) {
           {post.hidden ? <span className="chip chip-warning">{t('card.hidden')}</span> : null}
           {curb ? <span className="chip chip-free chip-curb" title={t('curb.until', { time: holdTime(curb.until) })}><Gift size={12} aria-hidden="true" />{t('curb.badge')}</span> : null}
           {price ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{price}</span> : null}
+          {markdownChip(post) ? <span className={'chip chip-markdown' + (markdownNow(post) ? ' is-now' : '')}><Percent size={12} aria-hidden="true" />{markdownChip(post)}</span> : null}
           {when ? <span className="chip chip-brand"><CalendarDays size={12} aria-hidden="true" />{when}</span> : null}
           {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
           {post.event ? <Link className="chip chip-event" to={'/events/' + post.event.id}><UsersRound size={12} aria-hidden="true" />{t('ev.partOf', { name: post.event.name })}</Link> : null}

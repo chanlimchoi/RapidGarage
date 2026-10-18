@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag, BellRing, Check, Package, X, UsersRound, Gift } from 'lucide-react';
+import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag, BellRing, Check, Package, X, UsersRound, Gift, Percent } from 'lucide-react';
 import Map from './Map';
 import PostCard from './PostCard';
 import { Alert, EmptyState, SkeletonGrid, Spinner } from './ui';
@@ -29,6 +29,8 @@ class PostList extends React.Component {
       events: [], neighborhood: false,
       // Free on the curb only (?curbside=true): leftovers neighbors can pick up now.
       curbside: false,
+      // Last-hour markdown running now (?markdown=true).
+      markdown: false,
     };
     this.handleSubmit = this.handleSubmit.bind(this);
     this.useMyLocation = this.useMyLocation.bind(this);
@@ -48,6 +50,7 @@ class PostList extends React.Component {
     if (this.state.when) q.push('when=' + encodeURIComponent(this.state.when));
     if (this.state.activeKeyword) q.push('keyword=' + encodeURIComponent(this.state.activeKeyword));
     if (this.state.curbside) q.push('curbside=true');
+    if (this.state.markdown) q.push('markdown=true');
     apiFetch('/allPosts' + (q.length ? '?' + q.join('&') : ''))
       .then(({ ok, data }) => this.mounted && this.setState({ loading: false, results: ok && Array.isArray(data) ? data.filter((p) => !this.state.neighborhood || p.event) : [],
         error: ok ? '' : errorMessage(data, t('list.loadFailed')) }))
@@ -71,6 +74,7 @@ class PostList extends React.Component {
       this.state.activeKeyword ? { keyword: this.state.activeKeyword } : {},
       this.state.neighborhood ? { neighborhood: 'true' } : {},
       this.state.curbside ? { curbside: 'true' } : {},
+      this.state.markdown ? { markdown: 'true' } : {},
       !this.state.freeOnly && this.state.maxPrice.trim() ? { maxPrice: this.state.maxPrice.trim() } : {});
     this.setState({ loading: true, error: '', notice: '' });
     return searchPosts(params).then(({ ok, data }) => {
@@ -152,6 +156,14 @@ class PostList extends React.Component {
   }
 
   // "Free on the curb" works on both the search and the recent list (server-side).
+  changeMarkdown(markdown) {
+    this.setState({ markdown }, () => {
+      if (this.state.lastWhere) return this.runSearch(this.state.lastWhere, 1);
+      this.setState({ loading: true });
+      return this.loadRecent();
+    });
+  }
+
   changeCurbside(curbside) {
     this.setState({ curbside }, () => {
       if (this.state.lastWhere) return this.runSearch(this.state.lastWhere, 1);
@@ -299,7 +311,7 @@ class PostList extends React.Component {
     const f = s.mode !== 'recent' ? s.resultFilter : null;
     const priceNote = f && f.freeOnly ? t('list.noteFree') : f && f.maxPrice !== null && f.maxPrice !== undefined ? t('list.noteMax', { price: formatUSD(f.maxPrice) }) : '';
     const whenItem = WHEN_FILTERS.filter((w) => w.value && w.value === s.when)[0];
-    const filterNote = priceNote + (whenItem ? ' · ' + t(whenItem.labelKey).toLocaleLowerCase() : '') + (s.activeKeyword ? ' · “' + s.activeKeyword + '”' : '') + (f && f.neighborhood ? ' · ' + t('ev.noteNeighborhood') : '') + (s.curbside ? ' · ' + t('curb.noteFilter') : '');
+    const filterNote = priceNote + (whenItem ? ' · ' + t(whenItem.labelKey).toLocaleLowerCase() : '') + (s.activeKeyword ? ' · “' + s.activeKeyword + '”' : '') + (f && f.neighborhood ? ' · ' + t('ev.noteNeighborhood') : '') + (s.curbside ? ' · ' + t('curb.noteFilter') : '') + (s.markdown ? ' · ' + t('md.noteFilter') : '');
     const maxPriceError = priceFieldError(s.maxPrice, t('list.maxPrice'));
     return (
       <div className="container">
@@ -354,6 +366,10 @@ class PostList extends React.Component {
             <label className="chip-toggle chip-toggle-curb" htmlFor="search-curbside">
               <input id="search-curbside" name="curbside" type="checkbox" checked={s.curbside} onChange={(e) => this.changeCurbside(e.target.checked)} />
               <Gift size={14} aria-hidden="true" />{t('curb.filter')}
+            </label>
+            <label className="chip-toggle chip-toggle-markdown" htmlFor="search-markdown">
+              <input id="search-markdown" name="markdown" type="checkbox" checked={s.markdown} onChange={(e) => this.changeMarkdown(e.target.checked)} />
+              <Percent size={14} aria-hidden="true" />{t('md.filter')}
             </label>
             <label className="chip-toggle" htmlFor="search-neighborhood">
               <input id="search-neighborhood" name="neighborhood" type="checkbox" checked={s.neighborhood} onChange={(e) => this.changeNeighborhood(e.target.checked)} />

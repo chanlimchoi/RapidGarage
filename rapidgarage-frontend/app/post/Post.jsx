@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3, Gift } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3, Gift, Percent } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
 import { addressLine, timeAgo, formatMiles } from '../lib/format';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
 import { BADGE_CLASS } from '../components/PostCard';
 import { formatPrice } from '../lib/price';
+import { isActive as markdownNow } from '../lib/markdown';
+import { chipLabel as markdownChip, describe as describeMarkdown } from '../lib/markdownText';
 import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../components/ui';
 import toast from '../components/toast';
 import { RatingBadge } from '../ratings/Stars';
@@ -269,6 +271,7 @@ class Post extends Component {
           <div className="chips">
             {formatPrice(post) ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{formatPrice(post)}</span> : null}
             {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
+            {markdownChip(post) ? <span className={'chip chip-markdown' + (markdownNow(post) ? ' is-now' : '')}><Percent size={12} aria-hidden="true" />{markdownChip(post)}</span> : null}
             {liveOffer(post) ? <span className="chip chip-free chip-curb" title={t('curb.until', { time: holdTime(post.curbside.until) })}><Gift size={12} aria-hidden="true" />{t('curb.badge')}</span> : null}
             {address ? <span className="chip"><MapPin size={12} aria-hidden="true" />{[post.city, post.state].filter(Boolean).join(', ')}</span> : null}
             <span className="chip"><Clock size={12} aria-hidden="true" />{t('card.posted', { when: timeAgo(post.createdAt) })}</span>
@@ -277,6 +280,12 @@ class Post extends Component {
         </header>
         <article className="post-layout">
           <div className="stack">
+            {post.markdown && post.markdown.startsAt ? (
+              <p className={'markdown-note' + (post.markdown.active ? ' is-now' : '')}>
+                <Percent size={16} aria-hidden="true" />
+                <span>{post.markdown.active ? t('md.runningNow', { percent: post.markdown.percent }) + ' ' : ''}{describeMarkdown(post.markdown)}</span>
+              </p>
+            ) : null}
             {this.renderGallery(post)}
             {post.description ? (
               <section>

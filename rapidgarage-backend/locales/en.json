@@ -544,6 +544,11 @@
   "You can't follow this person.": "You can't follow this person.",
   "You follow the maximum number of people. Unfollow someone first.": "You follow the maximum number of people. Unfollow someone first.",
   "notify must be true or false.": "notify must be true or false.",
-  "following must be true or false.": "following must be true or false."
+  "following must be true or false.": "following must be true or false.",
+  "Markdown must be a whole percent from 5 to 90.": "Markdown must be a whole percent from 5 to 90.",
+  "Markdown start must be a time like 14:00.": "Markdown start must be a time like 14:00.",
+  "markdownLastDay must be true or false.": "markdownLastDay must be true or false.",
+  "Choose when the markdown starts.": "Choose when the markdown starts.",
+  "markdown must be true or false.": "markdown must be true or false."
  }
 }

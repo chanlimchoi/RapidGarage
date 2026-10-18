@@ -8,6 +8,7 @@ import toast from '../components/toast';
 import { t } from '../i18n';
 import { holdTime } from '../messages/holdText';
 import { liveOffer, itemFree } from '../lib/curbside';
+import { isActive as markdownNow, discounted } from '../lib/markdown';
 
 // A sale's items on the sale page. Sold items are struck through and
 // dimmed; the seller can mark them sold right here. While leftovers are free
@@ -112,7 +113,11 @@ export default class ItemList extends React.Component {
                   </button>
                 ) : <span className="item-thumb item-thumb-empty" aria-hidden="true"><Package size={16} /></span>}
                 <span className="item-name">{item.name}{item.sold ? <span className="sr-only">{t('items.soldSr')}</span> : null}{item.reserved ? <span className="sr-only">{t('items.reservedSr')}</span> : null}</span>
-                {price ? <span className={'item-price' + (item.priceCents === 0 ? ' is-free' : '')}>{price}</span> : null}
+                {price && markdownNow(post) && item.priceCents > 0 && !item.sold ? (
+                  <span className="item-price item-price-marked">
+                    <s aria-label={t('md.wasPrice', { price })}>{price}</s> <strong>{formatCents(discounted(item.priceCents, post.markdown.percent))}</strong>
+                  </span>
+                ) : price ? <span className={'item-price' + (item.priceCents === 0 ? ' is-free' : '')}>{price}</span> : null}
                 {item.sold ? <span className="chip chip-muted item-sold-chip" aria-hidden="true">{t('items.sold')}</span> : null}
                 {item.reserved ? <span className="chip chip-warning item-reserved-chip" aria-hidden="true" title={owner ? t('items.reservedUntil', { time: holdTime(item.reservedUntil) }) : undefined}>{t('items.reserved')}</span> : null}
                 {this.renderCurb(item, offer)}

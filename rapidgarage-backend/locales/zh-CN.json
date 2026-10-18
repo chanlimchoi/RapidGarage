@@ -524,6 +524,11 @@
   "You can't follow this person.": "你无法关注此人。",
   "You follow the maximum number of people. Unfollow someone first.": "你关注的人数已达上限，请先取消关注一些人。",
   "notify must be true or false.": "notify 必须为 true 或 false。",
-  "following must be true or false.": "following 必须为 true 或 false。"
+  "following must be true or false.": "following 必须为 true 或 false。",
+  "Markdown must be a whole percent from 5 to 90.": "折扣必须是 5 到 90 之间的整数百分比。",
+  "Markdown start must be a time like 14:00.": "折扣开始时间必须类似 14:00。",
+  "markdownLastDay must be true or false.": "markdownLastDay 必须为 true 或 false。",
+  "Choose when the markdown starts.": "请选择折扣开始时间。",
+  "markdown must be true or false.": "markdown 必须为 true 或 false。"
  }
 }

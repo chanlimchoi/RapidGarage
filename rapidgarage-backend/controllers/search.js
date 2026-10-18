@@ -7,6 +7,7 @@
 //   when=today|weekend|now: sales open in that window (sale's local time)
 //   keyword: words that must each match the title, description or an unsold item
 //   neighborhood=true: only sales that are part of a neighborhood sale
+//   markdown=true: only sales whose last-hour markdown is running now (lib/markdown.js)
 //   curbside=true: only sales with leftovers free on the curb right now
 //     (lib/curbside.js). Those also show without the filter, even after the
 //     sale ended, and count as free for free=true and any maxPrice.
@@ -29,6 +30,7 @@ const schedule = require('../lib/schedule');
 const itemsLib = require('../lib/items');
 const eventsLib = require('../lib/events');
 const curbside = require('../lib/curbside');
+const markdownLib = require('../lib/markdown');
 
 const MAX_PAGE_SIZE = 50;
 const MAX_CANDIDATES = 5000; // hard cap on rows pulled by the bounding box
@@ -89,6 +91,11 @@ function parseQuery(query) {
     if (cs === 'true' || cs === '1') out.curbside = true;
     else if (cs !== 'false' && cs !== '0') errors.curbside = 'curbside must be true or false.';
   }
+  const md = query.markdown;
+  if (md !== undefined && md !== '') {
+    if (md === 'true' || md === '1') out.markdown = true;
+    else if (md !== 'false' && md !== '0') errors.markdown = 'markdown must be true or false.';
+  }
   const k = itemsLib.parseKeyword(query.keyword);
   if (k.error) errors.keyword = k.error;
   else if (k.words) { out.words = k.words; out.keyword = k.keyword; }
@@ -138,7 +145,7 @@ async function curbsideRows(rows, filter) {
 async function nearbyRanked(center, radius, filter, user) {
   const box = geo.boundingBox(center, radius);
   const rows = await models.Post.findAll({
-    attributes: ['id', 'lat', 'lng', 'createdAt', 'startDate', 'endDate', 'timeZone', 'hidden', 'isFree', 'priceMin', 'priceMax', 'curbsideUntil', 'curbsideGoneAt'],
+    attributes: ['id', 'lat', 'lng', 'createdAt', 'startDate', 'endDate', 'timeZone', 'hidden', 'isFree', 'priceMin', 'priceMax', 'curbsideUntil', 'curbsideGoneAt', 'markdownPercent', 'markdownFrom', 'markdownLastDay'],
     where: and(
       { lat: { [Op.between]: [box.minLat, box.maxLat] } },
       { [Op.or]: box.lngRanges.map(([a, b]) => ({ lng: { [Op.between]: [a, b] } })) },
@@ -157,6 +164,7 @@ async function nearbyRanked(center, radius, filter, user) {
     const inEvent = await eventsLib.eventsForPosts(kept.map((r) => r.id), user);
     kept = kept.filter((r) => inEvent.has(r.id));
   }
+  if (filter.markdown) kept = await markdownLib.filterActive(models, kept);
   return kept
     .map((p) => ({ id: p.id, createdAt: new Date(p.createdAt), distance: geo.haversineMiles(center, { lat: p.lat, lng: p.lng }) }))
     .filter((r) => r.distance <= radius)
@@ -188,6 +196,7 @@ async function textMatch(q, filter, user) {
     const inEvent = await eventsLib.eventsForPosts(posts.map((p) => p.id), user);
     posts = posts.filter((p) => inEvent.has(p.id));
   }
+  if (filter.markdown) posts = posts.filter((p) => markdownLib.isActive(p));
   let matched = {};
   if (filter.words) {
     const ids = await itemsLib.keywordPostIds(models, filter.words, posts.map((p) => p.id));
@@ -203,6 +212,7 @@ function filterOf(v) {
   if (v.keyword) out.keyword = v.keyword;
   if (v.neighborhood) out.neighborhood = true;
   if (v.curbside) out.curbside = true;
+  if (v.markdown) out.markdown = true;
   return out;
 }
 

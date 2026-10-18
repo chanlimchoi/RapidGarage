@@ -84,6 +84,16 @@ page show a price chip ("Free", "$5", "$5–$50", "Up to $50"). The search bar h
 box and a "Free only" toggle, which apply on top of the radius and distance sorting. See the
 backend README for the exact rules and API.
 
+## Last-hour markdowns
+
+Sellers can sell off what's left: on the New and Edit post forms, **Last-hour markdown** sets a
+discount (5–90%) and a start time in the sale's local time, on every sale day or **only on the
+last day**. Each day's markdown runs from that time until the day's sale ends. Once it starts,
+cards show a "50% off now" chip (and "50% off from 2 PM" in the 12 hours before), the sale page
+explains it, and item prices show the old price struck through next to the discounted one,
+rounded down to the cent. **Discounts now** on the home page filters both the distance search
+and the recent list to sales whose markdown is running. Free sales don't offer a markdown.
+
 ## Reporting and moderation
 
 Logged-in users can report someone else's sale from the post page ("Report this sale"): pick a

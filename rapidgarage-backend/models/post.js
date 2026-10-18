@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
     priceMin: { type: DataTypes.INTEGER, allowNull: true },
     priceMax: { type: DataTypes.INTEGER, allowNull: true },
     isFree: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    // Last-hour markdown (lib/markdown.js): X% off from a local time. Serialized as `markdown`.
+    markdownPercent: { type: DataTypes.INTEGER, allowNull: true },
+    markdownFrom: { type: DataTypes.STRING(5), allowNull: true },
+    markdownLastDay: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     // Moderation (lib/moderation.js). Hidden posts are visible only to the owner and admins.
     hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     hiddenAt: { type: DataTypes.DATE, allowNull: true },
@@ -77,6 +81,10 @@ module.exports = (sequelize, DataTypes) => {
     CURBSIDE_FIELDS.forEach((k) => { delete out[k]; });
     delete out.calendarDates; // only used to cancel removed days in .ics files
     if (Array.isArray(this.saleDays)) out.schedule = require('../lib/schedule').toJSON(this);
+    out.markdown = require('../lib/markdown').state(this);
+    delete out.markdownPercent;
+    delete out.markdownFrom;
+    delete out.markdownLastDay;
     delete out.saleDays;
     return out;
   };
