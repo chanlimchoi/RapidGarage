@@ -529,6 +529,15 @@
   "Markdown start must be a time like 14:00.": "折扣开始时间必须类似 14:00。",
   "markdownLastDay must be true or false.": "markdownLastDay 必须为 true 或 false。",
   "Choose when the markdown starts.": "请选择折扣开始时间。",
-  "markdown must be true or false.": "markdown 必须为 true 或 false。"
+  "markdown must be true or false.": "markdown 必须为 true 或 false。",
+  "Drafting items from photos is turned off on this server.": "此服务器已关闭根据照片生成物品草稿功能。",
+  "photoIds must be a list of photo ids.": "photoIds 必须是照片 ID 列表。",
+  "Add photos to the sale first, then draft items from them.": "请先为甩卖添加照片，再根据照片生成物品草稿。",
+  "You've used today's item drafts. Try again tomorrow, or add items by hand.": "今天的物品草稿次数已用完。请明天再试，或手动添加物品。",
+  "Couldn't draft items from these photos. Add items by hand instead.": "无法根据这些照片生成物品草稿，请手动添加。",
+  "The item draft came back incomplete. Please try again.": "物品草稿不完整，请重试。",
+  "Item drafting is busy right now. Please try again in a minute.": "物品草稿功能当前繁忙，请一分钟后再试。",
+  "Item drafting isn't available right now. Please try again later.": "物品草稿功能当前不可用，请稍后再试。",
+  "items must be a non-empty list.": "items 必须是非空列表。"
  }
 }

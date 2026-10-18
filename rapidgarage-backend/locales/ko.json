@@ -529,6 +529,15 @@
   "Markdown start must be a time like 14:00.": "할인 시작 시간은 14:00 같은 형식이어야 해요.",
   "markdownLastDay must be true or false.": "markdownLastDay는 true 또는 false여야 해요.",
   "Choose when the markdown starts.": "할인 시작 시간을 정하세요.",
-  "markdown must be true or false.": "markdown은 true 또는 false여야 해요."
+  "markdown must be true or false.": "markdown은 true 또는 false여야 해요.",
+  "Drafting items from photos is turned off on this server.": "이 서버에서는 사진으로 물품 초안 만들기가 꺼져 있어요.",
+  "photoIds must be a list of photo ids.": "photoIds는 사진 ID 목록이어야 해요.",
+  "Add photos to the sale first, then draft items from them.": "먼저 세일에 사진을 추가한 다음 사진으로 물품 초안을 만드세요.",
+  "You've used today's item drafts. Try again tomorrow, or add items by hand.": "오늘 쓸 수 있는 물품 초안을 모두 썼어요. 내일 다시 시도하거나 직접 추가하세요.",
+  "Couldn't draft items from these photos. Add items by hand instead.": "이 사진으로는 물품 초안을 만들 수 없었어요. 직접 추가해 주세요.",
+  "The item draft came back incomplete. Please try again.": "물품 초안이 불완전하게 왔어요. 다시 시도하세요.",
+  "Item drafting is busy right now. Please try again in a minute.": "지금 물품 초안 기능이 바빠요. 1분 후에 다시 시도하세요.",
+  "Item drafting isn't available right now. Please try again later.": "지금은 물품 초안 기능을 쓸 수 없어요. 나중에 다시 시도하세요.",
+  "items must be a non-empty list.": "items는 비어 있지 않은 목록이어야 해요."
  }
 }

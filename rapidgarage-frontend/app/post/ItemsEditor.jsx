@@ -7,6 +7,7 @@ import { formatCents, centsInput, validateItemFields, itemSummary, ITEM_NAME_MAX
 import toast from '../components/toast';
 import { t } from '../i18n';
 import { holdTime } from '../messages/holdText';
+import AiDraftPanel from './AiDraftPanel';
 
 const MAX_ITEMS = 100;
 const blank = () => ({ name: '', price: '', photoId: null });
@@ -208,6 +209,9 @@ class ItemsEditor extends Component {
         <Link to={'/post/' + post.id} className="back-link"><ArrowLeft size={16} aria-hidden="true" />{t('edit.backToSale')}</Link>
         <header className="page-header"><div><h1>{t('items.title')}</h1><p>{post.title}{items.length ? ' · ' + itemSummary(items) : ''}</p></div></header>
         <div className="stack">
+          {this.props.config && this.props.config.aiItems && photos.length ? (
+            <AiDraftPanel post={post} photos={photos} room={MAX_ITEMS - items.length} onAdded={(added) => this.setItems(this.items().concat(added))} />
+          ) : null}
           <form className="card-form item-form" onSubmit={(e) => this.add(e)} noValidate aria-labelledby="add-item-title">
             <h2 id="add-item-title" className="h4">{t('items.addAnItem')}</h2>
             <ItemFields idPrefix="new" values={draft} errors={draftErrors} photos={photos}

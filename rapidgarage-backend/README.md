@@ -497,6 +497,24 @@ from the sale that is open or opens first (ties: the one closing first). At most
 directions link using the sales' public addresses; without `lat,lng` it has no origin so
 Google Maps starts from the phone's location. The location is only used for that request.
 
+## Draft items from photos (Claude)
+
+- `POST /post/:id/items/suggest` `{ photoIds? }` (seller only) → `{ suggestions: [{ name, priceCents|null, photoId|null }], room, photosUsed }`.
+  Nothing is saved. `POST /post/:id/items/bulk` `{ items: [{ name, price?, photoId? }] }` adds
+  them in one transaction: all or nothing, with errors keyed `"<index>.<field>"`.
+- `lib/aiItems.js` uses `@anthropic-ai/sdk`: `beta.messages.create` with `claude-opus-5-5`, base64 WebP
+  images, `output_config: { effort, format: { type: 'json_schema', schema } }` and server-side refusal
+  fallback (`fallbacks: 'default'`, beta `server-side-fallback-2026-07-01`). Opus 5.5 always uses
+  adaptive thinking, so `thinking` isn't sent. The reply is parsed and cleaned up: names trimmed
+  and deduplicated (max 80), prices dropped when negative or out of range, photo numbers mapped to ids.
+- Errors: refusal → `422 ai_refused`; truncated or invalid output → `502 ai_failed`; Anthropic 429 →
+  `503 ai_busy`; anything else → `503 ai_unavailable`; no key or switched off → `404 feature_disabled`;
+  over the daily budget → `429`. Failed calls don't use up the budget.
+- Settings: `ANTHROPIC_API_KEY` (required), `ENABLE_AI_ITEMS` (admin switch default),
+  `AI_ITEMS_PER_DAY` (10, in memory per process), `AI_ITEMS_MODEL` (`claude-opus-5-5`),
+  `AI_ITEMS_EFFORT` (`medium`), `AI_ITEMS_TIMEOUT_MS` (90000, one SDK retry). `/config` reports `aiItems`.
+- Tests swap in a fake client (`aiItems.setClient`), so they never call the API.
+
 ## Following sellers
 
 - `GET /follows` → `{ results: [{ seller: { id, name }, notify, currentSales, since }] }`.

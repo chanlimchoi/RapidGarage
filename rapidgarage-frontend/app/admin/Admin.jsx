@@ -60,6 +60,20 @@ export default class Admin extends React.Component {
       .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
   }
 
+  toggleAiItems() {
+    const next = !this.state.settings.aiItems;
+    this.setState({ busy: true, error: '' });
+    apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify({ aiItems: next }) })
+      .then(({ ok, data }) => {
+        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, t('admin.settingFailed'))); return null; }
+        this.setState({ busy: false, settings: data });
+        toast.success(data.aiItems ? t('admin.aiOn') : t('admin.aiOff'));
+        if (this.props.onConfigChange) this.props.onConfigChange();
+        return null;
+      })
+      .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
+  }
+
   toggleWanted() {
     const next = !this.state.settings.wantedPosts;
     this.setState({ busy: true, error: '' });
@@ -169,6 +183,17 @@ export default class Admin extends React.Component {
                     <span>
                       <strong>{t('admin.wantedPosts')}</strong>
                       <span id="toggleWantedPosts-hint" className="field-hint" style={{ display: 'block' }}>{t('admin.wantedPostsHint')}</span>
+                    </span>
+                  </label>
+                  <label className="checkbox-row" htmlFor="toggleAiItems">
+                    <span className="switch">
+                      <input id="toggleAiItems" type="checkbox" role="switch" checked={!!s.settings.aiItems} disabled={s.busy}
+                        onChange={() => this.toggleAiItems()} aria-describedby="toggleAiItems-hint" />
+                      <span className="switch-track" aria-hidden="true" />
+                    </span>
+                    <span>
+                      <strong>{t('admin.aiItems')}</strong>
+                      <span id="toggleAiItems-hint" className="field-hint" style={{ display: 'block' }}>{t('admin.aiItemsHint')}</span>
                     </span>
                   </label>
                 </div>

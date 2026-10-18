@@ -549,6 +549,15 @@
   "Markdown start must be a time like 14:00.": "Markdown start must be a time like 14:00.",
   "markdownLastDay must be true or false.": "markdownLastDay must be true or false.",
   "Choose when the markdown starts.": "Choose when the markdown starts.",
-  "markdown must be true or false.": "markdown must be true or false."
+  "markdown must be true or false.": "markdown must be true or false.",
+  "Drafting items from photos is turned off on this server.": "Drafting items from photos is turned off on this server.",
+  "photoIds must be a list of photo ids.": "photoIds must be a list of photo ids.",
+  "Add photos to the sale first, then draft items from them.": "Add photos to the sale first, then draft items from them.",
+  "You've used today's item drafts. Try again tomorrow, or add items by hand.": "You've used today's item drafts. Try again tomorrow, or add items by hand.",
+  "Couldn't draft items from these photos. Add items by hand instead.": "Couldn't draft items from these photos. Add items by hand instead.",
+  "The item draft came back incomplete. Please try again.": "The item draft came back incomplete. Please try again.",
+  "Item drafting is busy right now. Please try again in a minute.": "Item drafting is busy right now. Please try again in a minute.",
+  "Item drafting isn't available right now. Please try again later.": "Item drafting isn't available right now. Please try again later.",
+  "items must be a non-empty list.": "items must be a non-empty list."
  }
 }

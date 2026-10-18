@@ -105,4 +105,4 @@ async function matchedItems(models, words, postIds) {
   return out;
 }
 
-module.exports = { MAX_ITEMS, NAME_MAX, KEYWORD_MAX, parseCents, validateItem, parseKeyword, keywordPostIds, matchedItems };
+module.exports = { MAX_ITEMS, NAME_MAX, PRICE_CAP_CENTS, KEYWORD_MAX, parseCents, validateItem, parseKeyword, keywordPostIds, matchedItems };
