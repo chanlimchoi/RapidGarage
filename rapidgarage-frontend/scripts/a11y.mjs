@@ -3,13 +3,14 @@
 // state, at desktop and phone widths, logged in and out, in English and Korean.
 // Also checks html[lang], horizontal overflow (reflow) and dark-theme contrast.
 //
-//   npm run dev                       # app on http://localhost:5173, API behind /api
+//   npm run dev                       # app on http://localhost:3000, API behind /api
 //   npm run test:a11y                 # scan; exits 1 on serious/critical issues
 //
 // It creates its own test accounts and sales through the API, so point it at a
 // local or throwaway server, never production. Environment:
-//   A11Y_BASE            app URL (default http://localhost:5173)
+//   A11Y_BASE            app URL (default http://localhost:3000)
 //   A11Y_ADMIN_EMAIL / A11Y_ADMIN_PASSWORD   an admin account, to scan /admin (optional)
+//   A11Y_ALLOW_REMOTE=1  allow a non-localhost A11Y_BASE (disposable test servers only)
 //   A11Y_LOCALES         default "en,ko"     A11Y_VIEWPORTS  default "desktop,mobile"
 //   A11Y_ONLY            regex on state names, e.g. "messages|admin"
 //   A11Y_FAIL_ON         impacts that fail the run (default "serious,critical")
@@ -25,7 +26,13 @@ import zlib from 'node:zlib';
 
 const require = createRequire(import.meta.url);
 const AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
-const B = (process.env.A11Y_BASE || 'http://localhost:5173').replace(/\/$/, '');
+const B = (process.env.A11Y_BASE || 'http://localhost:3000').replace(/\/$/, '');
+// It writes data (users, sales, messages): refuse anything that isn't local
+// unless explicitly allowed, so it can't be pointed at production by mistake.
+if (!/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(B) && process.env.A11Y_ALLOW_REMOTE !== '1') {
+  console.error('A11Y_BASE ' + B + ' is not a local URL. The scan creates accounts and sales; set A11Y_ALLOW_REMOTE=1 only for a disposable test server.');
+  process.exit(2);
+}
 const LOCALES = (process.env.A11Y_LOCALES || 'en,ko').split(',');
 const VIEWPORTS = (process.env.A11Y_VIEWPORTS || 'desktop,mobile').split(',');
 const ONLY = process.env.A11Y_ONLY ? new RegExp(process.env.A11Y_ONLY) : null;

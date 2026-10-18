@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertCircle, AlertTriangle, Info, CheckCircle2, Loader2, X } from 'lucide-react';
 import { t } from '../i18n';
 import { wireControl } from '../lib/wire';
+import { inertOutside } from '../lib/a11y';
 
 export { wireControl };
 
@@ -114,6 +115,8 @@ export class Dialog extends React.Component {
     document.addEventListener('keydown', this.onKey);
     document.addEventListener('focusin', this.onFocusIn);
     const el = this.ref.current;
+    // The page behind is inert while the dialog is open (not just covered).
+    this.uninert = el && el.parentElement ? inertOutside(el.parentElement) : null;
     const first = el && (el.querySelector('[autofocus]') || focusables(el).find((x) => !x.classList.contains('dialog-close')));
     if (first) first.focus(); else if (el) el.focus();
   }
@@ -121,6 +124,7 @@ export class Dialog extends React.Component {
   componentWillUnmount() {
     document.removeEventListener('keydown', this.onKey);
     document.removeEventListener('focusin', this.onFocusIn);
+    if (this.uninert) this.uninert();
     const back = this.opener && this.opener.isConnected && this.opener !== document.body ? this.opener : resolve(this.props.returnFocus);
     if (back && back.focus) back.focus();
   }

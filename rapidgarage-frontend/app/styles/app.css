@@ -36,7 +36,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .skip-link:focus { top: var(--space-2); }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  /* transition: none, not a tiny duration: a 0.01ms transition still lands a
+     frame late (the skip link stayed off-screen when focused). */
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; scroll-behavior: auto !important; }
 }
 
 /* Layout ---------------------------------------------------------------- */
@@ -991,7 +993,8 @@ html:lang(ko) body { word-break: keep-all; overflow-wrap: anywhere; }
 .dash-sale-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
 .dash-sale { display: grid; gap: var(--space-3); }
 .dash-sale.is-ended { background: var(--color-surface-2); }
-.dash-sale-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
+.dash-sale-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
+.dash-sale-head > :first-child { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
 .dash-sale-head .chips { margin-top: var(--space-1); }
 .dash-sale-title { margin: 0; font-size: var(--text-lg, 1.125rem); }
 .dash-sale-title a { color: var(--color-text); }
@@ -1135,7 +1138,7 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .wanted-share { margin-top: calc(-1 * var(--space-2)); }
 
 /* ---- Safety tips, before-you-send nudge, meetup spots --------------------- */
-.safety-link { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-sm); }
+.safety-link { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-sm); min-height: 24px; }
 .thread-safety { margin-left: auto; }
 .safety-tips { align-self: stretch; border: 1px solid var(--color-border); border-left: 4px solid var(--color-success); background: var(--color-success-soft); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-2); }
 .safety-tips-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }

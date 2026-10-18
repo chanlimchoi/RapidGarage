@@ -1368,8 +1368,6 @@ export default {
   "rem.onLabel": "已开启当天早上提醒",
   "rem.offShort": "提醒我",
   "rem.onShort": "已开启提醒",
-  "rem.turnOnNamed": "在 {title} 当天早上提醒我",
-  "rem.turnOffNamed": "关闭 {title} 的提醒",
   "rem.hint": "每个特卖日的早上（按特卖当地时间）发送邮件和应用内通知",
   "rem.onToast": "我们会在特卖当天早上提醒你。",
   "rem.offToast": "提醒已关闭。",

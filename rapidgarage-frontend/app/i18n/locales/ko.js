@@ -1368,8 +1368,6 @@ export default {
   "rem.onLabel": "당일 아침 알림 켜짐",
   "rem.offShort": "알림 받기",
   "rem.onShort": "알림 켜짐",
-  "rem.turnOnNamed": "{title} 당일 아침에 알려 주세요",
-  "rem.turnOffNamed": "{title} 알림 끄기",
   "rem.hint": "세일 날마다 아침에 세일 지역 시간 기준으로 이메일과 앱 알림을 보내요",
   "rem.onToast": "세일 당일 아침에 알려 드릴게요.",
   "rem.offToast": "알림을 껐어요.",

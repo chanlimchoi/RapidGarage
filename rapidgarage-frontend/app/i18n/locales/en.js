@@ -1368,8 +1368,6 @@ export default {
   "rem.onLabel": "Morning-of reminder on",
   "rem.offShort": "Remind me",
   "rem.onShort": "Reminder on",
-  "rem.turnOnNamed": "Remind me the morning of {title}",
-  "rem.turnOffNamed": "Turn off the reminder for {title}",
   "rem.hint": "An email and an in-app notice on the morning of each sale day, in the sale's local time",
   "rem.onToast": "We'll remind you the morning of the sale.",
   "rem.offToast": "Reminder turned off.",

@@ -16,3 +16,29 @@ export function photoAlt(photo, index, count, title, tmpl) {
   if (own) return own;
   return tmpl({ title: title || '', n: index + 1, count });
 }
+
+// While a modal is open, everything outside it is inert and hidden from
+// assistive tech (so it can't be tabbed to, clicked or read behind the modal),
+// except toasts and live regions, which must still be heard. Returns a
+// function that undoes exactly what it changed (nested modals stay correct).
+export const KEEP_LIVE = '.toaster, [aria-live], [role="status"], [role="alert"]';
+export function inertOutside(el, keep) {
+  const sel = keep || KEEP_LIVE;
+  const changed = [];
+  for (let n = el; n && n.parentElement; n = n.parentElement) {
+    if (n.tagName === 'BODY') break;
+    for (const sib of Array.from(n.parentElement.children)) {
+      if (sib === n || /^(SCRIPT|STYLE|TEMPLATE)$/.test(sib.tagName) || (sib.matches && sib.matches(sel))) continue;
+      if (sib.hasAttribute('inert')) continue;
+      changed.push([sib, sib.getAttribute('aria-hidden')]);
+      sib.setAttribute('inert', '');
+      sib.setAttribute('aria-hidden', 'true');
+    }
+  }
+  return () => {
+    for (const [sib, hidden] of changed) {
+      sib.removeAttribute('inert');
+      if (hidden == null) sib.removeAttribute('aria-hidden'); else sib.setAttribute('aria-hidden', hidden);
+    }
+  };
+}

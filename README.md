@@ -225,3 +225,35 @@ glyphs a flyer uses (a Korean flyer is about 35 KB).
   has no translation. Emails, short-link pages and PDFs use the `strings` keys.
 - The flyer wording (`flyer.*`, `price.*`) exists in both catalogs; a test checks that
   they match, so the print preview always shows what the PDF will print.
+
+## Accessibility
+
+The target is **WCAG 2.2 AA**. What the app does:
+
+- **Keyboard.** "Skip to content" is the first Tab stop. Every control shows a focus ring. Dialogs trap focus, close on Escape, return focus to the button that opened them, and make the page behind them inert. Menus and popovers (account, mobile nav, share, add to calendar, conversation) also close on Escape and return focus; they support Home and End, and close when focus leaves them.
+- **Screen readers.**
+  - Form errors are tied to their fields with `aria-describedby` and `aria-invalid`.
+  - Toasts are announced through permanent live regions. They pause while hovered or focused; errors stay up for 10 s.
+  - New unread messages and new wanted matches in the nav are announced politely.
+- **Photo descriptions.** Sellers can describe each photo when posting or editing (stored as `PostPhotos.alt`, up to 250 characters). Without one, the alt text is "<title>, photo 2 of 5".
+- **Layout.**
+  - The nav measures itself: when it doesn't fit, it drops its labels, then moves into the menu, so it never overflows in any language.
+  - Pages reflow without sideways scrolling down to 320px wide (400% zoom).
+  - Touch targets are at least 24px.
+  - `prefers-reduced-motion` turns off transitions and smooth scrolling.
+  - `<html lang>` follows the chosen language.
+
+**Checking it:** `npm run test:a11y` in `rapidgarage-frontend` runs axe-core with Playwright on about 46 pages and states: logged in and out, buyer, seller and admin, dialogs and menus open, and forms with errors. It covers desktop (1280px) and mobile (390px) in English and Korean, plus a dark-theme pass and a 320px/640px reflow pass. It then runs keyboard checks: the skip link, focus rings, focus traps, Escape and focus return, html lang, and reduced motion. It exits non-zero on any serious or critical issue and writes `a11y-report.json`.
+
+**Set up before running:**
+- It needs the app running with its API, e.g. `npm run dev` against a local backend.
+- It creates its own throwaway users and sales through the API, so **never point it at production**; it refuses a non-local `A11Y_BASE` unless `A11Y_ALLOW_REMOTE=1`.
+- Playwright's Chromium is needed once: `npx playwright install chromium`.
+
+**Settings** (environment variables):
+- `A11Y_BASE`: app URL (default `http://localhost:3000`).
+- `A11Y_ADMIN_EMAIL` / `A11Y_ADMIN_PASSWORD`: an existing admin account, for the admin pages. They're skipped without it.
+- `A11Y_LOCALES`, `A11Y_VIEWPORTS`, `A11Y_ONLY=<regex>`: narrow the run.
+- `A11Y_FAIL_ON`: impacts that fail the run (default `serious,critical`).
+- `A11Y_SHOTS=<dir>`: save a screenshot of each state.
+- `A11Y_REFLOW=0` / `A11Y_KEYBOARD=0`: skip those passes.

@@ -1,7 +1,7 @@
 import { describe, test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
-import { photoAlt, prefersReducedMotion, scrollBehavior } from '../app/lib/a11y.js';
+import { photoAlt, prefersReducedMotion, scrollBehavior, inertOutside } from '../app/lib/a11y.js';
 import { wireControl } from '../app/lib/wire.js';
 import toast, { subscribe, pause, resume, dismiss } from '../app/components/toast.js';
 
@@ -64,5 +64,47 @@ describe('toasts', () => {
       assert.equal(items.length, 0);
       off();
     } finally { mock.timers.reset(); }
+  });
+});
+
+// Minimal element stand-in: enough tree + attributes for inertOutside().
+function node(tagName, cls, kids) {
+  const n = { tagName, className: cls || '', attrs: {}, children: kids || [], parentElement: null,
+    setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; },
+    hasAttribute(k) { return k in this.attrs; }, removeAttribute(k) { delete this.attrs[k]; },
+    matches(sel) { return sel.split(',').some((s) => { s = s.trim(); return s[0] === '.' ? this.className.split(' ').includes(s.slice(1)) : /^\[aria-live\]$/.test(s) ? 'aria-live' in this.attrs : false; }); } };
+  n.children.forEach((c) => { c.parentElement = n; });
+  return n;
+}
+
+describe('inertOutside', () => {
+  test('hides everything but the dialog and live regions, then restores', () => {
+    const backdrop = node('DIV', 'dialog-backdrop');
+    const nav = node('HEADER'); const footer = node('FOOTER'); const toaster = node('SECTION', 'toaster');
+    const live = node('DIV', 'sr-only'); live.setAttribute('aria-live', 'polite');
+    const already = node('DIV', 'decor'); already.setAttribute('aria-hidden', 'true');
+    const panel = node('DIV', 'panel'); const page = node('DIV', 'page', [panel, backdrop]);
+    const main = node('MAIN', '', [page]);
+    const app = node('DIV', 'app', [nav, main, footer, live, toaster, already]);
+    const body = node('BODY', '', [app]);
+    assert.ok(body);
+    const undo = inertOutside(backdrop);
+    for (const n of [panel, nav, footer, already]) { assert.equal(n.getAttribute('inert'), ''); assert.equal(n.getAttribute('aria-hidden'), 'true'); }
+    for (const n of [backdrop, page, main, app, toaster, live]) assert.equal(n.hasAttribute('inert'), false);
+    undo();
+    for (const n of [panel, nav, footer, already]) assert.equal(n.hasAttribute('inert'), false);
+    assert.equal(nav.hasAttribute('aria-hidden'), false);
+    assert.equal(already.getAttribute('aria-hidden'), 'true', 'keeps an aria-hidden it did not set');
+  });
+
+  test('a nested modal does not undo the outer one', () => {
+    const inner = node('DIV', 'inner'); const outer = node('DIV', 'outer'); const side = node('ASIDE');
+    node('BODY', '', [node('DIV', 'app', [side, outer, inner])]);
+    const undoOuter = inertOutside(outer);
+    const undoInner = inertOutside(inner);
+    undoInner();
+    assert.equal(side.getAttribute('inert'), '', 'still inert while the outer modal is open');
+    undoOuter();
+    assert.equal(side.hasAttribute('inert'), false);
   });
 });

@@ -1368,8 +1368,6 @@ export default {
   "rem.onLabel": "Recordatorio de la mañana activado",
   "rem.offShort": "Recordarme",
   "rem.onShort": "Recordatorio activado",
-  "rem.turnOnNamed": "Recordarme la mañana de {title}",
-  "rem.turnOffNamed": "Desactivar el recordatorio de {title}",
   "rem.hint": "Un correo y un aviso en la app la mañana de cada día de venta, en la hora local de la venta",
   "rem.onToast": "Te lo recordaremos la mañana de la venta.",
   "rem.offToast": "Recordatorio desactivado.",
