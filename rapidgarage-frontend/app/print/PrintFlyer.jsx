@@ -61,7 +61,7 @@ export default class PrintFlyer extends React.Component {
     if (layout === 'sign') {
       const lines = signLines(lang, post);
       return (
-        <div className="print-sheet sheet-sign" lang={lang} aria-label={t('pf.signPreview')}>
+        <div className="print-sheet sheet-sign" lang={lang} role="group" aria-label={t('pf.signPreview')}>
           <div className="sign-head">{head.toLocaleUpperCase(intlLocale(lang))}</div>
           <div className={'sign-row sign-arrow-' + arrow}>
             {arrow === 'left' ? <ArrowRight className="sign-arrow flip" aria-hidden="true" strokeWidth={3} /> : null}
@@ -84,7 +84,7 @@ export default class PrintFlyer extends React.Component {
     const firstPhoto = photo && (post.photos || [])[0];
     const lines = flyerLines(lang, post);
     return (
-      <div className={'print-sheet sheet-flyer' + (layout === 'half' ? ' sheet-half' : '')} lang={lang} aria-label={t('pf.flyerPreview')}>
+      <div className={'print-sheet sheet-flyer' + (layout === 'half' ? ' sheet-half' : '')} lang={lang} role="group" aria-label={t('pf.flyerPreview')}>
         <div className="flyer-band"><span className="flyer-brand">RapidGarage</span><span>{tl('flyer.tagline')}</span></div>
         <div className="flyer-body">
           <div className="flyer-kicker">{head.toLocaleUpperCase(intlLocale(lang))}</div>
@@ -122,9 +122,9 @@ export default class PrintFlyer extends React.Component {
     const { loading, error, post, info, layout, photo, items, headline, arrow } = this.state;
     const back = post ? <Link className="back-link" to={'/post/' + post.id}><ArrowLeft size={16} aria-hidden="true" />{t('edit.backToSale')}</Link> : null;
     if (loading) return <div className="container"><SkeletonBlock lines={6} /></div>;
-    if (error === 'not_found') return <div className="container container-narrow"><EmptyState title={t('pf.notFound')}>{t('pf.removed')}</EmptyState></div>;
-    if (error === 'login') return <div className="container container-narrow"><EmptyState icon={Lock} title={t('pf.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('pf.onlySellerText')}</EmptyState></div>;
-    if (error === 'forbidden') return <div className="container container-narrow">{back}<EmptyState icon={Lock} title={t('pf.onlySeller')}>{t('pf.carriesQr')}</EmptyState></div>;
+    if (error === 'not_found') return <div className="container container-narrow"><EmptyState level={1} title={t('pf.notFound')}>{t('pf.removed')}</EmptyState></div>;
+    if (error === 'login') return <div className="container container-narrow"><EmptyState level={1} icon={Lock} title={t('pf.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('pf.onlySellerText')}</EmptyState></div>;
+    if (error === 'forbidden') return <div className="container container-narrow">{back}<EmptyState level={1} icon={Lock} title={t('pf.onlySeller')}>{t('pf.carriesQr')}</EmptyState></div>;
     if (error) return <div className="container container-narrow">{back}<Alert tone="danger">{error}</Alert></div>;
     const pdf = (download) => printAssetUrl(post.id, 'flyer.pdf', this.pdfParams(download));
     const pageSize = layout === 'sign' ? 'letter landscape' : layout === 'half' ? '5.5in 8.5in' : 'letter';

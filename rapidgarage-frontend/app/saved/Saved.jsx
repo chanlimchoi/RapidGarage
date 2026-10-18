@@ -209,7 +209,7 @@ class Saved extends Component {
     if (ready && !user) {
       return (
         <div className="container page">
-          <EmptyState icon={LogIn} title={t('sv.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>
+          <EmptyState level={1} icon={LogIn} title={t('sv.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>
             {t('sv.loginText')}
           </EmptyState>
         </div>

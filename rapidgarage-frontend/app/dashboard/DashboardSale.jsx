@@ -36,11 +36,11 @@ export default class DashboardSale extends React.Component {
   render() {
     const back = <Link to="/dashboard" className="back-link"><ArrowLeft size={16} aria-hidden="true" />{t('dash.back')}</Link>;
     if (!this.props.user) {
-      return <div className="container container-narrow"><EmptyState icon={Lock} title={t('dash.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('dash.loginText')}</EmptyState></div>;
+      return <div className="container container-narrow"><EmptyState level={1} icon={Lock} title={t('dash.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('dash.loginText')}</EmptyState></div>;
     }
     const { loading, error, sale: s } = this.state;
     if (loading) return <div className="container"><SkeletonBlock height={160} lines={6} /></div>;
-    if (error === 'not_found') return <div className="container container-narrow">{back}<EmptyState icon={Lock} title={t('dash.notYours')}>{t('dash.notYoursText')}</EmptyState></div>;
+    if (error === 'not_found') return <div className="container container-narrow">{back}<EmptyState level={1} icon={Lock} title={t('dash.notYours')}>{t('dash.notYoursText')}</EmptyState></div>;
     if (error) return <div className="container">{back}<Alert tone="danger">{error}</Alert></div>;
     const lines = s.schedule ? dayLines(s) : [];
     return (

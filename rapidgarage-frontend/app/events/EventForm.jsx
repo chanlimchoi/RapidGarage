@@ -102,7 +102,7 @@ export default class EventForm extends React.Component {
     if (!this.props.user && this.props.ready) {
       return (
         <div className="container container-narrow">
-          <EmptyState icon={LogIn} title={t('ev.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('ev.loginText')}</EmptyState>
+          <EmptyState level={1} icon={LogIn} title={t('ev.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('ev.loginText')}</EmptyState>
         </div>
       );
     }

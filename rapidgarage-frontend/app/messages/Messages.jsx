@@ -76,13 +76,23 @@ export default class Messages extends React.Component {
     if (this.state.menuOpen && this.menuRef.current && !this.menuRef.current.contains(e.target)) this.setState({ menuOpen: false });
   }
 
+  // Menu keys: arrows / Home / End move, Escape closes and returns focus to
+  // the button, Tab closes and moves on.
   onMenuKey(e) {
-    if (e.key === 'Escape') { this.setState({ menuOpen: false }); return; }
-    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-    e.preventDefault();
+    const trigger = this.menuRef.current && this.menuRef.current.querySelector('button[aria-haspopup]');
+    if (e.key === 'Escape') { e.stopPropagation(); this.setState({ menuOpen: false }); if (trigger) trigger.focus(); return; }
+    if (e.key === 'Tab') { this.setState({ menuOpen: false }); return; }
     const items = Array.prototype.slice.call(this.menuRef.current.querySelectorAll('[role="menuitem"]:not(:disabled)'));
+    if (!items.length) return;
     const i = items.indexOf(document.activeElement);
-    items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
+    let next = null;
+    if (e.key === 'ArrowDown') next = (i + 1) % items.length;
+    else if (e.key === 'ArrowUp') next = (i - 1 + items.length) % items.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = items.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    items[next].focus();
   }
 
   toggleMenu() {
@@ -93,6 +103,10 @@ export default class Messages extends React.Component {
   }
 
   openReport() {
+    // The menu item goes away with the menu: focus its button, so the dialog
+    // hands focus back there when it closes.
+    const trigger = this.menuRef.current && this.menuRef.current.querySelector('button[aria-haspopup]');
+    if (trigger) trigger.focus();
     this.setState({ menuOpen: false, reportOpen: true, reason: '', note: '', alsoBlock: false, reportError: '' });
   }
 
@@ -557,7 +571,7 @@ export default class Messages extends React.Component {
       if (!ready) return <div className="container"><SkeletonBlock lines={4} /></div>;
       return (
         <div className="container container-narrow">
-          <EmptyState icon={LogIn} title={t('msg.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('msg.private')}</EmptyState>
+          <EmptyState icon={LogIn} level={1} title={t('msg.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('msg.private')}</EmptyState>
         </div>
       );
     }

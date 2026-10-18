@@ -157,4 +157,27 @@ describe('post photos', function () {
     assert.strictEqual((await admin.delete(`/post/${postId}`)).status, 204);
     assert.strictEqual(await models.PostPhoto.count(), 0);
   });
+
+  it('lets the seller describe each photo (alt text); others cannot', async () => {
+    const up = await upload(alice, [[await makeImage('png', 50, 40), 'a.png'], [await makeImage('png', 50, 40), 'b.png']]);
+    const [a, b] = up.body;
+    assert.strictEqual(a.alt, null);
+    const ok = await alice.put(`/post/${postId}/photos/${a.id}`).send({ alt: '  Green velvet couch,\n three seats  ' });
+    assert.strictEqual(ok.status, 200, JSON.stringify(ok.body));
+    assert.strictEqual(ok.body.alt, 'Green velvet couch, three seats');
+    const post = await request(app).get(`/post/${postId}`);
+    assert.deepStrictEqual(post.body.photos.map((p) => p.alt), ['Green velvet couch, three seats', null]);
+    // Validation, ownership, wrong post
+    assert.strictEqual((await alice.put(`/post/${postId}/photos/${a.id}`).send({ alt: 5 })).status, 400);
+    const long = await alice.put(`/post/${postId}/photos/${a.id}`).send({ alt: 'x'.repeat(251) });
+    assert.strictEqual(long.status, 400);
+    assert.strictEqual(long.body.error.details.alt, 'Keep it under 250 characters.');
+    assert.strictEqual((await bob.put(`/post/${postId}/photos/${a.id}`).send({ alt: 'mine now' })).status, 403);
+    assert.strictEqual((await request(app).put(`/post/${postId}/photos/${a.id}`).send({ alt: 'anon' })).status, 401);
+    assert.strictEqual((await alice.put(`/post/${postId}/photos/999999`).send({ alt: 'nope' })).status, 404);
+    assert.strictEqual((await admin.put(`/post/${postId}/photos/${b.id}`).send({ alt: 'Admin fixed it' })).status, 200);
+    // Clearing goes back to the default
+    const cleared = await alice.put(`/post/${postId}/photos/${a.id}`).send({ alt: '   ' });
+    assert.strictEqual(cleared.body.alt, null);
+  });
 });

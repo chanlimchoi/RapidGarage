@@ -24,7 +24,7 @@ export function MetricCard({ metric, total, today, series }) {
   const wk = weekChange(series);
   return (
     <section className={'panel metric-card metric-' + metric} aria-labelledby={'metric-' + metric}>
-      <div className="metric-head"><Icon size={18} aria-hidden="true" /><h3 id={'metric-' + metric} className="metric-label">{METRIC_LABEL[metric]}</h3></div>
+      <div className="metric-head"><Icon size={18} aria-hidden="true" /><h2 id={'metric-' + metric} className="metric-label">{METRIC_LABEL[metric]}</h2></div>
       <div className="metric-total">{total}</div>
       <div className="metric-sub small muted">
         <span>{t('dash.last14', { n: sum(series) })}</span>

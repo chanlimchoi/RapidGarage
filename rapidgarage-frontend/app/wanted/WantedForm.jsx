@@ -88,7 +88,7 @@ export default class WantedForm extends React.Component {
     if (!this.props.user && this.props.ready) {
       return (
         <div className="container container-narrow">
-          <EmptyState icon={LogIn} title={t('want.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('want.loginText')}</EmptyState>
+          <EmptyState level={1} icon={LogIn} title={t('want.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>}>{t('want.loginText')}</EmptyState>
         </div>
       );
     }

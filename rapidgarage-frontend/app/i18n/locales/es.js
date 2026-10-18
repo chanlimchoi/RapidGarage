@@ -1571,4 +1571,11 @@ export default {
   "spots.none": "Aún no hay lugares de encuentro",
   "spots.noneHint": "Agrega zonas de intercambio de la policía, bibliotecas y tiendas donde la gente pueda reunirse. Mientras tanto, se puede escribir un lugar público.",
   "spots.privacy": "Esta lista solo tiene lugares públicos. Las conversaciones siguen siendo privadas a menos que alguien en ellas las denuncie.",
+  "toast.region": "Notificaciones",
+  "photos.describeN": "Describe la foto {n}",
+  "photos.describePlaceholder": "p. ej., sofá verde de terciopelo de tres plazas",
+  "photos.describeHint": "Una descripción breve ayuda a quienes usan lectores de pantalla. Si la dejas vacía, usamos el título de la venta y el número de foto.",
+  "edit.altFailed": "No se pudo guardar la descripción de una foto.",
+  "post.photoAltOf": "{title}, foto {n} de {count}",
+  "post.openFullSize": "(abre en tamaño completo en una pestaña nueva)",
 };

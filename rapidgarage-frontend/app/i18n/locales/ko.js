@@ -1571,4 +1571,11 @@ export default {
   "spots.none": "아직 만남 장소가 없어요",
   "spots.noneHint": "경찰서 거래 구역, 도서관, 상점처럼 만날 수 있는 곳을 추가하세요. 그 전에도 공공장소를 직접 입력할 수 있어요.",
   "spots.privacy": "이 목록에는 공공장소만 있어요. 대화는 참여자가 신고하지 않는 한 비공개예요.",
+  "toast.region": "알림",
+  "photos.describeN": "사진 {n} 설명",
+  "photos.describePlaceholder": "예: 초록색 벨벳 3인용 소파",
+  "photos.describeHint": "짧은 설명은 화면 낭독기를 쓰는 분들에게 도움이 돼요. 비워 두면 세일 제목과 사진 번호를 사용해요.",
+  "edit.altFailed": "사진 설명을 저장하지 못했어요.",
+  "post.photoAltOf": "{title}, 사진 {count}장 중 {n}번째",
+  "post.openFullSize": "(새 탭에서 원본 크기로 열림)",
 };

@@ -1571,4 +1571,11 @@ export default {
   "spots.none": "还没有见面地点",
   "spots.noneHint": "添加可以见面的警察局交易区、图书馆和商店。在此之前，用户仍可自行填写公共场所。",
   "spots.privacy": "此列表只包含公共场所。除非对话中有人举报，对话始终保持私密。",
+  "toast.region": "通知",
+  "photos.describeN": "描述照片 {n}",
+  "photos.describePlaceholder": "例如：绿色丝绒三人沙发",
+  "photos.describeHint": "简短的描述可以帮助使用读屏软件的人。如果留空，我们会使用特卖标题和照片编号。",
+  "edit.altFailed": "无法保存照片描述。",
+  "post.photoAltOf": "{title}，第 {n} 张照片，共 {count} 张",
+  "post.openFullSize": "（在新标签页中打开原图）",
 };

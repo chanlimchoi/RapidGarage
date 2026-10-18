@@ -3,7 +3,7 @@ const router = require('express').Router({ mergeParams: true });
 const multer = require('multer');
 const models = require('../models');
 const { badRequest, sendError, notFound, serverError, parseId } = require('../lib/http');
-const { MAX_PHOTOS_PER_POST, MAX_FILE_BYTES, processImage, newKeys } = require('../lib/photos');
+const { MAX_PHOTOS_PER_POST, MAX_FILE_BYTES, processImage, newKeys, parseAlt } = require('../lib/photos');
 const { getStorage } = require('../lib/storage');
 
 const upload = multer({
@@ -56,6 +56,23 @@ router.post('/', runUpload, async (req, res) => {
     return res.status(201).json(photos);
   } catch (err) {
     await Promise.all(written.map((k) => storage.remove(k).catch(() => {})));
+    return serverError(res, err);
+  }
+});
+
+// PUT /post/:id/photos/:photoId { alt }: the seller's description of a photo
+// for people who can't see it. Empty or null goes back to the default.
+router.put('/:photoId', async (req, res) => {
+  const photoId = parseId(req.params.photoId);
+  if (!photoId) return badRequest(res, 'Photo id must be a positive integer.');
+  const alt = parseAlt((req.body || {}).alt);
+  if (alt.error) return badRequest(res, alt.error, { alt: alt.error });
+  try {
+    const photo = await models.PostPhoto.findOne({ where: { id: photoId, postId: req.post.id } });
+    if (!photo) return notFound(res, 'Photo not found.');
+    await photo.update({ alt: alt.value });
+    return res.json(photo);
+  } catch (err) {
     return serverError(res, err);
   }
 });

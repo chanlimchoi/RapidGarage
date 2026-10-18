@@ -12,7 +12,7 @@ import { t } from '../i18n';
 class NewPost extends Component {
   constructor(props) {
     super(props);
-    this.state = { created: false, createdId: null, photos: [], saving: false, error: '' };
+    this.state = { created: false, createdId: null, photos: [], alts: [], saving: false, error: '' };
     this.form = React.createRef();
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -39,7 +39,7 @@ class NewPost extends Component {
           this.setState({ created: true, createdId: data.id, error: '' });
           return null;
         }
-        return uploadPhotos(data.id, this.state.photos).then((up) => {
+        return uploadPhotos(data.id, this.state.photos, this.state.alts).then((up) => {
           if (!up.ok) {
             // The post exists; send the user to edit it and retry the photos.
             toast.error(t('new.photosFailed'));
@@ -61,7 +61,7 @@ class NewPost extends Component {
     if (this.props.ready && !this.props.user) {
       return (
         <div className="container container-narrow">
-          <EmptyState icon={LogIn} title={t('new.loginTitle')}
+          <EmptyState level={1} icon={LogIn} title={t('new.loginTitle')}
             action={<div className="row" style={{ justifyContent: 'center' }}><Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link><Link className="btn btn-secondary" to="/signup">{t('new.createAccount')}</Link></div>}>
             {t('new.loginText')}
           </EmptyState>
@@ -83,7 +83,7 @@ class NewPost extends Component {
           <section className="card-form">
             <h2 className="h4"><Images size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('post.photos')}</h2>
             <p className="muted small">{t('new.photosLead')}</p>
-            <PhotoPicker max={MAX_PHOTOS} onChange={(photos) => this.setState({ photos })} />
+            <PhotoPicker max={MAX_PHOTOS} onChange={(photos, alts) => this.setState({ photos, alts })} />
           </section>
         </PostForm>
       </div>

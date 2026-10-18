@@ -16,6 +16,14 @@ export default class AddToCalendar extends React.Component {
     this.onKey = this.onKey.bind(this);
   }
 
+  componentDidUpdate(prev, prevState) {
+    // Disclosure popover: move focus into it when it opens.
+    if (this.state.open && !prevState.open && this.root) {
+      const first = this.root.querySelector('.cal-menu-list a[href], .cal-menu-list button');
+      if (first) first.focus();
+    }
+  }
+
   componentWillUnmount() { this.listen(false); }
 
   listen(on) {
@@ -38,19 +46,20 @@ export default class AddToCalendar extends React.Component {
     const many = events.length > 1;
     const id = 'cal-menu-' + kind + '-' + item.id;
     const link = (href, label, cls) => (
-      <a className={'cal-menu-item ' + (cls || '')} href={href} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={() => this.close()}>
+      <a className={'cal-menu-item ' + (cls || '')} href={href} target="_blank" rel="noopener noreferrer" onClick={() => this.close()}>
         <ExternalLink size={14} aria-hidden="true" />{label}
       </a>
     );
     return (
-      <div className={'cal-menu' + (this.state.open ? ' is-open' : '')} ref={(el) => { this.root = el; }}>
-        <button type="button" className="btn btn-secondary cal-menu-btn" aria-haspopup="true" aria-expanded={this.state.open} aria-controls={id}
+      <div className={'cal-menu' + (this.state.open ? ' is-open' : '')} ref={(el) => { this.root = el; }}
+        onBlur={(e) => { if (this.state.open && e.relatedTarget && this.root && !this.root.contains(e.relatedTarget)) this.close(); }}>
+        <button type="button" className="btn btn-secondary cal-menu-btn" aria-expanded={this.state.open} aria-controls={id}
           ref={(el) => { this.button = el; }} onClick={() => this.toggle()}>
           <CalendarPlus size={16} aria-hidden="true" />{t('cal.add')}<ChevronDown size={14} aria-hidden="true" />
         </button>
         {this.state.open ? (
-          <div className="cal-menu-list" id={id} role="menu" aria-label={t('cal.add')}>
-            <a className="cal-menu-item cal-ics" href={icsPath(item, kind)} download role="menuitem" onClick={() => this.close()}>
+          <div className="cal-menu-list" id={id} role="group" aria-label={t('cal.add')}>
+            <a className="cal-menu-item cal-ics" href={icsPath(item, kind)} download onClick={() => this.close()}>
               <Download size={14} aria-hidden="true" />
               <span><strong>{t('cal.ics')}</strong><span className="small muted cal-menu-hint">{many ? t('cal.icsAllDays', { count: events.length }) : t('cal.icsHint')}</span></span>
             </a>

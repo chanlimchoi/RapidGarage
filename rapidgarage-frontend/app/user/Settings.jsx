@@ -100,7 +100,7 @@ export default class Settings extends React.Component {
       if (!this.props.ready) return <div className="container container-narrow"><SkeletonBlock lines={4} /></div>;
       return (
         <div className="container container-narrow">
-          <EmptyState icon={LogIn} title={t('settings.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>} />
+          <EmptyState level={1} icon={LogIn} title={t('settings.loginTitle')} action={<Link className="btn btn-primary" to="/login">{t('nav.logIn')}</Link>} />
         </div>
       );
     }

@@ -1,6 +1,9 @@
 import React from 'react';
 import { AlertCircle, AlertTriangle, Info, CheckCircle2, Loader2, X } from 'lucide-react';
 import { t } from '../i18n';
+import { wireControl } from '../lib/wire';
+
+export { wireControl };
 
 // Labeled form field with hint and inline error, wired up for screen readers.
 export function Field({ id, label, optional, hint, error, children }) {
@@ -8,12 +11,13 @@ export function Field({ id, label, optional, hint, error, children }) {
   const errId = error ? id + '-error' : undefined;
   const describedBy = [errId, hintId].filter(Boolean).join(' ') || undefined;
   const control = React.Children.only(children);
+  const props = { id, 'aria-invalid': error ? 'true' : undefined, 'aria-describedby': describedBy };
   return (
     <div className="field">
       <label className="field-label" htmlFor={id}>
         {label}{optional ? <span className="optional"> {t('ui.optional')}</span> : null}
       </label>
-      {React.cloneElement(control, { id, 'aria-invalid': error ? 'true' : undefined, 'aria-describedby': describedBy })}
+      {wireControl(control, props)}
       {error ? <span className="field-error" id={errId}><AlertCircle size={14} aria-hidden="true" />{error}</span> : null}
       {hint ? <span className="field-hint" id={hintId}>{hint}</span> : null}
     </div>
@@ -34,11 +38,13 @@ export function Alert({ tone, children, className, live }) {
   );
 }
 
-export function EmptyState({ icon: Icon, title, children, action }) {
+// level: heading level of the title (1 when the empty state is the whole page).
+export function EmptyState({ icon: Icon, title, children, action, level }) {
+  const H = 'h' + (level || 2);
   return (
     <div className="empty no-results">
       {Icon ? <div className="empty-icon"><Icon size={28} aria-hidden="true" /></div> : null}
-      <h3>{title}</h3>
+      <H className="empty-title">{title}</H>
       {children ? <p>{children}</p> : null}
       {action || null}
     </div>
@@ -84,44 +90,64 @@ export function SkeletonBlock({ lines, height }) {
   );
 }
 
-// Modal dialog: closes on Escape / backdrop click, keeps Tab inside, and
-// returns focus to whatever opened it.
+// Modal dialog (a bottom sheet on phones): closes on Escape / backdrop click,
+// keeps Tab and focus inside, and returns focus to whatever opened it (or to
+// props.returnFocus when that element is gone, e.g. a menu item).
+const FOCUSABLE = 'a[href], button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
+export function focusables(root) {
+  if (!root) return [];
+  return Array.prototype.filter.call(root.querySelectorAll(FOCUSABLE), (el) => el.getClientRects().length > 0 && !el.closest('[inert]'));
+}
+
+function resolve(r) { return typeof r === 'function' ? r() : r && r.current !== undefined ? r.current : r; }
+
 export class Dialog extends React.Component {
   constructor(props) {
     super(props);
     this.ref = React.createRef();
     this.onKey = this.onKey.bind(this);
+    this.onFocusIn = this.onFocusIn.bind(this);
   }
 
   componentDidMount() {
     this.opener = document.activeElement;
     document.addEventListener('keydown', this.onKey);
+    document.addEventListener('focusin', this.onFocusIn);
     const el = this.ref.current;
-    const first = el && el.querySelector('[autofocus], input, select, textarea, button:not(.dialog-close)');
-    if (first) first.focus();
+    const first = el && (el.querySelector('[autofocus]') || focusables(el).find((x) => !x.classList.contains('dialog-close')));
+    if (first) first.focus(); else if (el) el.focus();
   }
 
   componentWillUnmount() {
     document.removeEventListener('keydown', this.onKey);
-    if (this.opener && this.opener.focus) this.opener.focus();
+    document.removeEventListener('focusin', this.onFocusIn);
+    const back = this.opener && this.opener.isConnected && this.opener !== document.body ? this.opener : resolve(this.props.returnFocus);
+    if (back && back.focus) back.focus();
+  }
+
+  // Focus that lands outside (e.g. a click on the page behind) comes back in.
+  onFocusIn(e) {
+    const el = this.ref.current;
+    if (el && !el.contains(e.target)) { const f = focusables(el); (f[0] || el).focus(); }
   }
 
   onKey(e) {
     if (e.key === 'Escape') { e.preventDefault(); if (this.props.onClose) this.props.onClose(); return; }
     if (e.key !== 'Tab' || !this.ref.current) return;
-    const items = this.ref.current.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]');
-    if (!items.length) return;
+    const items = focusables(this.ref.current);
+    if (!items.length) { e.preventDefault(); return; }
     const first = items[0];
     const last = items[items.length - 1];
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    const inside = this.ref.current.contains(document.activeElement);
+    if (e.shiftKey && (document.activeElement === first || !inside)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !inside)) { e.preventDefault(); first.focus(); }
   }
 
   render() {
     const { id, title, description, children, footer, onClose } = this.props;
     return (
       <div className="dialog-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && onClose) onClose(); }}>
-        <div className="dialog" role="dialog" aria-modal="true" aria-labelledby={id + '-title'} aria-describedby={description ? id + '-desc' : undefined} ref={this.ref}>
+        <div className="dialog" role="dialog" aria-modal="true" tabIndex="-1" aria-labelledby={id + '-title'} aria-describedby={description ? id + '-desc' : undefined} ref={this.ref}>
           <header className="dialog-header">
             <h2 id={id + '-title'}>{title}</h2>
             <button type="button" className="btn btn-ghost btn-icon btn-sm dialog-close" aria-label={t('ui.close')} onClick={onClose}><X size={18} aria-hidden="true" /></button>

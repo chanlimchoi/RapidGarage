@@ -173,7 +173,7 @@ export default class EventPage extends React.Component {
     if (error) {
       return (
         <div className="container container-narrow">
-          <EmptyState icon={SearchX} title={t('ev.cantFind')} action={<Link className="btn btn-primary" to="/events">{t('ev.allEvents')}</Link>}>{error}</EmptyState>
+          <EmptyState level={1} icon={SearchX} title={t('ev.cantFind')} action={<Link className="btn btn-primary" to="/events">{t('ev.allEvents')}</Link>}>{error}</EmptyState>
         </div>
       );
     }

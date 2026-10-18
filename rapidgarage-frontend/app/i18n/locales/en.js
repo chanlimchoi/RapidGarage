@@ -1571,4 +1571,11 @@ export default {
   "spots.none": "No meetup spots yet",
   "spots.noneHint": "Add police station exchange zones, libraries and stores where people can meet. Until then, people can still type a public place.",
   "spots.privacy": "This list holds public places only. Conversations stay private unless someone in them reports one.",
+  "toast.region": "Notifications",
+  "photos.describeN": "Describe photo {n}",
+  "photos.describePlaceholder": "e.g. Green velvet three-seat couch",
+  "photos.describeHint": "A short description helps people who use screen readers. If you leave it empty, we use the sale title and photo number.",
+  "edit.altFailed": "Couldn't save a photo description.",
+  "post.photoAltOf": "{title}, photo {n} of {count}",
+  "post.openFullSize": "(opens full size in a new tab)",
 };

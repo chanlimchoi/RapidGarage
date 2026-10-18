@@ -495,6 +495,7 @@
   "Meetup suggestion not found.": "No se encontró la sugerencia de encuentro.",
   "This meetup suggestion is no longer open.": "Esta sugerencia de encuentro ya no está abierta.",
   "Only the person it was suggested to can answer it.": "Solo la persona a la que se le sugirió puede responder.",
-  "Only the person who suggested it can withdraw it. You can decline it instead.": "Solo quien lo sugirió puede retirarlo. Tú puedes rechazarlo."
+  "Only the person who suggested it can withdraw it. You can decline it instead.": "Solo quien lo sugirió puede retirarlo. Tú puedes rechazarlo.",
+  "Photo description must be text.": "La descripción de la foto debe ser texto."
  }
 }

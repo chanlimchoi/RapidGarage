@@ -9,6 +9,8 @@ module.exports = (sequelize, DataTypes) => {
     width: { type: DataTypes.INTEGER, allowNull: false },
     height: { type: DataTypes.INTEGER, allowNull: false },
     position: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    // Seller's description for screen readers (null: the app writes a default).
+    alt: { type: DataTypes.STRING(250), allowNull: true },
   });
 
   PostPhoto.associate = (models) => {
@@ -23,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       width: this.width,
       height: this.height,
       position: this.position,
+      alt: this.alt || null,
       url: publicUrl(this.storageKey),
       thumbUrl: publicUrl(this.thumbKey),
       createdAt: this.createdAt,
