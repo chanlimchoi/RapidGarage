@@ -4,6 +4,8 @@ module.exports = (sequelize, DataTypes) => {
   const AlertDigest = sequelize.define('AlertDigest', {
     userId: { type: DataTypes.INTEGER, allowNull: false },
     postCount: { type: DataTypes.INTEGER, allowNull: false },
+    // alert (sale alerts) | wanted (wanted-post matches); both share one budget.
+    kind: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'alert' },
     sentAt: { type: DataTypes.DATE, allowNull: false },
   }, {
     updatedAt: false,

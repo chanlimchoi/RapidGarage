@@ -48,19 +48,21 @@ function tokenKey() {
   return crypto.createHash('sha256').update('rapidgarage-sale-alerts:' + secret).digest();
 }
 
-function tokenDigest(alertId) {
-  return crypto.createHmac('sha256', tokenKey()).update('unsub.v2.' + alertId).digest();
+// purpose separates token spaces (sale alerts: 'unsub.v2.', wanted posts:
+// 'wanted.unsub.v1.'), so a token for one id never works for another kind.
+function tokenDigest(alertId, purpose) {
+  return crypto.createHmac('sha256', tokenKey()).update((purpose || 'unsub.v2.') + alertId).digest();
 }
 
 // alertOrId: a SaleAlert (or { id }) or a positive integer id.
-function unsubscribeToken(alertOrId) {
+function unsubscribeToken(alertOrId, purpose) {
   const id = typeof alertOrId === 'object' && alertOrId ? alertOrId.id : alertOrId;
-  return tokenDigest(id).toString('base64url');
+  return tokenDigest(id, purpose).toString('base64url');
 }
 
 // Constant-time check of `token` for alert `alertId`; no database access.
-function verifyToken(alertId, token) {
-  const want = tokenDigest(alertId);
+function verifyToken(alertId, token, purpose) {
+  const want = tokenDigest(alertId, purpose);
   const wellFormed = typeof token === 'string' && TOKEN_RE.test(token);
   const got = wellFormed ? Buffer.from(token, 'base64url') : Buffer.alloc(want.length);
   const same = got.length === want.length && crypto.timingSafeEqual(got, want);
@@ -113,13 +115,16 @@ async function enqueueForPost(post) {
 
 // Fire-and-forget from request handlers; tests can await idle().
 const inflight = new Set();
-function schedulePostMatch(post) {
+function track(fn, what) {
   const p = Promise.resolve()
-    .then(() => enqueueForPost(post))
-    .catch((err) => console.error('Sale alert matching failed for post', post && post.id, err && err.message))
+    .then(fn)
+    .catch((err) => console.error(what, err && err.message))
     .finally(() => inflight.delete(p));
   inflight.add(p);
   return p;
+}
+function schedulePostMatch(post) {
+  return track(() => enqueueForPost(post), 'Sale alert matching failed for post ' + (post && post.id));
 }
 const idle = () => Promise.all(Array.from(inflight));
 
@@ -214,8 +219,28 @@ async function finish(rows, values) {
   await models().AlertNotification.update(values, { where: { id: rows.map((r) => r.id) } });
 }
 
-// One pass over the outbox. Returns a summary (for logs and tests).
+// One pass over both outboxes (sale alerts, then wanted-post matches; they
+// share the per-user digest interval and daily cap). Returns the sale-alert
+// summary with the wanted one under .wanted (for logs and tests).
 async function processQueue(now) {
+  now = now || new Date();
+  const summary = await processAlertQueue(now);
+  summary.wanted = await require('./wanted').processQueue(now);
+  return summary;
+}
+
+// Rate limits shared by every alert-style email (sale alerts and wanted
+// matches): true when `userId` may get an email now (digest interval passed
+// and under the daily cap).
+async function emailBudget(userId, now) {
+  const m = models();
+  const last = await m.AlertDigest.max('sentAt', { where: { userId } });
+  if (last && now - new Date(last) < digestMinutes() * 60000) return false;
+  const today = await m.AlertDigest.count({ where: { userId, sentAt: { [Op.gt]: new Date(now.getTime() - 86400000) } } });
+  return today < dailyCap();
+}
+
+async function processAlertQueue(now) {
   const m = models();
   now = now || new Date();
   const summary = { sent: 0, emails: 0, skipped: 0, failed: 0, deferred: 0, reason: null };
@@ -238,10 +263,7 @@ async function processQueue(now) {
   const due = { status: 'pending', [Op.or]: [{ nextAttemptAt: null }, { nextAttemptAt: { [Op.lte]: now } }] };
   const users = (await m.AlertNotification.findAll({ where: due, attributes: ['userId'], group: ['userId'], raw: true })).map((r) => r.userId);
   for (const userId of users) {
-    const last = await m.AlertDigest.max('sentAt', { where: { userId } });
-    if (last && now - new Date(last) < digestMinutes() * 60000) { summary.deferred++; continue; }
-    const today = await m.AlertDigest.count({ where: { userId, sentAt: { [Op.gt]: new Date(now.getTime() - 86400000) } } });
-    if (today >= dailyCap()) { summary.deferred++; continue; }
+    if (!(await emailBudget(userId, now))) { summary.deferred++; continue; }
     // Claim this user's due rows so a second worker can't send them too.
     const claim = crypto.randomBytes(12).toString('hex');
     const ids = (await m.AlertNotification.findAll({ where: Object.assign({ userId }, due), attributes: ['id'], order: [['createdAt', 'ASC']], limit: postsPerEmail(), raw: true })).map((r) => r.id);
@@ -320,6 +342,6 @@ function stopWorker() { if (timer) clearInterval(timer); timer = null; }
 
 module.exports = {
   RADIUS_MIN, RADIUS_MAX, maxPerUser, digestMinutes, dailyCap, baseUrl,
-  unsubscribeToken, verifyToken, unsubscribeUrl, enqueueForPost, schedulePostMatch, idle,
-  renderEmail, processQueue, startWorker, stopWorker,
+  unsubscribeToken, verifyToken, unsubscribeUrl, enqueueForPost, schedulePostMatch, idle, track,
+  renderEmail, processQueue, emailBudget, postsPerEmail, MAX_ATTEMPTS, EXPIRE_DAYS, startWorker, stopWorker,
 };

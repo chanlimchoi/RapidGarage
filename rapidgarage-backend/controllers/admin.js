@@ -196,6 +196,8 @@ router.post('/posts/:id/moderate', async (req, res) => {
       }
     });
     await post.reload();
+    // Visible again: it can match wanted posts now.
+    if (body.action === 'unhide') require('../lib/wanted').schedulePost(post.id);
     return res.json({ action: body.action, postId: id, resolved: closed[0], post: preview(post) });
   } catch (err) {
     return serverError(res, err);
@@ -210,6 +212,9 @@ router.use(require('./adminRatings'));
 
 // Neighborhood sale reports and hiding.
 router.use(require('./adminEvents'));
+
+// Wanted posts: reports and moderation.
+router.use(require('./adminWanted'));
 
 module.exports = router;
 module.exports.requireAdmin = requireAdmin;
