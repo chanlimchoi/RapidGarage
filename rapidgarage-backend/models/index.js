@@ -32,6 +32,10 @@ Object.keys(db).forEach(modelName => {
   }
 });
 
+// Destructive calls (sync({ force }), drop, truncate...) throw unless this is a
+// throwaway test database (lib/testDbGuard.js), so they can never wipe real data.
+require('../lib/testDbGuard').guardDestructive(sequelize);
+
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
