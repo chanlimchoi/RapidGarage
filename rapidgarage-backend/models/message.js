@@ -9,11 +9,15 @@ module.exports = (sequelize, DataTypes) => {
     // Soft delete by a moderator: participants see "removed by moderator".
     removedAt: { type: DataTypes.DATE, allowNull: true },
     removedBy: { type: DataTypes.INTEGER, allowNull: true },
-    // 'text', or 'hold' for item-hold events (holdEvent: requested | accepted |
+    // 'text', 'meetup' (below), or 'hold' for item-hold events (holdEvent: requested | accepted |
     // declined | released | cancelled | expired | sold); body keeps an English summary.
     kind: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'text' },
     holdId: { type: DataTypes.INTEGER, allowNull: true },
     holdEvent: { type: DataTypes.STRING(16), allowNull: true },
+    // 'meetup' messages: a meetup suggestion step (meetupEvent: proposed |
+    // countered | accepted | declined | cancelled | expired).
+    meetupId: { type: DataTypes.INTEGER, allowNull: true },
+    meetupEvent: { type: DataTypes.STRING(16), allowNull: true },
   }, {
     updatedAt: false,
     indexes: [
@@ -25,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
     Message.belongsTo(models.Conversation, { foreignKey: 'conversationId', onDelete: 'CASCADE' });
     Message.belongsTo(models.User, { as: 'sender', foreignKey: 'senderId', onDelete: 'CASCADE' });
     Message.belongsTo(models.ItemHold, { as: 'hold', foreignKey: 'holdId', onDelete: 'SET NULL', constraints: false });
+    Message.belongsTo(models.MeetupProposal, { as: 'meetup', foreignKey: 'meetupId', onDelete: 'SET NULL', constraints: false });
   };
   Message.BODY_MAX = BODY_MAX;
   return Message;
