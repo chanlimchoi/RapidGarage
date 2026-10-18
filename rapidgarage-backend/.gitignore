@@ -2,3 +2,6 @@
 node_modules
 .env
 uploads
+
+# scratch DB from test/scans-cleanup.test.js (removed after the run)
+.scan-cleanup-*.sqlite

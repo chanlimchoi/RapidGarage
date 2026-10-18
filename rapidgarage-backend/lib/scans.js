@@ -31,15 +31,34 @@ let saltDay = null;
 let salt = null;
 let purging = null;
 
+// Which ScanDedupe rows are stale when a new salt starts.
+//  - First salt of this process (after a restart): every row, today's too,
+//    since their salt is gone. `day` is NOT NULL, so this matches all rows,
+//    including any with a "future" day left by a clock change.
+//  - UTC day change: every row not from the new day.
+// Never an empty where: the database guard (lib/testDbGuard.js) refuses
+// delete-everything destroys on real databases.
+function staleWhere(first, day) {
+  return first ? { day: { [Op.not]: null } } : { day: { [Op.ne]: day } };
+}
+
+function purgeStale(first, day) {
+  return models().ScanDedupe.destroy({ where: staleWhere(first, day) }).catch((err) => {
+    // Counting goes on (new hashes use the new salt); only the cleanup failed.
+    // Name and message only: no SQL parameters, no connection details.
+    console.error('[scans] dedupe cleanup failed (' + (first ? 'after restart' : 'day change') + '): '
+      + ((err && err.name) || 'Error') + ': ' + String((err && err.message) || err).slice(0, 300));
+    return null;
+  });
+}
+
 function currentSalt() {
   const day = utcDay(clock());
   if (day !== saltDay) {
     const first = saltDay === null;
     saltDay = day;
     salt = crypto.randomBytes(32);
-    // After a restart even today's rows are unusable (their salt is gone).
-    const where = first ? {} : { day: { [Op.ne]: day } };
-    purging = models().ScanDedupe.destroy({ where }).catch(() => null);
+    purging = purgeStale(first, day);
   }
   return { day, salt };
 }
@@ -147,4 +166,4 @@ async function stats(post, n, kind) {
   return { total: total || 0, today: by.get(today) || 0, timeZone: tz, days };
 }
 
-module.exports = { setClock, resetSalt, isBot, isPrefetch, clientIp, skipReason, record, stats, BOT_RE };
+module.exports = { setClock, resetSalt, staleWhere, purgeStale, isBot, isPrefetch, clientIp, skipReason, record, stats, BOT_RE };
