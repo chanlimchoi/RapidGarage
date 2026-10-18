@@ -26,7 +26,22 @@ module.exports = (sequelize, DataTypes) => {
     hiddenAt: { type: DataTypes.DATE, allowNull: true },
     hiddenBy: { type: DataTypes.INTEGER, allowNull: true },
     hiddenSource: { type: DataTypes.STRING(16), allowNull: true },
+    // Add to calendar (lib/calendar.js): .ics SEQUENCE and every day ever scheduled.
+    calendarSeq: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    calendarDates: { type: DataTypes.TEXT, allowNull: true },
   }, {
+    hooks: {
+      beforeSave: (ev) => {
+        const cal = require('../lib/calendar');
+        if (ev.isNewRecord || ev.changed('days')) {
+          let prev = [];
+          try { prev = JSON.parse(ev.previous('days') || '[]'); } catch (e) { prev = []; }
+          const oldTz = ev.isNewRecord ? ev.timeZone : (ev.previous('timeZone') || ev.timeZone);
+          ev.set('calendarDates', cal.mergeHistory(cal.mergeHistory(ev.get('calendarDates'), ev.isNewRecord ? [] : prev, oldTz), ev.days || [], ev.timeZone));
+        }
+        if (!ev.isNewRecord) cal.bumpOnChange(ev, cal.eventFields);
+      },
+    },
     indexes: [
       { name: 'sale_events_lat_lng_idx', fields: ['lat', 'lng'] },
       { name: 'sale_events_end_idx', fields: ['endDate'] },

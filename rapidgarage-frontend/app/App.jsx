@@ -18,6 +18,7 @@ import EditPost from './post/EditPost';
 import Settings from './user/Settings';
 import Admin from './admin/Admin';
 import Messages from './messages/Messages';
+import ReminderBanner from './components/ReminderBanner';
 import Unsubscribe from './user/Unsubscribe';
 import PrintFlyer from './print/PrintFlyer';
 import PersonRatings from './ratings/PersonRatings';
@@ -51,6 +52,8 @@ class App extends Component {
       unread: 0,
       // New sales matching my wanted posts (same poll).
       wantedNew: 0,
+      // Today's morning-of reminders not yet dismissed (ReminderBanner).
+      reminders: 0,
       // Changing it re-mounts the page so every component re-renders its text.
       locale: i18n.locale(),
     };
@@ -80,11 +83,11 @@ class App extends Component {
 
   refreshUnread() {
     if (!this.state.user) {
-      if (this.state.unread || this.state.wantedNew) this.setState({ unread: 0, wantedNew: 0 });
+      if (this.state.unread || this.state.wantedNew || this.state.reminders) this.setState({ unread: 0, wantedNew: 0, reminders: 0 });
       return Promise.resolve();
     }
     return fetchBadges().then((b) => {
-      if (b && (b.count !== this.state.unread || b.wantedMatches !== this.state.wantedNew)) this.setState({ unread: b.count, wantedNew: b.wantedMatches });
+      if (b && (b.count !== this.state.unread || b.wantedMatches !== this.state.wantedNew || b.reminders !== this.state.reminders)) this.setState({ unread: b.count, wantedNew: b.wantedMatches, reminders: b.reminders });
     });
   }
 
@@ -131,6 +134,7 @@ class App extends Component {
       <div className="app" key={this.state.locale}>
         <NavBar user={user} ready={ready} unread={this.state.unread} wantedNew={this.state.wantedNew} location={this.props.location} />
         <main id="main" className="app-main" tabIndex="-1">
+          {user && !/^\/(alerts|admin)/.test(this.props.location.pathname) ? <ReminderBanner userId={user.id} count={this.state.reminders} onChange={this.refreshUnread} /> : null}
           <Switch>
             <Route exact path='/' render={(props) => <PostList {...props} {...common} config={config} />} />
             <Route path='/about' component={About} />

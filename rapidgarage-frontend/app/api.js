@@ -215,7 +215,7 @@ export const moderateWanted = (id, action, note) => apiFetch('/admin/wanted/' + 
 // { count, wantedMatches } for the nav badges, or null.
 export function fetchBadges() {
   return apiFetch('/conversations/unread')
-    .then(({ ok, data }) => (ok && data ? { count: data.count, wantedMatches: data.wantedMatches || 0 } : null))
+    .then(({ ok, data }) => (ok && data ? { count: data.count, wantedMatches: data.wantedMatches || 0, reminders: data.reminders || 0 } : null))
     .catch(() => null);
 }
 
@@ -225,3 +225,11 @@ export const startCurbside = (postId, body) => apiFetch('/post/' + postId + '/cu
 export const stopCurbside = (postId) => apiFetch('/post/' + postId + '/curbside', { method: 'DELETE' });
 export const markCurbTaken = (postId, itemId) => apiFetch('/post/' + postId + '/curbside/taken', jsonBody('POST', itemId ? { itemId } : {}));
 export const undoCurbTaken = (postId, itemId) => apiFetch('/post/' + postId + '/curbside/undo', jsonBody('POST', itemId ? { itemId } : {}));
+
+// ---- Morning-of reminders (controllers/reminders.js, controllers/saved.js) -----
+export const setSavedReminder = (postId, on) => apiFetch('/saved/' + postId + '/reminder', jsonBody('PUT', { on }));
+export const fetchReminderSettings = () => apiFetch('/reminders/settings');
+export const saveReminderSettings = (body) => apiFetch('/reminders/settings', jsonBody('PUT', body));
+export const fetchTodayReminders = () => apiFetch('/reminders/today');
+export const markReminderSeen = (id) => apiFetch('/reminders/' + id + '/seen', jsonBody('POST', {}));
+export const unsubscribeReminders = (r, token) => apiFetch('/reminders/unsubscribe', jsonBody('POST', { r, t: token }));

@@ -104,7 +104,29 @@
   "wmail.manageText": "구해요 글 관리: {url}",
   "wmail.turnOff": "\"{title}\" 이메일 그만 받기",
   "wmail.turnOffText": "\"{title}\" 이메일 그만 받기: {url}",
-  "wmail.curbside": "{time}까지 집 앞에 무료로 내놓음"
+  "wmail.curbside": "{time}까지 집 앞에 무료로 내놓음",
+  "cal.saved": "RapidGarage: 저장한 세일",
+  "cal.savedWeekend": "RapidGarage: 이번 주말 저장한 세일",
+  "cal.savedToday": "RapidGarage: 오늘 저장한 세일",
+  "rmail.subjectOne": "오늘: {title} · {time}",
+  "rmail.subjectMany": {
+   "other": "오늘 저장한 세일 {count}개가 열려요"
+  },
+  "rmail.headOne": "저장한 세일이 오늘 열려요",
+  "rmail.headMany": {
+   "other": "오늘 저장한 세일 {count}개"
+  },
+  "rmail.introOne": "운영 시간은 다음과 같아요:",
+  "rmail.introMany": {
+   "other": "운영 시간은 다음과 같아요:"
+  },
+  "rmail.when": "{day} · {time}",
+  "rmail.route": "오늘 경로 짜기",
+  "rmail.routeText": "오늘 경로 짜기: {url}",
+  "rmail.manage": "알림 설정",
+  "rmail.manageText": "알림 설정: {url}",
+  "rmail.turnOff": "모든 세일 알림 끄기",
+  "rmail.turnOffText": "모든 세일 알림 끄기: {url}"
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -390,6 +412,14 @@
   "You already marked that taken, and the seller says it is still there.": "이미 가져갔다고 표시했는데 판매자가 아직 있다고 했어요.",
   "You have marked a lot of things taken. Please try again later.": "가져감 표시를 너무 많이 했어요. 나중에 다시 시도하세요.",
   "This curbside offer is over. Start a new one instead.": "이 무료 나눔은 끝났어요. 새로 시작하세요.",
-  "curbside must be true or false.": "curbside는 true 또는 false여야 합니다."
+  "curbside must be true or false.": "curbside는 true 또는 false여야 합니다.",
+  "This sale has no dates yet.": "이 세일은 아직 날짜가 없어요.",
+  "This neighborhood sale has no dates yet.": "이 동네 세일은 아직 날짜가 없어요.",
+  "Reminder not found.": "알림을 찾을 수 없어요.",
+  "Invalid reminder settings.": "알림 설정이 올바르지 않아요.",
+  "defaultOn must be true or false.": "defaultOn은 true 또는 false여야 합니다.",
+  "applyToSaved must be true or false.": "applyToSaved는 true 또는 false여야 합니다.",
+  "Invalid reminder.": "알림이 올바르지 않아요.",
+  "on must be true or false.": "on은 true 또는 false여야 합니다."
  }
 }

@@ -104,7 +104,29 @@
   "wmail.manageText": "管理你的求购帖：{url}",
   "wmail.turnOff": "停止接收“{title}”的邮件",
   "wmail.turnOffText": "停止接收“{title}”的邮件：{url}",
-  "wmail.curbside": "路边免费自取，截至 {time}"
+  "wmail.curbside": "路边免费自取，截至 {time}",
+  "cal.saved": "RapidGarage：已收藏的特卖",
+  "cal.savedWeekend": "RapidGarage：本周末已收藏的特卖",
+  "cal.savedToday": "RapidGarage：今天已收藏的特卖",
+  "rmail.subjectOne": "今天：{title} · {time}",
+  "rmail.subjectMany": {
+   "other": "今天有 {count} 场你收藏的特卖"
+  },
+  "rmail.headOne": "你收藏的特卖就在今天",
+  "rmail.headMany": {
+   "other": "今天有 {count} 场收藏的特卖"
+  },
+  "rmail.introOne": "开放时间如下：",
+  "rmail.introMany": {
+   "other": "开放时间如下："
+  },
+  "rmail.when": "{day} · {time}",
+  "rmail.route": "规划今天的路线",
+  "rmail.routeText": "规划今天的路线：{url}",
+  "rmail.manage": "提醒设置",
+  "rmail.manageText": "提醒设置：{url}",
+  "rmail.turnOff": "停止所有特卖提醒",
+  "rmail.turnOffText": "停止所有特卖提醒：{url}"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -390,6 +412,14 @@
   "You already marked that taken, and the seller says it is still there.": "你已标记为已被拿走，但卖家说它还在。",
   "You have marked a lot of things taken. Please try again later.": "你标记了太多“已被拿走”。请稍后再试。",
   "This curbside offer is over. Start a new one instead.": "此次路边免费已结束。请重新发起。",
-  "curbside must be true or false.": "curbside 必须为 true 或 false。"
+  "curbside must be true or false.": "curbside 必须为 true 或 false。",
+  "This sale has no dates yet.": "此特卖还没有日期。",
+  "This neighborhood sale has no dates yet.": "此社区特卖还没有日期。",
+  "Reminder not found.": "未找到该提醒。",
+  "Invalid reminder settings.": "提醒设置无效。",
+  "defaultOn must be true or false.": "defaultOn 必须为 true 或 false。",
+  "applyToSaved must be true or false.": "applyToSaved 必须为 true 或 false。",
+  "Invalid reminder.": "提醒无效。",
+  "on must be true or false.": "on 必须为 true 或 false。"
  }
 }

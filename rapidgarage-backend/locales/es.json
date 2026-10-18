@@ -115,7 +115,32 @@
   "wmail.manageText": "Gestionar tus búsquedas: {url}",
   "wmail.turnOff": "Dejar de recibir correos de «{title}»",
   "wmail.turnOffText": "Dejar de recibir correos de «{title}»: {url}",
-  "wmail.curbside": "Gratis en la acera hasta {time}"
+  "wmail.curbside": "Gratis en la acera hasta {time}",
+  "cal.saved": "RapidGarage: ventas guardadas",
+  "cal.savedWeekend": "RapidGarage: ventas guardadas este fin de semana",
+  "cal.savedToday": "RapidGarage: ventas guardadas de hoy",
+  "rmail.subjectOne": "Hoy: {title} · {time}",
+  "rmail.subjectMany": {
+   "one": "Hoy hay {count} venta guardada",
+   "other": "Hoy hay {count} ventas guardadas"
+  },
+  "rmail.headOne": "Tu venta guardada es hoy",
+  "rmail.headMany": {
+   "one": "{count} venta guardada hoy",
+   "other": "{count} ventas guardadas hoy"
+  },
+  "rmail.introOne": "Este es su horario:",
+  "rmail.introMany": {
+   "one": "Este es su horario:",
+   "other": "Estos son sus horarios:"
+  },
+  "rmail.when": "{day} · {time}",
+  "rmail.route": "Planear la ruta de hoy",
+  "rmail.routeText": "Planear la ruta de hoy: {url}",
+  "rmail.manage": "Configuración de recordatorios",
+  "rmail.manageText": "Configuración de recordatorios: {url}",
+  "rmail.turnOff": "Detener todos los recordatorios de ventas",
+  "rmail.turnOffText": "Detener todos los recordatorios de ventas: {url}"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -401,6 +426,14 @@
   "You already marked that taken, and the seller says it is still there.": "Ya lo marcaste como recogido y quien vende dice que sigue ahí.",
   "You have marked a lot of things taken. Please try again later.": "Marcaste muchas cosas como recogidas. Inténtalo más tarde.",
   "This curbside offer is over. Start a new one instead.": "Esta oferta en la acera terminó. Empieza una nueva.",
-  "curbside must be true or false.": "curbside debe ser true o false."
+  "curbside must be true or false.": "curbside debe ser true o false.",
+  "This sale has no dates yet.": "Esta venta todavía no tiene fechas.",
+  "This neighborhood sale has no dates yet.": "Esta venta vecinal todavía no tiene fechas.",
+  "Reminder not found.": "No se encontró el recordatorio.",
+  "Invalid reminder settings.": "Configuración de recordatorios no válida.",
+  "defaultOn must be true or false.": "defaultOn debe ser true o false.",
+  "applyToSaved must be true or false.": "applyToSaved debe ser true o false.",
+  "Invalid reminder.": "Recordatorio no válido.",
+  "on must be true or false.": "on debe ser true o false."
  }
 }
