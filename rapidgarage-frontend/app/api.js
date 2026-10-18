@@ -26,6 +26,13 @@ export function apiFetch(path, options) {
   );
 }
 
+// ---- Passwords (forgot / reset / change) --------------------------------
+export const requestPasswordReset = (email) => apiFetch('/password-reset', { method: 'POST', body: JSON.stringify({ email }) });
+export const checkPasswordReset = (token) => apiFetch('/password-reset/check', { method: 'POST', body: JSON.stringify({ token }) });
+export const confirmPasswordReset = (token, password) => apiFetch('/password-reset/confirm', { method: 'POST', body: JSON.stringify({ token, password }) });
+export const fetchPasswordStatus = () => apiFetch('/me/password');
+export const changePassword = (currentPassword, newPassword) => apiFetch('/me/password', { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword }) });
+
 // Ask the server who is logged in. Resolves to the user or null.
 export function fetchMe() {
   return apiFetch('/me')

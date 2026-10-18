@@ -21,6 +21,9 @@ module.exports = (sequelize, DataTypes) => {
     // New saved sales get a morning-of reminder (lib/reminders.js).
     remindSaved: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     locale: { type: DataTypes.STRING(8), allowNull: true, validate: { isIn: [['en', 'es', 'ko', 'zh-CN']] } },
+    // Bumped when the password is reset or changed; sessions made under an
+    // older value are signed out (middlewares/authentication.js).
+    authVersion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   }, {
     // Never load the password hash unless explicitly asked for (login only).
     // The encrypted Maps key is excluded too; load it only via scope('withMapsKey').
@@ -33,13 +36,21 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
+  User.hashPassword = (plain) => new Promise((resolve, reject) => {
+    bcrypt.hash(plain, null, null, (err, hashedPassword) => (err ? reject(err) : resolve(hashedPassword)));
+  });
+
   User.beforeCreate((user) => {
     if (user.password === null || user.password === undefined) return undefined;
-    return new Promise((resolve) => {
-      bcrypt.hash(user.password, null, null, (err, hashedPassword) => {
-        resolve(hashedPassword);
-      });
-    }).then((hashedPassword) => {
+    return User.hashPassword(user.password).then((hashedPassword) => {
+      user.password = hashedPassword;
+    });
+  });
+
+  // New passwords set through update() (reset, change) are hashed the same way.
+  User.beforeUpdate((user) => {
+    if (!user.changed('password') || user.password === null || user.password === undefined) return undefined;
+    return User.hashPassword(user.password).then((hashedPassword) => {
       user.password = hashedPassword;
     });
   });
@@ -54,6 +65,7 @@ module.exports = (sequelize, DataTypes) => {
     delete values.password;
     delete values.mapsKeyEncrypted;
     delete values.googleId;
+    delete values.authVersion;
     values.hasMapsKey = !!values.mapsKeyLast4;
     return values;
   };

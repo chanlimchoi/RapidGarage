@@ -143,7 +143,19 @@
   "share.wantedTitle": "求购：{title}",
   "share.near": "{area} 附近 · {miles} 英里内",
   "share.photoAlt": "{title} 的照片",
-  "share.cardAlt": "RapidGarage 预览卡片：{title}"
+  "share.cardAlt": "RapidGarage 预览卡片：{title}",
+  "reset.subject": "重置你的 RapidGarage 密码",
+  "reset.heading": "重置密码",
+  "reset.intro": "有人请求重置你的 RapidGarage 账户密码。请使用下方按钮或链接设置新密码。",
+  "reset.button": "设置新密码",
+  "reset.expires": {
+   "other": "该链接只能使用一次，{count} 分钟后失效。"
+  },
+  "reset.ignore": "如果这不是你本人的请求，可以忽略这封邮件，你的密码不会改变。",
+  "reset.changedSubject": "你的 RapidGarage 密码已更改",
+  "reset.changedHeading": "你的密码已更改",
+  "reset.changedIntro": "你的 RapidGarage 账户密码刚刚被更改，其他所有设备均已退出登录。",
+  "reset.changedNotYou": "如果这不是你本人操作，请立即重置密码：{url}"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -480,6 +492,11 @@
   "This meetup suggestion is no longer open.": "此见面建议已关闭。",
   "Only the person it was suggested to can answer it.": "只有收到建议的人可以回复。",
   "Only the person who suggested it can withdraw it. You can decline it instead.": "只有提出建议的人可以撤回。你可以选择拒绝。",
-  "Photo description must be text.": "照片描述必须是文本。"
+  "Photo description must be text.": "照片描述必须是文本。",
+  "Password must be 200 characters or fewer.": "密码不能超过 200 个字符。",
+  "Too many reset requests. Please try again later.": "重置请求过多，请稍后再试。",
+  "Password reset emails aren't available on this server. Contact the site's administrator.": "此服务器无法发送密码重置邮件，请联系网站管理员。",
+  "This reset link is invalid or has expired. Request a new one.": "此重置链接无效或已过期，请重新申请。",
+  "Your current password is incorrect.": "当前密码不正确。"
  }
 }

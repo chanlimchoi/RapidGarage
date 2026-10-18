@@ -73,6 +73,22 @@ needs no DDL rights. If the table is missing, the server refuses to start and te
 - `POST /logout` deletes the session row and clears the cookie.
 - `SESSION_STORE=memory` switches back to the in-memory store (the default under `NODE_ENV=test`).
 - Deploying this logs everyone out once, since the old sessions only existed in memory.
+- A session stores `{ id, v }`, where `v` is the account's `authVersion` at login. A new password
+  (reset or change) increments `authVersion`, so every older session stops authenticating.
+  Sessions that hold a bare id (from before this) count as version 0 and stay valid.
+
+## Passwords
+
+- `POST /password-reset` `{ email }` → `202 { ok, expiresInMinutes }` for any valid email (an
+  account or not), `429` past the per-IP limit, `503 not_configured` without SMTP.
+- `POST /password-reset/check` `{ token }` → `{ valid }`.
+- `POST /password-reset/confirm` `{ token, password }` → `{ user }`. Logs in on a fresh session id.
+  A used, expired or unknown link → `400 invalid_token`.
+- `GET /me/password` → `{ hasPassword }`. `PUT /me/password` `{ currentPassword?, newPassword }`
+  (`currentPassword` is required when the account has one). The current session stays logged in.
+- Passwords are 8–200 characters. Settings: `PASSWORD_RESET_TTL_MINUTES` (60),
+  `PASSWORD_RESET_MAX_PER_HOUR` (3 emails per account), `PASSWORD_RESET_MAX_PER_IP_HOUR` (20).
+- Migration `20261018010000-password-resets` adds `Users.authVersion` and the `PasswordResets` table.
 
 ## Post photos
 
