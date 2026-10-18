@@ -497,6 +497,12 @@
   "Too many reset requests. Please try again later.": "재설정 요청이 너무 많아요. 나중에 다시 시도하세요.",
   "Password reset emails aren't available on this server. Contact the site's administrator.": "이 서버에서는 비밀번호 재설정 메일을 보낼 수 없어요. 사이트 관리자에게 문의하세요.",
   "This reset link is invalid or has expired. Request a new one.": "재설정 링크가 유효하지 않거나 만료되었어요. 새 링크를 요청하세요.",
-  "Your current password is incorrect.": "현재 비밀번호가 올바르지 않아요."
+  "Your current password is incorrect.": "현재 비밀번호가 올바르지 않아요.",
+  "Too many requests. Please slow down and try again shortly.": "요청이 너무 많아요. 잠시 후 다시 시도하세요.",
+  "Too many sign-in attempts from this network. Please wait a few minutes and try again.": "이 네트워크에서 로그인 시도가 너무 많아요. 몇 분 후에 다시 시도하세요.",
+  "Too many failed attempts. Please wait 15 minutes or reset your password.": "실패한 시도가 너무 많아요. 15분 기다리거나 비밀번호를 재설정하세요.",
+  "The server is busy. Please try again in a few seconds.": "서버가 바빠요. 몇 초 후에 다시 시도하세요.",
+  "Cross-site requests are not allowed.": "다른 사이트에서 보낸 요청은 허용되지 않아요.",
+  "Request body is too large.": "요청 내용이 너무 커요."
  }
 }

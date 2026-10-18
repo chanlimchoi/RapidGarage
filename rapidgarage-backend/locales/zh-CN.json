@@ -497,6 +497,12 @@
   "Too many reset requests. Please try again later.": "重置请求过多，请稍后再试。",
   "Password reset emails aren't available on this server. Contact the site's administrator.": "此服务器无法发送密码重置邮件，请联系网站管理员。",
   "This reset link is invalid or has expired. Request a new one.": "此重置链接无效或已过期，请重新申请。",
-  "Your current password is incorrect.": "当前密码不正确。"
+  "Your current password is incorrect.": "当前密码不正确。",
+  "Too many requests. Please slow down and try again shortly.": "请求过于频繁，请稍后再试。",
+  "Too many sign-in attempts from this network. Please wait a few minutes and try again.": "此网络的登录尝试过多，请几分钟后再试。",
+  "Too many failed attempts. Please wait 15 minutes or reset your password.": "失败次数过多，请等待 15 分钟或重置密码。",
+  "The server is busy. Please try again in a few seconds.": "服务器繁忙，请几秒后再试。",
+  "Cross-site requests are not allowed.": "不允许跨站请求。",
+  "Request body is too large.": "请求内容过大。"
  }
 }

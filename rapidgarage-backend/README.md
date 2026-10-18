@@ -90,6 +90,34 @@ needs no DDL rights. If the table is missing, the server refuses to start and te
   `PASSWORD_RESET_MAX_PER_HOUR` (3 emails per account), `PASSWORD_RESET_MAX_PER_IP_HOUR` (20).
 - Migration `20261018010000-password-resets` adds `Users.authVersion` and the `PasswordResets` table.
 
+## Abuse protection
+
+`lib/rateLimit.js` keeps fixed-window counters in memory, per process. Keys are the client IP
+from `req.ip` (so `TRUST_PROXY` must be right), with IPv6 grouped by /64.
+
+| Limit | Default | Setting |
+| --- | --- | --- |
+| API requests per IP | 300 / min | `RATE_LIMIT_API_PER_MINUTE` |
+| Writes (POST/PUT/DELETE) per IP | 60 / min | `RATE_LIMIT_WRITES_PER_MINUTE` |
+| `/login`, `/signup`, `/password-reset` writes per IP | 30 / 15 min | `RATE_LIMIT_AUTH_PER_15_MINUTES` |
+| Failed logins per (email, IP) | 5 / 15 min | `LOGIN_MAX_FAILURES` |
+| Failed logins per email | 50 / 15 min | `LOGIN_MAX_FAILURES_PER_EMAIL` |
+| Requests in flight | 500 | `MAX_CONCURRENT_REQUESTS` (then `503 overloaded`) |
+
+- Over a limit: `429 rate_limited` with `Retry-After`. Every limited response carries
+  `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`. `/uploads` and the health checks
+  aren't limited.
+- A successful login clears that (email, IP) pair's failures.
+- POST/PUT/DELETE with an `Origin` other than `FRONTEND_ORIGIN` or `APP_BASE_URL` → `403`.
+  Requests without `Origin` pass (curl, RFC 8058 one-click unsubscribe).
+- Bodies: JSON 100 kB, forms 10 kB / 50 fields; over → `413 payload_too_large`.
+- HTTP server: `headersTimeout` 15 s (`HTTP_HEADERS_TIMEOUT_MS`), `requestTimeout` 120 s
+  (`HTTP_REQUEST_TIMEOUT_MS`), `keepAliveTimeout` 5 s, at most 100 headers.
+- `GET /allPosts` returns at most the newest `ALL_POSTS_MAX` (500) sales.
+- `RATE_LIMIT=off` turns the rate limits off. Under `NODE_ENV=test` they're off unless a test
+  sets `RATE_LIMIT=on` (test/security.test.js).
+- Network-level DDoS needs a CDN or proxy in front: see DEPLOY.md.
+
 ## Post photos
 
 Run `npm run migrate` to create the `PostPhotos` table. Endpoints (owner or admin only):

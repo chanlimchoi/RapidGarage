@@ -298,6 +298,43 @@ compare row counts. Render and Fly Managed Postgres keep their own backups
 their disks/volumes are only covered by their volume snapshots. Copy
 `/data/uploads` elsewhere if the photos matter.
 
+## Abuse and DDoS protection
+
+What the app does on its own (per process, in memory; see the backend README):
+
+- **Rate limits per client IP** (IPv6 grouped by /64): 300 API requests a minute, 60 writes a
+  minute, and 30 login, signup and password-reset attempts per 15 minutes. Over the limit the
+  client gets `429` with `Retry-After`. Photo downloads (`/api/uploads`) and health checks don't count.
+- **Failed logins:** 5 per (email, IP) and 50 per email in 15 minutes, then `429`. Passwords
+  can't be guessed quickly, and the owner can still log in from another network.
+- **Load shedding:** with more than `MAX_CONCURRENT_REQUESTS` (500) requests in flight, new ones
+  get `503` at once instead of queueing behind the database pool.
+- **Slow clients:** the Node server drops connections that take more than 15 s to send headers or
+  more than 120 s to send a request. Bodies are capped (JSON 100 kB, photos 8 MB each).
+- **Bounded queries:** list endpoints are paginated or capped (`ALL_POSTS_MAX`, default 500).
+- **Cross-site writes:** POST, PUT and DELETE requests that carry a foreign `Origin` get `403`.
+
+The limits depend on the real client IP, so **`TRUST_PROXY` must match your setup** (see
+Configuration). Too high, and clients can fake their address and dodge every limit.
+
+What the app can't do: a volumetric attack (a flood of packets or millions of requests a second
+from a botnet) saturates the network link before any app code runs. Absorb it upstream:
+
+- **Cloudflare (free plan works) or another CDN/WAF in front of the domain.** Proxy the DNS record
+  (orange cloud), turn on "Under Attack" mode during an incident, and add a rate-limiting rule
+  for `/api/login` and `/api/signup`. Then allow only Cloudflare's IP ranges to reach ports
+  80/443, so attackers can't bypass it. Behind Cloudflare plus Caddy, set `TRUST_PROXY=2`.
+- **Render and Fly.io** already sit behind their own edge networks, which absorb network-layer
+  floods. Add Cloudflare in front for application-layer (HTTP) floods.
+- **VPS:** `deploy/Caddyfile` sets read timeouts, a header size limit and a body cap. Keep only
+  ports 22, 80 and 443 open; Postgres stays on the internal Docker network.
+
+Tune limits with `RATE_LIMIT_API_PER_MINUTE`, `RATE_LIMIT_WRITES_PER_MINUTE`,
+`RATE_LIMIT_AUTH_PER_15_MINUTES`, `LOGIN_MAX_FAILURES`, `LOGIN_MAX_FAILURES_PER_EMAIL`,
+`MAX_CONCURRENT_REQUESTS`, `HTTP_HEADERS_TIMEOUT_MS` and `HTTP_REQUEST_TIMEOUT_MS`.
+`RATE_LIMIT=off` disables the rate limits; tests run with them off unless a test turns them on.
+With several app instances, each enforces its own limits.
+
 ## Upgrades and rollback
 
 ```sh

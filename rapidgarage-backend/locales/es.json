@@ -514,6 +514,12 @@
   "Too many reset requests. Please try again later.": "Demasiadas solicitudes de restablecimiento. Inténtalo más tarde.",
   "Password reset emails aren't available on this server. Contact the site's administrator.": "Este servidor no puede enviar correos para restablecer la contraseña. Contacta al administrador del sitio.",
   "This reset link is invalid or has expired. Request a new one.": "Este enlace para restablecer no es válido o caducó. Pide uno nuevo.",
-  "Your current password is incorrect.": "Tu contraseña actual no es correcta."
+  "Your current password is incorrect.": "Tu contraseña actual no es correcta.",
+  "Too many requests. Please slow down and try again shortly.": "Demasiadas solicitudes. Ve más despacio e inténtalo de nuevo en un momento.",
+  "Too many sign-in attempts from this network. Please wait a few minutes and try again.": "Demasiados intentos de inicio de sesión desde esta red. Espera unos minutos e inténtalo de nuevo.",
+  "Too many failed attempts. Please wait 15 minutes or reset your password.": "Demasiados intentos fallidos. Espera 15 minutos o restablece tu contraseña.",
+  "The server is busy. Please try again in a few seconds.": "El servidor está ocupado. Inténtalo de nuevo en unos segundos.",
+  "Cross-site requests are not allowed.": "No se permiten solicitudes desde otros sitios.",
+  "Request body is too large.": "El cuerpo de la solicitud es demasiado grande."
  }
 }
