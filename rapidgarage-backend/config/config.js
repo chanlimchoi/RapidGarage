@@ -20,6 +20,11 @@ function postgres(defaultLogging) {
 
 module.exports = {
   development: postgres(true),
-  test: { dialect: 'sqlite', storage: ':memory:', logging: false },
+  // Tests never read DATABASE_URL (a dev or live .env may set it). In-memory
+  // SQLite by default; Postgres only via TEST_DATABASE_URL, and test/setup.js
+  // still refuses it unless the name ends in _test/_e2e and RG_ALLOW_TEST_PG=1.
+  test: process.env.TEST_DATABASE_URL
+    ? Object.assign(postgres(false), { use_env_variable: 'TEST_DATABASE_URL', logging: false })
+    : { dialect: 'sqlite', storage: process.env.TEST_SQLITE_FILE || ':memory:', logging: false },
   production: postgres(false),
 };

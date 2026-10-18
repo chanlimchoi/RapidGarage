@@ -11,6 +11,7 @@ const security = require('../lib/security');
 const { sslOption } = require('../lib/dbSsl');
 const { createHealthRouter, pendingMigrations, migrationFiles } = require('../lib/health');
 const { NONCE_PLACEHOLDER } = require('../lib/frontend');
+const { assertTestDb } = require('../lib/testDbGuard');
 
 const ROOT = path.join(__dirname, '..', '..');
 const baseEnv = (extra) => Object.assign({}, process.env, { NODE_ENV: 'test', SESSION_SECRET: 'test-secret' }, extra || {});
@@ -114,6 +115,7 @@ describe('Production readiness', function () {
       const ok = await request(b).get('/readyz');
       assert.strictEqual(ok.status, 200);
       assert.strictEqual(ok.body.checks.migrations, 'ok');
+      assertTestDb(models.sequelize, process.env, 'dropping SequelizeMeta');
       await qi.dropTable('SequelizeMeta');
     });
     it('a failing database gives 503 without leaking the error; draining gives 503', async () => {
@@ -325,7 +327,9 @@ describe('Production readiness', function () {
       // Quoted names read through helpers (e.g. limits read with a default).
       const quoted = execFileSync('grep', ['-rhoE', "['\"](ALERTS?_[A-Z_]+|[A-Z]+_MAX_PER_[A-Z]+|REPORT_[A-Z_]+|SESSION_[A-Z_]+|ENABLE_[A-Z_]+|GEOCODE_[A-Z_]+)['\"]", 'lib', 'controllers'], { cwd: backend }).toString();
       quoted.split('\n').filter(Boolean).forEach((q) => used.add(q.replace(/['"]/g, '')));
-      const notConfig = new Set(['ORPHAN_POST_OWNER_ID']); // one-off cleanup script option
+      // One-off cleanup script option; test-only database settings (README > Testing),
+      // which must never be set in production.
+      const notConfig = new Set(['ORPHAN_POST_OWNER_ID', 'TEST_DATABASE_URL', 'TEST_SQLITE_FILE', 'RG_ALLOW_TEST_PG']);
       const missing = [...used].filter((v) => !documented.has(v) && !notConfig.has(v)).sort();
       assert.deepStrictEqual(missing, [], 'undocumented: ' + missing.join(', '));
       for (const req of ['APP_BASE_URL', 'SESSION_SECRET', 'DATABASE_URL', 'SMTP_HOST', 'GOOGLE_MAPS_API_KEY', 'GOOGLE_GEOCODING_API_KEY', 'KEY_ENCRYPTION_SECRET', 'TRUST_PROXY', 'POSTGRES_PASSWORD']) assert.ok(documented.has(req), req);

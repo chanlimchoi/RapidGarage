@@ -11,6 +11,31 @@ npm run migrate && npm start
 cd ../rapidgarage-frontend && npm install && npm run dev        # http://localhost:3000
 ```
 
+## Testing
+
+- **Backend:** `cd rapidgarage-backend && npm test` runs mocha on **in-memory SQLite**.
+- **Frontend:** `cd rapidgarage-frontend && npm test` runs the unit tests (no database). `npm run test:a11y` runs the accessibility scan against a running local app (see Accessibility).
+
+**Tests can't touch a real database.** Every mocha run loads `test/setup.js` through `.mocharc.js`, including `npx mocha test/x.test.js`. It refuses to start unless:
+
+- `NODE_ENV` is `test` (unset counts as test). `development` or `production` from a `.env` is refused.
+- The database is in-memory SQLite, a SQLite file in the temp directory, or a throwaway Postgres DB whose name ends in `_test` or `_e2e`, **and** `RG_ALLOW_TEST_PG=1` is set.
+
+It also blanks `DATABASE_URL` and libpq `PG*` variables for the run, so neither the shell nor a `.env` can leak a real connection into the session store or child processes.
+
+On top of that, `models/index.js` guards every destructive call, also outside tests. That covers `sync({ force })`, `sync({ alter })`, `drop`, `truncate`, `destroy({ truncate })`, `destroy({ where: {} })`, `dropAllTables` and `dropAllSchemas`. Each one throws unless the same conditions hold.
+
+Refusals name the dialect, host, port and database, never the user or password.
+
+To run the backend tests on Postgres, use a database made for it:
+
+```sh
+createdb rapidgarage_test
+TEST_DATABASE_URL=postgres://user:pass@localhost:5432/rapidgarage_test RG_ALLOW_TEST_PG=1 npm test
+```
+
+Tests never read `DATABASE_URL`, so a live `.env` in the shell is ignored. Even so, keep a live `.env` out of your shell. Load it only in a subshell when you need it, e.g. `( set -a; . ./.env; set +a; npm run migrate )`.
+
 ## Production
 
 One Docker image runs the whole app on one port (frontend, API under `/api`,

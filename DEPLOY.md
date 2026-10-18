@@ -311,6 +311,16 @@ before it serves. If that fails, the container exits and the logs say why. To ro
 `git checkout <previous tag>` and rebuild. Migrations are not automatically
 reversed, so restore the pre-upgrade dump if a migration has to be undone.
 
+## Never run tests against production
+
+Don't run `npm test` or mocha with the production `.env` loaded, and don't point `TEST_DATABASE_URL` at a real database. The suite recreates every table. It refuses anyway:
+
+- any `NODE_ENV` other than `test`;
+- a Postgres database whose name doesn't end in `_test` or `_e2e`;
+- a test Postgres database without `RG_ALLOW_TEST_PG=1`.
+
+The app also refuses destructive schema calls such as `sync({ force })` on such databases. Load `.env` only in a subshell for one-off commands, e.g. `( set -a; . ./.env; set +a; npm run migrate )`, so it doesn't stay in your shell.
+
 ## How it works
 
 - **Single origin:** with `SERVE_FRONTEND_DIR` set (the image sets it), API

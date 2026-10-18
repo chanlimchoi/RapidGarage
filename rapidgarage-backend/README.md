@@ -437,6 +437,15 @@ from the sale that is open or opens first (ties: the one closing first). At most
 directions link using the sales' public addresses; without `lat,lng` it has no origin so
 Google Maps starts from the phone's location. The location is only used for that request.
 
+## Tests
+
+`npm test` uses in-memory SQLite. `.mocharc.js` loads `test/setup.js` for every mocha run, direct `npx mocha test/x.test.js` runs included. It refuses to start unless `NODE_ENV=test` (unset counts as test) and the database is throwaway:
+
+- SQLite in memory, or a file in the temp directory (`TEST_SQLITE_FILE`), or
+- Postgres via `TEST_DATABASE_URL`, with a name ending in `_test`/`_e2e` **and** `RG_ALLOW_TEST_PG=1`.
+
+`DATABASE_URL` is never used by tests. `models/index.js` also refuses destructive calls (`sync({ force/alter })`, `drop`, `truncate`, delete-everything `destroy`, `dropAllTables`) on anything else, in any environment. See `lib/testDbGuard.js` and `test/test-db-guard.test.js`.
+
 ## Optional
 
 - If you want to add views and handlebars to your server side
