@@ -61,6 +61,7 @@ module.exports = (sequelize, DataTypes) => {
     Post.hasMany(models.SaleItem, { as: 'items', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.PostScanDay, { as: 'scanDays', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.PostViewDay, { as: 'viewDays', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
+    Post.hasMany(models.PostShareDay, { as: 'shareDays', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.SavedPost, { as: 'saves', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.CurbsideMark, { as: 'curbsideMarks', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasOne(models.EventParticipant, { as: 'participation', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });

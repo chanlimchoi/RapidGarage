@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, CalendarDays, UserRound, Store, Pencil, QrCode, Tras
 import { apiFetch, errorMessage, fetchEvent, fetchEventPrint, joinEvent, approveParticipant, removeParticipant, deleteEvent } from '../api';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
 import AddToCalendar from '../components/AddToCalendar';
+import ShareButton from '../components/ShareButton';
 import { BADGE_CLASS } from '../components/PostCard';
 import PostCard from '../components/PostCard';
 import MapView from '../components/Map';
@@ -236,7 +237,7 @@ export default class EventPage extends React.Component {
                 </dd></div>
                 <div><dt><UsersRound size={18} aria-hidden="true" /><span>{t('ev.joining')}</span></dt><dd>{ev.joinMode === 'open' ? t('ev.modeOpen') : t('ev.modeApproval')}</dd></div>
               </dl>
-              {!ev.hidden && !ev.ended ? <div className="form-actions event-cal"><AddToCalendar item={ev} kind="event" /></div> : null}
+              {!ev.hidden && !ev.ended ? <div className="form-actions event-cal"><AddToCalendar item={ev} kind="event" /><ShareButton kind="event" item={ev} title={ev.name} /></div> : null}
               {ev.mine ? (
                 <div className="form-actions">
                   <Link className="btn btn-secondary" to={'/events/' + ev.id + '/edit'}><Pencil size={16} aria-hidden="true" />{t('ev.edit')}</Link>

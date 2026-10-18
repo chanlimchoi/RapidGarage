@@ -126,7 +126,24 @@
   "rmail.manage": "알림 설정",
   "rmail.manageText": "알림 설정: {url}",
   "rmail.turnOff": "모든 세일 알림 끄기",
-  "rmail.turnOffText": "모든 세일 알림 끄기: {url}"
+  "rmail.turnOffText": "모든 세일 알림 끄기: {url}",
+  "share.siteTitle": "RapidGarage · 내 주변 개러지 세일",
+  "share.siteHeadline": "내 주변 개러지 세일",
+  "share.siteDescription": "내 주변의 개러지·야드·에스테이트 세일을 찾고 올려 보세요.",
+  "share.kicker.sale": "개러지 세일",
+  "share.kicker.event": "동네 세일",
+  "share.kicker.wanted": "구해요",
+  "share.curbUntil": "{time}까지 집 앞 무료 나눔",
+  "share.moreDays": {
+   "other": "(+{count}일 더)"
+  },
+  "share.saleCount": {
+   "other": "세일 {count}곳"
+  },
+  "share.wantedTitle": "구해요: {title}",
+  "share.near": "{area} 근처 · {miles}마일 이내",
+  "share.photoAlt": "{title} 사진",
+  "share.cardAlt": "RapidGarage 미리보기 카드: {title}"
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -420,6 +437,9 @@
   "defaultOn must be true or false.": "defaultOn은 true 또는 false여야 합니다.",
   "applyToSaved must be true or false.": "applyToSaved는 true 또는 false여야 합니다.",
   "Invalid reminder.": "알림이 올바르지 않아요.",
-  "on must be true or false.": "on은 true 또는 false여야 합니다."
+  "on must be true or false.": "on은 true 또는 false여야 합니다.",
+  "path must be a site path.": "경로는 사이트 경로여야 해요.",
+  "Unknown preview image.": "알 수 없는 미리보기 이미지예요.",
+  "Unknown share channel.": "알 수 없는 공유 방법이에요."
  }
 }

@@ -233,3 +233,9 @@ export const saveReminderSettings = (body) => apiFetch('/reminders/settings', js
 export const fetchTodayReminders = () => apiFetch('/reminders/today');
 export const markReminderSeen = (id) => apiFetch('/reminders/' + id + '/seen', jsonBody('POST', {}));
 export const unsubscribeReminders = (r, token) => apiFetch('/reminders/unsubscribe', jsonBody('POST', { r, t: token }));
+
+// ---- Share button (controllers/post.js POST /post/:id/share) ------------------
+// Fire-and-forget; counted once per person per day for the seller dashboard.
+export function recordShare(postId, channel) {
+  try { return apiFetch('/post/' + postId + '/share', { method: 'POST', body: JSON.stringify({ channel }), keepalive: true }).catch(() => null); } catch (e) { return Promise.resolve(null); }
+}

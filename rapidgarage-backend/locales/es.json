@@ -140,7 +140,26 @@
   "rmail.manage": "Configuración de recordatorios",
   "rmail.manageText": "Configuración de recordatorios: {url}",
   "rmail.turnOff": "Detener todos los recordatorios de ventas",
-  "rmail.turnOffText": "Detener todos los recordatorios de ventas: {url}"
+  "rmail.turnOffText": "Detener todos los recordatorios de ventas: {url}",
+  "share.siteTitle": "RapidGarage · Ventas de garaje cerca de ti",
+  "share.siteHeadline": "Ventas de garaje cerca de ti",
+  "share.siteDescription": "Encuentra y publica ventas de garaje, de patio y de bienes cerca de ti.",
+  "share.kicker.sale": "Venta de garaje",
+  "share.kicker.event": "Venta vecinal",
+  "share.kicker.wanted": "Se busca",
+  "share.curbUntil": "Gratis en la acera hasta {time}",
+  "share.moreDays": {
+   "one": "(+{count} día más)",
+   "other": "(+{count} días más)"
+  },
+  "share.saleCount": {
+   "one": "{count} venta",
+   "other": "{count} ventas"
+  },
+  "share.wantedTitle": "Se busca: {title}",
+  "share.near": "Cerca de {area} · a {miles} mi",
+  "share.photoAlt": "Foto de {title}",
+  "share.cardAlt": "Tarjeta de vista previa de RapidGarage: {title}"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -434,6 +453,9 @@
   "defaultOn must be true or false.": "defaultOn debe ser true o false.",
   "applyToSaved must be true or false.": "applyToSaved debe ser true o false.",
   "Invalid reminder.": "Recordatorio no válido.",
-  "on must be true or false.": "on debe ser true o false."
+  "on must be true or false.": "on debe ser true o false.",
+  "path must be a site path.": "La ruta debe ser una ruta del sitio.",
+  "Unknown preview image.": "Imagen de vista previa desconocida.",
+  "Unknown share channel.": "Canal para compartir desconocido."
  }
 }

@@ -11,6 +11,7 @@
 // and the post's owner or an admin (testing their own flyer).
 // Neighborhood sales (kind 'event') are counted the same way in EventScanDays;
 // their dedupe input is prefixed, so an event and a post never share a hash.
+// Shares (kind 'share', PostShareDays): Share button presses, prefix 'share:'.
 // Sale page views (kind 'view', seller dashboard) use the same rules in
 // PostViewDays, sent by the sale page as a POST beacon (so link prefetchers
 // and crawlers that only GET never count); prefix 'view:'.
@@ -80,6 +81,9 @@ const KINDS = {
   post: { model: 'PostScanDay', key: 'postId', owner: (s) => s.userId, tag: (id) => String(id) },
   event: { model: 'EventScanDay', key: 'eventId', owner: (s) => s.organizerId, tag: (id) => 'event:' + id },
   view: { model: 'PostViewDay', key: 'postId', owner: (s) => s.userId, tag: (id) => 'view:' + id, method: 'POST' },
+  // Share button presses (seller dashboard). The seller sharing their own sale
+  // counts too (that's most shares); still once per person per day.
+  share: { model: 'PostShareDay', key: 'postId', owner: (s) => s.userId, tag: (id) => 'share:' + id, method: 'POST', countOwner: true },
 };
 const kindOf = (k) => KINDS[k || 'post'];
 
@@ -88,7 +92,7 @@ function skipReason(req, post, kind) {
   const ua = req.get('user-agent') || '';
   if (isBot(ua)) return 'bot';
   if (isPrefetch(req)) return 'prefetch';
-  if (req.user && (req.user.id === kindOf(kind).owner(post) || isAdmin(req.user))) return 'owner';
+  if (req.user && !kindOf(kind).countOwner && (req.user.id === kindOf(kind).owner(post) || isAdmin(req.user))) return 'owner';
   return null;
 }
 

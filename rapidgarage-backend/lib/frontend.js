@@ -2,7 +2,8 @@
 // one container/port runs the whole app. Only used when SERVE_FRONTEND_DIR is
 // set; in development Vite serves the frontend and proxies /api here.
 //
-//   /                      index.html with a fresh CSP nonce (no-cache)
+//   /                      index.html with a fresh CSP nonce (no-cache) and
+//                          link-preview tags for the page (lib/share.js)
 //   /sw.js                 service worker, never cached by HTTP caches
 //   /manifest.webmanifest  application/manifest+json, revalidated
 //   /assets/*              content-hashed files, cached for a year
@@ -14,6 +15,9 @@ const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
 const security = require('./security');
+const share = require('./share');
+
+const HEAD_TIMEOUT_MS = 1500;
 
 // vite.config.js sets html.cspNonce to this placeholder, so the build marks
 // every <script>/<link> (plus a <meta property="csp-nonce"> that Vite's
@@ -54,22 +58,31 @@ function staticHeaders(dir, env) {
 function mountFrontend(app, dir, env) {
   const parts = loadIndex(dir);
 
-  function sendIndex(req, res) {
+  // Every page gets link-preview tags (lib/share.js): the sale / neighborhood
+  // sale / wanted post for those routes, the site preview elsewhere. A slow
+  // or failing lookup falls back to the build's static tags.
+  async function sendIndex(req, res) {
     const nonce = crypto.randomBytes(16).toString('base64');
+    let html = parts.join(nonce);
+    try {
+      const out = await Promise.race([share.headFor(req.path, req), new Promise((resolve) => setTimeout(() => resolve(null), HEAD_TIMEOUT_MS).unref())]);
+      if (out) html = share.injectHead(html, out.head, out.lang);
+    } catch (err) { /* keep the static tags */ }
     security.setPagePolicy(res, nonce, env);
     res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Vary', 'Accept-Language');
     res.type('html');
-    res.send(parts.join(nonce));
+    res.send(html);
   }
 
-  app.get(['/', '/index.html'], sendIndex);
+  app.get(['/', '/index.html'], (req, res, next) => sendIndex(req, res).catch(next));
   app.use(express.static(dir, { index: false, redirect: false, fallthrough: true, setHeaders: staticHeaders(dir, env) }));
   app.use((req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next();
     if (req.path === '/api' || req.path.startsWith('/api/')) return next();
     if (path.posix.extname(req.path)) return next(); // a file that does not exist
     if (!req.accepts('html')) return next();
-    sendIndex(req, res);
+    sendIndex(req, res).catch(next);
   });
   return { sendIndex };
 }

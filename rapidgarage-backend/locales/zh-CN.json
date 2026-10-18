@@ -126,7 +126,24 @@
   "rmail.manage": "提醒设置",
   "rmail.manageText": "提醒设置：{url}",
   "rmail.turnOff": "停止所有特卖提醒",
-  "rmail.turnOffText": "停止所有特卖提醒：{url}"
+  "rmail.turnOffText": "停止所有特卖提醒：{url}",
+  "share.siteTitle": "RapidGarage · 附近的车库特卖",
+  "share.siteHeadline": "附近的车库特卖",
+  "share.siteDescription": "查找和发布附近的车库、庭院和遗产特卖。",
+  "share.kicker.sale": "车库特卖",
+  "share.kicker.event": "社区甩卖",
+  "share.kicker.wanted": "求购",
+  "share.curbUntil": "路边免费，截至 {time}",
+  "share.moreDays": {
+   "other": "（另有 {count} 天）"
+  },
+  "share.saleCount": {
+   "other": "{count} 场特卖"
+  },
+  "share.wantedTitle": "求购：{title}",
+  "share.near": "{area} 附近 · {miles} 英里内",
+  "share.photoAlt": "{title} 的照片",
+  "share.cardAlt": "RapidGarage 预览卡片：{title}"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -420,6 +437,9 @@
   "defaultOn must be true or false.": "defaultOn 必须为 true 或 false。",
   "applyToSaved must be true or false.": "applyToSaved 必须为 true 或 false。",
   "Invalid reminder.": "提醒无效。",
-  "on must be true or false.": "on 必须为 true 或 false。"
+  "on must be true or false.": "on 必须为 true 或 false。",
+  "path must be a site path.": "路径必须是站内路径。",
+  "Unknown preview image.": "未知的预览图片。",
+  "Unknown share channel.": "未知的分享方式。"
  }
 }

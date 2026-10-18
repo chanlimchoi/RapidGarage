@@ -4,6 +4,7 @@
 //   views     sale page views per local day (lib/scans.js kind 'view')
 //   scans     QR short-link scans per local day (PostScanDays)
 //   saves     current saves, and new saves per day (SavedPosts.createdAt)
+//   shares    Share button presses per local day (PostShareDays; counts only)
 //   messages  buyer messages per day (text only, not removed, not the seller's)
 //   conversations, unread, holds (pending / active), items sold vs total,
 //   neighborhood sale membership.
@@ -22,7 +23,7 @@ function models() { return require('../models'); }
 
 const SPAN = 14;
 const MAX_SALES = 200;
-const METRICS = ['views', 'scans', 'saves', 'messages'];
+const METRICS = ['views', 'scans', 'saves', 'messages', 'shares'];
 
 const tzOf = (post) => (post.timeZone && schedule.isValidTimeZone(post.timeZone) ? post.timeZone : schedule.defaultTimeZone());
 const dayStr = (v) => String(v).slice(0, 10);
@@ -66,7 +67,7 @@ async function collect(me, posts, span, at) {
   const since = new Date(Date.parse(oldest + 'T00:00:00Z') - 2 * 86400000); // covers every time zone
 
   await holds.sweep(now);
-  const [views, viewTotals, scanDays, scanTotals, saves, saveRecent, convs, items, openHolds, parts] = await Promise.all([
+  const [views, viewTotals, scanDays, scanTotals, saves, saveRecent, convs, items, openHolds, parts, shareDays, shareTotals] = await Promise.all([
     M.PostViewDay.findAll({ where: { postId: ids, day: { [Op.gte]: oldest } }, raw: true }),
     M.PostViewDay.findAll({ where: { postId: ids }, attributes: ['postId', [M.sequelize.fn('SUM', M.sequelize.col('count')), 'n']], group: ['postId'], raw: true }),
     M.PostScanDay.findAll({ where: { postId: ids, day: { [Op.gte]: oldest } }, raw: true }),
@@ -77,7 +78,11 @@ async function collect(me, posts, span, at) {
     M.SaleItem.findAll({ where: { postId: ids }, attributes: ['postId', 'sold', 'reservedUntil'], raw: true }),
     M.ItemHold.findAll({ where: { postId: ids, sellerId: me, status: M.ItemHold.ACTIVE, expiresAt: { [Op.gt]: now } }, attributes: ['postId', 'status'], raw: true }),
     M.EventParticipant.findAll({ where: { postId: ids }, include: [{ model: M.SaleEvent, as: 'event' }] }),
+    M.PostShareDay.findAll({ where: { postId: ids, day: { [Op.gte]: oldest } }, raw: true }),
+    M.PostShareDay.findAll({ where: { postId: ids }, attributes: ['postId', [M.sequelize.fn('SUM', M.sequelize.col('count')), 'n']], group: ['postId'], raw: true }),
   ]);
+  shareDays.forEach((r) => { const s = per.get(r.postId); bump(s, 'shares', dayStr(r.day), r.count); });
+  shareTotals.forEach((r) => { per.get(r.postId).totals.shares = Number(r.n) || 0; });
   views.forEach((r) => { const s = per.get(r.postId); bump(s, 'views', dayStr(r.day), r.count); });
   viewTotals.forEach((r) => { per.get(r.postId).totals.views = Number(r.n) || 0; });
   scanDays.forEach((r) => { const s = per.get(r.postId); bump(s, 'scans', dayStr(r.day), r.count); });

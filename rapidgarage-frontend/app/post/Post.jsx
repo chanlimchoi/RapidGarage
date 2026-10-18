@@ -17,6 +17,7 @@ import CurbsidePanel from './CurbsidePanel';
 import SaveButton from '../saved/SaveButton';
 import RemindToggle from '../saved/RemindToggle';
 import AddToCalendar from '../components/AddToCalendar';
+import ShareButton from '../components/ShareButton';
 import ItemList from './ItemList';
 import JoinEventPanel from '../events/JoinEventPanel';
 import { t } from '../i18n';
@@ -307,6 +308,7 @@ class Post extends Component {
                 ) : null}
                 {!isOwner ? <SaveButton post={post} /> : null}
                 <AddToCalendar item={post} kind="post" />
+                <ShareButton kind="post" item={post} title={post.title} />
                 {!isOwner ? <RemindToggle post={post} /> : null}
                 {canEditPost(this.props.user, post) ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/edit'}><Pencil size={16} aria-hidden="true" />{t('post.editPost')}</Link> : null}
                 {isOwner ? <Link className="btn btn-secondary print-link" to={'/post/' + post.id + '/print'}><QrCode size={16} aria-hidden="true" />{t('post.printFlyer')}</Link> : null}

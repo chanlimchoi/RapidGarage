@@ -140,7 +140,26 @@
   "rmail.manage": "Reminder settings",
   "rmail.manageText": "Reminder settings: {url}",
   "rmail.turnOff": "Stop all sale reminders",
-  "rmail.turnOffText": "Stop all sale reminders: {url}"
+  "rmail.turnOffText": "Stop all sale reminders: {url}",
+  "share.siteTitle": "RapidGarage · Garage sales near you",
+  "share.siteHeadline": "Garage sales near you",
+  "share.siteDescription": "Find and post garage, yard and estate sales near you.",
+  "share.kicker.sale": "Garage sale",
+  "share.kicker.event": "Neighborhood sale",
+  "share.kicker.wanted": "Wanted",
+  "share.curbUntil": "Free on the curb until {time}",
+  "share.moreDays": {
+   "one": "(+{count} more day)",
+   "other": "(+{count} more days)"
+  },
+  "share.saleCount": {
+   "one": "{count} sale",
+   "other": "{count} sales"
+  },
+  "share.wantedTitle": "Wanted: {title}",
+  "share.near": "Near {area} · within {miles} mi",
+  "share.photoAlt": "Photo from {title}",
+  "share.cardAlt": "RapidGarage preview card: {title}"
  },
  "messages": {
   "Login required.": "Login required.",
@@ -434,6 +453,9 @@
   "defaultOn must be true or false.": "defaultOn must be true or false.",
   "applyToSaved must be true or false.": "applyToSaved must be true or false.",
   "Invalid reminder.": "Invalid reminder.",
-  "on must be true or false.": "on must be true or false."
+  "on must be true or false.": "on must be true or false.",
+  "path must be a site path.": "path must be a site path.",
+  "Unknown preview image.": "Unknown preview image.",
+  "Unknown share channel.": "Unknown share channel."
  }
 }

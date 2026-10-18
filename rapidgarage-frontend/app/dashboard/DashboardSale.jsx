@@ -110,7 +110,7 @@ export default class DashboardSale extends React.Component {
             ) : <p className="small muted">{t('dash.noEvent')}</p>}
           </section>
         </div>
-        <p className="small muted dash-privacy"><ShieldCheck size={14} aria-hidden="true" /> {t('dash.privacy')}</p>
+        <p className="small muted dash-privacy"><ShieldCheck size={14} aria-hidden="true" /> {t('dash.privacy')} {t('dash.sharesNote')}</p>
       </div>
     );
   }
