@@ -141,7 +141,7 @@ export default class MeetupSpots extends React.Component {
                     <td>{kindLabel(s.kind)}</td>
                     <td>{[s.address, s.city, s.state].filter(Boolean).join(', ')}<small className="muted" style={{ display: 'block' }}>{s.lat.toFixed(4)}, {s.lng.toFixed(4)}</small></td>
                     <td>
-                      <label className="switch" title={s.active ? t('spots.active') : t('spots.inactive')}>
+                      <label className="switch spot-switch" title={s.active ? t('spots.active') : t('spots.inactive')}>
                         <input type="checkbox" role="switch" checked={s.active} disabled={busy === s.id} onChange={() => this.toggle(s)} aria-label={t('spots.activeFor', { name: s.name })} />
                         <span className="switch-track" aria-hidden="true" />
                       </label>

@@ -1119,14 +1119,13 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .safety-tips-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .safety-tips h3 { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-md); margin: 0; }
 .safety-tips ul { margin: var(--space-2) 0; padding-left: 1.2em; font-size: var(--text-sm); display: grid; gap: 2px; }
-.send-nudge { margin: 0 var(--space-4); padding: var(--space-3); border: 1px solid var(--color-warning); border-radius: var(--radius-md); background: var(--color-surface); font-size: var(--text-sm); display: grid; gap: var(--space-1); }
+.send-nudge { grid-column: 1 / -1; margin: 0; padding: var(--space-3); border: 1px solid var(--color-warning); border-radius: var(--radius-md); background: var(--color-surface); font-size: var(--text-sm); display: grid; gap: var(--space-1); }
 .send-nudge p { margin: 0; }
 .send-nudge-title { display: flex; align-items: center; gap: 6px; color: var(--color-text); }
 .send-nudge-title svg { color: var(--color-warning); }
 .send-nudge-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-1); }
 .composer-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4) 0; border-top: 1px solid var(--color-border); background: var(--color-surface); }
-.composer-tools + .composer, .composer-tools + .send-nudge + .composer { border-top: 0; }
-.composer-tools + .send-nudge { margin-top: var(--space-2); }
+.composer-tools + .composer { border-top: 0; }
 .meet-card { align-self: center; width: min(440px, 100%); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); padding: var(--space-3); display: grid; gap: 4px; box-shadow: var(--shadow-sm, none); }
 .meet-card.meet-accepted { border-color: var(--color-success); }
 .meet-card.meet-declined, .meet-card.meet-cancelled, .meet-card.meet-expired, .meet-card.meet-countered { opacity: 0.8; }
@@ -1154,7 +1153,8 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .meet-search p { flex-basis: 100%; margin: 0; }
 .meet-other { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
 .meet-other .field-hint { margin: 0; }
-.meet-tip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0; }
+.meet-tip { margin: 0; }
+.meet-tip > svg { vertical-align: -2px; margin-right: 2px; }
 .hold-safety { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .safety-h1-icon { color: var(--color-success); vertical-align: -4px; margin-right: 8px; }
 .safety-section h2 { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-2); }
@@ -1176,3 +1176,4 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
   .spot-actions { white-space: normal; }
 }
 .chip-sm { height: 22px; padding: 0 8px; }
+.spot-switch { display: inline-block; vertical-align: middle; margin-top: 0; }

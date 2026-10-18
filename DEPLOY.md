@@ -253,6 +253,18 @@ bots don't. Only the daily total per sale is stored (`PostShareDays`); the
 channel is checked but not kept. The total appears as *Shares* on the seller
 dashboard.
 
+## Safety tips and meetup spots
+
+Conversations show a short safety card at the start of a new conversation (people can hide it; that choice is remembered on their device only). Every conversation and the hold flow link to the public **/safety** page, which is also in the footer.
+
+**Before-you-send check.** When a message looks like it has a phone number, an email address, or common scam words (gift cards, wire transfers, overpayment, shipping or a courier, verification codes; in English, Spanish, Korean and Chinese), the composer shows a gentle note with "Edit message" and "Send anyway". The check runs in the browser only. It never blocks a message, and nothing about it is sent to the server, logged or reported.
+
+**Suggest a meetup spot.** Either person in a conversation can suggest a public place and a time (up to 14 days ahead). The other person can accept, decline or suggest another time or place. The person who suggested can withdraw it, and either person can call off a meetup they agreed to. Suggestions are stored as conversation messages, like holds, so they follow the same privacy rules: only the two people in the conversation can see them, and moderators can read them only after one of them reports the conversation. Limits: one open suggestion per conversation and 10 a day per person. A suggestion nobody answered expires at its meeting time. Blocking someone (or reporting and blocking) ends open and agreed suggestions.
+
+**Safe meetup spots (admin).** In **Admin → Meetup spots**, add public places such as police station exchange zones, libraries, stores and community centers, each with a name, type, approximate location and an on/off switch. Only spots that are turned on are offered. The nearest ones (within 30 miles, up to 8) are listed first. Distance is measured from the sale's public location, or from the center of the area on a Wanted post (shown in whole miles). If a sale hides its address, the list falls back to spots in the same city and state. Nobody's own location is used, and the app never shows more of a home address than the sale already does. When you add a spot without coordinates, the app looks up the address with the server geocoding key if one is set (`GOOGLE_GEOCODING_API_KEY`); otherwise enter an approximate latitude and longitude. People can also type a public place of their own instead of picking from the list.
+
+**Optional: nearby place search.** If you set `GOOGLE_PLACES_API_KEY` (a server key with the Places API (New) turned on), the meetup dialog adds a search box for nearby public places. Searches go through the server, are biased to the sale's area and limited to 30 an hour per person. The curated list works fine without this key. Leave it unset to turn search off.
+
 ## Backups and restore
 
 `rapidgarage-backend/scripts/backup-db.sh` (the compose `backup` service does

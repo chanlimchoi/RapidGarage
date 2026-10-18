@@ -522,9 +522,9 @@ export default class Messages extends React.Component {
             {pendingMeetup ? <span className="small muted">{t('meet.pendingExists')}</span> : null}
           </div>
         ) : null}
-        {conv.canSend && this.state.nudge ? this.renderNudge() : null}
         {conv.canSend ? (
           <form className="composer" onSubmit={(e) => this.send(e)}>
+            {this.state.nudge ? this.renderNudge() : null}
             <label htmlFor="composer-input" className="sr-only">{t('msg.messageNamed', { name: conv.other ? conv.other.name : '' }).trim()}</label>
             <textarea id="composer-input" ref={this.inputRef} className="textarea composer-input" rows={1} maxLength={MESSAGE_MAX} value={draft}
               placeholder={t('msg.placeholder')} aria-describedby="composer-hint" aria-invalid={sendError ? 'true' : undefined}
