@@ -47,6 +47,8 @@ class NewPost extends Component {
             return;
           }
           toast.success(t('new.liveWithPhotos', { count: this.state.photos.length }));
+          // The sale and photos are up; only a description didn't save (fix it in Edit).
+          if (up.altFailed) toast.error(t('edit.altFailed'));
           this.setState({ created: true, createdId: data.id, error: '' });
         });
       })
