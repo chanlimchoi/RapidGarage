@@ -82,6 +82,32 @@ services:
       db:
         condition: service_healthy
 
+  # Uptime alerts (profile "uptime"): checks the app every minute and alerts by
+  # webhook or email. It runs on the same host, so it catches a crashed app or
+  # database but not a dead machine: also point a hosted monitor at /readyz
+  # (DEPLOY.md "Monitoring"). Only these variables reach this container.
+  uptime:
+    image: rapidgarage:local
+    profiles: ["uptime"]
+    restart: unless-stopped
+    entrypoint: ["node", "scripts/uptime-check.js"]
+    user: node
+    environment:
+      UPTIME_URLS: ${UPTIME_URLS:-http://app:8080/readyz}
+      UPTIME_INTERVAL_SECONDS: ${UPTIME_INTERVAL_SECONDS:-60}
+      UPTIME_FAILURES: ${UPTIME_FAILURES:-3}
+      UPTIME_REMIND_MINUTES: ${UPTIME_REMIND_MINUTES:-60}
+      UPTIME_WEBHOOK_URL: ${UPTIME_WEBHOOK_URL:-}
+      UPTIME_ALERT_EMAIL: ${UPTIME_ALERT_EMAIL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    depends_on:
+      - app
+
   caddy:
     image: caddy:2-alpine
     profiles: ["https"]

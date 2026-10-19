@@ -1843,4 +1843,8 @@ export default {
   "alerts.weekly": "Weekend digest",
   "alerts.weeklyHint": "One email on Thursday evening with that weekend's sales.",
   "alerts.weeklyChip": "weekend digest",
+  "crash.title": "Something went wrong",
+  "crash.text": "This page hit an error. Reloading usually fixes it.",
+  "crash.reload": "Reload",
+  "crash.home": "Go to the home page",
 };

@@ -19,6 +19,8 @@ const notFound = (res, message) => sendError(res, 404, 'not_found', message || '
 const conflict = (res, message) => sendError(res, 409, 'conflict', message);
 const serverError = (res, err) => {
   console.error(err);
+  // Error tracking when SENTRY_DSN is set (lib/errorTracking.js); res.req is the request.
+  require('./errorTracking').capture(err, { req: res.req });
   return sendError(res, 500, 'server_error', 'Something went wrong.');
 };
 

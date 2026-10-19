@@ -1843,4 +1843,8 @@ export default {
   "alerts.weekly": "周末摘要",
   "alerts.weeklyHint": "周四晚上发送一封邮件，介绍当周末的甩卖。",
   "alerts.weeklyChip": "周末摘要",
+  "crash.title": "出了点问题",
+  "crash.text": "此页面出错了。重新加载通常可以解决。",
+  "crash.reload": "重新加载",
+  "crash.home": "返回首页",
 };

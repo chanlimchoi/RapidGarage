@@ -194,6 +194,7 @@ Fly's cost is mostly its managed database.
 - Print a flyer and scan its QR code with a phone: it opens `https://<domain>/s/...`.
 - Turn on the Google Cloud budget alert and restrict the browser key to `https://<domain>/*`.
 - Do a test restore (below) once.
+- Set up monitoring (below): a hosted uptime check on `/readyz`, and `SENTRY_DSN` if you want error reports.
 - Paste a sale link into Facebook's Sharing Debugger (developers.facebook.com/tools/debug)
   or a Slack DM and check the title, dates, area and picture (see *Link previews* below).
 
@@ -385,6 +386,33 @@ Tune limits with `RATE_LIMIT_API_PER_MINUTE`, `RATE_LIMIT_WRITES_PER_MINUTE`,
 `MAX_CONCURRENT_REQUESTS`, `HTTP_HEADERS_TIMEOUT_MS` and `HTTP_REQUEST_TIMEOUT_MS`.
 `RATE_LIMIT=off` disables the rate limits; tests run with them off unless a test turns them on.
 With several app instances, each enforces its own limits.
+
+## Monitoring
+
+**Uptime.** Point a hosted monitor (UptimeRobot, Better Stack, Healthchecks.io, Uptime Kuma on another
+machine...) at `https://<domain>/readyz`, every minute, alerting after 2-3 failures. `/readyz` answers 200
+only when the app is up, the database answers and no migration is pending; `/healthz` only says the
+process is alive. A hosted monitor is the only kind that notices when the whole server is gone.
+
+The repo also has a small checker, `scripts/uptime-check.js`, for when you have no hosted monitor or want
+a second opinion. It alerts by webhook (`UPTIME_WEBHOOK_URL`, https: Slack, Discord or any service that
+takes `{ "text": ... }` JSON) and/or email (`UPTIME_ALERT_EMAIL`, with the SMTP settings) after
+`UPTIME_FAILURES` (3) failed checks in a row, reminds every `UPTIME_REMIND_MINUTES` (60) while down, and
+says when the site is back.
+
+- Same server, Docker: `docker compose --env-file .env.production --profile uptime up -d uptime`. It checks
+  the app container directly (`http://app:8080/readyz`), so it catches a crashed app or database, not a dead host.
+- Another machine: `UPTIME_URLS=https://<domain>/readyz UPTIME_WEBHOOK_URL=... node scripts/uptime-check.js`
+  (Node 18+, run inside `rapidgarage-backend` after `npm ci`).
+- Cron: `node scripts/uptime-check.js --once` checks once and exits 1 when anything is down.
+
+**Error tracking.** Set `SENTRY_DSN` (Sentry, or a self-hosted GlitchTip) and the app reports unexpected
+server errors (every 500), crashes at startup, and crashes in the web app (uncaught errors, failed
+promises and React render errors, sent through `POST /api/client-errors`, at most `CLIENT_ERRORS_PER_HOUR`
+per IP). Set `SENTRY_RELEASE` (or `APP_VERSION`) to the commit you deploy to see which release an error
+started in. Only errors are sent (no performance tracing). Events carry the method, route, user id and
+the error; cookies, headers, request bodies, query strings, IPs and server names are removed, and
+emails, API keys, tokens and database URLs are masked in messages. Without a DSN nothing is loaded or sent.
 
 ## Upgrades and rollback
 

@@ -14,6 +14,8 @@ router.get('/', (req, res) => {
       aiItems: ai.enabled, aiSiteKey: ai.site, userAiKeys: ai.userKeys, userAiKeySave: ai.userKeySave,
       // New accounts must confirm their email before posting or messaging.
       emailVerification: require('../lib/emailVerify').required(),
+      // The app reports its own crashes to POST /client-errors (only when error tracking is on).
+      errorReporting: require('../lib/errorTracking').enabled(),
     }))
     .catch((err) => serverError(res, err));
 });

@@ -5,6 +5,7 @@ import '@fontsource-variable/inter';
 import './styles/tokens.css';
 import './styles/app.css';
 import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
 import * as pwa from './pwa/pwa';
 import * as i18n from './i18n';
 
@@ -15,9 +16,11 @@ pwa.init({ register: import.meta.env.PROD });
 // so the page never flashes English first.
 i18n.init().then(() => {
   ReactDOM.render(
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>,
+    <ErrorBoundary>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ErrorBoundary>,
     document.getElementById('root')
   );
 });
