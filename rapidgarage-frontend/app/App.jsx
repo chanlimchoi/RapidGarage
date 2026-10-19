@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Suspense, lazy } from 'react';
 import { Route, Switch, withRouter } from 'react-router-dom';
 import { fetchMe, apiFetch, fetchBadges } from './api';
 import * as errorReporter from './lib/errorReporter';
@@ -6,43 +6,52 @@ import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import Toaster from './components/Toaster';
 import PwaBanners from './pwa/PwaBanners';
-import Profile from './components/Profile';
 import PostList from './components/PostList';
-import About from './components/About';
-import SafetyPage from './safety/SafetyPage';
 import NotFound from './components/NotFound';
 import Post from './post/Post';
-import Login from './user/Login';
-import Logout from './user/Logout';
-import SignUp from './user/SignUp';
-import ForgotPassword from './user/ForgotPassword';
-import ResetPassword from './user/ResetPassword';
-import VerifyEmail from './user/VerifyEmail';
 import VerifyBanner from './user/VerifyBanner';
-import NewPost from './post/NewPost';
-import EditPost from './post/EditPost';
-import Settings from './user/Settings';
-import Admin from './admin/Admin';
-import Messages from './messages/Messages';
 import ReminderBanner from './components/ReminderBanner';
-import Unsubscribe from './user/Unsubscribe';
-import PrintFlyer from './print/PrintFlyer';
-import PersonRatings from './ratings/PersonRatings';
-import Saved from './saved/Saved';
-import Following from './follows/Following';
-import ItemsEditor from './post/ItemsEditor';
-import EventsIndex from './events/EventsIndex';
-import EventForm from './events/EventForm';
-import EventPage from './events/EventPage';
-import EventPrint from './events/EventPrint';
-import WantedBoard from './wanted/WantedBoard';
-import WantedForm from './wanted/WantedForm';
-import WantedPage from './wanted/WantedPage';
-import Dashboard from './dashboard/Dashboard';
-import DashboardSale from './dashboard/DashboardSale';
+import { SkeletonBlock } from './components/ui';
 import * as savedStore from './lib/saved';
 import * as i18n from './i18n';
 import * as liveClient from './lib/liveClient';
+
+// The app shell (nav, footer, toaster, banners) and the two pages people land
+// on first -- the home list and a sale page opened from a shared link or QR
+// code -- load eagerly. Every other route is loaded on demand: each import()
+// below becomes its own chunk (see vite.config.js), so the first page does not
+// pay for the admin console, dashboards, editors and print views. <Suspense>
+// shows a skeleton while a chunk loads; repeat visits get the chunks from the
+// service worker's precache.
+const About = lazy(() => import('./components/About'));
+const SafetyPage = lazy(() => import('./safety/SafetyPage'));
+const Profile = lazy(() => import('./components/Profile'));
+const Login = lazy(() => import('./user/Login'));
+const Logout = lazy(() => import('./user/Logout'));
+const SignUp = lazy(() => import('./user/SignUp'));
+const ForgotPassword = lazy(() => import('./user/ForgotPassword'));
+const ResetPassword = lazy(() => import('./user/ResetPassword'));
+const VerifyEmail = lazy(() => import('./user/VerifyEmail'));
+const NewPost = lazy(() => import('./post/NewPost'));
+const EditPost = lazy(() => import('./post/EditPost'));
+const Settings = lazy(() => import('./user/Settings'));
+const Admin = lazy(() => import('./admin/Admin'));
+const Messages = lazy(() => import('./messages/Messages'));
+const Unsubscribe = lazy(() => import('./user/Unsubscribe'));
+const PrintFlyer = lazy(() => import('./print/PrintFlyer'));
+const PersonRatings = lazy(() => import('./ratings/PersonRatings'));
+const Saved = lazy(() => import('./saved/Saved'));
+const Following = lazy(() => import('./follows/Following'));
+const ItemsEditor = lazy(() => import('./post/ItemsEditor'));
+const EventsIndex = lazy(() => import('./events/EventsIndex'));
+const EventForm = lazy(() => import('./events/EventForm'));
+const EventPage = lazy(() => import('./events/EventPage'));
+const EventPrint = lazy(() => import('./events/EventPrint'));
+const WantedBoard = lazy(() => import('./wanted/WantedBoard'));
+const WantedForm = lazy(() => import('./wanted/WantedForm'));
+const WantedPage = lazy(() => import('./wanted/WantedPage'));
+const Dashboard = lazy(() => import('./dashboard/Dashboard'));
+const DashboardSale = lazy(() => import('./dashboard/DashboardSale'));
 
 const UNREAD_POLL_MS = 15000;
 
@@ -155,42 +164,44 @@ class App extends Component {
         <main id="main" className="app-main" tabIndex="-1">
           {user && config.emailVerification && !user.emailVerifiedAt && !/^\/verify-email/.test(this.props.location.pathname) ? <VerifyBanner user={user} onVerified={this.refreshUser} /> : null}
           {user && !/^\/(alerts|admin)/.test(this.props.location.pathname) ? <ReminderBanner userId={user.id} count={this.state.reminders} onChange={this.refreshUnread} /> : null}
-          <Switch>
-            <Route exact path='/' render={(props) => <PostList {...props} {...common} config={config} />} />
-            <Route path='/about' component={About} />
-            <Route path='/safety' component={SafetyPage} />
-            <Route path='/admin' render={(props) => <Admin {...props} {...common} onAuthChange={this.refreshUser} onConfigChange={this.refreshConfig} />} />
-            <Route path='/settings' render={(props) => <Settings {...props} {...common} config={config} onAuthChange={this.refreshUser} />} />
-            <Route path='/signup' render={(props) => <SignUp {...props} onAuthChange={this.refreshUser} />} />
-            <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
-            <Route path='/forgot-password' component={ForgotPassword} />
-            <Route path='/verify-email' render={(props) => <VerifyEmail {...props} onAuthChange={this.refreshUser} />} />
-            <Route path='/reset-password' render={(props) => <ResetPassword {...props} onAuthChange={this.refreshUser} />} />
-            <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />
-            <Route path='/newpost' render={(props) => <NewPost {...props} {...common} />} />
-            <Route path='/post/:id/print' render={(props) => <PrintFlyer {...props} {...common} />} />
-            <Route path='/post/:id/items' render={(props) => <ItemsEditor {...props} {...common} config={config} />} />
-            <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} config={config} />} />
-            <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
-            <Route exact path='/dashboard' render={(props) => <Dashboard {...props} {...common} />} />
-            <Route path='/dashboard/sales/:id' render={(props) => <DashboardSale {...props} {...common} />} />
-            <Route exact path='/events' render={(props) => <EventsIndex {...props} {...common} />} />
-            <Route path='/events/new' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
-            <Route path='/events/:id/edit' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
-            <Route path='/events/:id/print' render={(props) => <EventPrint {...props} {...common} />} />
-            <Route path='/events/:id' render={(props) => <EventPage {...props} {...common} />} />
-            <Route exact path='/wanted' render={(props) => <WantedBoard {...props} {...common} />} />
-            <Route path='/wanted/new' render={(props) => <WantedForm key='new' {...props} {...common} />} />
-            <Route path='/wanted/:id/edit' render={(props) => <WantedForm key={props.match.params.id} {...props} {...common} />} />
-            <Route path='/wanted/:id' render={(props) => <WantedPage {...props} {...common} onSeen={this.refreshUnread} />} />
-            <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
-            <Route path='/alerts/unsubscribe' component={Unsubscribe} />
-            <Route path='/following' render={(props) => <Following {...props} {...common} />} />
-            <Route path='/saved' render={(props) => <Saved {...props} {...common} config={config} />} />
-            <Route path='/people/:id' render={(props) => <PersonRatings {...props} {...common} />} />
-            <Route path='/profile' render={(props) => <Profile {...props} {...common} />} />
-            <Route component={NotFound} />
-          </Switch>
+          <Suspense fallback={<SkeletonBlock lines={5} />}>
+            <Switch>
+              <Route exact path='/' render={(props) => <PostList {...props} {...common} config={config} />} />
+              <Route path='/about' component={About} />
+              <Route path='/safety' component={SafetyPage} />
+              <Route path='/admin' render={(props) => <Admin {...props} {...common} onAuthChange={this.refreshUser} onConfigChange={this.refreshConfig} />} />
+              <Route path='/settings' render={(props) => <Settings {...props} {...common} config={config} onAuthChange={this.refreshUser} />} />
+              <Route path='/signup' render={(props) => <SignUp {...props} onAuthChange={this.refreshUser} />} />
+              <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
+              <Route path='/forgot-password' component={ForgotPassword} />
+              <Route path='/verify-email' render={(props) => <VerifyEmail {...props} onAuthChange={this.refreshUser} />} />
+              <Route path='/reset-password' render={(props) => <ResetPassword {...props} onAuthChange={this.refreshUser} />} />
+              <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />
+              <Route path='/newpost' render={(props) => <NewPost {...props} {...common} />} />
+              <Route path='/post/:id/print' render={(props) => <PrintFlyer {...props} {...common} />} />
+              <Route path='/post/:id/items' render={(props) => <ItemsEditor {...props} {...common} config={config} />} />
+              <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} config={config} />} />
+              <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
+              <Route exact path='/dashboard' render={(props) => <Dashboard {...props} {...common} />} />
+              <Route path='/dashboard/sales/:id' render={(props) => <DashboardSale {...props} {...common} />} />
+              <Route exact path='/events' render={(props) => <EventsIndex {...props} {...common} />} />
+              <Route path='/events/new' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
+              <Route path='/events/:id/edit' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
+              <Route path='/events/:id/print' render={(props) => <EventPrint {...props} {...common} />} />
+              <Route path='/events/:id' render={(props) => <EventPage {...props} {...common} />} />
+              <Route exact path='/wanted' render={(props) => <WantedBoard {...props} {...common} />} />
+              <Route path='/wanted/new' render={(props) => <WantedForm key='new' {...props} {...common} />} />
+              <Route path='/wanted/:id/edit' render={(props) => <WantedForm key={props.match.params.id} {...props} {...common} />} />
+              <Route path='/wanted/:id' render={(props) => <WantedPage {...props} {...common} onSeen={this.refreshUnread} />} />
+              <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
+              <Route path='/alerts/unsubscribe' component={Unsubscribe} />
+              <Route path='/following' render={(props) => <Following {...props} {...common} />} />
+              <Route path='/saved' render={(props) => <Saved {...props} {...common} config={config} />} />
+              <Route path='/people/:id' render={(props) => <PersonRatings {...props} {...common} />} />
+              <Route path='/profile' render={(props) => <Profile {...props} {...common} />} />
+              <Route component={NotFound} />
+            </Switch>
+          </Suspense>
         </main>
         <Footer />
         <PwaBanners offerInstall={!/^\/(login|signup|logout|forgot-password|reset-password|verify-email|alerts|admin|settings)/.test(this.props.location.pathname)} />
