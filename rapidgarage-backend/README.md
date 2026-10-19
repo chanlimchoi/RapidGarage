@@ -527,6 +527,17 @@ Google Maps starts from the phone's location. The location is only used for that
   sale, never message text.
 - Migration `20261018050000-push-notifications`.
 
+## AI listing review
+
+- `lib/aiReview.js` runs after create and edit, and after item adds (fire-and-forget). It sends title + description + item names
+  in `<listing>` tags with a system prompt that treats them as data, `output_config.format` (`verdict` ok|flag, `categories`, `reason`),
+  `effort: low` (`AI_REVIEW_EFFORT`), and `fallbacks: "default"`. A refusal → flagged `other` for a human.
+- `Posts.aiFlagStatus`: `open` | `cleared` (a later clean review) | `dismissed` | `actioned` (set by `/admin/posts/:id/moderate`), plus
+  categories, reason, `aiFlaggedAt`, and `aiReviewHash` (unchanged text isn't re-reviewed). Never in public JSON.
+- `GET /admin/ai-flags` → open flags (up to 200). Admin setting `aiReview` (`ENABLE_AI_REVIEW`); needs the site key;
+  `AI_REVIEW_PER_DAY` (500, a site-wide counter).
+- Migration `20261018080000-ai-review`.
+
 ## Own Anthropic keys (BYOK)
 
 - `GET /me/ai-key` → `{ hasKey, last4, setAt }`. `PUT /me/ai-key` `{ key, currentPassword }` (password required when the account

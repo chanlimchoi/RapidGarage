@@ -61,6 +61,19 @@ export default class Admin extends React.Component {
       .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
   }
 
+  toggleAiReview() {
+    const next = !this.state.settings.aiReview;
+    this.setState({ busy: true, error: '' });
+    apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify({ aiReview: next }) })
+      .then(({ ok, data }) => {
+        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, t('admin.settingFailed'))); return null; }
+        this.setState({ busy: false, settings: data });
+        toast.success(data.aiReview ? t('admin.aiReviewOn') : t('admin.aiReviewOff'));
+        return null;
+      })
+      .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
+  }
+
   toggleUserAiKeys() {
     const next = !this.state.settings.userAiKeys;
     this.setState({ busy: true, error: '' });
@@ -222,6 +235,17 @@ export default class Admin extends React.Component {
                     <span>
                       <strong>{t('admin.userAiKeys')}</strong>
                       <span id="toggleUserAiKeys-hint" className="field-hint" style={{ display: 'block' }}>{t('admin.userAiKeysHint')}</span>
+                    </span>
+                  </label>
+                  <label className="checkbox-row" htmlFor="toggleAiReview">
+                    <span className="switch">
+                      <input id="toggleAiReview" type="checkbox" role="switch" checked={!!s.settings.aiReview} disabled={s.busy}
+                        onChange={() => this.toggleAiReview()} aria-describedby="toggleAiReview-hint" />
+                      <span className="switch-track" aria-hidden="true" />
+                    </span>
+                    <span>
+                      <strong>{t('admin.aiReview')}</strong>
+                      <span id="toggleAiReview-hint" className="field-hint" style={{ display: 'block' }}>{t('admin.aiReviewHint')}</span>
                     </span>
                   </label>
                 </div>

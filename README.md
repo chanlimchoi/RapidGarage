@@ -222,6 +222,17 @@ email, address or sale text goes along. It needs `ANTHROPIC_API_KEY` on the serv
 switched off in **Admin → Settings**. Each seller gets `AI_ITEMS_PER_DAY` (default 10) drafts a
 day, and failed attempts don't count.
 
+### AI-assisted listing review
+
+When a sale is posted, or its title, description or items change, Claude reads that public text and
+either clears it or flags it for **Admin → Reports → AI flags**, with categories (weapons, drugs,
+recalled products, scams, offensive, spam...) and a one-line reason. Admins choose **Looks fine**,
+**Hide** or **Delete**; the regular moderation actions settle a flag too. Nothing is hidden
+automatically. The listing text is passed to the model as data and the answer must match a
+strict schema, so the worst a manipulative listing can do is go unflagged. It uses the site's
+`ANTHROPIC_API_KEY`, skips text it already reviewed, and is capped at `AI_REVIEW_PER_DAY`
+(500) reviews a day. Admins can switch it off.
+
 ### Your own Anthropic key
 
 Sellers can use their own Anthropic key instead of the site's. It works even without `ANTHROPIC_API_KEY`:

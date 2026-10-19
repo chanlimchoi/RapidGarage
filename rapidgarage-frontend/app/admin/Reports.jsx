@@ -10,6 +10,7 @@ import ConversationReports from './ConversationReports';
 import RatingReports from './RatingReports';
 import EventReports from './EventReports';
 import WantedReports from './WantedReports';
+import AiFlags from './AiFlags';
 import { fetchRatingReportQueue, fetchEventReports, fetchWantedReports } from '../api';
 import { t } from '../i18n';
 
@@ -233,9 +234,12 @@ export default class Reports extends React.Component {
             <button type="button" aria-pressed={kind === 'ratings'} onClick={() => this.setState({ kind: 'ratings' })}>{t('rep.ratings')}{count(ratingCount)}</button>
             <button type="button" aria-pressed={kind === 'events'} onClick={() => this.setState({ kind: 'events' })}>{t('ev.reportsTab')}{count(eventCount)}</button>
             <button type="button" aria-pressed={kind === 'wanted'} onClick={() => this.setState({ kind: 'wanted' })}>{t('want.reportsTab')}{count(wantedCount)}</button>
+            <button type="button" aria-pressed={kind === 'ai'} onClick={() => this.setState({ kind: 'ai' })}>{t('aiflag.tab')}{count(this.state.aiCount)}</button>
           </div>
         </div>
-        {kind === 'wanted' ? (
+        {kind === 'ai' ? (
+          <AiFlags onCount={(n) => this.setState({ aiCount: n })} />
+        ) : kind === 'wanted' ? (
           <WantedReports onCount={(n) => this.setCounts({ wantedCount: n })} />
         ) : kind === 'events' ? (
           <EventReports onCount={(n) => this.setCounts({ eventCount: n })} />

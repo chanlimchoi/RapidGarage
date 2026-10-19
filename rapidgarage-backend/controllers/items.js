@@ -116,6 +116,7 @@ router.post('/', requireLogin, owner, async (req, res) => {
     res.status(201).json(item);
     // A new item may be what someone is looking for.
     if (!item.sold) wanted.schedulePost(req.post.id);
+    require('../lib/aiReview').schedule(req.post.id);
     return undefined;
   } catch (err) { return serverError(res, err); }
 });
@@ -144,6 +145,7 @@ router.post('/bulk', requireLogin, owner, async (req, res) => {
     const fresh = await models.SaleItem.findAll({ where: { id: created.map((c) => c.id).filter(Boolean) } });
     res.status(201).json({ items: sorted(fresh.length ? fresh : created).map((i) => i.toJSON()) });
     wanted.schedulePost(req.post.id);
+    require('../lib/aiReview').schedule(req.post.id);
     return undefined;
   } catch (err) { return serverError(res, err); }
 });

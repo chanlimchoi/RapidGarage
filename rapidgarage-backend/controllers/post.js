@@ -14,6 +14,7 @@ const events = require('../lib/events');
 const scans = require('../lib/scans');
 const wanted = require('../lib/wanted');
 const follows = require('../lib/follows');
+const aiReview = require('../lib/aiReview');
 const { requireVerified } = require('../lib/emailVerify');
 const curbside = require('../lib/curbside');
 const calendar = require('../lib/calendar');
@@ -75,6 +76,8 @@ router.post('/', requireLogin, requireVerified, async (req, res) => {
     wanted.schedulePost(post.id);
     // People who follow the seller hear about new sales (not edits).
     follows.schedulePost(post);
+    // AI listing review for admins (advisory; lib/aiReview.js).
+    aiReview.schedule(post.id);
   } catch (err) {
     serverError(res, err);
   }
@@ -166,6 +169,8 @@ router.put('/:id', requireLogin, loadPost, requireOwner, async (req, res) => {
     // Any change (title, description, price, place, dates) may make it match a
     // wanted post now; each (wanted post, sale) pair is only ever told once.
     wanted.schedulePost(post.id);
+    // Text may have changed: review again (unchanged text is skipped by hash).
+    aiReview.schedule(post.id);
   } catch (err) {
     serverError(res, err);
   }
