@@ -136,27 +136,20 @@ function sanitize(list, photoIds) {
 // Resolves to { suggestions } or rejects with err.code:
 //   not_configured | refused | truncated | bad_output | ai_unavailable | ai_rate_limited
 // opts.apiKey: the person's own key (used for this call only).
-async function suggest(photos, lang, opts) {
+// One structured-output request; resolves to the parsed JSON. Errors carry
+// err.code: not_configured | refused | truncated | bad_output | ai_unavailable |
+// ai_rate_limited | own_key_rejected.
+async function structuredCall(content, schema, opts) {
   const ownKey = opts && opts.apiKey;
   const c = ownKey ? clientForKey(ownKey) : getClient();
   if (!c) { const e = new Error('AI is not configured'); e.code = 'not_configured'; throw e; }
-  const use = photos.slice(0, MAX_PHOTOS);
-  const storage = getStorage();
-  const images = await Promise.all(use.map((p) => storage.read(p.storageKey)));
-  const content = [];
-  images.forEach((buf, i) => {
-    content.push({ type: 'text', text: 'Photo ' + (i + 1) + ':' });
-    content.push({ type: 'image', source: { type: 'base64', media_type: 'image/webp', data: buf.toString('base64') } });
-  });
-  content.push({ type: 'text', text: prompt(i18n.normalize(lang) || 'en', use.length) });
-
   let response;
   try {
     response = await c.beta.messages.create({
       model: model(),
       max_tokens: 16000,
       // Opus 5.5 always thinks; effort sets how much (its default is medium).
-      output_config: { effort: effort(), format: { type: 'json_schema', schema: SCHEMA } },
+      output_config: { effort: effort(), format: { type: 'json_schema', schema } },
       // A policy decline is retried on Anthropic's recommended fallback model.
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
@@ -176,9 +169,62 @@ async function suggest(photos, lang, opts) {
   if (response.stop_reason === 'refusal') { const e = new Error('AI declined'); e.code = 'refused'; throw e; }
   if (response.stop_reason === 'max_tokens') { const e = new Error('AI output was cut off'); e.code = 'truncated'; throw e; }
   const text = response.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
-  let parsed;
-  try { parsed = JSON.parse(text); } catch (err) { const e = new Error('AI returned invalid JSON'); e.code = 'bad_output'; throw e; }
-  return { suggestions: sanitize(parsed && parsed.items, use.map((p) => p.id)), model: response.model };
+  try { return JSON.parse(text); } catch (err) { const e = new Error('AI returned invalid JSON'); e.code = 'bad_output'; throw e; }
 }
 
-module.exports = { MAX_PHOTOS, MAX_SUGGESTIONS, SCHEMA, model, effort, perDay, isConfigured, getClient, setClient, setKeyClientFactory, perDayOwnKey, takeSlot, giveBack, resetBudgets, prompt, sanitize, suggest };
+async function imageBlocks(photos) {
+  const storage = getStorage();
+  const images = await Promise.all(photos.map((p) => storage.read(p.storageKey)));
+  const content = [];
+  images.forEach((buf, i) => {
+    content.push({ type: 'text', text: 'Photo ' + (i + 1) + ':' });
+    content.push({ type: 'image', source: { type: 'base64', media_type: 'image/webp', data: buf.toString('base64') } });
+  });
+  return content;
+}
+
+async function suggest(photos, lang, opts) {
+  const use = photos.slice(0, MAX_PHOTOS);
+  const content = await imageBlocks(use);
+  content.push({ type: 'text', text: prompt(i18n.normalize(lang) || 'en', use.length) });
+  const parsed = await structuredCall(content, SCHEMA, opts);
+  return { suggestions: sanitize(parsed && parsed.items, use.map((p) => p.id)) };
+}
+
+// ---- title & description --------------------------------------------------
+const NL = String.fromCharCode(10);
+const TITLE_MAX = 80;
+const DESCRIPTION_MAX = 1200;
+const DESCRIBE_SCHEMA = {
+  type: 'object',
+  properties: {
+    title: { type: 'string', description: 'Listing title, at most 80 characters.' },
+    description: { type: 'string', description: 'Listing description, 2-5 short sentences.' },
+  },
+  required: ['title', 'description'],
+  additionalProperties: false,
+};
+
+// Write a title and description from the sale's item names and up to 3
+// photos. Only the item names, prices and city are sent (no street address).
+async function describe(post, items, photos, lang, opts) {
+  const l = i18n.normalize(lang) || 'en';
+  const names = (items || []).filter((i) => !i.sold).map((i) => i.name + (i.priceCents ? ' ($' + (i.priceCents / 100).toFixed(i.priceCents % 100 ? 2 : 0) + ')' : '')).slice(0, 60);
+  const content = await imageBlocks((photos || []).slice(0, 3));
+  content.push({ type: 'text', text: [
+    'Write a listing title and description for this garage/yard sale, in ' + (LANGUAGE_NAMES[l] || 'English') + '.',
+    'Facts you may use (do not invent others; never add an address, phone number or prices that are not listed):',
+    '- Kind of sale: ' + (post.title ? 'currently titled "' + String(post.title).slice(0, 120) + '"' : 'not titled yet'),
+    '- Area: ' + ([post.city, post.state].filter(Boolean).join(', ') || 'not given'),
+    names.length ? '- Items: ' + names.join('; ') : '- Items: see the photos',
+    'Title: at most 80 characters, friendly and specific (mention the best 2-3 kinds of items). Description: 2-5 short sentences highlighting what is for sale; no emoji, no ALL CAPS, no exclamation marks in every sentence.',
+  ].join(NL) });
+  const parsed = await structuredCall(content, DESCRIBE_SCHEMA, opts);
+  const clean = (v, max) => String(v || '').split(NL).join(' ').replace(/ {2,}/g, ' ').trim().slice(0, max);
+  const title = clean(parsed.title, TITLE_MAX);
+  const description = String(parsed.description || '').trim().slice(0, DESCRIPTION_MAX);
+  if (!title) { const e = new Error('empty title'); e.code = 'bad_output'; throw e; }
+  return { title, description };
+}
+
+module.exports = { MAX_PHOTOS, MAX_SUGGESTIONS, SCHEMA, model, effort, perDay, isConfigured, getClient, setClient, setKeyClientFactory, perDayOwnKey, describe, DESCRIBE_SCHEMA, takeSlot, giveBack, resetBudgets, prompt, sanitize, suggest };

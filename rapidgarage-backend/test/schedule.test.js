@@ -231,8 +231,10 @@ describe('sale dates & times', function () {
       assert.strictEqual(rows.length, 2);
       clock = new Date('2026-10-21T18:00:00Z'); // 2pm: "Ends at 1pm" is over
       await alerts.processQueue(clock);
-      assert.strictEqual(sent.length, 1);
-      assert.ok(/Saturday/.test(sent[0].subject), sent[0].subject);
+      // (alice also gets her post-sale summary for the ended sale; lib/sellerTools.js)
+      const toBob = sent.filter((m) => m.to === 'bob@example.com');
+      assert.strictEqual(toBob.length, 1);
+      assert.ok(/Saturday/.test(toBob[0].subject), toBob[0].subject);
       const dropped = await models.AlertNotification.findOne({ where: { postId: soon.id } });
       assert.strictEqual(dropped.status, 'skipped');
       assert.strictEqual(dropped.lastError, 'post_ended');

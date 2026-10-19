@@ -7,6 +7,8 @@ import { dayLines } from '../lib/schedule';
 import { timeAgo } from '../lib/format';
 import { METRICS } from '../lib/dashboard';
 import BarChart from './BarChart';
+import SaleRecap from './SaleRecap';
+import DuplicateButton from '../post/DuplicateButton';
 import { MetricCard, ItemsBar, METRIC_LABEL, STATUS_LABEL, STATUS_CLASS } from './parts';
 import { t, intlLocale } from '../i18n';
 
@@ -57,8 +59,10 @@ export default class DashboardSale extends React.Component {
             {!s.ended ? <Link className="btn btn-secondary btn-sm" to={'/post/' + s.id + '/edit'}><Pencil size={14} aria-hidden="true" />{t('post.editPost')}</Link> : null}
             <Link className="btn btn-secondary btn-sm" to={'/post/' + s.id + '/items'}><Package size={14} aria-hidden="true" />{t('dash.items')}</Link>
             {!s.hidden ? <Link className="btn btn-secondary btn-sm" to={'/post/' + s.id + '/print'}><QrCode size={14} aria-hidden="true" />{t('post.printFlyer')}</Link> : null}
+            {!s.hidden ? <DuplicateButton postId={s.id} small /> : null}
           </div>
         </header>
+        {s.ended ? <SaleRecap postId={s.id} hidden={s.hidden} /> : null}
         <div className="metric-grid">
           {METRICS.map((m) => <MetricCard key={m} metric={m} total={s.totals[m]} today={s.today[m]} series={s.series[m]} />)}
         </div>

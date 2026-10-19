@@ -222,6 +222,19 @@ email, address or sale text goes along. It needs `ANTHROPIC_API_KEY` on the serv
 switched off in **Admin → Settings**. Each seller gets `AI_ITEMS_PER_DAY` (default 10) drafts a
 day, and failed attempts don't count.
 
+### Seller tools: write with AI, duplicate, sale summary
+
+- **Write title & description with AI** (on **Edit sale**): Claude writes a suggested title and a
+  short description from the item list and up to 3 photos. **Use these** copies it into the form;
+  nothing is saved until the seller presses Save. Only item names, prices, the city and the photos
+  are sent (no street address, name or email). Same key choice and daily budget as item drafts.
+- **Duplicate sale** (sale page and dashboard): a new sale with the same details, prices,
+  markdown, unsold items and copies of the photos, without dates. It opens for editing so the
+  seller picks the new days.
+- **How it went**: once a sale ends, its dashboard page shows items sold (and their listed value),
+  views, saves and conversations, with **Offer leftovers free on the curb** and **Duplicate for
+  next time**. The seller also gets this summary by email once, in their language, the day after.
+
 ### AI-assisted listing review
 
 When a sale is posted, or its title, description or items change, Claude reads that public text and

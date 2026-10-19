@@ -586,6 +586,20 @@ Google Maps starts from the phone's location. The location is only used for that
   `AI_ITEMS_EFFORT` (`medium`), `AI_ITEMS_TIMEOUT_MS` (90000, one SDK retry). `/config` reports `aiItems`.
 - Tests swap in a fake client (`aiItems.setClient`), so they never call the API.
 
+## Seller tools (lib/sellerTools.js)
+
+- `POST /post/:id/describe` `{ oneTimeKey? }` (owner) → `{ title (≤80), description (≤1200), keySource }`. Nothing is saved.
+  Sends unsold item names and prices, city/state, the current title and up to 3 photos; never the street or ZIP.
+  Key choice and budget are shared with item drafts (`lib/aiAccess.js`); errors as for item drafts.
+- `POST /post/:id/duplicate` (owner, verified email) → 201 with the new post: same text, address, coordinates,
+  prices, markdown and time zone; unsold items; photos copied to new storage keys. No dates, no curb offer.
+  Hidden sales → 403. The copy is announced like a new sale (alerts, wanted posts, followers, AI review).
+- `GET /post/:id/summary` (owner) → `{ items: { total, sold, unsold, soldValueCents }, views, scans, shares, saves,
+  conversations, holdsCompleted, ended }` (all time).
+- Summary email: the alert worker emails the owner of each visible sale that ended in the last 3 days, once
+  (`Posts.summarySentAt`, claimed before sending, released if SMTP fails). Migration
+  `20261018090000-sale-summaries` marks already-ended sales as sent so nobody gets old summaries.
+
 ## Following sellers
 
 - `GET /follows` → `{ results: [{ seller: { id, name }, notify, currentSales, since }] }`.

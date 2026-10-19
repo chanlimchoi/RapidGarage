@@ -1233,6 +1233,11 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .ai-draft-fields { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr 7rem; gap: var(--space-2); }
 .ai-draft-fields .field-error { grid-column: 1 / -1; }
 .ai-draft-privacy { margin-top: var(--space-2); }
+.ai-write-preview { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.ai-write-preview p { margin: 0; }
+.ai-write-description { margin-top: var(--space-2) !important; white-space: pre-line; }
+.sale-recap { margin-bottom: var(--space-4); }
+.sale-recap p { margin: 0; }
 @media (max-width: 480px) { .ai-draft-fields { grid-template-columns: 1fr; } }
 
 /* Admin analytics */

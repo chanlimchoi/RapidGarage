@@ -5,6 +5,7 @@ import { ArrowLeft, X, Lock, SearchX } from 'lucide-react';
 import { apiFetch, errorMessage, uploadPhotos, deletePhoto, savePhotoAlt, canEditPost, MAX_PHOTOS } from '../api';
 import PhotoPicker, { ALT_MAX } from '../components/PhotoPicker';
 import PostForm from './PostForm';
+import AiWritePanel from './AiWritePanel';
 import { EmptyState, SkeletonBlock } from '../components/ui';
 import toast from '../components/toast';
 import { t } from '../i18n';
@@ -86,6 +87,9 @@ class EditPost extends Component {
         <header className="page-header"><div><h1>{t('edit.title')}</h1><p>{post.title}</p></div></header>
         <PostForm ref={this.form} post={post} textDisabled={!own} saving={this.state.saving} submitLabel={t('edit.saveChanges')}
           error={this.state.error} onSubmit={this.handleSubmit}
+          textAddon={own && this.props.config && this.props.config.aiItems && (photos.length || (post.items || []).length) ? (
+            <AiWritePanel post={post} config={this.props.config} onUse={(text) => this.form.current && this.form.current.setText(text)} />
+          ) : null}
           cancel={<Link className="btn btn-ghost btn-lg" to={'/post/' + post.id}>{t('common.cancel')}</Link>}>
           <section className="card-form">
             <h2 className="h4">{t('post.photos')} <span className="muted small">({photos.length}/{MAX_PHOTOS})</span></h2>

@@ -11,9 +11,7 @@ const holds = require('../lib/holds');
 const wanted = require('../lib/wanted');
 const curbside = require('../lib/curbside');
 const aiItems = require('../lib/aiItems');
-const { aiStatus } = require('../lib/features');
-const userAiKey = require('../lib/userAiKey');
-const { keysOverHttps } = require('../lib/runtime');
+const aiAccess = require('../lib/aiAccess');
 const i18n = require('../lib/i18n');
 
 const sorted = (list) => list.slice().sort((a, b) => a.position - b.position || a.id - b.id);
@@ -61,28 +59,16 @@ router.post('/suggest', requireLogin, owner, async (req, res) => {
   delete body.oneTimeKey;
   let apiKey = null;
   try {
-    const ai = await aiStatus();
-    if (!ai.enabled) return sendError(res, 404, 'feature_disabled', 'Drafting items from photos is turned off on this server.');
-    let source = 'site';
-    if (oneTime !== undefined) {
-      if (!ai.userKeys) return sendError(res, 404, 'feature_disabled', 'Using your own AI key is turned off on this server.');
-      if (!keysOverHttps(req)) return badRequest(res, 'Keys can only be sent over HTTPS.');
-      if (!(await userAiKey.takeAttempt(req.user.id))) { res.set('Retry-After', '3600'); return sendError(res, 429, 'rate_limited', 'Too many key attempts. Please try again later.'); }
-      apiKey = userAiKey.normalize(oneTime);
-      if (!apiKey) return badRequest(res, 'Invalid request.', { oneTimeKey: 'That does not look like an Anthropic API key (they start with "sk-ant-").' });
-      source = 'one_time';
-    } else if (ai.userKeys && (apiKey = await userAiKey.load(req.user.id))) {
-      source = 'saved';
-    } else if (!ai.site) {
-      return sendError(res, 400, 'needs_key', 'Add your own Anthropic key in Settings, or paste one to use just once.');
-    }
+    const picked = await aiAccess.pickKey(req, oneTime, 'Drafting items from photos is turned off on this server.');
+    if (picked.error) return aiAccess.sendPicked(res, picked.error);
+    apiKey = picked.apiKey;
+    const source = picked.source;
     const all = (req.post.photos || []).slice().sort((a, b) => a.position - b.position || a.id - b.id);
     const want = req.body && req.body.photoIds;
     if (want !== undefined && (!Array.isArray(want) || want.some((id) => !parseId(id)))) return badRequest(res, 'Invalid request.', { photoIds: 'photoIds must be a list of photo ids.' });
     const photos = want ? all.filter((p) => want.map(Number).includes(p.id)) : all;
     if (!photos.length) return badRequest(res, 'Add photos to the sale first, then draft items from them.');
-    const bucket = source === 'site' ? req.user.id : 'own:' + req.user.id;
-    if (!(await aiItems.takeSlot(bucket, source === 'site' ? aiItems.perDay() : aiItems.perDayOwnKey()))) {
+    if (!(await aiAccess.takeBudget(req.user.id, source))) {
       res.set('Retry-After', '3600');
       return sendError(res, 429, 'rate_limited', "You've used today's item drafts. Try again tomorrow, or add items by hand.");
     }
@@ -92,7 +78,7 @@ router.post('/suggest', requireLogin, owner, async (req, res) => {
       const room = Math.max(0, items.MAX_ITEMS - (await models.SaleItem.count({ where: { postId: req.post.id } })));
       return res.json({ suggestions: out.suggestions, room, photosUsed: Math.min(photos.length, aiItems.MAX_PHOTOS), keySource: source });
     } catch (err) {
-      await aiItems.giveBack(bucket);
+      await aiAccess.giveBack(req.user.id, source);
       if (err.code === 'own_key_rejected') return sendError(res, 400, 'own_key_rejected', 'Anthropic rejected that key. Check it in the Anthropic Console, or update the one saved in Settings.');
       if (err.code === 'refused') return sendError(res, 422, 'ai_refused', "Couldn't draft items from these photos. Add items by hand instead.");
       if (err.code === 'truncated' || err.code === 'bad_output') return sendError(res, 502, 'ai_failed', 'The item draft came back incomplete. Please try again.');

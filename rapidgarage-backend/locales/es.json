@@ -209,7 +209,13 @@
   "verify.expires": "El enlace funciona una sola vez y caduca en 48 horas.",
   "verify.ignore": "Si no creaste una cuenta, puedes ignorar este correo.",
   "account.deletedSubject": "Se eliminó tu cuenta de RapidGarage",
-  "account.deletedText": "Se eliminaron tu cuenta y todo su contenido (ventas, fotos, mensajes, ventas guardadas, alertas y configuración). Gracias por usar RapidGarage."
+  "account.deletedText": "Se eliminaron tu cuenta y todo su contenido (ventas, fotos, mensajes, ventas guardadas, alertas y configuración). Gracias por usar RapidGarage.",
+  "summary.subject": "Cómo te fue en tu venta: {title}",
+  "summary.intro": "Tu venta \"{title}\" terminó. Así te fue:",
+  "summary.items": "Vendiste {sold} de {total} artículos de la lista ({value} a precios de lista).",
+  "summary.reach": "Visitas: {views} · Guardados: {saves} · Conversaciones: {conversations}",
+  "summary.curb": "¿Te sobró algo? Regálalo en la acera: {url}",
+  "summary.again": "Mira los detalles o duplica la venta para la próxima vez: {url}"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -595,6 +601,14 @@
   "This server can't send email right now.": "Este servidor no puede enviar correos ahora.",
   "This confirmation link is invalid or has expired. Ask for a new one.": "Este enlace de confirmación no es válido o caducó. Pide uno nuevo.",
   "Type DELETE to confirm.": "Escribe DELETE para confirmar.",
-  "You're the only admin. Make someone else an admin before deleting your account.": "Eres el único administrador. Haz administrador a otra persona antes de eliminar tu cuenta."
+  "You're the only admin. Make someone else an admin before deleting your account.": "Eres el único administrador. Haz administrador a otra persona antes de eliminar tu cuenta.",
+  "A hidden sale can't be duplicated.": "Una venta oculta no se puede duplicar.",
+  "Writing with AI is turned off on this server.": "La escritura con IA está desactivada en este servidor.",
+  "Add photos or items first, then write with AI.": "Primero agrega fotos o artículos y luego escribe con IA.",
+  "You've used today's AI requests. Try again tomorrow.": "Ya usaste las solicitudes de IA de hoy. Inténtalo mañana.",
+  "Couldn't write a description for this sale. Please write it yourself.": "No se pudo escribir una descripción para esta venta. Escríbela tú.",
+  "The AI answer came back incomplete. Please try again.": "La respuesta de la IA llegó incompleta. Inténtalo de nuevo.",
+  "The AI is busy right now. Please try again in a minute.": "La IA está ocupada ahora. Inténtalo en un minuto.",
+  "AI writing isn't available right now. Please try again later.": "La escritura con IA no está disponible ahora. Inténtalo más tarde."
  }
 }

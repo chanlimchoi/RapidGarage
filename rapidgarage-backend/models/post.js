@@ -32,6 +32,8 @@ module.exports = (sequelize, DataTypes) => {
     aiFlagReason: { type: DataTypes.STRING(300), allowNull: true },
     aiFlaggedAt: { type: DataTypes.DATE, allowNull: true },
     aiReviewHash: { type: DataTypes.STRING(64), allowNull: true },
+    // Post-sale summary email sent (lib/sellerTools.js).
+    summarySentAt: { type: DataTypes.DATE, allowNull: true },
     // Moderation (lib/moderation.js). Hidden posts are visible only to the owner and admins.
     hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     hiddenAt: { type: DataTypes.DATE, allowNull: true },
@@ -91,7 +93,7 @@ module.exports = (sequelize, DataTypes) => {
     delete out.markdownPercent;
     delete out.markdownFrom;
     delete out.markdownLastDay;
-    ['aiFlagStatus', 'aiFlagCategories', 'aiFlagReason', 'aiFlaggedAt', 'aiReviewHash'].forEach((k) => { delete out[k]; });
+    ['aiFlagStatus', 'aiFlagCategories', 'aiFlagReason', 'aiFlaggedAt', 'aiReviewHash', 'summarySentAt'].forEach((k) => { delete out[k]; });
     delete out.saleDays;
     return out;
   };
