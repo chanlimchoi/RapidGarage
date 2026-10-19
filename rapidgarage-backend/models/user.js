@@ -33,6 +33,8 @@ module.exports = (sequelize, DataTypes) => {
     pushMessages: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     pushFollows: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     pushReminders: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    // When the address was confirmed (lib/emailVerify.js); Google sign-in counts.
+    emailVerifiedAt: { type: DataTypes.DATE, allowNull: true },
   }, {
     // Never load the password hash unless explicitly asked for (login only).
     // The encrypted Maps key is excluded too; load it only via scope('withMapsKey').

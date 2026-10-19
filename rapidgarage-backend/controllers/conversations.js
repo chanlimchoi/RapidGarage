@@ -225,7 +225,7 @@ async function startAboutWanted(req, res, wantedId) {
 
 // POST /conversations { postId } : start (201) or reuse (200) my conversation
 // with the seller of postId. { wantedId } instead: see startAboutWanted.
-router.post('/', async (req, res) => {
+router.post('/', require('../lib/emailVerify').requireVerified, async (req, res) => {
   const me = req.user.id;
   const body = req.body || {};
   if (body.wantedId !== undefined && body.postId === undefined) {
@@ -322,7 +322,7 @@ router.get('/:id/messages', loadConversation, async (req, res) => {
 
 // POST /conversations/:id/messages { body } : send. 403 when either side has
 // blocked the other; 429 over MESSAGE_MAX_PER_MINUTE.
-router.post('/:id/messages', loadConversation, async (req, res) => {
+router.post('/:id/messages', require('../lib/emailVerify').requireVerified, loadConversation, async (req, res) => {
   const me = req.user.id;
   const conv = req.conversation;
   const { text, error } = msg.validateBody((req.body || {}).body);

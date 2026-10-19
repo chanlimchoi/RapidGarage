@@ -16,6 +16,8 @@ import Logout from './user/Logout';
 import SignUp from './user/SignUp';
 import ForgotPassword from './user/ForgotPassword';
 import ResetPassword from './user/ResetPassword';
+import VerifyEmail from './user/VerifyEmail';
+import VerifyBanner from './user/VerifyBanner';
 import NewPost from './post/NewPost';
 import EditPost from './post/EditPost';
 import Settings from './user/Settings';
@@ -145,6 +147,7 @@ class App extends Component {
       <div className="app" key={this.state.locale}>
         <NavBar user={user} ready={ready} unread={this.state.unread} wantedNew={this.state.wantedNew} location={this.props.location} />
         <main id="main" className="app-main" tabIndex="-1">
+          {user && config.emailVerification && !user.emailVerifiedAt && !/^\/verify-email/.test(this.props.location.pathname) ? <VerifyBanner user={user} onVerified={this.refreshUser} /> : null}
           {user && !/^\/(alerts|admin)/.test(this.props.location.pathname) ? <ReminderBanner userId={user.id} count={this.state.reminders} onChange={this.refreshUnread} /> : null}
           <Switch>
             <Route exact path='/' render={(props) => <PostList {...props} {...common} config={config} />} />
@@ -155,6 +158,7 @@ class App extends Component {
             <Route path='/signup' render={(props) => <SignUp {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/forgot-password' component={ForgotPassword} />
+            <Route path='/verify-email' render={(props) => <VerifyEmail {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/reset-password' render={(props) => <ResetPassword {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/newpost' render={(props) => <NewPost {...props} {...common} />} />
@@ -183,7 +187,7 @@ class App extends Component {
           </Switch>
         </main>
         <Footer />
-        <PwaBanners offerInstall={!/^\/(login|signup|logout|forgot-password|reset-password|alerts|admin|settings)/.test(this.props.location.pathname)} />
+        <PwaBanners offerInstall={!/^\/(login|signup|logout|forgot-password|reset-password|verify-email|alerts|admin|settings)/.test(this.props.location.pathname)} />
         <Toaster />
       </div>
     );

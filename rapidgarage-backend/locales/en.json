@@ -203,7 +203,13 @@
   "push.followTitle": "{name} posted a new sale",
   "push.reminderTitle": "A sale you saved is today",
   "push.testTitle": "Notifications are on",
-  "push.testBody": "This is how RapidGarage will let you know about new messages and sales."
+  "push.testBody": "This is how RapidGarage will let you know about new messages and sales.",
+  "verify.subject": "Confirm your email for RapidGarage",
+  "verify.intro": "Welcome to RapidGarage! Confirm this is your email address to post sales and message people:",
+  "verify.expires": "The link works once and expires in 48 hours.",
+  "verify.ignore": "If you didn't create an account, you can ignore this email.",
+  "account.deletedSubject": "Your RapidGarage account was deleted",
+  "account.deletedText": "Your account and everything in it (sales, photos, messages, saved sales, alerts and settings) were deleted. Thanks for using RapidGarage."
  },
  "messages": {
   "Login required.": "Login required.",
@@ -584,6 +590,11 @@
   "Invalid push subscription.": "Invalid push subscription.",
   "messages must be true or false.": "messages must be true or false.",
   "follows must be true or false.": "follows must be true or false.",
-  "reminders must be true or false.": "reminders must be true or false."
+  "reminders must be true or false.": "reminders must be true or false.",
+  "Confirm your email address first: open the link we sent you, or ask for a new one.": "Confirm your email address first: open the link we sent you, or ask for a new one.",
+  "This server can't send email right now.": "This server can't send email right now.",
+  "This confirmation link is invalid or has expired. Ask for a new one.": "This confirmation link is invalid or has expired. Ask for a new one.",
+  "Type DELETE to confirm.": "Type DELETE to confirm.",
+  "You're the only admin. Make someone else an admin before deleting your account.": "You're the only admin. Make someone else an admin before deleting your account."
  }
 }

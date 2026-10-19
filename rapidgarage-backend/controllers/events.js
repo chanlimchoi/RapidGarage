@@ -124,7 +124,7 @@ router.get('/for-post/:postId', requireLogin, async (req, res) => {
   } catch (err) { return serverError(res, err); }
 });
 
-router.post('/', requireLogin, async (req, res) => {
+router.post('/', requireLogin, require('../lib/emailVerify').requireVerified, async (req, res) => {
   const body = req.body || {};
   const { errors, values } = ev.validate(body, true);
   if (Object.keys(errors).length) return badRequest(res, 'Invalid neighborhood sale.', errors);

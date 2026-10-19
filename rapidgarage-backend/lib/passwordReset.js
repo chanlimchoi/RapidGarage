@@ -155,6 +155,7 @@ async function confirm(token, password, now) {
   const [claimed] = await models().PasswordReset.update({ usedAt: new Date() }, { where: { id: row.id, usedAt: null } });
   if (!claimed) return { invalid: true };
   const user = await setPassword(row.userId, password);
+  if (user) await require('./emailVerify').markVerified(user.id);
   return user ? { user } : { invalid: true };
 }
 

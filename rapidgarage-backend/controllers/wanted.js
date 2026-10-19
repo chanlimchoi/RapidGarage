@@ -116,7 +116,7 @@ router.get('/mine', requireLogin, async (req, res) => {
   } catch (err) { return serverError(res, err); }
 });
 
-router.post('/', requireLogin, async (req, res) => {
+router.post('/', requireLogin, require('../lib/emailVerify').requireVerified, async (req, res) => {
   const body = req.body || {};
   const { errors, values } = W.validate(body, true);
   area.readLocation(body, errors, values, true);
