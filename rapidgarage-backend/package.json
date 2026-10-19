@@ -12,7 +12,9 @@
     "db:precheck": "node scripts/db-precheck.js precheck",
     "db:cleanup": "node scripts/db-precheck.js cleanup",
     "geocode:backfill": "node scripts/geocode-backfill.js",
-    "start:prod": "node app.js"
+    "start:prod": "node app.js",
+    "audit": "npm audit --omit=dev --audit-level=high",
+    "audit:all": "npm audit --audit-level=high"
   },
   "author": "Edgardo Molina",
   "license": "ISC",
@@ -26,10 +28,10 @@
     "@anthropic-ai/sdk": "^0.135.0",
     "@aws-sdk/client-s3": "^3.1152.0",
     "@sentry/node": "^11.8.0",
-    "bcrypt-nodejs": "0.0.3",
+    "bcryptjs": "^3.0.3",
     "body-parser": "^1.20.8",
     "connect-pg-simple": "^10.0.0",
-    "dotenv": "^8.6.0",
+    "dotenv": "^18.0.8",
     "express": "^4.22.3",
     "express-session": "^1.19.0",
     "helmet": "^8.3.0",
@@ -48,6 +50,7 @@
     "web-push": "^3.6.7"
   },
   "overrides": {
-    "ini": "^1.3.8"
+    "ini": "^1.3.8",
+    "uuid": "^11.1.1"
   }
 }
