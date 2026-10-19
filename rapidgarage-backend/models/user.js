@@ -1,5 +1,7 @@
 'use strict';
-const bcrypt = require('bcrypt-nodejs');
+// Maintained, pure-JS drop-in for bcrypt-nodejs (unmaintained since 2016).
+// Same compareSync; the hash() callback signature is (data, salt, cb).
+const bcrypt = require('bcryptjs');
 
 module.exports = (sequelize, DataTypes) => {
   var User = sequelize.define('User', {
@@ -48,8 +50,11 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
+  const SALT_ROUNDS = 10;
   User.hashPassword = (plain) => new Promise((resolve, reject) => {
-    bcrypt.hash(plain, null, null, (err, hashedPassword) => (err ? reject(err) : resolve(hashedPassword)));
+    // bcryptjs takes (data, salt, callback); pass the cost the old
+    // bcrypt-nodejs default used. Hashes stay `$2a$`-compatible.
+    bcrypt.hash(plain, SALT_ROUNDS, (err, hashedPassword) => (err ? reject(err) : resolve(hashedPassword)));
   });
 
   User.beforeCreate((user) => {
