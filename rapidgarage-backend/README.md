@@ -586,6 +586,26 @@ Google Maps starts from the phone's location. The location is only used for that
   `AI_ITEMS_EFFORT` (`medium`), `AI_ITEMS_TIMEOUT_MS` (90000, one SDK retry). `/config` reports `aiItems`.
 - Tests swap in a fake client (`aiItems.setClient`), so they never call the API.
 
+## Make an offer (lib/holds.js)
+
+- `POST /conversations/:id/holds` takes an optional `offerCents`: a whole number of cents, at least 1 and below the asking
+  price (any amount when the item has no price; free items can't get offers). Stored on `ItemHolds.offerCents`.
+- `POST /holds/:id/counter { offerCents }` (seller, pending offer only): above the offer, at most the asking price. Sets
+  `counterCents` and gives the buyer a fresh answer window (`HOLD_REQUEST_HOURS`).
+- `POST /holds/:id/take` (buyer): accepts the counteroffer. The item is reserved like an accepted hold, `offerCents` becomes
+  the counter (the agreed price) and other pending requests for the item are declined. A seller `accept` agrees to the
+  buyer's offer and drops any counter.
+- Hold JSON has `offerCents` and `counterCents`; thread events have `hold.cents` (`Messages.holdCents`, the amount at that
+  step) and the new events `countered` and `agreed`. Migration `20261018100000-offers-and-weekend-digest`.
+
+## Weekend digest (lib/weekendDigest.js)
+
+- `SaleAlerts.frequency`: `instant` (default) or `weekly`. Weekly alerts never queue instant notifications.
+- The alert worker's pass sends each weekly alert one email between Thursday `WEEKEND_DIGEST_HOUR` (17) and Saturday noon
+  in `DEFAULT_TIME_ZONE`: up to 10 visible sales open on Saturday or Sunday inside the radius and price filter, nearest
+  first, skipping the person's own sales and blocks. It uses the instant alert layout (`renderEmail(user, items, { weekly: true })`).
+  `weeklySentAt` is claimed before sending (at most once every 4 days) and released if SMTP fails. No sales, no email.
+
 ## Seller tools (lib/sellerTools.js)
 
 - `POST /post/:id/describe` `{ oneTimeKey? }` (owner) → `{ title (≤80), description (≤1200), keySource }`. Nothing is saved.

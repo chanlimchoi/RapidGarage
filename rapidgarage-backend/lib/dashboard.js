@@ -184,6 +184,7 @@ async function forSale(me, post, at) {
   sale.holdList = openHolds.map((h) => ({
     id: h.id, status: h.status, conversationId: h.conversationId, item: h.item ? h.item.name : null,
     buyer: h.buyer ? publicName(h.buyer) : null, pickupAt: h.pickupAt, expiresAt: h.expiresAt,
+    offerCents: h.offerCents || null, counterCents: h.counterCents || null,
   }));
   sale.conversationList = convs.map((c) => ({ id: c.id, buyer: c.buyer ? publicName(c.buyer) : null, lastMessageAt: c.lastMessageAt, unread: unread.get(c.id) || 0 }));
   return { span: SPAN, metrics: METRICS, sale };

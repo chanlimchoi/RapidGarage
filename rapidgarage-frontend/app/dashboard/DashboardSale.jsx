@@ -6,6 +6,7 @@ import { Alert, EmptyState, SkeletonBlock } from '../components/ui';
 import { dayLines } from '../lib/schedule';
 import { timeAgo } from '../lib/format';
 import { METRICS } from '../lib/dashboard';
+import { formatCents } from '../lib/items';
 import BarChart from './BarChart';
 import SaleRecap from './SaleRecap';
 import DuplicateButton from '../post/DuplicateButton';
@@ -85,7 +86,7 @@ export default class DashboardSale extends React.Component {
               <ul className="dash-list">
                 {s.holdList.map((h) => (
                   <li key={h.id}>
-                    <div><strong>{h.item || t('dash.removedItem')}</strong> <span className={'chip ' + (h.status === 'accepted' ? 'chip-success' : 'chip-info')}>{HOLD_STATUS[h.status]}</span></div>
+                    <div><strong>{h.item || t('dash.removedItem')}</strong> <span className={'chip ' + (h.status === 'accepted' ? 'chip-success' : 'chip-info')}>{HOLD_STATUS[h.status]}</span>{h.offerCents ? <span className="chip chip-price">{h.status === 'accepted' ? t('offer.agreed', { price: formatCents(h.offerCents) }) : t('offer.offered', { price: formatCents(h.offerCents) })}</span> : null}</div>
                     <div className="small muted">{h.buyer || t('msg.formerUser')} · {h.status === 'accepted' ? t('hold.until', { time: when(h.expiresAt) }) : t('hold.answerBy', { time: when(h.expiresAt) })}{h.pickupAt ? ' · ' + t('hold.pickupAt', { time: when(h.pickupAt) }) : ''}</div>
                     <Link className="small" to={'/messages/' + h.conversationId}>{t('dash.openThread')}</Link>
                   </li>

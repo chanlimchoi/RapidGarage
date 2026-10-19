@@ -215,7 +215,16 @@
   "summary.items": "Vendiste {sold} de {total} artículos de la lista ({value} a precios de lista).",
   "summary.reach": "Visitas: {views} · Guardados: {saves} · Conversaciones: {conversations}",
   "summary.curb": "¿Te sobró algo? Regálalo en la acera: {url}",
-  "summary.again": "Mira los detalles o duplica la venta para la próxima vez: {url}"
+  "summary.again": "Mira los detalles o duplica la venta para la próxima vez: {url}",
+  "weekly.subject": {
+   "one": "Este fin de semana: {count} venta de garaje cerca de ti",
+   "other": "Este fin de semana: {count} ventas de garaje cerca de ti"
+  },
+  "weekly.head": "Las ventas de este fin de semana",
+  "weekly.intro": {
+   "one": "{count} venta de este fin de semana coincide con tu resumen de RapidGarage:",
+   "other": "{count} ventas de este fin de semana coinciden con tu resumen de RapidGarage:"
+  }
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -609,6 +618,15 @@
   "Couldn't write a description for this sale. Please write it yourself.": "No se pudo escribir una descripción para esta venta. Escríbela tú.",
   "The AI answer came back incomplete. Please try again.": "La respuesta de la IA llegó incompleta. Inténtalo de nuevo.",
   "The AI is busy right now. Please try again in a minute.": "La IA está ocupada ahora. Inténtalo en un minuto.",
-  "AI writing isn't available right now. Please try again later.": "La escritura con IA no está disponible ahora. Inténtalo más tarde."
+  "AI writing isn't available right now. Please try again later.": "La escritura con IA no está disponible ahora. Inténtalo más tarde.",
+  "Choose instant emails or a weekly digest.": "Elige correos al momento o un resumen semanal.",
+  "Enter an amount in dollars, like 5 or 4.50.": "Escribe una cantidad en dólares, como 5 o 4.50.",
+  "This item is free.": "Este artículo es gratis.",
+  "Offer less than the asking price, or just ask to hold it.": "Ofrece menos que el precio pedido, o solo pide que te lo aparten.",
+  "A counteroffer has to be more than their offer.": "La contraoferta tiene que ser mayor que su oferta.",
+  "A counteroffer can't be more than the asking price.": "La contraoferta no puede ser mayor que el precio pedido.",
+  "There is no offer to counter.": "No hay ninguna oferta para contraofertar.",
+  "There is no counteroffer to take.": "No hay ninguna contraoferta para aceptar.",
+  "Invalid offer.": "Oferta no válida."
  }
 }

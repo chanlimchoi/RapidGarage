@@ -26,6 +26,14 @@ describe('hold event text', () => {
   test('no double period after an initial', () => {
     assert.ok(holdEventText(ev('accepted', true), 'Alex R.').endsWith('Alex R.'));
   });
+  test('offers, counteroffers and agreed prices show the amount', () => {
+    assert.equal(holdEventText(ev('requested', false, { cents: 350 }), 'Sam K.'), 'Sam K. offered $3.50 for Blue bike.');
+    assert.equal(holdEventText(ev('countered', true, { cents: 500 }), 'Sam K.'), 'You countered at $5 for Blue bike.');
+    assert.ok(holdEventText(ev('accepted', false, { cents: 350 }), 'Sam K.').includes('accepted $3.50'));
+    assert.equal(holdEventText(ev('agreed', false, { cents: 500 }), 'Sam K.'), 'Sam K. took your counteroffer: Blue bike for $5.');
+    // Without an amount, the plain hold wording.
+    assert.doesNotMatch(holdEventText(ev('requested', false), 'Sam K.'), /offered/);
+  });
   test('unknown events fall back to the server summary', () => {
     assert.equal(holdEventText(ev('weird', false), 'Sam K.'), 'English summary');
   });

@@ -17,6 +17,13 @@ export function centsInput(c) {
   return c % 100 ? (c / 100).toFixed(2) : String(c / 100);
 }
 
+// "4.50" / "$4.50" / "4" -> cents (450, 400); anything else -> null.
+export function parseCents(raw) {
+  const p = String(raw === null || raw === undefined ? '' : raw).trim().replace(/^\$/, '');
+  if (!/^\d{1,6}(\.\d{1,2})?$/.test(p)) return null;
+  return Math.round(Number(p) * 100);
+}
+
 export function validateItemFields({ name, price }) {
   const errors = {};
   const n = (name || '').trim();

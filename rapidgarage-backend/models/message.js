@@ -10,10 +10,12 @@ module.exports = (sequelize, DataTypes) => {
     removedAt: { type: DataTypes.DATE, allowNull: true },
     removedBy: { type: DataTypes.INTEGER, allowNull: true },
     // 'text', 'meetup' (below), or 'hold' for item-hold events (holdEvent: requested | accepted |
-    // declined | released | cancelled | expired | sold); body keeps an English summary.
+    // declined | released | cancelled | expired | sold | countered | agreed); body keeps an English summary.
     kind: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'text' },
     holdId: { type: DataTypes.INTEGER, allowNull: true },
     holdEvent: { type: DataTypes.STRING(16), allowNull: true },
+    // The offer amount at that step (requested with an offer, countered, accepted, agreed).
+    holdCents: { type: DataTypes.INTEGER, allowNull: true },
     // 'meetup' messages: a meetup suggestion step (meetupEvent: proposed |
     // countered | accepted | declined | cancelled | expired).
     meetupId: { type: DataTypes.INTEGER, allowNull: true },

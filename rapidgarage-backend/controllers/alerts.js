@@ -39,6 +39,10 @@ function validate(body, partial) {
     if (typeof body[k] !== 'boolean') errors[k] = k + ' must be true or false.';
     else values[k] = body[k];
   });
+  if (has('frequency')) {
+    if (!alerts.FREQUENCIES.includes(body.frequency)) errors.frequency = 'Choose instant emails or a weekly digest.';
+    else values.frequency = body.frequency;
+  }
   if (values.freeOnly) values.maxPrice = null;
   return { errors, values };
 }
@@ -98,7 +102,7 @@ router.post('/', async (req, res) => {
     const count = await models.SaleAlert.count({ where: { userId: req.user.id } });
     if (count >= alerts.maxPerUser()) return sendError(res, 409, 'limit_reached', 'You can have up to ' + alerts.maxPerUser() + ' alerts. Delete one to add another.');
     if (!(await resolveAddress(req, res, body, values))) return undefined;
-    const alert = await models.SaleAlert.create(Object.assign({ enabled: true, freeOnly: false, maxPrice: null }, values, { userId: req.user.id }));
+    const alert = await models.SaleAlert.create(Object.assign({ enabled: true, freeOnly: false, maxPrice: null, frequency: 'instant' }, values, { userId: req.user.id }));
     return res.status(201).json(alert);
   } catch (err) {
     return serverError(res, err);

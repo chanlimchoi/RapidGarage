@@ -50,7 +50,7 @@ function messageJSON(m, me, holdMap) {
   if (m.kind === 'hold') {
     const h = holdMap && m.holdId ? holdMap.get(m.holdId) : null;
     out.kind = 'hold';
-    out.hold = { id: m.holdId, event: m.holdEvent, itemName: h && h.item ? h.item.name : null, pickupAt: h ? h.pickupAt : null, expiresAt: h ? h.expiresAt : null, status: h ? h.status : null, endedReason: h ? h.endedReason : null };
+    out.hold = { id: m.holdId, event: m.holdEvent, itemName: h && h.item ? h.item.name : null, pickupAt: h ? h.pickupAt : null, expiresAt: h ? h.expiresAt : null, status: h ? h.status : null, endedReason: h ? h.endedReason : null, cents: m.holdCents || null };
   }
   if (m.kind === 'meetup') {
     const p = holdMap && holdMap.meetups && m.meetupId ? holdMap.meetups.get(m.meetupId) : null;
@@ -444,7 +444,8 @@ router.get('/:id/holds', loadConversation, async (req, res) => {
   } catch (err) { return serverError(res, err); }
 });
 
-// POST /conversations/:id/holds { itemId, pickupAt? } : the buyer asks to hold
+// POST /conversations/:id/holds { itemId, pickupAt?, offerCents? } : the buyer asks to hold
+// (optionally offering a price below the asking price; the seller can accept or counter)
 // one unsold, unreserved item of this sale. See lib/holds.js for the limits.
 router.post('/:id/holds', loadConversation, async (req, res) => {
   const me = req.user.id;
@@ -469,6 +470,8 @@ router.post('/:id/holds', loadConversation, async (req, res) => {
     if (!item) return notFound(res, 'Item not found.');
     if (item.sold) return sendError(res, 409, 'item_unavailable', 'This item is no longer available.');
     if (item.reservedUntil && new Date(item.reservedUntil) > t) return sendError(res, 409, 'item_reserved', 'This item is already reserved.');
+    const offer = holds.parseOffer(body.offerCents, item);
+    if (offer.error) return badRequest(res, 'Invalid hold.', { offerCents: offer.error });
     const H = models.ItemHold;
     if (await H.count({ where: { itemId, buyerId: me, status: H.ACTIVE } })) return sendError(res, 409, 'already_requested', 'You already asked to hold this item.');
     const declined = await H.findOne({ where: { itemId, buyerId: me, status: 'declined', endedReason: null, decidedAt: { [Op.gt]: new Date(t - holds.DECLINE_COOLDOWN_MS) } } });
@@ -486,9 +489,9 @@ router.post('/:id/holds', loadConversation, async (req, res) => {
     if (await H.count({ where: { itemId, status: 'pending' } }) >= holds.MAX_PENDING_PER_ITEM) {
       return sendError(res, 409, 'too_many_requests', 'Several people have already asked to hold this item. Message the seller instead.');
     }
-    const hold = await H.create({ itemId, postId: post.id, conversationId: conv.id, buyerId: me, sellerId: conv.sellerId, status: 'pending', pickupAt: pickup.value, expiresAt: holds.requestExpiry(post, t) });
+    const hold = await H.create({ itemId, postId: post.id, conversationId: conv.id, buyerId: me, sellerId: conv.sellerId, status: 'pending', pickupAt: pickup.value, offerCents: offer.value, expiresAt: holds.requestExpiry(post, t) });
     hold.item = item;
-    await holds.postEvent(hold, 'requested', me, item.name);
+    await holds.postEvent(hold, 'requested', me, item.name, offer.value);
     return res.status(201).json(holds.holdJSON(hold, me));
   } catch (err) { return serverError(res, err); }
 });
