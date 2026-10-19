@@ -10,6 +10,7 @@ const { publicUser } = require('../lib/people');
 const ratings = require('../lib/ratings');
 const holds = require('../lib/holds');
 const meetups = require('../lib/meetups');
+const follows = require('../lib/follows');
 const schedule = require('../lib/schedule');
 const wanted = require('../lib/wanted');
 const { wantedEnabled } = require('../lib/features');
@@ -373,7 +374,7 @@ router.post('/:id/report', loadConversation, async (req, res) => {
       return sendError(res, 429, 'rate_limited', 'You have sent a lot of reports. Please try again later.');
     }
     const report = await models.ConversationReport.create({ conversationId: conv.id, reporterId: me, reportedUserId: other, reason: body.reason, note });
-    if (body.block) { await models.UserBlock.findOrCreate({ where: { blockerId: me, blockedId: other } }); await holds.endBetween(me, other); await meetups.endBetween(me, other); }
+    if (body.block) { await models.UserBlock.findOrCreate({ where: { blockerId: me, blockedId: other } }); await holds.endBetween(me, other); await meetups.endBetween(me, other); await follows.endBetween(me, other); }
     return res.status(201).json({
       id: report.id, conversationId: conv.id, reason: report.reason, status: report.status, createdAt: report.createdAt,
       blocked: await msg.blockState(me, other),
@@ -393,6 +394,7 @@ router.post('/:id/block', loadConversation, async (req, res) => {
     await models.UserBlock.findOrCreate({ where: { blockerId: me, blockedId: other } });
     await holds.endBetween(me, other);
     await meetups.endBetween(me, other);
+    await follows.endBetween(me, other);
     return res.json({ blocked: await msg.blockState(me, other) });
   } catch (err) {
     if (err && err.name === 'SequelizeUniqueConstraintError') return res.json({ blocked: await msg.blockState(me, other) });

@@ -223,6 +223,17 @@ key is available) and an **Open in Google Maps** link with the stops as waypoint
 stops, Google's limit). Your saved list is private to you.
 
 
+## Following sellers
+
+**Follow** on a sale page or a seller's page (`/people/:id`, which also shows the follower count)
+gets you their new sales. **Following** in the account menu (`/following`) lists the current sales
+of everyone you follow, and each person with an email switch and **Unfollow**. When a followed
+seller publishes a sale, followers with emails on get an email. Edits don't trigger one. These
+emails share the sale-alert budget (`ALERT_DIGEST_MINUTES`, `ALERT_DAILY_MAX_EMAILS`), so several
+new sales arrive bundled. Each email has a one-click link that stops emails about that seller
+without unfollowing. Blocking someone ends following in both directions, and blocked users can't
+follow each other. Nobody sees anyone's email address; sellers show as "First L.".
+
 ## Item holds
 
 From a conversation, a buyer can ask the seller to hold one item of the sale, optionally with a pickup time (before the sale ends, at most 14 days ahead). The seller accepts (choosing how long: until an hour after pickup, or 2/6/24/48 h), declines, or later releases the hold; the buyer can cancel. An accepted hold shows the item as **Reserved** on the sale page and in its item list (the seller also sees "Reserved until ..."); nobody else is told who holds it, and a reserved item can't be requested by anyone else.

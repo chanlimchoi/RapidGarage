@@ -172,7 +172,26 @@
   "reset.changedSubject": "Your RapidGarage password was changed",
   "reset.changedHeading": "Your password was changed",
   "reset.changedIntro": "The password for your RapidGarage account was just changed, and every other device was signed out.",
-  "reset.changedNotYou": "If this wasn't you, reset your password now: {url}"
+  "reset.changedNotYou": "If this wasn't you, reset your password now: {url}",
+  "follow.subjectOne": "{name} posted a new sale: {title}",
+  "follow.subjectMany": {
+   "one": "{count} new sale from people you follow",
+   "other": "{count} new sales from people you follow"
+  },
+  "follow.headOne": "A new sale from someone you follow",
+  "follow.headMany": {
+   "one": "{count} new sale from people you follow",
+   "other": "{count} new sales from people you follow"
+  },
+  "follow.introOne": "A seller you follow just posted a sale:",
+  "follow.introMany": {
+   "one": "Sellers you follow posted {count} new sale:",
+   "other": "Sellers you follow posted {count} new sales:"
+  },
+  "follow.manage": "See everyone you follow",
+  "follow.manageText": "See everyone you follow: {url}",
+  "follow.turnOff": "Stop emails about {name}",
+  "follow.turnOffText": "Stop emails about {name}: {url}"
  },
  "messages": {
   "Login required.": "Login required.",
@@ -520,6 +539,11 @@
   "Too many failed attempts. Please wait 15 minutes or reset your password.": "Too many failed attempts. Please wait 15 minutes or reset your password.",
   "The server is busy. Please try again in a few seconds.": "The server is busy. Please try again in a few seconds.",
   "Cross-site requests are not allowed.": "Cross-site requests are not allowed.",
-  "Request body is too large.": "Request body is too large."
+  "Request body is too large.": "Request body is too large.",
+  "You can't follow yourself.": "You can't follow yourself.",
+  "You can't follow this person.": "You can't follow this person.",
+  "You follow the maximum number of people. Unfollow someone first.": "You follow the maximum number of people. Unfollow someone first.",
+  "notify must be true or false.": "notify must be true or false.",
+  "following must be true or false.": "following must be true or false."
  }
 }

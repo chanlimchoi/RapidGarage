@@ -172,7 +172,26 @@
   "reset.changedSubject": "Se cambió tu contraseña de RapidGarage",
   "reset.changedHeading": "Se cambió tu contraseña",
   "reset.changedIntro": "Se acaba de cambiar la contraseña de tu cuenta de RapidGarage y se cerró la sesión en todos los demás dispositivos.",
-  "reset.changedNotYou": "Si no fuiste tú, restablece tu contraseña ahora: {url}"
+  "reset.changedNotYou": "Si no fuiste tú, restablece tu contraseña ahora: {url}",
+  "follow.subjectOne": "{name} publicó una venta nueva: {title}",
+  "follow.subjectMany": {
+   "one": "{count} venta nueva de personas que sigues",
+   "other": "{count} ventas nuevas de personas que sigues"
+  },
+  "follow.headOne": "Una venta nueva de alguien que sigues",
+  "follow.headMany": {
+   "one": "{count} venta nueva de personas que sigues",
+   "other": "{count} ventas nuevas de personas que sigues"
+  },
+  "follow.introOne": "Un vendedor que sigues acaba de publicar una venta:",
+  "follow.introMany": {
+   "one": "Vendedores que sigues publicaron {count} venta nueva:",
+   "other": "Vendedores que sigues publicaron {count} ventas nuevas:"
+  },
+  "follow.manage": "Ver a quién sigues",
+  "follow.manageText": "Ver a quién sigues: {url}",
+  "follow.turnOff": "Dejar de recibir correos sobre {name}",
+  "follow.turnOffText": "Dejar de recibir correos sobre {name}: {url}"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -520,6 +539,11 @@
   "Too many failed attempts. Please wait 15 minutes or reset your password.": "Demasiados intentos fallidos. Espera 15 minutos o restablece tu contraseña.",
   "The server is busy. Please try again in a few seconds.": "El servidor está ocupado. Inténtalo de nuevo en unos segundos.",
   "Cross-site requests are not allowed.": "No se permiten solicitudes desde otros sitios.",
-  "Request body is too large.": "El cuerpo de la solicitud es demasiado grande."
+  "Request body is too large.": "El cuerpo de la solicitud es demasiado grande.",
+  "You can't follow yourself.": "No puedes seguirte a ti mismo.",
+  "You can't follow this person.": "No puedes seguir a esta persona.",
+  "You follow the maximum number of people. Unfollow someone first.": "Ya sigues al número máximo de personas. Deja de seguir a alguien primero.",
+  "notify must be true or false.": "notify debe ser true o false.",
+  "following must be true or false.": "following debe ser true o false."
  }
 }
