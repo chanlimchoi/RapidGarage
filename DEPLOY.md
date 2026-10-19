@@ -253,6 +253,30 @@ bots don't. Only the daily total per sale is stored (`PostShareDays`); the
 channel is checked but not kept. The total appears as *Shares* on the seller
 dashboard.
 
+## Search engines (SEO)
+
+Built on the same server-rendered `<head>` as link previews, so crawlers that don't run
+JavaScript still see it:
+
+- **Structured data.** Sale and neighborhood-sale pages carry schema.org `SaleEvent` JSON-LD,
+  one entry per remaining sale day. Each has the dates, the city, state and zip, coordinates
+  rounded to about 1 km, the preview image and the price range (`AggregateOffer`; a free sale
+  gets an `Offer` of 0). Never the street address or names. The home page gets a `WebSite` block.
+- **Languages.** Public pages list `hreflang` alternates for en, es, ko and zh-CN (`?lang=`) plus
+  `x-default`.
+- **`/robots.txt`** allows public pages, preview images and photos, and disallows the API, QR
+  short links and every private page (admin, settings, messages, saved, dashboard, login and
+  sign-up, password reset, edit, print and item pages). It points at the sitemap.
+- **`/sitemap.xml`** lists the home, events, wanted, about and safety pages, plus every visible,
+  not-ended sale, neighborhood sale and open wanted post (up to 45,000 URLs), with `lastmod`.
+  It's cached for 10 minutes.
+- **noindex.** Private pages get `X-Robots-Tag: noindex` and a robots meta tag. Hidden, ended
+  or removed items already did.
+
+URLs come from `APP_BASE_URL`, so set it to the public https address. After launch, submit
+`https://<your domain>/sitemap.xml` in Google Search Console and Bing Webmaster Tools. In development, Vite
+proxies `/robots.txt` and `/sitemap.xml` to the backend.
+
 ## Safety tips and meetup spots
 
 Conversations show a short safety card at the start of a new conversation (people can hide it; that choice is remembered on their device only). Every conversation and the hold flow link to the public **/safety** page, which is also in the footer.

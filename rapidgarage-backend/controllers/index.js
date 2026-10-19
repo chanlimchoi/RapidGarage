@@ -24,6 +24,8 @@ router.use('/share', require('./share'));
 router.use('/ratings', require('./ratings'));
 router.use('/dashboard', require('./dashboard'));
 router.use('/s', require('./shortlinks'));
+// robots.txt and sitemap.xml (also mounted at the site root by app.js).
+router.use('/', require('./seo'));
 router.use('/', require('./home'));
 
 module.exports = router;

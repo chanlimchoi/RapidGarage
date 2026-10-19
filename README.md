@@ -275,6 +275,14 @@ Anyone logged in can organize a **neighborhood sale** (`/events/new`): a name, a
 - **Moderation.** Events can be reported (same reasons, the same hourly report budget as posts, auto-hide at the same threshold). Admins find them under **Admin → Reports → Neighborhood sales** and can dismiss, hide, unhide or delete. Hiding takes the event out of search and lists and stops its short link and printing; its sales stay listed on their own. Ended events stay viewable but leave search.
 - **Limits.** `EVENT_MAX_ACTIVE` upcoming events per organizer (3), `EVENT_MAX_PER_DAY` created per 24 h (5), `EVENT_MAX_SALES` sales per event (200).
 
+## Search engines (SEO)
+
+Sale and neighborhood-sale pages include schema.org `SaleEvent` structured data (dates, city,
+price range, image; never the street or names), so search engines can show them as events.
+Public pages list `hreflang` alternates for the four languages. `/robots.txt` and a live
+`/sitemap.xml` of current public sales are served, and private pages are `noindex`. See
+DEPLOY.md ("Search engines").
+
 ## Admin analytics
 
 **Admin → Analytics** shows site-wide numbers for the last 7, 30 or 90 days. Stat tiles show

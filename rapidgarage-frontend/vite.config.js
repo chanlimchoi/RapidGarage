@@ -12,6 +12,9 @@ const proxy = {
     changeOrigin: false,
     rewrite: (p) => p.replace(/^\/api/, ''),
   },
+  // robots.txt and sitemap.xml are built by the backend (lib/seo.js).
+  '/robots.txt': { target: BACKEND, changeOrigin: false },
+  '/sitemap.xml': { target: BACKEND, changeOrigin: false },
   // QR short links (/s/<code>, not /saved, /settings, /signup...) go to the
   // backend unchanged; it counts the scan and redirects to the post. xfwd adds
   // X-Forwarded-For so repeat scans can be told apart (the IP is only hashed).
