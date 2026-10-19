@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import '@fontsource-variable/inter';
 import './styles/tokens.css';
@@ -15,12 +15,11 @@ pwa.init({ register: import.meta.env.PROD });
 // Pick the language (saved choice, else the browser's) before the first render
 // so the page never flashes English first.
 i18n.init().then(() => {
-  ReactDOM.render(
+  createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </ErrorBoundary>,
-    document.getElementById('root')
+    </ErrorBoundary>
   );
 });
