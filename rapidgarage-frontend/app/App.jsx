@@ -1,5 +1,6 @@
 import React, { Component, Suspense, lazy } from 'react';
-import { Route, Switch, withRouter } from 'react-router-dom';
+import { Routes, Route, useParams } from 'react-router-dom';
+import { withRouterProps } from './lib/router';
 import { fetchMe, apiFetch, fetchBadges } from './api';
 import * as errorReporter from './lib/errorReporter';
 import NavBar from './components/NavBar';
@@ -52,6 +53,31 @@ const WantedForm = lazy(() => import('./wanted/WantedForm'));
 const WantedPage = lazy(() => import('./wanted/WantedPage'));
 const Dashboard = lazy(() => import('./dashboard/Dashboard'));
 const DashboardSale = lazy(() => import('./dashboard/DashboardSale'));
+
+// Route elements need the router props RR4's render-prop used to pass
+// (match/location/history) plus the App-level values (common/user/ready, config,
+// and the refresh callbacks). The values come from this context so the route
+// table stays declarative; the router props come from withRouterProps below.
+const AppCtx = React.createContext(null);
+
+// Renders one routed component with the App-level values RR4's render-prop used
+// to spread in (common/user/ready + config) and the router props (match,
+// location, history) via withRouterProps. `keyParam` names a param ('id') that
+// remounts the component when it changes, replacing RR4's key={props.match...}
+// (so switching /events/new <-> /events/:id/edit does not reuse form state).
+const RoutedInner = ({ component: Inner, keyParam, ...rest }) => {
+  const ctx = React.useContext(AppCtx) || {};
+  const params = useParams();
+  const WithRouter = withRouterProps(Inner);
+  return (
+    <WithRouter
+      key={keyParam ? params[keyParam] || 'new' : undefined}
+      {...rest}
+      {...(ctx.common || {})}
+      config={ctx.config}
+    />
+  );
+};
 
 const UNREAD_POLL_MS = 15000;
 
@@ -165,42 +191,44 @@ class App extends Component {
           {user && config.emailVerification && !user.emailVerifiedAt && !/^\/verify-email/.test(this.props.location.pathname) ? <VerifyBanner user={user} onVerified={this.refreshUser} /> : null}
           {user && !/^\/(alerts|admin)/.test(this.props.location.pathname) ? <ReminderBanner userId={user.id} count={this.state.reminders} onChange={this.refreshUnread} /> : null}
           <Suspense fallback={<SkeletonBlock lines={5} />}>
-            <Switch>
-              <Route exact path='/' render={(props) => <PostList {...props} {...common} config={config} />} />
-              <Route path='/about' component={About} />
-              <Route path='/safety' component={SafetyPage} />
-              <Route path='/admin' render={(props) => <Admin {...props} {...common} onAuthChange={this.refreshUser} onConfigChange={this.refreshConfig} />} />
-              <Route path='/settings' render={(props) => <Settings {...props} {...common} config={config} onAuthChange={this.refreshUser} />} />
-              <Route path='/signup' render={(props) => <SignUp {...props} onAuthChange={this.refreshUser} />} />
-              <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
-              <Route path='/forgot-password' component={ForgotPassword} />
-              <Route path='/verify-email' render={(props) => <VerifyEmail {...props} onAuthChange={this.refreshUser} />} />
-              <Route path='/reset-password' render={(props) => <ResetPassword {...props} onAuthChange={this.refreshUser} />} />
-              <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />
-              <Route path='/newpost' render={(props) => <NewPost {...props} {...common} />} />
-              <Route path='/post/:id/print' render={(props) => <PrintFlyer {...props} {...common} />} />
-              <Route path='/post/:id/items' render={(props) => <ItemsEditor {...props} {...common} config={config} />} />
-              <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} config={config} />} />
-              <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
-              <Route exact path='/dashboard' render={(props) => <Dashboard {...props} {...common} />} />
-              <Route path='/dashboard/sales/:id' render={(props) => <DashboardSale {...props} {...common} />} />
-              <Route exact path='/events' render={(props) => <EventsIndex {...props} {...common} />} />
-              <Route path='/events/new' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
-              <Route path='/events/:id/edit' render={(props) => <EventForm key={props.match.params.id || 'new'} {...props} {...common} />} />
-              <Route path='/events/:id/print' render={(props) => <EventPrint {...props} {...common} />} />
-              <Route path='/events/:id' render={(props) => <EventPage {...props} {...common} />} />
-              <Route exact path='/wanted' render={(props) => <WantedBoard {...props} {...common} />} />
-              <Route path='/wanted/new' render={(props) => <WantedForm key='new' {...props} {...common} />} />
-              <Route path='/wanted/:id/edit' render={(props) => <WantedForm key={props.match.params.id} {...props} {...common} />} />
-              <Route path='/wanted/:id' render={(props) => <WantedPage {...props} {...common} onSeen={this.refreshUnread} />} />
-              <Route path='/messages/:id?' render={(props) => <Messages {...props} {...common} onUnreadChange={this.refreshUnread} />} />
-              <Route path='/alerts/unsubscribe' component={Unsubscribe} />
-              <Route path='/following' render={(props) => <Following {...props} {...common} />} />
-              <Route path='/saved' render={(props) => <Saved {...props} {...common} config={config} />} />
-              <Route path='/people/:id' render={(props) => <PersonRatings {...props} {...common} />} />
-              <Route path='/profile' render={(props) => <Profile {...props} {...common} />} />
-              <Route component={NotFound} />
-            </Switch>
+            <AppCtx.Provider value={{ common, config, refreshUser: this.refreshUser, refreshConfig: this.refreshConfig, refreshUnread: this.refreshUnread }}>
+              <Routes>
+                <Route path='/' element={<RoutedInner component={PostList} />} />
+                <Route path='/about' element={<RoutedInner component={About} />} />
+                <Route path='/safety' element={<RoutedInner component={SafetyPage} />} />
+                <Route path='/admin' element={<RoutedInner component={Admin} onAuthChange={this.refreshUser} onConfigChange={this.refreshConfig} />} />
+                <Route path='/settings' element={<RoutedInner component={Settings} onAuthChange={this.refreshUser} />} />
+                <Route path='/signup' element={<RoutedInner component={SignUp} onAuthChange={this.refreshUser} />} />
+                <Route path='/login' element={<RoutedInner component={Login} onAuthChange={this.refreshUser} />} />
+                <Route path='/forgot-password' element={<RoutedInner component={ForgotPassword} />} />
+                <Route path='/verify-email' element={<RoutedInner component={VerifyEmail} onAuthChange={this.refreshUser} />} />
+                <Route path='/reset-password' element={<RoutedInner component={ResetPassword} onAuthChange={this.refreshUser} />} />
+                <Route path='/logout' element={<RoutedInner component={Logout} onAuthChange={this.refreshUser} />} />
+                <Route path='/newpost' element={<RoutedInner component={NewPost} />} />
+                <Route path='/post/:id/print' element={<RoutedInner component={PrintFlyer} />} />
+                <Route path='/post/:id/items' element={<RoutedInner component={ItemsEditor} />} />
+                <Route path='/post/:id/edit' element={<RoutedInner component={EditPost} />} />
+                <Route path='/post/:id' element={<RoutedInner component={Post} />} />
+                <Route path='/dashboard' element={<RoutedInner component={Dashboard} />} />
+                <Route path='/dashboard/sales/:id' element={<RoutedInner component={DashboardSale} />} />
+                <Route path='/events' element={<RoutedInner component={EventsIndex} />} />
+                <Route path='/events/new' element={<RoutedInner component={EventForm} keyParam='id' />} />
+                <Route path='/events/:id/edit' element={<RoutedInner component={EventForm} keyParam='id' />} />
+                <Route path='/events/:id/print' element={<RoutedInner component={EventPrint} />} />
+                <Route path='/events/:id' element={<RoutedInner component={EventPage} />} />
+                <Route path='/wanted' element={<RoutedInner component={WantedBoard} />} />
+                <Route path='/wanted/new' element={<RoutedInner component={WantedForm} keyParam='id' />} />
+                <Route path='/wanted/:id/edit' element={<RoutedInner component={WantedForm} keyParam='id' />} />
+                <Route path='/wanted/:id' element={<RoutedInner component={WantedPage} onSeen={this.refreshUnread} />} />
+                <Route path='/messages/:id?' element={<RoutedInner component={Messages} onUnreadChange={this.refreshUnread} />} />
+                <Route path='/alerts/unsubscribe' element={<RoutedInner component={Unsubscribe} />} />
+                <Route path='/following' element={<RoutedInner component={Following} />} />
+                <Route path='/saved' element={<RoutedInner component={Saved} />} />
+                <Route path='/people/:id' element={<RoutedInner component={PersonRatings} />} />
+                <Route path='/profile' element={<RoutedInner component={Profile} />} />
+                <Route path='*' element={<RoutedInner component={NotFound} />} />
+              </Routes>
+            </AppCtx.Provider>
           </Suspense>
         </main>
         <Footer />
@@ -211,4 +239,4 @@ class App extends Component {
   }
 }
 
-export default withRouter(App);
+export default withRouterProps(App);

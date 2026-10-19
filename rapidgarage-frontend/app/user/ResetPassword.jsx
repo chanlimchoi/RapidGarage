@@ -1,6 +1,5 @@
 import React from 'react';
-import { Redirect } from 'react-router';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { checkPasswordReset, confirmPasswordReset, errorMessage } from '../api';
 import { Field, Alert, EmptyState, SkeletonBlock, Spinner } from '../components/ui';
@@ -59,7 +58,7 @@ export default class ResetPassword extends React.Component {
 
   render() {
     const s = this.state;
-    if (s.done) return <Redirect to="/" />;
+    if (s.done) return <Navigate replace to="/" />;
     if (s.status === 'checking') return <div className="container container-narrow"><SkeletonBlock lines={3} /></div>;
     if (s.status === 'invalid') {
       return (

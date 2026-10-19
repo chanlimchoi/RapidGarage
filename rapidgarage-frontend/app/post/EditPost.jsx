@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { ArrowLeft, X, Lock, SearchX } from 'lucide-react';
 import { apiFetch, errorMessage, uploadPhotos, deletePhoto, savePhotoAlt, canEditPost, MAX_PHOTOS } from '../api';
 import PhotoPicker, { ALT_MAX } from '../components/PhotoPicker';
@@ -70,7 +69,7 @@ class EditPost extends Component {
 
   render() {
     const { post, loadError } = this.state;
-    if (this.state.done) return <Redirect to={'/post/' + post.id} />;
+    if (this.state.done) return <Navigate replace to={'/post/' + post.id} />;
     if (loadError) {
       return <div className="container container-narrow"><EmptyState level={1} icon={SearchX} title={t('edit.cantLoad')} action={<Link className="btn btn-primary" to="/">{t('nav.browseSales')}</Link>}>{loadError}</EmptyState></div>;
     }
