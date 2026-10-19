@@ -57,7 +57,7 @@ export default defineConfig(({ mode }) => {
           // a separate framework chunk stays cached across releases. Vite 8
           // bundles with Rolldown, whose manualChunks takes a function.
           manualChunks(id) {
-            if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|history|scheduler)[\\/]/.test(id)) return 'vendor';
+            if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(id)) return 'vendor';
           },
         },
       },

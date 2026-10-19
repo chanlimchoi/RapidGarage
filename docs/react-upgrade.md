@@ -145,3 +145,42 @@ npm run test:a11y # Playwright + axe, needs a running app
 ```
 
 Plus the manual route walk. No backend change is involved.
+
+## Outcome (as shipped)
+
+All four stages landed. Each was verified the same way (unit tests, a
+warning-free build, `check:pwa` 21/21, a real-browser deep-link walk over
+every route, and the project's Playwright + axe-core suite — 386 states,
+0 violations).
+
+- **Stage 1** — React 16.14 → 18.3 (#79). `createRoot` only; nothing else
+  needed, since the codebase uses no lifecycle, string ref, legacy context
+  or `defaultProps` that 18 changed.
+- **Stage 2** — react-router 4.3 → 6.30 (#81). The `withRouter` bridge
+  shipped as `app/lib/router.jsx` (`withRouterProps`) plus a single
+  `RoutedInner` wrapper in `App.jsx`, rather than the per-file swap this
+  doc first sketched — the route table stayed declarative and only one
+  module had to know about RR4-vs-RR6 props.
+- **Stage 3** — React 18.3 → 19.3 (#82). Version bump only; the React 19
+  removals (`ReactDOM.render`, string refs, `propTypes`, factory
+  components) were all absent.
+- **Stage 4** — `StrictMode`, dev-only (this change). Wrapped in
+  `app/index.jsx` behind `import.meta.env.DEV`, so the production bundle
+  is byte-identical (the built entry does not reference `StrictMode` at
+  all). A lifecycle probe on the dev server confirmed the double-invoke
+  is real (`ctor, ctor, render, render, didMount, willUnmount, didMount`),
+  and an instrumented run showed no leaked intervals or listeners across
+  30 reloads and 8 SPA navigations.
+
+One caveat found while doing Stage 4: because the app waits for
+`i18n.init()` (a dynamic-import promise) before its first render, `App`'s
+own class lifecycle mounts *outside* StrictMode's double-invoke window —
+the wrapper is double-invoked, but `App.componentDidMount` commits once.
+The guard therefore mainly protects the routed page components (Messages,
+Saved, dialogs), which mount synchronously. Moving the boot into a
+Suspense boundary would widen the window, but at the cost of the
+"no English flash" guarantee, so it was left as is.
+
+Left over, not scheduled: the `withRouterProps` shim can be deleted as
+components migrate to hooks, and components can then be converted from
+classes to functions incrementally.
