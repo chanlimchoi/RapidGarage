@@ -497,6 +497,22 @@ from the sale that is open or opens first (ties: the one closing first). At most
 directions link using the sales' public addresses; without `lat,lng` it has no origin so
 Google Maps starts from the phone's location. The location is only used for that request.
 
+## Live updates (SSE) and push
+
+- `GET /live` (login): `text/event-stream`. It sends `hello` on connect, then `badges` and `message { conversationId }` events,
+  ids only, with a heartbeat comment every 25 s and `retry: 5000`. At most 5 streams per person (the oldest is closed) and
+  `MAX_LIVE_CONNECTIONS` (2000) per process; past that, `503`. Streams are exempt from load shedding and closed
+  first on shutdown. They're per process: with several instances, the clients' 60 s fallback poll covers events from
+  another instance.
+- Events come from a `Message` `afterCreate` hook, run after commit (`lib/notify.js`). That covers text, hold and meetup messages.
+- Push (`lib/push.js`, `web-push`, VAPID): `GET|PUT /push/settings` (`messages`, `follows`, `reminders`), `POST|DELETE
+  /push/subscriptions`, `POST /push/test` (5 per hour). Endpoints must be https on a known push service (FCM, Mozilla, Apple, WNS,
+  plus `PUSH_EXTRA_HOSTS`): no credentials, no other ports, so the server can't be pointed at arbitrary hosts. Up to 10
+  devices per person. A 404/410 from the push service, or 5 failures in a row, deletes the subscription. Triggers: a new message
+  (skipped while the recipient has a live tab), a followed seller's new sale, morning reminders. Payloads hold who and which
+  sale, never message text.
+- Migration `20261018050000-push-notifications`.
+
 ## Own Anthropic keys (BYOK)
 
 - `GET /me/ai-key` → `{ hasKey, last4, setAt }`. `PUT /me/ai-key` `{ key, currentPassword }` (password required when the account

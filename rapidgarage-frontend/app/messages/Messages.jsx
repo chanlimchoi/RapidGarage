@@ -19,6 +19,7 @@ import MeetupCard from './MeetupCard';
 import { meetupEventText, meetTime, upcomingAgreed, syncMeetups } from './meetupText';
 import { checkMessage, showTips, hideTips } from '../lib/safety';
 import { t, intlLocale } from '../i18n';
+import * as liveClient from '../lib/liveClient';
 
 const POLL_MS = 10000;
 
@@ -68,7 +69,11 @@ export default class Messages extends React.Component {
 
   componentDidMount() {
     if (this.props.user) this.init();
-    this.timer = setInterval(() => { if (!document.hidden) this.poll(); }, POLL_MS);
+    // Live events fetch at once; polling is the fallback (every 10 s without a
+    // live connection, every 60 s with one).
+    this.ticks = 0;
+    this.timer = setInterval(() => { if (!document.hidden && (!liveClient.isOpen() || ++this.ticks % 6 === 0)) this.poll(); }, POLL_MS);
+    this.offLive = liveClient.on((type) => { if (type === 'message' && !document.hidden) this.poll(); });
     document.addEventListener('mousedown', this.onDocClick);
   }
 
@@ -173,6 +178,7 @@ export default class Messages extends React.Component {
 
   componentWillUnmount() {
     clearInterval(this.timer);
+    if (this.offLive) this.offLive();
     document.removeEventListener('mousedown', this.onDocClick);
     this.unmounted = true;
   }

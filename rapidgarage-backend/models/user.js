@@ -29,6 +29,10 @@ module.exports = (sequelize, DataTypes) => {
     aiKeyEncrypted: { type: DataTypes.TEXT, allowNull: true },
     aiKeyLast4: { type: DataTypes.STRING(4), allowNull: true },
     aiKeySetAt: { type: DataTypes.DATE, allowNull: true },
+    // Push notification choices (lib/push.js); devices are PushSubscriptions.
+    pushMessages: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    pushFollows: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    pushReminders: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   }, {
     // Never load the password hash unless explicitly asked for (login only).
     // The encrypted Maps key is excluded too; load it only via scope('withMapsKey').

@@ -105,6 +105,9 @@ async function enqueueForPost(post) {
     .map((f) => ({ userId: f.followerId, postId: post.id, followId: f.id, status: 'pending' }));
   if (!rows.length) return 0;
   await m.FollowNotification.bulkCreate(rows, { ignoreDuplicates: true });
+  // Push right away to followers who allow it (the email follows in the digest).
+  const seller = await m.User.findByPk(post.userId, { attributes: ['id', 'firstName', 'lastName'] });
+  rows.forEach((r) => require('./push').newSale(r.userId, { sellerName: publicName(seller), title: post.title, postId: post.id }));
   return rows.length;
 }
 
