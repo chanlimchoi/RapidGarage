@@ -71,7 +71,7 @@ async function enqueueDue(now) {
   const t = now.getTime();
   const days = await m.SaleDay.findAll({
     where: { startsAt: { [Op.lt]: new Date(t + 24 * HOUR), [Op.gt]: new Date(t - 24 * HOUR) }, endsAt: { [Op.gt]: now } },
-    include: [{ model: m.Post, attributes: ['id', 'userId', 'hidden', 'timeZone'], where: { hidden: false } }],
+    include: [{ model: m.Post, attributes: ['id', 'userId', 'hidden', 'timeZone', 'title'], where: { hidden: false } }],
   });
   let created = 0;
   for (const d of days) {
@@ -86,6 +86,7 @@ async function enqueueDue(now) {
       .map((s) => ({ userId: s.userId, postId: d.postId, date: d.date, startsAt: d.startsAt, endsAt: d.endsAt, status: 'pending', noticeAt: now }));
     if (!rows.length) continue;
     await m.SaleReminder.bulkCreate(rows, { ignoreDuplicates: true });
+    rows.forEach((r) => require('./push').reminder(r.userId, { title: d.Post.title, postId: d.postId }));
     created += rows.length;
   }
   return created;

@@ -10,6 +10,7 @@ import SaleAlerts from './SaleAlerts';
 import ReminderSettings from './ReminderSettings';
 import PasswordSettings from './PasswordSettings';
 import AiKeySettings from './AiKeySettings';
+import NotificationSettings from './NotificationSettings';
 import { t } from '../i18n';
 import { tx } from '../i18n/rich';
 
@@ -115,7 +116,7 @@ export default class Settings extends React.Component {
       return (
         <div className="container rg-settings">
           {this.header()}
-          <div className="stack-lg">{this.languageSection()}<SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} /><PasswordSettings user={this.props.user} />{this.aiKeySection()}</div>
+          <div className="stack-lg">{this.languageSection()}<SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} /><NotificationSettings user={this.props.user} /><PasswordSettings user={this.props.user} />{this.aiKeySection()}</div>
         </div>
       );
     }
@@ -126,6 +127,7 @@ export default class Settings extends React.Component {
         <div className="stack-lg">
           {this.languageSection()}
           <SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} />
+          <NotificationSettings user={this.props.user} />
           <PasswordSettings user={this.props.user} />
           {this.aiKeySection()}
           <section className="settings-section card-form" aria-labelledby="maps-key-heading">

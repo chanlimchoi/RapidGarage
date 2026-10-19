@@ -270,6 +270,20 @@ key is available) and an **Open in Google Maps** link with the stops as waypoint
 stops, Google's limit). Your saved list is private to you.
 
 
+## Live updates and push notifications
+
+While you're logged in, each tab keeps one live connection (`/api/live`, Server-Sent Events). New
+messages and badge changes show up at once instead of on the next poll. Polling drops to once a
+minute and takes over again if the connection is lost.
+
+**Settings → Notifications** turns on push notifications for the current phone or computer
+(Web Push, so they arrive even with the app closed; iPhone/iPad need RapidGarage on the Home
+Screen first). You choose what to hear about: new messages, new sales from people you follow,
+and saved sales happening today. A **Send a test** button checks the setup. Notifications say who
+wrote and which sale, never the message text, because they can show on a lock screen. Message
+notifications are skipped while you have the app open. Push needs `VAPID_PUBLIC_KEY` and
+`VAPID_PRIVATE_KEY` on the server (`npx web-push generate-vapid-keys`).
+
 ## Following sellers
 
 **Follow** on a sale page or a seller's page (`/people/:id`, which also shows the follower count)

@@ -25,6 +25,12 @@ module.exports = (sequelize, DataTypes) => {
       { name: 'messages_sender_created_idx', fields: ['senderId', 'createdAt'] },
     ],
   });
+  // Live updates + push for the other person (lib/notify.js), after commit.
+  Message.afterCreate((msg, options) => {
+    const run = () => { require('../lib/notify').messageCreated(msg); };
+    if (options && options.transaction && typeof options.transaction.afterCommit === 'function') options.transaction.afterCommit(run);
+    else run();
+  });
   Message.associate = (models) => {
     Message.belongsTo(models.Conversation, { foreignKey: 'conversationId', onDelete: 'CASCADE' });
     Message.belongsTo(models.User, { as: 'sender', foreignKey: 'senderId', onDelete: 'CASCADE' });

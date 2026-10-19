@@ -158,6 +158,8 @@ if (require.main === module) {
       // in-flight requests, then close DB pools.
       const shutdown = () => {
         app.locals.draining = true;
+        // Open event streams would hold close() open; browsers reconnect to the next instance.
+        require('./lib/live').closeAll();
         server.close(() => {
           require('./lib/alerts').stopWorker();
           Promise.all([sessionStore.close(), models.sequelize.close()]).finally(() => process.exit(0));

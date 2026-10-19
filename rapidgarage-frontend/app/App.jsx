@@ -39,6 +39,7 @@ import Dashboard from './dashboard/Dashboard';
 import DashboardSale from './dashboard/DashboardSale';
 import * as savedStore from './lib/saved';
 import * as i18n from './i18n';
+import * as liveClient from './lib/liveClient';
 
 const UNREAD_POLL_MS = 15000;
 
@@ -70,13 +71,18 @@ class App extends Component {
   componentDidMount() {
     this.refreshUser();
     this.refreshConfig();
-    this.unreadTimer = setInterval(() => { if (!document.hidden) this.refreshUnread(); }, UNREAD_POLL_MS);
+    // With a live connection the badge refreshes on events; poll every 60 s as a fallback.
+    this.ticks = 0;
+    this.unreadTimer = setInterval(() => { if (!document.hidden && (!liveClient.isOpen() || ++this.ticks % 4 === 0)) this.refreshUnread(); }, UNREAD_POLL_MS);
+    this.offLive = liveClient.on((type) => { if (type === 'badges' || type === 'message') this.refreshUnread(); });
     document.addEventListener('visibilitychange', this.onVisible);
     this.offLocale = i18n.onChange((locale) => this.setState({ locale }));
   }
 
   componentWillUnmount() {
     clearInterval(this.unreadTimer);
+    if (this.offLive) this.offLive();
+    liveClient.disconnect();
     document.removeEventListener('visibilitychange', this.onVisible);
     if (this.offLocale) this.offLocale();
   }
@@ -113,6 +119,7 @@ class App extends Component {
   refreshUser() {
     return fetchMe().then((user) => {
       savedStore.setUser(user);
+      if (user) liveClient.connect(); else liveClient.disconnect();
       this.syncLocale(user);
       this.setState({ user, ready: true }, this.refreshUnread);
     });

@@ -162,6 +162,8 @@ const loginGuard = {
 const inflight = { count: 0 };
 function shedLoad() {
   return function shed(req, res, next) {
+    // Live event streams stay open for minutes; they have their own cap (lib/live.js).
+    if (['/live', '/live/', '/api/live', '/api/live/'].includes(req.path)) return next();
     const max = intEnv('MAX_CONCURRENT_REQUESTS', 500);
     if (inflight.count >= max) {
       res.set('Retry-After', '5');

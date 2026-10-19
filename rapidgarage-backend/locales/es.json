@@ -196,7 +196,14 @@
   "aikey.addedText": "Se guardó en tu cuenta una clave de API de Anthropic que termina en {last4} para crear artículos a partir de fotos. Se guarda cifrada y nadie puede verla, ni tú ni los administradores del sitio.",
   "aikey.removedSubject": "Se eliminó la clave de IA de tu cuenta de RapidGarage",
   "aikey.removedText": "Se eliminó de tu cuenta la clave de API de Anthropic que termina en {last4}.",
-  "aikey.notYou": "Si no fuiste tú, cambia tu contraseña y elimina la clave en la consola de Anthropic."
+  "aikey.notYou": "Si no fuiste tú, cambia tu contraseña y elimina la clave en la consola de Anthropic.",
+  "push.messageTitle": "Nuevo mensaje de {name}",
+  "push.messageAbout": "Sobre “{title}”. Abre RapidGarage para leerlo.",
+  "push.messageOpen": "Abre RapidGarage para leerlo.",
+  "push.followTitle": "{name} publicó una venta nueva",
+  "push.reminderTitle": "Hoy es una venta que guardaste",
+  "push.testTitle": "Las notificaciones están activadas",
+  "push.testBody": "Así te avisará RapidGarage de mensajes y ventas nuevas."
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -571,6 +578,12 @@
   "That does not look like an Anthropic API key (they start with \"sk-ant-\").": "Eso no parece una clave de API de Anthropic (empiezan con \"sk-ant-\").",
   "Add your own Anthropic key in Settings, or paste one to use just once.": "Agrega tu propia clave de Anthropic en Configuración o pega una para usarla una sola vez.",
   "Anthropic rejected that key. Check it in the Anthropic Console, or update the one saved in Settings.": "Anthropic rechazó esa clave. Revísala en la consola de Anthropic o actualiza la guardada en Configuración.",
-  "Couldn't check the key with Anthropic right now. Please try again.": "No se pudo comprobar la clave con Anthropic ahora. Inténtalo de nuevo."
+  "Couldn't check the key with Anthropic right now. Please try again.": "No se pudo comprobar la clave con Anthropic ahora. Inténtalo de nuevo.",
+  "Push notifications aren't set up on this server.": "Las notificaciones push no están configuradas en este servidor.",
+  "This browser's push service isn't supported.": "El servicio de notificaciones de este navegador no es compatible.",
+  "Invalid push subscription.": "Suscripción de notificaciones no válida.",
+  "messages must be true or false.": "messages debe ser true o false.",
+  "follows must be true or false.": "follows debe ser true o false.",
+  "reminders must be true or false.": "reminders debe ser true o false."
  }
 }
