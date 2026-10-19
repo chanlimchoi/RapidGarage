@@ -4,6 +4,7 @@ const { badRequest, conflict, serverError } = require('../lib/http');
 const { validateSignup } = require('../lib/validate');
 const { applyAdminBootstrap } = require('../lib/roles');
 const i18n = require('../lib/i18n');
+const emailVerify = require('../lib/emailVerify');
 
 const User = models.User;
 
@@ -24,6 +25,8 @@ router.post('/', (req, res, next) => {
         // The language the person signed up in (web app sends it), else their browser's.
         locale: i18n.normalize(body.locale) || i18n.fromAcceptLanguage(req.get('Accept-Language')),
       }).then((created) => applyAdminBootstrap(created, false)).then((user) => {
+        // Only when verification is enforced (otherwise the link would have nothing to unlock).
+        if (emailVerify.required()) emailVerify.send(user).catch((e) => console.error('Verification email failed:', e && e.message));
         req.login(user, (err) => {
           if (err) return next(err);
           return res.status(201).json(user.toJSON());

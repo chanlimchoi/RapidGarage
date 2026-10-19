@@ -11,6 +11,7 @@ import ReminderSettings from './ReminderSettings';
 import PasswordSettings from './PasswordSettings';
 import AiKeySettings from './AiKeySettings';
 import NotificationSettings from './NotificationSettings';
+import AccountSettings from './AccountSettings';
 import { t } from '../i18n';
 import { tx } from '../i18n/rich';
 
@@ -116,7 +117,7 @@ export default class Settings extends React.Component {
       return (
         <div className="container rg-settings">
           {this.header()}
-          <div className="stack-lg">{this.languageSection()}<SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} /><NotificationSettings user={this.props.user} /><PasswordSettings user={this.props.user} />{this.aiKeySection()}</div>
+          <div className="stack-lg">{this.languageSection()}<SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} /><NotificationSettings user={this.props.user} /><PasswordSettings user={this.props.user} />{this.aiKeySection()}<AccountSettings user={this.props.user} onAuthChange={this.props.onAuthChange} history={this.props.history} /></div>
         </div>
       );
     }
@@ -130,6 +131,7 @@ export default class Settings extends React.Component {
           <NotificationSettings user={this.props.user} />
           <PasswordSettings user={this.props.user} />
           {this.aiKeySection()}
+          <AccountSettings user={this.props.user} onAuthChange={this.props.onAuthChange} history={this.props.history} />
           <section className="settings-section card-form" aria-labelledby="maps-key-heading">
             <header>
               <h2 id="maps-key-heading"><KeyRound size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('settings.mapsKey')}</h2>

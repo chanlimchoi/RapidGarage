@@ -203,7 +203,13 @@
   "push.followTitle": "{name} publicó una venta nueva",
   "push.reminderTitle": "Hoy es una venta que guardaste",
   "push.testTitle": "Las notificaciones están activadas",
-  "push.testBody": "Así te avisará RapidGarage de mensajes y ventas nuevas."
+  "push.testBody": "Así te avisará RapidGarage de mensajes y ventas nuevas.",
+  "verify.subject": "Confirma tu correo en RapidGarage",
+  "verify.intro": "¡Bienvenido a RapidGarage! Confirma que este es tu correo para publicar ventas y enviar mensajes:",
+  "verify.expires": "El enlace funciona una sola vez y caduca en 48 horas.",
+  "verify.ignore": "Si no creaste una cuenta, puedes ignorar este correo.",
+  "account.deletedSubject": "Se eliminó tu cuenta de RapidGarage",
+  "account.deletedText": "Se eliminaron tu cuenta y todo su contenido (ventas, fotos, mensajes, ventas guardadas, alertas y configuración). Gracias por usar RapidGarage."
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -584,6 +590,11 @@
   "Invalid push subscription.": "Suscripción de notificaciones no válida.",
   "messages must be true or false.": "messages debe ser true o false.",
   "follows must be true or false.": "follows debe ser true o false.",
-  "reminders must be true or false.": "reminders debe ser true o false."
+  "reminders must be true or false.": "reminders debe ser true o false.",
+  "Confirm your email address first: open the link we sent you, or ask for a new one.": "Primero confirma tu correo: abre el enlace que te enviamos o pide uno nuevo.",
+  "This server can't send email right now.": "Este servidor no puede enviar correos ahora.",
+  "This confirmation link is invalid or has expired. Ask for a new one.": "Este enlace de confirmación no es válido o caducó. Pide uno nuevo.",
+  "Type DELETE to confirm.": "Escribe DELETE para confirmar.",
+  "You're the only admin. Make someone else an admin before deleting your account.": "Eres el único administrador. Haz administrador a otra persona antes de eliminar tu cuenta."
  }
 }

@@ -183,7 +183,13 @@
   "push.followTitle": "{name} 发布了新甩卖",
   "push.reminderTitle": "你收藏的甩卖就在今天",
   "push.testTitle": "通知已开启",
-  "push.testBody": "RapidGarage 会这样通知你新消息和新甩卖。"
+  "push.testBody": "RapidGarage 会这样通知你新消息和新甩卖。",
+  "verify.subject": "确认你的 RapidGarage 邮箱",
+  "verify.intro": "欢迎使用 RapidGarage！请确认这是你的邮箱，以便发布甩卖和发送消息：",
+  "verify.expires": "该链接只能使用一次，48 小时后失效。",
+  "verify.ignore": "如果你没有创建账户，可以忽略这封邮件。",
+  "account.deletedSubject": "你的 RapidGarage 账户已删除",
+  "account.deletedText": "你的账户及其中的所有内容（甩卖、照片、消息、收藏、提醒和设置）均已删除。感谢使用 RapidGarage。"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -564,6 +570,11 @@
   "Invalid push subscription.": "推送订阅无效。",
   "messages must be true or false.": "messages 必须为 true 或 false。",
   "follows must be true or false.": "follows 必须为 true 或 false。",
-  "reminders must be true or false.": "reminders 必须为 true 或 false。"
+  "reminders must be true or false.": "reminders 必须为 true 或 false。",
+  "Confirm your email address first: open the link we sent you, or ask for a new one.": "请先确认你的邮箱：打开我们发送的链接，或重新获取一个。",
+  "This server can't send email right now.": "此服务器目前无法发送邮件。",
+  "This confirmation link is invalid or has expired. Ask for a new one.": "此确认链接无效或已过期，请重新获取。",
+  "Type DELETE to confirm.": "请输入 DELETE 以确认。",
+  "You're the only admin. Make someone else an admin before deleting your account.": "你是唯一的管理员。删除账户前请先将其他人设为管理员。"
  }
 }

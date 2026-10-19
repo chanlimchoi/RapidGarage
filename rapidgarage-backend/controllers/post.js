@@ -14,6 +14,7 @@ const events = require('../lib/events');
 const scans = require('../lib/scans');
 const wanted = require('../lib/wanted');
 const follows = require('../lib/follows');
+const { requireVerified } = require('../lib/emailVerify');
 const curbside = require('../lib/curbside');
 const calendar = require('../lib/calendar');
 
@@ -54,7 +55,7 @@ const reload = (post) => Post.findByPk(post.id, { include: [photoInclude, daysIn
 
 // Create: the owner is always the session user, never a body userId.
 // body.schedule ({ timeZone, days }) wins over the legacy startDate/endDate.
-router.post('/', requireLogin, async (req, res) => {
+router.post('/', requireLogin, requireVerified, async (req, res) => {
   const body = req.body || {};
   const { errors, values } = validatePost(body, false);
   const sched = readSchedule(body, true);

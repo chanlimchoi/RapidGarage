@@ -12,6 +12,8 @@ router.get('/', (req, res) => {
       googleLogin: !!passport.googleConfig(), userMapsKeys, saleAlerts, wantedPosts, passwordReset: mailer.isConfigured(),
       // aiItems: drafting is available; aiSiteKey: the site pays; userAiKeys / userAiKeySave: own keys (one-time / saved).
       aiItems: ai.enabled, aiSiteKey: ai.site, userAiKeys: ai.userKeys, userAiKeySave: ai.userKeySave,
+      // New accounts must confirm their email before posting or messaging.
+      emailVerification: require('../lib/emailVerify').required(),
     }))
     .catch((err) => serverError(res, err));
 });

@@ -110,13 +110,14 @@ function handleGoogleProfile(profile) {
         if (byEmail.get('googleId') && byEmail.get('googleId') !== googleId) {
           return { user: null, reason: 'linked_to_other_google_account' };
         }
-        return byEmail.update({ googleId }).then((u) => ({ user: u, reason: 'linked' }));
+        return byEmail.update({ googleId, emailVerifiedAt: byEmail.emailVerifiedAt || new Date() }).then((u) => ({ user: u, reason: 'linked' }));
       }
       const name = profile.name || {};
       return User.create({
         email: normalized,
         googleId,
         password: null,
+        emailVerifiedAt: new Date(),
         firstName: name.givenName || profile.displayName || normalized.split('@')[0],
         lastName: name.familyName || null,
       }).then((u) => ({ user: u, reason: 'created' }));

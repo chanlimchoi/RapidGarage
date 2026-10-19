@@ -77,6 +77,20 @@ needs no DDL rights. If the table is missing, the server refuses to start and te
   (reset or change) increments `authVersion`, so every older session stops authenticating.
   Sessions that hold a bare id (from before this) count as version 0 and stay valid.
 
+## Account: verification, export, deletion
+
+- `POST /verify-email/send` (login; 5 per hour) and `POST /verify-email/confirm` `{ token }` (no login). Tokens are
+  32 random bytes, stored as SHA-256, valid 48 h, single use. `Users.emailVerifiedAt` is set by confirmation, by
+  Google sign-in or linking, or by a completed password reset; the migration backfills existing users.
+- `lib/emailVerify.requireVerified` guards `POST /post`, `POST /wanted`, `POST /events`, `POST /conversations` and
+  `POST /conversations/:id/messages` → `403 email_unverified`. It's enforced when `REQUIRE_EMAIL_VERIFICATION`
+  is on (default: production only) and SMTP is configured. `/config` reports `emailVerification`.
+- `GET /me/export` → a JSON attachment (`format: rapidgarage-export-v1`), 3 per hour.
+- `DELETE /me` `{ currentPassword?, confirm: "DELETE" }` → `204`, after removing photo files, posts, conversations,
+  follows, saves, alerts, devices, tokens, blocks, wanted posts and events, then the user (other rows cascade).
+  The last admin → `409`.
+- Migration `20261018070000-email-verification`.
+
 ## Passwords
 
 - `POST /password-reset` `{ email }` → `202 { ok, expiresInMinutes }` for any valid email (an

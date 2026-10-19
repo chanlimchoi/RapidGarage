@@ -138,6 +138,48 @@ router.delete('/ai-key', requireLogin, async (req, res) => {
   } catch (err) { return serverError(res, err); }
 });
 
+// ---- Your data -------------------------------------------------------------
+// GET /me/export: everything about me as a JSON download (3 per hour).
+router.get('/export', requireLogin, async (req, res) => {
+  noStore(res);
+  try {
+    const counters = require('../lib/counters');
+    const key = 'export|' + req.user.id;
+    const hit = await counters.hit(key, 3600000);
+    if (hit.count > 3) { await counters.decrement(key); res.set('Retry-After', '3600'); return sendError(res, 429, 'rate_limited', 'Too many requests. Please slow down and try again shortly.'); }
+    const data = await require('../lib/account').exportData(req.user.id);
+    res.set('Content-Disposition', 'attachment; filename="rapidgarage-data-' + new Date().toISOString().slice(0, 10) + '.json"');
+    return res.type('application/json').send(JSON.stringify(data, null, 2));
+  } catch (err) { return serverError(res, err); }
+});
+
+// DELETE /me { currentPassword?, confirm: "DELETE" }: delete the account and
+// everything in it, then end the session.
+router.delete('/', requireLogin, async (req, res, next) => {
+  noStore(res);
+  const body = req.body || {};
+  if (body.confirm !== 'DELETE') return badRequest(res, 'Invalid request.', { confirm: 'Type DELETE to confirm.' });
+  try {
+    const user = await models.User.scope('withPassword').findByPk(req.user.id);
+    if (!user) return notFound(res, 'User not found.');
+    if (user.password) {
+      let ok = false;
+      try { ok = typeof body.currentPassword === 'string' && bcrypt.compareSync(body.currentPassword, user.password); } catch (e) { ok = false; }
+      if (!ok) return badRequest(res, 'Invalid request.', { currentPassword: 'Your current password is incorrect.' });
+    }
+    const out = await require('../lib/account').deleteAccount(user.id);
+    if (out.reason === 'last_admin') return sendError(res, 409, 'conflict', "You're the only admin. Make someone else an admin before deleting your account.");
+    return req.logout((err) => {
+      if (err) return next(err);
+      if (!req.session) return res.status(204).end();
+      return req.session.destroy(() => {
+        res.clearCookie('connect.sid', { path: '/', httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+        res.status(204).end();
+      });
+    });
+  } catch (err) { return serverError(res, err); }
+});
+
 // Whether the account has a password of its own (Google-only accounts don't),
 // so Settings knows whether to ask for the current one.
 router.get('/password', requireLogin, (req, res) => {

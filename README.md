@@ -141,6 +141,22 @@ by moderator") or ban a participant from messaging (they can still read, but not
 start conversations), and lift a ban later. Participants never see who else reported or any
 admin notes.
 
+## Email verification, data export and account deletion
+
+- **Email verification.** New accounts get a confirmation link (valid 48 hours, single use). Until they
+  open it, they can browse, save and set alerts, but can't post sales, wanted posts or neighborhood
+  sales, or message anyone, which is what spam accounts sign up for. A banner offers **Resend email**
+  (5 per hour). Google sign-in and a completed password reset count as verified, and accounts that
+  existed before this feature are marked verified by the migration. It's enforced in production when
+  SMTP is set (`REQUIRE_EMAIL_VERIFICATION`).
+- **Settings → Your account → Download my data** gives a JSON file of your profile, sales (with items
+  and schedule), wanted posts, neighborhood sales, saved sales, alerts, follows, ratings and
+  conversations (the other person as "First L."). It never contains passwords, keys, tokens or push
+  endpoints. Limited to 3 an hour.
+- **Delete account** needs your password and typing DELETE. It deletes your sales and their photo
+  files, conversations (for the other person too), saves, alerts, follows, devices and settings, then
+  ends your session and emails a confirmation. The only admin can't delete themselves.
+
 ## Forgot password
 
 **Log in → Forgot password?** asks for an email and sends a link to

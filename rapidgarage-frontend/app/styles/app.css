@@ -1282,3 +1282,7 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 
 /* Notifications */
 .notif-kinds { border: 0; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+
+/* Email verification banner */
+.verify-banner { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin: 0 auto var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-warning); border-radius: var(--radius-md); background: var(--color-warning-soft); color: var(--color-text); }
+.verify-banner span { flex: 1; min-width: 200px; }

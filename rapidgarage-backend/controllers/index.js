@@ -4,6 +4,7 @@ const router = express.Router();
 router.use('/login', require('./login'));
 router.use('/signup', require('./signup'));
 router.use('/password-reset', require('./passwordReset'));
+router.use('/verify-email', require('./verifyEmail'));
 router.use('/me', require('./me'));
 router.use('/auth', require('./auth'));
 router.use('/maps', require('./maps'));

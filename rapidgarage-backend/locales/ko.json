@@ -183,7 +183,13 @@
   "push.followTitle": "{name}님이 새 세일을 올렸어요",
   "push.reminderTitle": "저장한 세일이 오늘이에요",
   "push.testTitle": "알림이 켜졌어요",
-  "push.testBody": "새 메시지와 세일 소식을 이렇게 알려 드려요."
+  "push.testBody": "새 메시지와 세일 소식을 이렇게 알려 드려요.",
+  "verify.subject": "RapidGarage 이메일 확인",
+  "verify.intro": "RapidGarage에 오신 걸 환영해요! 세일을 올리고 메시지를 보내려면 이메일 주소를 확인하세요:",
+  "verify.expires": "링크는 한 번만 쓸 수 있고 48시간 후에 만료돼요.",
+  "verify.ignore": "계정을 만든 적이 없다면 이 메일은 무시하셔도 돼요.",
+  "account.deletedSubject": "RapidGarage 계정이 삭제되었어요",
+  "account.deletedText": "계정과 그 안의 모든 것(세일, 사진, 메시지, 저장한 세일, 알림, 설정)이 삭제되었어요. RapidGarage를 이용해 주셔서 감사해요."
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -564,6 +570,11 @@
   "Invalid push subscription.": "잘못된 푸시 구독이에요.",
   "messages must be true or false.": "messages는 true 또는 false여야 해요.",
   "follows must be true or false.": "follows는 true 또는 false여야 해요.",
-  "reminders must be true or false.": "reminders는 true 또는 false여야 해요."
+  "reminders must be true or false.": "reminders는 true 또는 false여야 해요.",
+  "Confirm your email address first: open the link we sent you, or ask for a new one.": "먼저 이메일 주소를 확인하세요. 보내 드린 링크를 열거나 새 링크를 요청하세요.",
+  "This server can't send email right now.": "지금은 이 서버에서 메일을 보낼 수 없어요.",
+  "This confirmation link is invalid or has expired. Ask for a new one.": "확인 링크가 유효하지 않거나 만료되었어요. 새 링크를 요청하세요.",
+  "Type DELETE to confirm.": "확인하려면 DELETE를 입력하세요.",
+  "You're the only admin. Make someone else an admin before deleting your account.": "유일한 관리자예요. 계정을 삭제하기 전에 다른 사람을 관리자로 지정하세요."
  }
 }
