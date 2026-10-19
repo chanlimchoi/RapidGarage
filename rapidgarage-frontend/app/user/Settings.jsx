@@ -9,6 +9,7 @@ import toast from '../components/toast';
 import SaleAlerts from './SaleAlerts';
 import ReminderSettings from './ReminderSettings';
 import PasswordSettings from './PasswordSettings';
+import AiKeySettings from './AiKeySettings';
 import { t } from '../i18n';
 import { tx } from '../i18n/rich';
 
@@ -88,6 +89,11 @@ export default class Settings extends React.Component {
     );
   }
 
+  aiKeySection() {
+    const c = this.props.config || {};
+    return c.userAiKeys ? <AiKeySettings user={this.props.user} canSave={c.userAiKeySave} /> : null;
+  }
+
   header() {
     return (
       <header className="page-header">
@@ -109,7 +115,7 @@ export default class Settings extends React.Component {
       return (
         <div className="container rg-settings">
           {this.header()}
-          <div className="stack-lg">{this.languageSection()}<SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} /><PasswordSettings user={this.props.user} /></div>
+          <div className="stack-lg">{this.languageSection()}<SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} /><PasswordSettings user={this.props.user} />{this.aiKeySection()}</div>
         </div>
       );
     }
@@ -121,6 +127,7 @@ export default class Settings extends React.Component {
           {this.languageSection()}
           <SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} />
           <PasswordSettings user={this.props.user} />
+          {this.aiKeySection()}
           <section className="settings-section card-form" aria-labelledby="maps-key-heading">
             <header>
               <h2 id="maps-key-heading"><KeyRound size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('settings.mapsKey')}</h2>

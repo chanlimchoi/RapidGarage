@@ -191,7 +191,12 @@
   "follow.manage": "See everyone you follow",
   "follow.manageText": "See everyone you follow: {url}",
   "follow.turnOff": "Stop emails about {name}",
-  "follow.turnOffText": "Stop emails about {name}: {url}"
+  "follow.turnOffText": "Stop emails about {name}: {url}",
+  "aikey.addedSubject": "An AI key was added to your RapidGarage account",
+  "aikey.addedText": "An Anthropic API key ending in {last4} was saved to your account for drafting items from photos. It is stored encrypted and can't be viewed by anyone, including you or site admins.",
+  "aikey.removedSubject": "The AI key was removed from your RapidGarage account",
+  "aikey.removedText": "The Anthropic API key ending in {last4} was deleted from your account.",
+  "aikey.notYou": "If this wasn't you, change your password and delete the key in the Anthropic Console."
  },
  "messages": {
   "Login required.": "Login required.",
@@ -559,6 +564,13 @@
   "Item drafting is busy right now. Please try again in a minute.": "Item drafting is busy right now. Please try again in a minute.",
   "Item drafting isn't available right now. Please try again later.": "Item drafting isn't available right now. Please try again later.",
   "items must be a non-empty list.": "items must be a non-empty list.",
-  "days must be 7, 30 or 90.": "days must be 7, 30 or 90."
+  "days must be 7, 30 or 90.": "days must be 7, 30 or 90.",
+  "Using your own AI key is turned off on this server.": "Using your own AI key is turned off on this server.",
+  "Keys can only be sent over HTTPS.": "Keys can only be sent over HTTPS.",
+  "Too many key attempts. Please try again later.": "Too many key attempts. Please try again later.",
+  "That does not look like an Anthropic API key (they start with \"sk-ant-\").": "That does not look like an Anthropic API key (they start with \"sk-ant-\").",
+  "Add your own Anthropic key in Settings, or paste one to use just once.": "Add your own Anthropic key in Settings, or paste one to use just once.",
+  "Anthropic rejected that key. Check it in the Anthropic Console, or update the one saved in Settings.": "Anthropic rejected that key. Check it in the Anthropic Console, or update the one saved in Settings.",
+  "Couldn't check the key with Anthropic right now. Please try again.": "Couldn't check the key with Anthropic right now. Please try again."
  }
 }

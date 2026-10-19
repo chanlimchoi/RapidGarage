@@ -18,6 +18,8 @@ const SETTINGS = {
   wantedPosts: { type: 'boolean', default: () => envFlag('ENABLE_WANTED_POSTS', true) },
   // "Draft items from photos" with Claude (also needs ANTHROPIC_API_KEY).
   aiItems: { type: 'boolean', default: () => envFlag('ENABLE_AI_ITEMS', true) },
+  // Let people use their own Anthropic key for it (saved encrypted, or one-time).
+  userAiKeys: { type: 'boolean', default: () => envFlag('ENABLE_USER_AI_KEYS', true) },
 };
 
 function models() {
@@ -50,6 +52,15 @@ const userMapsKeysEnabled = () => getSetting('userMapsKeys');
 const saleAlertsEnabled = () => getSetting('saleAlerts');
 const wantedEnabled = () => getSetting('wantedPosts');
 // On only when the admin switch is on and the server has an Anthropic key.
-const aiItemsEnabled = () => getSetting('aiItems').then((on) => on && require('./aiItems').isConfigured());
+// Item drafts (lib/aiItems.js): on when the admin switch is on and there is a
+// key to use: the site's (ANTHROPIC_API_KEY) or, if allowed, the person's own.
+async function aiStatus() {
+  const [on, own] = await Promise.all([getSetting('aiItems'), getSetting('userAiKeys')]);
+  const site = on && require('./aiItems').isConfigured();
+  const userKeys = on && own;
+  return { enabled: site || userKeys, site, userKeys, userKeySave: userKeys && require('./secretBox').isConfigured() };
+}
+const aiItemsEnabled = () => aiStatus().then((s) => s.enabled);
+const userAiKeysEnabled = () => aiStatus().then((s) => s.userKeys);
 
-module.exports = { envFlag, SETTINGS, getSetting, getAllSettings, setSetting, userMapsKeysEnabled, saleAlertsEnabled, wantedEnabled, aiItemsEnabled };
+module.exports = { envFlag, SETTINGS, getSetting, getAllSettings, setSetting, userMapsKeysEnabled, saleAlertsEnabled, wantedEnabled, aiItemsEnabled, userAiKeysEnabled, aiStatus };

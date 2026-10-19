@@ -85,6 +85,13 @@ function applyHttpLimits(server, env) {
   return server;
 }
 
+// API keys (own AI keys) may only travel over HTTPS in production. Behind a
+// TLS proxy this relies on TRUST_PROXY so req.secure reflects the client side.
+function keysOverHttps(req) {
+  if (!isProd(process.env) || isOn(process.env.ALLOW_KEYS_OVER_HTTP)) return true;
+  return !!req.secure;
+}
+
 // Startup checks. Errors stop a production start; warnings are logged.
 function checkConfig(env) {
   const e = env || process.env;
@@ -103,4 +110,4 @@ function checkConfig(env) {
   return { errors, warnings };
 }
 
-module.exports = { trustProxy, cookieSecure, hsts, frontendDir, origin, checkConfig, isOn, httpLimits, applyHttpLimits };
+module.exports = { trustProxy, cookieSecure, hsts, frontendDir, origin, checkConfig, isOn, httpLimits, applyHttpLimits, keysOverHttps };

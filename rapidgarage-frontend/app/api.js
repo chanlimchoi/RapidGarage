@@ -265,7 +265,12 @@ export const markReminderSeen = (id) => apiFetch('/reminders/' + id + '/seen', j
 export const unsubscribeReminders = (r, token) => apiFetch('/reminders/unsubscribe', jsonBody('POST', { r, t: token }));
 
 // ---- Item drafts from photos (lib/aiItems.js on the server) ----------------
-export const suggestItems = (postId, photoIds) => apiFetch('/post/' + postId + '/items/suggest', jsonBody('POST', photoIds ? { photoIds } : {}));
+// oneTimeKey: an Anthropic key used for this one request and never saved.
+export const suggestItems = (postId, photoIds, oneTimeKey) => apiFetch('/post/' + postId + '/items/suggest', jsonBody('POST', Object.assign(photoIds ? { photoIds } : {}, oneTimeKey ? { oneTimeKey } : {})));
+// Own Anthropic key, saved encrypted (only the last 4 characters come back).
+export const fetchAiKey = () => apiFetch('/me/ai-key');
+export const saveAiKey = (key, currentPassword) => apiFetch('/me/ai-key', jsonBody('PUT', { key, currentPassword: currentPassword || undefined }));
+export const deleteAiKey = () => apiFetch('/me/ai-key', { method: 'DELETE' });
 export const addItemsBulk = (postId, items) => apiFetch('/post/' + postId + '/items/bulk', jsonBody('POST', { items }));
 
 // ---- Following sellers (lib/follows.js on the server) ----------------------

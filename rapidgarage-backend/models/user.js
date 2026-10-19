@@ -24,15 +24,21 @@ module.exports = (sequelize, DataTypes) => {
     // Bumped when the password is reset or changed; sessions made under an
     // older value are signed out (middlewares/authentication.js).
     authVersion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    // Bring-your-own Anthropic key (lib/userAiKey.js), encrypted and bound to
+    // this row; never serialized. Load only via scope('withAiKey').
+    aiKeyEncrypted: { type: DataTypes.TEXT, allowNull: true },
+    aiKeyLast4: { type: DataTypes.STRING(4), allowNull: true },
+    aiKeySetAt: { type: DataTypes.DATE, allowNull: true },
   }, {
     // Never load the password hash unless explicitly asked for (login only).
     // The encrypted Maps key is excluded too; load it only via scope('withMapsKey').
     defaultScope: {
-      attributes: { exclude: ['password', 'mapsKeyEncrypted'] },
+      attributes: { exclude: ['password', 'mapsKeyEncrypted', 'aiKeyEncrypted'] },
     },
     scopes: {
-      withPassword: { attributes: { exclude: ['mapsKeyEncrypted'] } },
-      withMapsKey: { attributes: { exclude: ['password'] } },
+      withPassword: { attributes: { exclude: ['mapsKeyEncrypted', 'aiKeyEncrypted'] } },
+      withMapsKey: { attributes: { exclude: ['password', 'aiKeyEncrypted'] } },
+      withAiKey: { attributes: { exclude: ['password', 'mapsKeyEncrypted'] } },
     },
   });
 
@@ -66,6 +72,10 @@ module.exports = (sequelize, DataTypes) => {
     delete values.mapsKeyEncrypted;
     delete values.googleId;
     delete values.authVersion;
+    delete values.aiKeyEncrypted;
+    delete values.aiKeyLast4;
+    delete values.aiKeySetAt;
+    values.hasAiKey = !!this.get('aiKeyLast4');
     values.hasMapsKey = !!values.mapsKeyLast4;
     return values;
   };

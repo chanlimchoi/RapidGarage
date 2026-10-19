@@ -4,7 +4,9 @@ const secretBox = require('../lib/secretBox');
 const i18n = require('../lib/i18n');
 const bcrypt = require('bcrypt-nodejs');
 const passwordReset = require('../lib/passwordReset');
-const { userMapsKeysEnabled } = require('../lib/features');
+const userAiKey = require('../lib/userAiKey');
+const { keysOverHttps } = require('../lib/runtime');
+const { userMapsKeysEnabled, userAiKeysEnabled } = require('../lib/features');
 const { badRequest, unauthorized, notFound, sendError, serverError, requireLogin } = require('../lib/http');
 
 // The server is the source of truth for who is logged in.
@@ -81,6 +83,59 @@ router.put('/locale', requireLogin, (req, res) => {
       return user.update({ locale: code }).then((u) => res.json({ locale: u.locale }));
     })
     .catch((err) => serverError(res, err));
+});
+
+// ---- Own Anthropic key (lib/userAiKey.js) --------------------------------
+// GET shows only whether one is saved and its last 4 characters. PUT saves
+// (password required when the account has one, checked with Anthropic first,
+// HTTPS only in production); DELETE erases it at once.
+function requireUserAiKeys(req, res, next) {
+  return userAiKeysEnabled().then((on) => {
+    if (!on) return sendError(res, 404, 'feature_disabled', 'Using your own AI key is turned off on this server.');
+    return next();
+  }).catch((err) => serverError(res, err));
+}
+router.use('/ai-key', requireUserAiKeys);
+
+router.get('/ai-key', requireLogin, async (req, res) => {
+  noStore(res);
+  try { return res.json(await userAiKey.status(req.user.id)); } catch (err) { return serverError(res, err); }
+});
+
+router.put('/ai-key', requireLogin, async (req, res) => {
+  noStore(res);
+  const body = req.body || {};
+  const raw = body.key;
+  delete body.key; // keep it out of anything that might log the body
+  if (!secretBox.isConfigured()) return sendError(res, 503, 'not_configured', 'Saving keys is disabled: the server has no KEY_ENCRYPTION_SECRET.');
+  if (!keysOverHttps(req)) return badRequest(res, 'Keys can only be sent over HTTPS.');
+  if (!userAiKey.takeAttempt(req.user.id)) { res.set('Retry-After', '3600'); return sendError(res, 429, 'rate_limited', 'Too many key attempts. Please try again later.'); }
+  const key = userAiKey.normalize(raw);
+  if (!key) return badRequest(res, 'Invalid request.', { key: 'That does not look like an Anthropic API key (they start with "sk-ant-").' });
+  try {
+    const user = await models.User.scope('withPassword').findByPk(req.user.id);
+    if (!user) return notFound(res, 'User not found.');
+    if (user.password) {
+      let ok = false;
+      try { ok = typeof body.currentPassword === 'string' && bcrypt.compareSync(body.currentPassword, user.password); } catch (e) { ok = false; }
+      if (!ok) return badRequest(res, 'Invalid request.', { currentPassword: 'Your current password is incorrect.' });
+    }
+    const check = await userAiKey.verify(key);
+    if (check === 'rejected') return sendError(res, 400, 'own_key_rejected', 'Anthropic rejected that key. Check it in the Anthropic Console, or update the one saved in Settings.');
+    if (check !== 'ok') return sendError(res, 503, 'ai_unavailable', "Couldn't check the key with Anthropic right now. Please try again.");
+    await userAiKey.save(user, key);
+    return res.json(await userAiKey.status(user.id));
+  } catch (err) { return serverError(res, err); }
+});
+
+router.delete('/ai-key', requireLogin, async (req, res) => {
+  noStore(res);
+  try {
+    const user = await models.User.findByPk(req.user.id, { attributes: ['id', 'email', 'firstName', 'locale', 'aiKeyLast4'] });
+    if (!user) return notFound(res, 'User not found.');
+    await userAiKey.remove(user);
+    return res.json(await userAiKey.status(user.id));
+  } catch (err) { return serverError(res, err); }
 });
 
 // Whether the account has a password of its own (Google-only accounts don't),

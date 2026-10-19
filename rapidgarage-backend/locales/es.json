@@ -191,7 +191,12 @@
   "follow.manage": "Ver a quién sigues",
   "follow.manageText": "Ver a quién sigues: {url}",
   "follow.turnOff": "Dejar de recibir correos sobre {name}",
-  "follow.turnOffText": "Dejar de recibir correos sobre {name}: {url}"
+  "follow.turnOffText": "Dejar de recibir correos sobre {name}: {url}",
+  "aikey.addedSubject": "Se agregó una clave de IA a tu cuenta de RapidGarage",
+  "aikey.addedText": "Se guardó en tu cuenta una clave de API de Anthropic que termina en {last4} para crear artículos a partir de fotos. Se guarda cifrada y nadie puede verla, ni tú ni los administradores del sitio.",
+  "aikey.removedSubject": "Se eliminó la clave de IA de tu cuenta de RapidGarage",
+  "aikey.removedText": "Se eliminó de tu cuenta la clave de API de Anthropic que termina en {last4}.",
+  "aikey.notYou": "Si no fuiste tú, cambia tu contraseña y elimina la clave en la consola de Anthropic."
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -559,6 +564,13 @@
   "Item drafting is busy right now. Please try again in a minute.": "La creación de artículos está ocupada ahora. Inténtalo en un minuto.",
   "Item drafting isn't available right now. Please try again later.": "La creación de artículos no está disponible ahora. Inténtalo más tarde.",
   "items must be a non-empty list.": "items debe ser una lista no vacía.",
-  "days must be 7, 30 or 90.": "days debe ser 7, 30 o 90."
+  "days must be 7, 30 or 90.": "days debe ser 7, 30 o 90.",
+  "Using your own AI key is turned off on this server.": "Usar tu propia clave de IA está desactivado en este servidor.",
+  "Keys can only be sent over HTTPS.": "Las claves solo se pueden enviar por HTTPS.",
+  "Too many key attempts. Please try again later.": "Demasiados intentos con claves. Inténtalo más tarde.",
+  "That does not look like an Anthropic API key (they start with \"sk-ant-\").": "Eso no parece una clave de API de Anthropic (empiezan con \"sk-ant-\").",
+  "Add your own Anthropic key in Settings, or paste one to use just once.": "Agrega tu propia clave de Anthropic en Configuración o pega una para usarla una sola vez.",
+  "Anthropic rejected that key. Check it in the Anthropic Console, or update the one saved in Settings.": "Anthropic rechazó esa clave. Revísala en la consola de Anthropic o actualiza la guardada en Configuración.",
+  "Couldn't check the key with Anthropic right now. Please try again.": "No se pudo comprobar la clave con Anthropic ahora. Inténtalo de nuevo."
  }
 }

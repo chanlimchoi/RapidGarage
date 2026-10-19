@@ -497,6 +497,25 @@ from the sale that is open or opens first (ties: the one closing first). At most
 directions link using the sales' public addresses; without `lat,lng` it has no origin so
 Google Maps starts from the phone's location. The location is only used for that request.
 
+## Own Anthropic keys (BYOK)
+
+- `GET /me/ai-key` → `{ hasKey, last4, setAt }`. `PUT /me/ai-key` `{ key, currentPassword }` (password required when the account
+  has one) checks the key with Anthropic (`models.list`, free) and saves it. `DELETE /me/ai-key` erases it. All responses are `no-store`.
+- `POST /post/:id/items/suggest` `{ oneTimeKey }` uses that key for this call only. Key order: one-time, then saved, then the site's.
+  The response's `keySource` says which (`one_time` | `saved` | `site`). No key available → `400 needs_key`; Anthropic
+  rejecting the person's key → `400 own_key_rejected`.
+- Storage: `Users.aiKeyEncrypted` uses `secretBox` v2 (AES-256-GCM, HKDF per-purpose key, AAD `ai-key:user:<id>`), so a value
+  copied onto another row, or read with another `KEY_ENCRYPTION_SECRET`, won't decrypt. It's excluded from every
+  scope but `withAiKey` and from `toJSON`, which exposes only `hasAiKey`. Maps keys keep the v1 format.
+- Handling: one-time keys are removed from `req.body` before anything else runs. Clients for own keys are built per
+  request and never cached. Errors keep only status and class name. Tests prove neither kind of key reaches any table,
+  session, response or log line.
+- Guards: HTTPS only in production (`req.secure`, so `TRUST_PROXY` must be right; `ALLOW_KEYS_OVER_HTTP` exists for
+  local testing only); `AI_KEY_ATTEMPTS_PER_HOUR` (10) key submissions per account; `AI_ITEMS_PER_DAY_OWN_KEY` (50); admin
+  setting `userAiKeys` (`ENABLE_USER_AI_KEYS`). Saving needs `KEY_ENCRYPTION_SECRET`; one-time keys don't.
+- `/config` adds `aiSiteKey`, `userAiKeys` and `userAiKeySave`. `aiItems` is true when either the site key or own keys can be used.
+- Migration `20261018040000-user-ai-keys`.
+
 ## Admin analytics
 
 - `GET /admin/analytics?days=7|30|90` (admins; default 30) → `{ days, from, to, totals: { users, activeSales, openReports },

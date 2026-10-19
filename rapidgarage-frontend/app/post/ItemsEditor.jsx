@@ -210,7 +210,7 @@ class ItemsEditor extends Component {
         <header className="page-header"><div><h1>{t('items.title')}</h1><p>{post.title}{items.length ? ' · ' + itemSummary(items) : ''}</p></div></header>
         <div className="stack">
           {this.props.config && this.props.config.aiItems && photos.length ? (
-            <AiDraftPanel post={post} photos={photos} room={MAX_ITEMS - items.length} onAdded={(added) => this.setItems(this.items().concat(added))} />
+            <AiDraftPanel post={post} photos={photos} config={this.props.config} room={MAX_ITEMS - items.length} onAdded={(added) => this.setItems(this.items().concat(added))} />
           ) : null}
           <form className="card-form item-form" onSubmit={(e) => this.add(e)} noValidate aria-labelledby="add-item-title">
             <h2 id="add-item-title" className="h4">{t('items.addAnItem')}</h2>

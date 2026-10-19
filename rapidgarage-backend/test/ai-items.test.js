@@ -109,10 +109,16 @@ describe('drafting items from photos (Claude)', function () {
     assert.strictEqual((await suggest(alice, { photoIds: ['x'] })).status, 400);
 
     aiItems.setClient(null);
+    // No site key: still available for people's own keys, but it asks for one.
+    let cfg = (await request(app).get('/config')).body;
+    assert.deepStrictEqual([cfg.aiItems, cfg.aiSiteKey, cfg.userAiKeys], [true, false, true]);
+    assert.strictEqual((await suggest(alice)).body.error.code, 'needs_key');
+    await setSetting('userAiKeys', false);
     assert.strictEqual((await request(app).get('/config')).body.aiItems, false);
     assert.strictEqual((await suggest(alice)).status, 404);
     process.env.ANTHROPIC_API_KEY = 'sk-test';
-    assert.strictEqual((await request(app).get('/config')).body.aiItems, true);
+    cfg = (await request(app).get('/config')).body;
+    assert.deepStrictEqual([cfg.aiItems, cfg.aiSiteKey], [true, true]);
     await setSetting('aiItems', false);
     assert.strictEqual((await request(app).get('/config')).body.aiItems, false);
     assert.strictEqual((await suggest(alice)).status, 404);
