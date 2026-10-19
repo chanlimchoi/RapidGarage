@@ -45,6 +45,22 @@ export default defineConfig(({ mode }) => {
     html: { cspNonce: '__RG_CSP_NONCE__' },
     server: { port: 3000, strictPort: true, proxy },
     preview: { port: 3000, strictPort: true, proxy },
-    build: { outDir: 'build', sourcemap: true },
+    build: {
+      outDir: 'build',
+      // 'hidden' still writes the sourcemaps (for error reporting) but drops the
+      // //# sourceMappingURL comment, so browsers never fetch them and the
+      // service worker never precaches them (pwa/sw-core.js excludes *.map).
+      sourcemap: 'hidden',
+      rollupOptions: {
+        output: {
+          // React and the router change rarely, the app on every deploy:
+          // a separate framework chunk stays cached across releases. Vite 8
+          // bundles with Rolldown, whose manualChunks takes a function.
+          manualChunks(id) {
+            if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|history|scheduler)[\\/]/.test(id)) return 'vendor';
+          },
+        },
+      },
+    },
   };
 });
