@@ -41,6 +41,8 @@ describe('drafting items from photos (Claude)', function () {
     aiItems.setClient(fake);
     aiItems.resetBudgets();
     await models.sequelize.sync({ force: true });
+    // Listing review shares the fake client; keep these tests about drafting.
+    await setSetting('aiReview', false);
     alice = request.agent(app);
     bob = request.agent(app);
     await alice.post('/signup').send({ email: 'alice@example.com', password: PW, firstName: 'A' });

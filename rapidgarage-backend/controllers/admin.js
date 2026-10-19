@@ -167,6 +167,22 @@ const ACTIONS = ['dismiss', 'hide', 'unhide', 'delete'];
 
 // POST /admin/posts/:id/moderate { action: dismiss|hide|unhide|delete, note? }
 // Resolves every open report on the post.
+// AI flags (lib/aiReview.js): sales Claude suggested a moderator look at.
+router.get('/ai-flags', async (req, res) => {
+  try {
+    const posts = await models.Post.findAll({
+      where: { aiFlagStatus: 'open' },
+      include: [{ model: models.User, attributes: ['id', 'firstName', 'lastName'] }, { model: models.PostPhoto, as: 'photos' }],
+      order: [['aiFlaggedAt', 'DESC']],
+      limit: 200,
+    });
+    const { publicName } = require('../lib/people');
+    return res.json({ results: posts.map((p) => Object.assign(preview(p), {
+      seller: publicName(p.User), categories: String(p.aiFlagCategories || '').split(',').filter(Boolean), reason: p.aiFlagReason, flaggedAt: p.aiFlaggedAt,
+    })) });
+  } catch (err) { return serverError(res, err); }
+});
+
 router.post('/posts/:id/moderate', async (req, res) => {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'Post id must be a positive integer.');
@@ -203,6 +219,8 @@ router.post('/posts/:id/moderate', async (req, res) => {
         closed = await mod.closeOpenReports(id, { status: 'dismissed', action: 'unhidden', reviewerId: by, resolutionNote: note }, t);
       }
     });
+    // Any decision also settles an open AI flag.
+    if (post.aiFlagStatus === 'open') await post.update({ aiFlagStatus: body.action === 'hide' ? 'actioned' : 'dismissed' });
     await post.reload();
     // Visible again: it can match wanted posts now.
     if (body.action === 'unhide') require('../lib/wanted').schedulePost(post.id);

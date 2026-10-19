@@ -26,6 +26,12 @@ module.exports = (sequelize, DataTypes) => {
     markdownPercent: { type: DataTypes.INTEGER, allowNull: true },
     markdownFrom: { type: DataTypes.STRING(5), allowNull: true },
     markdownLastDay: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    // AI listing review (lib/aiReview.js), admins only; never serialized.
+    aiFlagStatus: { type: DataTypes.STRING(16), allowNull: true },
+    aiFlagCategories: { type: DataTypes.STRING(200), allowNull: true },
+    aiFlagReason: { type: DataTypes.STRING(300), allowNull: true },
+    aiFlaggedAt: { type: DataTypes.DATE, allowNull: true },
+    aiReviewHash: { type: DataTypes.STRING(64), allowNull: true },
     // Moderation (lib/moderation.js). Hidden posts are visible only to the owner and admins.
     hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     hiddenAt: { type: DataTypes.DATE, allowNull: true },
@@ -85,6 +91,7 @@ module.exports = (sequelize, DataTypes) => {
     delete out.markdownPercent;
     delete out.markdownFrom;
     delete out.markdownLastDay;
+    ['aiFlagStatus', 'aiFlagCategories', 'aiFlagReason', 'aiFlaggedAt', 'aiReviewHash'].forEach((k) => { delete out[k]; });
     delete out.saleDays;
     return out;
   };

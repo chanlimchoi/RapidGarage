@@ -20,6 +20,8 @@ const SETTINGS = {
   aiItems: { type: 'boolean', default: () => envFlag('ENABLE_AI_ITEMS', true) },
   // Let people use their own Anthropic key for it (saved encrypted, or one-time).
   userAiKeys: { type: 'boolean', default: () => envFlag('ENABLE_USER_AI_KEYS', true) },
+  // AI-assisted listing review for admins (lib/aiReview.js; needs ANTHROPIC_API_KEY).
+  aiReview: { type: 'boolean', default: () => envFlag('ENABLE_AI_REVIEW', true) },
 };
 
 function models() {
