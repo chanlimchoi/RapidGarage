@@ -211,6 +211,22 @@ npm run geocode:backfill -- --retry        # also retry addresses that were not_
 npm run geocode:backfill -- --limit 500
 ```
 
+## Last-hour markdowns
+
+- Post fields: `markdownPercent` (whole 5–90, `null` clears all three), `markdownFrom` (`"HH:MM"`,
+  sale's local time, required with a percent) and `markdownLastDay` (boolean). Updates validate
+  against the stored values, like prices.
+- Responses carry `markdown: { percent, from, lastDayOnly, active, startsAt, endsAt }` or `null`.
+  `startsAt`/`endsAt` give the current or next markdown window (ISO), or `null` once none is left.
+  The raw columns aren't serialized.
+- A day's window runs from `markdownFrom` to that day's end. A start before opening covers the
+  whole day; a start at or after closing covers none.
+- `GET /allPosts?markdown=1` and `GET /search?markdown=true` keep only sales whose markdown is
+  running now. Search applies it before pagination, so `total` stays correct.
+- Item discounts are computed on the client as `floor(cents * (100 - percent) / 100)`; `lib/markdown.js`
+  has the same function.
+- Migration `20261018030000-markdowns`.
+
 ## Reporting and moderation
 
 Migration `20261017040000-moderation` adds `Posts.hidden` (plus `hiddenAt`, `hiddenBy`,

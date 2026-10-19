@@ -11,6 +11,7 @@ const itemsLib = require('../lib/items');
 const events = require('../lib/events');
 const curbside = require('../lib/curbside');
 const follows = require('../lib/follows');
+const markdown = require('../lib/markdown');
 
 // Add { event: { id, name } } to posts that are part of a neighborhood sale.
 async function withEvents(list, viewer) {
@@ -68,6 +69,10 @@ router.get('/allPosts', async (req, res) => {
   const fl = req.query.following;
   if (fl !== undefined && fl !== '' && ['true', '1', 'false', '0'].indexOf(fl) === -1) return badRequest(res, 'Invalid filter.', { following: 'following must be true or false.' });
   const onlyFollowing = fl === 'true' || fl === '1';
+  // ?markdown=1: only sales whose last-hour markdown is running now.
+  const md = req.query.markdown;
+  if (md !== undefined && md !== '' && ['true', '1', 'false', '0'].indexOf(md) === -1) return badRequest(res, 'Invalid filter.', { markdown: 'markdown must be true or false.' });
+  const onlyMarkdown = md === 'true' || md === '1';
   if (onlyFollowing && !req.user) return unauthorized(res);
   try {
     let where = onlyCurb ? Object.assign({}, curbside.activeWhere()) : null;
@@ -82,6 +87,7 @@ router.get('/allPosts', async (req, res) => {
     let posts = newest.length ? await models.Post.findAll(Object.assign({ where: { id: newest } }, newestFirst)) : [];
     if (w.when) posts = posts.filter((p) => schedule.matchesWhen(p, w.when) || curbside.countsForWhen(p, w.when));
     if (onlyCurb) posts = posts.filter((p) => !p.hidden);
+    if (onlyMarkdown) posts = posts.filter((p) => markdown.isActive(p));
     if (!k.words) { const out = await finish(req, posts); return res.json(onlyCurb ? out.filter((p) => p.curbside && p.curbside.state === 'active') : out); }
     const ids = await itemsLib.keywordPostIds(models, k.words, posts.map((p) => p.id));
     posts = posts.filter((p) => ids.has(p.id));

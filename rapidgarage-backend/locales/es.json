@@ -544,6 +544,11 @@
   "You can't follow this person.": "No puedes seguir a esta persona.",
   "You follow the maximum number of people. Unfollow someone first.": "Ya sigues al número máximo de personas. Deja de seguir a alguien primero.",
   "notify must be true or false.": "notify debe ser true o false.",
-  "following must be true or false.": "following debe ser true o false."
+  "following must be true or false.": "following debe ser true o false.",
+  "Markdown must be a whole percent from 5 to 90.": "El descuento debe ser un porcentaje entero de 5 a 90.",
+  "Markdown start must be a time like 14:00.": "La hora de inicio del descuento debe ser como 14:00.",
+  "markdownLastDay must be true or false.": "markdownLastDay debe ser true o false.",
+  "Choose when the markdown starts.": "Elige cuándo empieza el descuento.",
+  "markdown must be true or false.": "markdown debe ser true o false."
  }
 }

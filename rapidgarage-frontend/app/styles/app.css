@@ -1215,3 +1215,11 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .following-who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .following-name { font-weight: 600; }
 .following-actions { gap: var(--space-2); flex-wrap: wrap; }
+
+/* Last-hour markdowns */
+.chip-markdown { background: var(--color-warning-soft); color: var(--color-warning); }
+.chip-markdown.is-now { background: var(--color-brand-bg); color: var(--color-on-brand); }
+.markdown-note { display: flex; align-items: center; gap: var(--space-2); margin: 0; padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--color-border); }
+.markdown-note.is-now { border-color: var(--color-brand); font-weight: 600; }
+.markdown-fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--space-3); }
+.item-price-marked s { color: var(--color-text-muted); font-weight: 400; }

@@ -524,6 +524,11 @@
   "You can't follow this person.": "이 사람은 팔로우할 수 없어요.",
   "You follow the maximum number of people. Unfollow someone first.": "팔로우할 수 있는 최대 인원에 도달했어요. 먼저 누군가를 언팔로우하세요.",
   "notify must be true or false.": "notify는 true 또는 false여야 해요.",
-  "following must be true or false.": "following은 true 또는 false여야 해요."
+  "following must be true or false.": "following은 true 또는 false여야 해요.",
+  "Markdown must be a whole percent from 5 to 90.": "할인율은 5에서 90 사이의 정수여야 해요.",
+  "Markdown start must be a time like 14:00.": "할인 시작 시간은 14:00 같은 형식이어야 해요.",
+  "markdownLastDay must be true or false.": "markdownLastDay는 true 또는 false여야 해요.",
+  "Choose when the markdown starts.": "할인 시작 시간을 정하세요.",
+  "markdown must be true or false.": "markdown은 true 또는 false여야 해요."
  }
 }
