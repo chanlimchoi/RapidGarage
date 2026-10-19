@@ -158,10 +158,13 @@ if (require.main === module) {
       // Sale alert email outbox (set ALERT_WORKER=off to run it elsewhere).
       const alerts = require('./lib/alerts');
       const holds = require('./lib/holds');
+      const lock = require('./lib/workerLock');
       if (String(process.env.ALERT_WORKER || '').toLowerCase() !== 'off') alerts.startWorker();
       // End overdue item holds every minute (reads also sweep; see lib/holds.js).
-      setInterval(() => holds.sweep().catch((err) => console.error('hold sweep failed', err && err.message)), 60000).unref();
-      setInterval(() => require('./lib/meetups').sweep().catch((err) => console.error('meetup sweep failed', err && err.message)), 60000).unref();
+      // Runs on one instance at a time (lib/workerLock.js); the passes are
+      // idempotent, so a second instance picking up after a restart is fine.
+      setInterval(() => lock.withLock(() => holds.sweep()).catch((err) => console.error('hold sweep failed', err && err.message)), 60000).unref();
+      setInterval(() => lock.withLock(() => require('./lib/meetups').sweep()).catch((err) => console.error('meetup sweep failed', err && err.message)), 60000).unref();
       // On SIGTERM: report not-ready, stop accepting connections, finish
       // in-flight requests, then close DB pools.
       const shutdown = () => {

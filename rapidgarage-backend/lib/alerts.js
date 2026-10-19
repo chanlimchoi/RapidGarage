@@ -355,7 +355,11 @@ function startWorker() {
   const tick = () => {
     if (running) return;
     running = true;
-    processQueue().catch((err) => console.error('Sale alert worker error:', err && err.message)).finally(() => { running = false; });
+    // One instance at a time (lib/workerLock.js); the outbox rows are claimed
+    // atomically below, so a duplicate pass would still not send twice.
+    require('./workerLock').withLock(() => processQueue())
+      .catch((err) => console.error('Sale alert worker error:', err && err.message))
+      .finally(() => { running = false; });
   };
   timer = setInterval(tick, workerSeconds() * 1000);
   if (timer.unref) timer.unref();
