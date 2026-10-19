@@ -63,6 +63,13 @@ export default class PostForm extends React.Component {
     focusFirstError(this.formRef.current, errs);
   }
 
+  // "Write with AI" (AiWritePanel) fills these in; the seller still saves.
+  setText(patch) {
+    const serverErrors = Object.assign({}, this.state.serverErrors);
+    Object.keys(patch).forEach((k) => delete serverErrors[k]);
+    this.setState({ values: Object.assign({}, this.state.values, patch), serverErrors });
+  }
+
   errors() {
     const own = validateForm(this.state.values);
     return Object.assign({}, this.state.serverErrors, own);
@@ -207,6 +214,7 @@ export default class PostForm extends React.Component {
             </Field>
           </fieldset>
         </section>
+        {this.props.textAddon || null}
         {children}
         {error ? <Alert tone="danger">{error}</Alert> : null}
         {footer || null}

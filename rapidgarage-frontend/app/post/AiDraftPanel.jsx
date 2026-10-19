@@ -1,9 +1,7 @@
 import React from 'react';
 import { Sparkles, Plus, RotateCcw } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { suggestItems, addItemsBulk, fetchAiKey, errorMessage } from '../api';
-import { NO_SAVE } from '../user/AiKeySettings';
-import PasswordInput from '../user/PasswordInput';
+import AiKeyChoice, { keySource } from './AiKeyChoice';
 import { Alert, Spinner } from '../components/ui';
 import { centsInput, validateItemFields, ITEM_NAME_MAX } from '../lib/items';
 import toast from '../components/toast';
@@ -30,14 +28,7 @@ export default class AiDraftPanel extends React.Component {
   }
   componentWillUnmount() { this.mounted = false; }
 
-  // Which key the next draft uses, as the server will choose it.
-  source() {
-    const c = this.props.config || {};
-    if (c.userAiKeys && this.state.useOnce) return 'one_time';
-    if (c.userAiKeys && this.state.saved && this.state.saved.hasKey) return 'saved';
-    if (c.aiSiteKey) return 'site';
-    return c.userAiKeys ? 'one_time' : null;
-  }
+  source() { return keySource(this.props.config, this.state.saved, this.state.useOnce); }
 
   draft() {
     const once = this.source() === 'one_time';
@@ -79,35 +70,6 @@ export default class AiDraftPanel extends React.Component {
     }).catch(() => this.setState({ adding: false, error: t('common.network') }));
   }
 
-  renderKeyChoice() {
-    const c = this.props.config || {};
-    const src = this.source();
-    const saved = this.state.saved;
-    const canChoose = c.userAiKeys && (c.aiSiteKey || (saved && saved.hasKey));
-    return (
-      <div className="ai-key-choice small">
-        {src === 'saved' ? <p>{t('aikey.usesSaved', { last4: saved.last4 })}</p> : null}
-        {src === 'site' ? <p className="muted">{t('aikey.usesSite')}</p> : null}
-        {src === 'one_time' ? (
-          <div className="stack">
-            <label htmlFor="ai-once-key" className="field-label">{t('aikey.onceLabel')}</label>
-            <PasswordInput id="ai-once-key" name="rg-ai-once" placeholder="sk-ant-…" value={this.state.oneTimeKey} {...NO_SAVE}
-              aria-describedby="ai-once-hint" onChange={(e) => this.setState({ oneTimeKey: e.target.value, error: '' })} />
-            <span id="ai-once-hint" className="field-hint">{t('aikey.onceHint')}</span>
-          </div>
-        ) : null}
-        <div className="row ai-key-links">
-          {canChoose ? (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => this.setState({ useOnce: !this.state.useOnce, oneTimeKey: '' })}>
-              {this.state.useOnce ? t('aikey.cancelOnce') : t('aikey.useOnce')}
-            </button>
-          ) : null}
-          {c.userAiKeys && c.userAiKeySave ? <Link className="btn btn-ghost btn-sm" to="/settings#ai-key">{saved && saved.hasKey ? t('aikey.manage') : t('aikey.saveInSettings')}</Link> : null}
-        </div>
-      </div>
-    );
-  }
-
   render() {
     const { photos, room } = this.props;
     const { busy, adding, error, drafts } = this.state;
@@ -117,7 +79,8 @@ export default class AiDraftPanel extends React.Component {
       <section className="card-form ai-draft" aria-labelledby="ai-draft-title" aria-busy={busy}>
         <h2 id="ai-draft-title" className="h4"><Sparkles size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('ai.title')}</h2>
         <p className="small muted">{t('ai.lead', { count: Math.min(photos.length, 5) })}</p>
-        {!drafts ? this.renderKeyChoice() : null}
+        {!drafts ? <AiKeyChoice id="ai-draft" config={this.props.config} saved={this.state.saved} useOnce={this.state.useOnce} oneTimeKey={this.state.oneTimeKey}
+          onChange={(patch) => this.setState(Object.assign({ error: '' }, patch))} /> : null}
         {!drafts ? (
           <div className="form-actions">
             <button type="button" className="btn btn-secondary" disabled={busy || !room || !this.source()} onClick={() => this.draft()}>

@@ -23,6 +23,7 @@ import ShareButton from '../components/ShareButton';
 import ItemList from './ItemList';
 import JoinEventPanel from '../events/JoinEventPanel';
 import FollowButton from '../follows/FollowButton';
+import DuplicateButton from './DuplicateButton';
 import { scrollBehavior, photoAlt } from '../lib/a11y';
 import { t } from '../i18n';
 
@@ -327,6 +328,7 @@ class Post extends Component {
                 {isOwner ? <Link className="btn btn-secondary print-link" to={'/post/' + post.id + '/print'}><QrCode size={16} aria-hidden="true" />{t('post.printFlyer')}</Link> : null}
                 {isOwner ? <Link className="btn btn-secondary sale-dashboard-link" to={'/dashboard/sales/' + post.id}><BarChart3 size={16} aria-hidden="true" />{t('dash.saleStats')}</Link> : null}
                 {isOwner ? <Link className="btn btn-secondary" to={'/post/' + post.id + '/items'}><Package size={16} aria-hidden="true" />{(post.items || []).length ? t('post.editItems') : t('post.addItems')}</Link> : null}
+                {isOwner && !post.hidden ? <DuplicateButton postId={post.id} /> : null}
               </div>
             </div>
             {isOwner && !post.hidden ? <JoinEventPanel post={post} /> : null}

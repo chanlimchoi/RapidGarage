@@ -189,7 +189,13 @@
   "verify.expires": "링크는 한 번만 쓸 수 있고 48시간 후에 만료돼요.",
   "verify.ignore": "계정을 만든 적이 없다면 이 메일은 무시하셔도 돼요.",
   "account.deletedSubject": "RapidGarage 계정이 삭제되었어요",
-  "account.deletedText": "계정과 그 안의 모든 것(세일, 사진, 메시지, 저장한 세일, 알림, 설정)이 삭제되었어요. RapidGarage를 이용해 주셔서 감사해요."
+  "account.deletedText": "계정과 그 안의 모든 것(세일, 사진, 메시지, 저장한 세일, 알림, 설정)이 삭제되었어요. RapidGarage를 이용해 주셔서 감사해요.",
+  "summary.subject": "세일 결과: {title}",
+  "summary.intro": "\"{title}\" 세일이 끝났어요. 결과는 이래요:",
+  "summary.items": "목록의 물품 {total}개 중 {sold}개를 팔았어요 (표시 가격 기준 {value}).",
+  "summary.reach": "조회 {views} · 저장 {saves} · 대화 {conversations}",
+  "summary.curb": "남은 물건이 있나요? 문 앞에 무료로 내놓으세요: {url}",
+  "summary.again": "자세히 보거나 다음 세일용으로 복제하세요: {url}"
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -575,6 +581,14 @@
   "This server can't send email right now.": "지금은 이 서버에서 메일을 보낼 수 없어요.",
   "This confirmation link is invalid or has expired. Ask for a new one.": "확인 링크가 유효하지 않거나 만료되었어요. 새 링크를 요청하세요.",
   "Type DELETE to confirm.": "확인하려면 DELETE를 입력하세요.",
-  "You're the only admin. Make someone else an admin before deleting your account.": "유일한 관리자예요. 계정을 삭제하기 전에 다른 사람을 관리자로 지정하세요."
+  "You're the only admin. Make someone else an admin before deleting your account.": "유일한 관리자예요. 계정을 삭제하기 전에 다른 사람을 관리자로 지정하세요.",
+  "A hidden sale can't be duplicated.": "숨겨진 세일은 복제할 수 없어요.",
+  "Writing with AI is turned off on this server.": "이 서버에서는 AI 글쓰기가 꺼져 있어요.",
+  "Add photos or items first, then write with AI.": "먼저 사진이나 물품을 추가한 다음 AI로 쓰세요.",
+  "You've used today's AI requests. Try again tomorrow.": "오늘 AI 요청을 모두 사용했어요. 내일 다시 시도해 주세요.",
+  "Couldn't write a description for this sale. Please write it yourself.": "이 세일의 설명을 쓰지 못했어요. 직접 써 주세요.",
+  "The AI answer came back incomplete. Please try again.": "AI 답변이 불완전하게 왔어요. 다시 시도해 주세요.",
+  "The AI is busy right now. Please try again in a minute.": "지금 AI가 바빠요. 잠시 후 다시 시도해 주세요.",
+  "AI writing isn't available right now. Please try again later.": "지금은 AI 글쓰기를 사용할 수 없어요. 나중에 다시 시도해 주세요."
  }
 }

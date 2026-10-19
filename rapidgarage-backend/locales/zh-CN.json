@@ -189,7 +189,13 @@
   "verify.expires": "该链接只能使用一次，48 小时后失效。",
   "verify.ignore": "如果你没有创建账户，可以忽略这封邮件。",
   "account.deletedSubject": "你的 RapidGarage 账户已删除",
-  "account.deletedText": "你的账户及其中的所有内容（甩卖、照片、消息、收藏、提醒和设置）均已删除。感谢使用 RapidGarage。"
+  "account.deletedText": "你的账户及其中的所有内容（甩卖、照片、消息、收藏、提醒和设置）均已删除。感谢使用 RapidGarage。",
+  "summary.subject": "你的甩卖成果：{title}",
+  "summary.intro": "你的甩卖“{title}”已结束。成果如下：",
+  "summary.items": "清单上 {total} 件物品已售出 {sold} 件（按标价计 {value}）。",
+  "summary.reach": "浏览：{views} · 收藏：{saves} · 对话：{conversations}",
+  "summary.curb": "有剩下的东西吗？免费放在路边：{url}",
+  "summary.again": "查看详情，或复制此甩卖以便下次使用：{url}"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -575,6 +581,14 @@
   "This server can't send email right now.": "此服务器目前无法发送邮件。",
   "This confirmation link is invalid or has expired. Ask for a new one.": "此确认链接无效或已过期，请重新获取。",
   "Type DELETE to confirm.": "请输入 DELETE 以确认。",
-  "You're the only admin. Make someone else an admin before deleting your account.": "你是唯一的管理员。删除账户前请先将其他人设为管理员。"
+  "You're the only admin. Make someone else an admin before deleting your account.": "你是唯一的管理员。删除账户前请先将其他人设为管理员。",
+  "A hidden sale can't be duplicated.": "已隐藏的甩卖无法复制。",
+  "Writing with AI is turned off on this server.": "此服务器已关闭 AI 撰写。",
+  "Add photos or items first, then write with AI.": "请先添加照片或物品，再用 AI 撰写。",
+  "You've used today's AI requests. Try again tomorrow.": "你今天的 AI 请求次数已用完，请明天再试。",
+  "Couldn't write a description for this sale. Please write it yourself.": "无法为此甩卖撰写描述，请自行撰写。",
+  "The AI answer came back incomplete. Please try again.": "AI 返回的内容不完整，请重试。",
+  "The AI is busy right now. Please try again in a minute.": "AI 当前繁忙，请一分钟后再试。",
+  "AI writing isn't available right now. Please try again later.": "AI 撰写暂时不可用，请稍后再试。"
  }
 }

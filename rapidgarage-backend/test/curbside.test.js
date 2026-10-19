@@ -351,8 +351,10 @@ describe('free on the curb', function () {
     // Email goes out with the pickup time, through the shared queue.
     const summary = await alerts.processQueue(now);
     assert.strictEqual(summary.wanted.sent, 1);
-    assert.strictEqual(sent.length, 1);
-    assert.ok(/Free on the curb until/.test(sent[0].text), sent[0].text);
+    // (Sam also gets his post-sale summary; lib/sellerTools.js)
+    const toBea = sent.filter((m) => m.to === 'bea@example.com');
+    assert.strictEqual(toBea.length, 1);
+    assert.ok(/Free on the curb until/.test(toBea[0].text), toBea[0].text);
     // Changing the offer doesn't tell her again.
     await sam.put('/post/' + post.id + '/curbside').send({ itemIds: [bike.id], note: 'By the mailbox' });
     await alerts.idle();

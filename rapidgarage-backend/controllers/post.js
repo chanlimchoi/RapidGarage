@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const models = require('../models');
-const { badRequest, forbidden, notFound, serverError, requireLogin, parseId } = require('../lib/http');
+const { badRequest, forbidden, notFound, sendError, serverError, requireLogin, parseId } = require('../lib/http');
 const { validatePost } = require('../lib/validate');
 const { isAdmin } = require('../lib/roles');
 const { removePhotoFiles } = require('./photos');
@@ -18,6 +18,10 @@ const aiReview = require('../lib/aiReview');
 const { requireVerified } = require('../lib/emailVerify');
 const curbside = require('../lib/curbside');
 const calendar = require('../lib/calendar');
+const sellerTools = require('../lib/sellerTools');
+const aiItems = require('../lib/aiItems');
+const aiAccess = require('../lib/aiAccess');
+const i18n = require('../lib/i18n');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -91,6 +95,66 @@ router.use('/:id/curbside', loadPost, require('./curbside'));
 router.use('/:id/print', requireLogin, loadPost, require('./print'));
 
 router.use('/:id/report', requireLogin, loadPost, require('./report'));
+
+// Duplicate a sale for next time: same details, prices, markdown, unsold items
+// and photo copies; no dates. Hidden (moderated) sales can't be copied.
+router.post('/:id/duplicate', requireLogin, requireVerified, loadPost, requireOwner, async (req, res) => {
+  if (req.post.hidden) return forbidden(res, "A hidden sale can't be duplicated.");
+  try {
+    const id = await sellerTools.duplicate(req.post);
+    const post = await reload({ id });
+    res.status(201).json(post);
+    // Like a new sale (POST /): alerts, wanted posts, followers, AI review.
+    alerts.schedulePostMatch(post);
+    wanted.schedulePost(post.id);
+    follows.schedulePost(post);
+    aiReview.schedule(post.id);
+  } catch (err) { serverError(res, err); }
+  return undefined;
+});
+
+// How the sale went (owner only): items sold, views, saves, conversations.
+router.get('/:id/summary', requireLogin, loadPost, requireOwner, async (req, res) => {
+  try { return res.json(await sellerTools.summary(req.post)); } catch (err) { return serverError(res, err); }
+});
+
+// "Write title & description with AI": a suggestion only; the seller edits
+// and saves it with PUT /:id. body: { oneTimeKey? } (same key rules as item drafts).
+router.post('/:id/describe', requireLogin, loadPost, requireOwner, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const body = req.body || {};
+  // Out of the request right away, so nothing later can see it.
+  const oneTime = body.oneTimeKey;
+  delete body.oneTimeKey;
+  let apiKey = null;
+  try {
+    const picked = await aiAccess.pickKey(req, oneTime, 'Writing with AI is turned off on this server.');
+    if (picked.error) return aiAccess.sendPicked(res, picked.error);
+    apiKey = picked.apiKey;
+    const source = picked.source;
+    const photos = (req.post.photos || []).slice().sort((a, b) => a.position - b.position || a.id - b.id);
+    const list = (req.post.items || []).slice().sort((a, b) => a.position - b.position || a.id - b.id);
+    if (!photos.length && !list.length) return badRequest(res, 'Add photos or items first, then write with AI.');
+    if (!(await aiAccess.takeBudget(req.user.id, source))) {
+      res.set('Retry-After', '3600');
+      return sendError(res, 429, 'rate_limited', "You've used today's AI requests. Try again tomorrow.");
+    }
+    try {
+      const out = await aiItems.describe(req.post, list, photos, i18n.requestLang(req), apiKey ? { apiKey } : null);
+      apiKey = null;
+      return res.json(Object.assign(out, { keySource: source }));
+    } catch (err) {
+      await aiAccess.giveBack(req.user.id, source);
+      if (err.code === 'own_key_rejected') return sendError(res, 400, 'own_key_rejected', 'Anthropic rejected that key. Check it in the Anthropic Console, or update the one saved in Settings.');
+      if (err.code === 'refused') return sendError(res, 422, 'ai_refused', "Couldn't write a description for this sale. Please write it yourself.");
+      if (err.code === 'truncated' || err.code === 'bad_output') return sendError(res, 502, 'ai_failed', 'The AI answer came back incomplete. Please try again.');
+      if (err.code === 'ai_rate_limited') { res.set('Retry-After', '60'); return sendError(res, 503, 'ai_busy', 'The AI is busy right now. Please try again in a minute.'); }
+      console.error('AI describe failed for post ' + req.post.id + ':', err.code, err.cause ? (err.cause.status || err.cause.name) : err.message);
+      return sendError(res, 503, 'ai_unavailable', "AI writing isn't available right now. Please try again later.");
+    }
+  } catch (err) { return serverError(res, err); } finally { apiKey = null; }
+});
+
 
 // Sale page view beacon (seller dashboard). Always 204, whether or not it was
 // counted: counted like QR scans (lib/scans.js kind 'view'), never for hidden

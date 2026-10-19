@@ -236,6 +236,10 @@ async function processQueue(now) {
     console.error('Sale reminder pass failed:', err && err.message);
     summary.reminders = { error: true };
   }
+  try { summary.saleSummaries = await require('./sellerTools').processSummaries(now); } catch (err) {
+    console.error('Sale summary pass failed:', err && err.message);
+    summary.saleSummaries = { error: true };
+  }
   return summary;
 }
 

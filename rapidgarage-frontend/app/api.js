@@ -272,6 +272,10 @@ export const fetchAiKey = () => apiFetch('/me/ai-key');
 export const saveAiKey = (key, currentPassword) => apiFetch('/me/ai-key', jsonBody('PUT', { key, currentPassword: currentPassword || undefined }));
 export const deleteAiKey = () => apiFetch('/me/ai-key', { method: 'DELETE' });
 export const addItemsBulk = (postId, items) => apiFetch('/post/' + postId + '/items/bulk', jsonBody('POST', { items }));
+// Seller tools (backend lib/sellerTools.js): AI title & description, duplicate, summary.
+export const describeSale = (postId, oneTimeKey) => apiFetch('/post/' + postId + '/describe', jsonBody('POST', oneTimeKey ? { oneTimeKey } : {}));
+export const duplicateSale = (postId) => apiFetch('/post/' + postId + '/duplicate', { method: 'POST' });
+export const fetchSaleSummary = (postId) => apiFetch('/post/' + postId + '/summary');
 
 // ---- Following sellers (lib/follows.js on the server) ----------------------
 export const fetchFollows = () => apiFetch('/follows');

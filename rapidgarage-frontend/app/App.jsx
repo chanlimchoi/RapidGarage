@@ -164,7 +164,7 @@ class App extends Component {
             <Route path='/newpost' render={(props) => <NewPost {...props} {...common} />} />
             <Route path='/post/:id/print' render={(props) => <PrintFlyer {...props} {...common} />} />
             <Route path='/post/:id/items' render={(props) => <ItemsEditor {...props} {...common} config={config} />} />
-            <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} />} />
+            <Route path='/post/:id/edit' render={(props) => <EditPost {...props} {...common} config={config} />} />
             <Route path='/post/:id' render={(props) => <Post {...props} {...common} />} />
             <Route exact path='/dashboard' render={(props) => <Dashboard {...props} {...common} />} />
             <Route path='/dashboard/sales/:id' render={(props) => <DashboardSale {...props} {...common} />} />
