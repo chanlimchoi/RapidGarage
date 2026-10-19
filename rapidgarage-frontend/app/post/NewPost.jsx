@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { LogIn, Images } from 'lucide-react';
 import { apiFetch, errorMessage, uploadPhotos, MAX_PHOTOS } from '../api';
 import PhotoPicker from '../components/PhotoPicker';
@@ -58,7 +57,7 @@ class NewPost extends Component {
 
   render() {
     if (this.state.created) {
-      return <Redirect to={this.state.createdId ? '/post/' + this.state.createdId : '/'} />;
+      return <Navigate replace to={this.state.createdId ? '/post/' + this.state.createdId : '/'} />;
     }
     if (this.props.ready && !this.props.user) {
       return (

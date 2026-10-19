@@ -1,5 +1,5 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
+import { withRouterProps } from '../lib/router';
 import { Copy } from 'lucide-react';
 import { duplicateSale, errorMessage } from '../api';
 import { Spinner } from '../components/ui';
@@ -34,4 +34,4 @@ class DuplicateButton extends React.Component {
   }
 }
 
-export default withRouter(DuplicateButton);
+export default withRouterProps(DuplicateButton);
