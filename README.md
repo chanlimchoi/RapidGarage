@@ -49,6 +49,14 @@ cp .env.production.example .env.production   # fill in (DEPLOY.md)
 docker compose --env-file .env.production up -d --build   # http://localhost:8080
 ```
 
+## Security and abuse protection
+
+The API rate-limits each client IP, slows down password guessing per account, sheds load when
+saturated, drops slow clients, caps body sizes and refuses cross-site writes. Logging in rotates
+the session id (passport 0.7). Volumetric DDoS has to be stopped before traffic reaches the app;
+DEPLOY.md ("Abuse and DDoS protection") covers the limits, the Caddy settings and putting
+Cloudflare in front.
+
 ## Photos on posts
 
 Each post can have up to 5 photos (JPEG, PNG or WebP, 8 MB max each). The server checks the

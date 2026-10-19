@@ -31,6 +31,7 @@ async function finish(req, posts, keepEnded) {
 }
 
 const router = express.Router();
+const allPostsMax = () => { const n = Number(process.env.ALL_POSTS_MAX); return Number.isInteger(n) && n > 0 ? n : 500; };
 const newestFirst = {
   include: [{ model: models.PostPhoto, as: 'photos' }, { model: models.SaleDay, as: 'saleDays' }],
   order: [['createdAt', 'DESC'], [{ model: models.PostPhoto, as: 'photos' }, 'position', 'ASC']],
@@ -38,13 +39,16 @@ const newestFirst = {
 
 // Destroy the passport session.
 router.post('/logout', (req, res, next) => {
-  req.logout();
   if (!req.session) return res.json({ success: true });
-  req.session.destroy((err) => {
-    if (err) return next(err);
-    // Same attributes as the session cookie, or browsers keep it.
-    res.clearCookie('connect.sid', { path: '/', httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
-    return res.json({ success: true });
+  // passport >= 0.6: logout is async (it also rotates the session id).
+  req.logout((logoutErr) => {
+    if (logoutErr) return next(logoutErr);
+    req.session.destroy((err) => {
+      if (err) return next(err);
+      // Same attributes as the session cookie, or browsers keep it.
+      res.clearCookie('connect.sid', { path: '/', httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+      return res.json({ success: true });
+    });
   });
 });
 
@@ -61,7 +65,10 @@ router.get('/allPosts', async (req, res) => {
   const onlyCurb = cs === 'true' || cs === '1';
   try {
     const where = onlyCurb ? Object.assign({}, curbside.activeWhere()) : null;
-    let posts = await models.Post.findAll(Object.assign({ where: visible(req, where) }, newestFirst));
+    // Capped to the newest ALL_POSTS_MAX so a request's cost can't grow with
+    // the data. Ids first: LIMIT plus ordered hasMany includes is unreliable.
+    const newest = (await models.Post.findAll({ attributes: ['id'], where: visible(req, where), order: [['createdAt', 'DESC'], ['id', 'DESC']], limit: allPostsMax(), raw: true })).map((r) => r.id);
+    let posts = newest.length ? await models.Post.findAll(Object.assign({ where: { id: newest } }, newestFirst)) : [];
     if (w.when) posts = posts.filter((p) => schedule.matchesWhen(p, w.when) || curbside.countsForWhen(p, w.when));
     if (onlyCurb) posts = posts.filter((p) => !p.hidden);
     if (!k.words) { const out = await finish(req, posts); return res.json(onlyCurb ? out.filter((p) => p.curbside && p.curbside.state === 'active') : out); }

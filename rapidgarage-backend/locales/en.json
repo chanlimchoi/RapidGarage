@@ -514,6 +514,12 @@
   "Too many reset requests. Please try again later.": "Too many reset requests. Please try again later.",
   "Password reset emails aren't available on this server. Contact the site's administrator.": "Password reset emails aren't available on this server. Contact the site's administrator.",
   "This reset link is invalid or has expired. Request a new one.": "This reset link is invalid or has expired. Request a new one.",
-  "Your current password is incorrect.": "Your current password is incorrect."
+  "Your current password is incorrect.": "Your current password is incorrect.",
+  "Too many requests. Please slow down and try again shortly.": "Too many requests. Please slow down and try again shortly.",
+  "Too many sign-in attempts from this network. Please wait a few minutes and try again.": "Too many sign-in attempts from this network. Please wait a few minutes and try again.",
+  "Too many failed attempts. Please wait 15 minutes or reset your password.": "Too many failed attempts. Please wait 15 minutes or reset your password.",
+  "The server is busy. Please try again in a few seconds.": "The server is busy. Please try again in a few seconds.",
+  "Cross-site requests are not allowed.": "Cross-site requests are not allowed.",
+  "Request body is too large.": "Request body is too large."
  }
 }

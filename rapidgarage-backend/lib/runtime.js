@@ -59,6 +59,32 @@ function origin(url) {
   try { return new URL(String(url).trim()).origin; } catch (_) { return null; }
 }
 
+// Node HTTP server limits against clients that open connections and then
+// send slowly (slowloris) or never finish. Uploads (up to 5 x 8 MB from a
+// phone) get the longest budget, so requestTimeout stays generous.
+function httpLimits(env) {
+  const e = env || process.env;
+  const ms = (name, dflt) => { const n = Number(e[name]); return Number.isInteger(n) && n > 0 ? n : dflt; };
+  return {
+    headersTimeout: ms('HTTP_HEADERS_TIMEOUT_MS', 15000),
+    requestTimeout: ms('HTTP_REQUEST_TIMEOUT_MS', 120000),
+    keepAliveTimeout: ms('HTTP_KEEP_ALIVE_TIMEOUT_MS', 5000),
+    maxHeadersCount: 100,
+    maxRequestsPerSocket: 1000,
+  };
+}
+
+function applyHttpLimits(server, env) {
+  const l = httpLimits(env);
+  // Node requires headersTimeout <= requestTimeout.
+  server.requestTimeout = l.requestTimeout;
+  server.headersTimeout = Math.min(l.headersTimeout, l.requestTimeout);
+  server.keepAliveTimeout = l.keepAliveTimeout;
+  server.maxHeadersCount = l.maxHeadersCount;
+  server.maxRequestsPerSocket = l.maxRequestsPerSocket;
+  return server;
+}
+
 // Startup checks. Errors stop a production start; warnings are logged.
 function checkConfig(env) {
   const e = env || process.env;
@@ -77,4 +103,4 @@ function checkConfig(env) {
   return { errors, warnings };
 }
 
-module.exports = { trustProxy, cookieSecure, hsts, frontendDir, origin, checkConfig, isOn };
+module.exports = { trustProxy, cookieSecure, hsts, frontendDir, origin, checkConfig, isOn, httpLimits, applyHttpLimits };

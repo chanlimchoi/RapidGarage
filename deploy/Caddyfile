@@ -2,7 +2,34 @@
 # HTTP -> HTTPS redirect, compression. Caddy sets X-Forwarded-For/-Proto from
 # the real connection (it ignores client-sent ones), so the app runs with
 # TRUST_PROXY=1.
+#
+# Timeouts drop clients that connect and then dribble bytes (slowloris), and
+# the body cap rejects floods of huge uploads before they reach Node. The app
+# has its own rate limits and load shedding; for volumetric DDoS put a CDN in
+# front (DEPLOY.md, "Abuse and DDoS protection").
+{
+	servers {
+		timeouts {
+			read_header 10s
+			read_body 2m
+			write 2m
+			idle 2m
+		}
+		max_header_size 32KB
+	}
+}
+
 {$DOMAIN} {
 	encode zstd gzip
-	reverse_proxy app:8080
+	# 5 photos x 8 MB plus multipart overhead.
+	request_body {
+		max_size 45MB
+	}
+	reverse_proxy app:8080 {
+		# Give up on a stuck upstream instead of piling up connections.
+		transport http {
+			dial_timeout 5s
+			response_header_timeout 60s
+		}
+	}
 }

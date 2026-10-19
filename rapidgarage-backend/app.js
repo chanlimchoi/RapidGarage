@@ -9,6 +9,7 @@ const runtime = require('./lib/runtime');
 const security = require('./lib/security');
 const { createHealthRouter } = require('./lib/health');
 const { sendError } = require('./lib/http');
+const rateLimit = require('./lib/rateLimit');
 
 const PORT = process.env.PORT || 8000;
 
@@ -60,8 +61,13 @@ function createApp(env) {
   app.use(health);
   app.use('/api', health);
 
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
+  // Past this point, refuse at once when the process is already saturated.
+  app.use(rateLimit.shedLoad());
+
+  // Explicit body limits: JSON bodies are small (the largest, a 100-item list,
+  // is well under 100 kB); forms are only one-click unsubscribe POSTs.
+  app.use(bodyParser.json({ limit: '100kb' }));
+  app.use(bodyParser.urlencoded({ extended: false, limit: '10kb', parameterLimit: 50 }));
 
   // Enable sessions & passport. Sessions live in Postgres (table "session")
   // outside tests, so logins survive restarts; see lib/sessionStore.js.
@@ -86,7 +92,12 @@ function createApp(env) {
 
   const api = express.Router();
   // Uploaded photos: read-only (GET/HEAD), served through the storage layer.
+  // Before the limiters: a page of results loads one thumbnail per sale.
   api.use('/uploads', require('./controllers/uploads'));
+  api.use(rateLimit.sameOriginWrites([FRONTEND_ORIGIN, runtime.origin(e.APP_BASE_URL)]));
+  api.use(rateLimit.apiLimiter);
+  api.use(rateLimit.writeLimiter);
+  api.use(['/login', '/signup', '/password-reset'], rateLimit.authLimiter);
   // Load up all of the controllers
   api.use(require('./controllers'));
 
@@ -103,6 +114,9 @@ function createApp(env) {
   app.use((err, req, res, next) => {
     if (err && err.type === 'entity.parse.failed') {
       return sendError(res, 400, 'bad_request', 'Malformed JSON body.');
+    }
+    if (err && (err.type === 'entity.too.large' || err.type === 'parameters.too.many')) {
+      return sendError(res, 413, 'payload_too_large', 'Request body is too large.');
     }
     console.error(err);
     sendError(res, 500, 'server_error', 'Something went wrong.');
@@ -130,6 +144,8 @@ if (require.main === module) {
         const mode = app.locals.frontendDir ? 'frontend + API' : 'API only';
         console.log(`Server is up and running on port: ${PORT} (session store: ${sessionStore.kind}, ${mode})`);
       });
+      // Slow-client (slowloris) protection: see runtime.httpLimits.
+      runtime.applyHttpLimits(server, process.env);
       // Sale alert email outbox (set ALERT_WORKER=off to run it elsewhere).
       const alerts = require('./lib/alerts');
       const holds = require('./lib/holds');
