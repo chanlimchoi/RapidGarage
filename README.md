@@ -275,6 +275,17 @@ Anyone logged in can organize a **neighborhood sale** (`/events/new`): a name, a
 - **Moderation.** Events can be reported (same reasons, the same hourly report budget as posts, auto-hide at the same threshold). Admins find them under **Admin → Reports → Neighborhood sales** and can dismiss, hide, unhide or delete. Hiding takes the event out of search and lists and stops its short link and printing; its sales stay listed on their own. Ended events stay viewable but leave search.
 - **Limits.** `EVENT_MAX_ACTIVE` upcoming events per organizer (3), `EVENT_MAX_PER_DAY` created per 24 h (5), `EVENT_MAX_SALES` sales per event (200).
 
+## Admin analytics
+
+**Admin → Analytics** shows site-wide numbers for the last 7, 30 or 90 days. Stat tiles show
+active sales, new sales, sign-ups, sale views, messages, QR scans, saves, new follows, accounts
+and open reports, each with the change versus the previous period of the same length. Below
+them, one small chart per daily series: sign-ups, new sales, messages, views, QR scans and
+shares. Each chart has a crosshair tooltip that also works with the arrow keys, and **Show
+tables** reveals the numbers as tables. Last come where the active sales are (top cities) and
+the most-viewed sales. Everything is aggregate: no emails or message text, sellers as "First L.".
+Days are UTC.
+
 ## Seller dashboard
 
 Logged-in sellers get **Dashboard** in the nav (`/dashboard`): totals and 14-day charts for page views, QR scans, saves and buyer messages across all their sales, a "right now" snapshot (active/ended sales, conversations and unread, holds waiting/reserved, items sold vs total, sales in neighborhood sales), and every sale, ended ones included (filter: all / active / ended), each with its own numbers. `/dashboard/sales/:id` shows one sale: four daily charts, items sold, open holds (item, buyer as "First L.", until when, link to the thread), its conversations and its neighborhood sale. Charts are plain SVG with a screen-reader table; no chart library.

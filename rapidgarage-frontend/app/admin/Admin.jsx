@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Users, SlidersHorizontal, Lock, LogIn, Flag, MapPin } from 'lucide-react';
+import { ShieldCheck, Users, SlidersHorizontal, Lock, LogIn, Flag, MapPin, BarChart3 } from 'lucide-react';
 import Reports from './Reports';
 import MeetupSpots from './MeetupSpots';
+import Analytics from './Analytics';
 import { apiFetch, errorMessage } from '../api';
 import { Alert, EmptyState, SkeletonBlock } from '../components/ui';
 import { initials, displayName } from '../lib/format';
@@ -137,12 +138,14 @@ export default class Admin extends React.Component {
         <div className="segmented admin-tabs" role="group" aria-label={t('admin.sections')}>
           <button type="button" aria-pressed={s.tab === 'reports'} onClick={() => this.setState({ tab: 'reports' })}><Flag size={14} aria-hidden="true" />{t('admin.reports')}{s.openReports ? <span className="count" aria-label={t('admin.open', { count: s.openReports })}>{s.openReports}</span> : null}</button>
           <button type="button" aria-pressed={s.tab === 'spots'} onClick={() => this.setState({ tab: 'spots' })}><MapPin size={14} aria-hidden="true" />{t('admin.spotsTab')}</button>
+          <button type="button" aria-pressed={s.tab === 'analytics'} onClick={() => this.setState({ tab: 'analytics' })}><BarChart3 size={14} aria-hidden="true" />{t('an.tab')}</button>
           <button type="button" aria-pressed={s.tab === 'users'} onClick={() => this.setState({ tab: 'users' })}><Users size={14} aria-hidden="true" />{t('admin.usersTab')}</button>
           <button type="button" aria-pressed={s.tab === 'settings'} onClick={() => this.setState({ tab: 'settings' })}><SlidersHorizontal size={14} aria-hidden="true" />{t('nav.settings')}</button>
         </div>
         {s.tab === 'reports' ? <Reports onCount={(n) => this.setState({ openReports: n })} /> : null}
         {s.tab === 'spots' ? <MeetupSpots /> : null}
-        {s.tab !== 'reports' && s.tab !== 'spots' && s.loading ? <SkeletonBlock height={120} lines={4} /> : null}
+        {s.tab === 'analytics' ? <Analytics onReports={() => this.setState({ tab: 'reports' })} /> : null}
+        {s.tab !== 'reports' && s.tab !== 'spots' && s.tab !== 'analytics' && s.loading ? <SkeletonBlock height={120} lines={4} /> : null}
         {s.tab === 'settings' && !s.loading ? (
           <div className="stack">
             {s.settings ? (

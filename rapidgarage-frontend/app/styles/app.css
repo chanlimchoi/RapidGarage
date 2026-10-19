@@ -1234,3 +1234,43 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .ai-draft-fields .field-error { grid-column: 1 / -1; }
 .ai-draft-privacy { margin-top: var(--space-2); }
 @media (max-width: 480px) { .ai-draft-fields { grid-template-columns: 1fr; } }
+
+/* Admin analytics */
+.analytics-filters { gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+.analytics .is-refreshing { opacity: 0.55; transition: opacity 120ms; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
+.stat-tile { display: flex; flex-direction: column; gap: 2px; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.stat-label { font-size: var(--text-sm); color: var(--color-text-muted); }
+.stat-value { font-size: 1.6rem; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--color-text); }
+.stat-delta { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-sm); color: var(--color-text-muted); }
+.stat-link { align-self: flex-start; padding-left: 0; }
+.trend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-3); }
+.trend-chart { margin: 0; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.trend-chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); margin-bottom: var(--space-2); }
+.trend-chart-title { font-size: var(--text-sm); color: var(--color-text-muted); }
+.trend-chart-total { font-variant-numeric: tabular-nums; color: var(--color-text); }
+.trend-chart-plot { position: relative; height: 120px; border-radius: 4px; touch-action: pan-y; }
+.trend-chart-plot:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.trend-chart-plot svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.trend-area { fill: var(--color-chart); opacity: 0.14; }
+.trend-line { fill: none; stroke: var(--color-chart); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.trend-gridline { stroke: var(--color-border); stroke-width: 1; stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; }
+.trend-base { stroke: var(--color-border-strong); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.trend-cross { stroke: var(--color-text-muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.trend-dot { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: var(--color-chart); box-shadow: 0 0 0 2px var(--color-surface); pointer-events: none; }
+.trend-tip { position: absolute; top: 0; transform: translateX(8px); display: flex; flex-direction: column; padding: 4px 8px; border-radius: 6px; background: var(--color-surface); border: 1px solid var(--color-border-strong); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); font-size: var(--text-sm); white-space: nowrap; pointer-events: none; }
+.trend-tip.is-left { transform: translateX(calc(-100% - 8px)); }
+.trend-tip strong { color: var(--color-text); font-variant-numeric: tabular-nums; }
+.trend-tip span { color: var(--color-text-muted); }
+.trend-axis { display: flex; justify-content: space-between; margin-top: var(--space-1); }
+.trend-table { width: 100%; margin-top: var(--space-2); font-size: var(--text-sm); border-collapse: collapse; }
+.trend-table th, .trend-table td { text-align: left; padding: 2px 4px; border-bottom: 1px solid var(--color-border); }
+.trend-table td:last-child, .trend-table th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.analytics-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-3); }
+.rank-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+.rank-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; }
+.rank-list li:has(.rank-bar) { grid-template-columns: minmax(0, 1.2fr) minmax(40px, 1fr) auto; }
+.rank-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-bar { height: 8px; border-radius: 4px; background: var(--color-surface-2); overflow: hidden; }
+.rank-bar span { display: block; height: 100%; border-radius: 4px; background: var(--color-chart); }
+.rank-value { font-size: var(--text-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }

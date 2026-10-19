@@ -538,6 +538,7 @@
   "The item draft came back incomplete. Please try again.": "物品草稿不完整，请重试。",
   "Item drafting is busy right now. Please try again in a minute.": "物品草稿功能当前繁忙，请一分钟后再试。",
   "Item drafting isn't available right now. Please try again later.": "物品草稿功能当前不可用，请稍后再试。",
-  "items must be a non-empty list.": "items 必须是非空列表。"
+  "items must be a non-empty list.": "items 必须是非空列表。",
+  "days must be 7, 30 or 90.": "days 必须是 7、30 或 90。"
  }
 }

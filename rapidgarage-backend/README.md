@@ -497,6 +497,17 @@ from the sale that is open or opens first (ties: the one closing first). At most
 directions link using the sales' public addresses; without `lat,lng` it has no origin so
 Google Maps starts from the phone's location. The location is only used for that request.
 
+## Admin analytics
+
+- `GET /admin/analytics?days=7|30|90` (admins; default 30) → `{ days, from, to, totals: { users, activeSales, openReports },
+  metrics: { signups, posts, messages, conversations, saves, views, scans, shares, follows }, topCities, topSales }`.
+  Each metric is `{ total, previous, series: [{ date, count }] }`, with `previous` covering the same number of days
+  just before. Series cover every UTC day in the window, zeros included.
+- Created-per-day counts are one `GROUP BY date(createdAt)` query per table (works on SQLite and Postgres).
+  Views, scans and shares sum the existing `Post*Day` tables. Messages count `kind = 'text'` only.
+- Active sales are visible and not ended. Top cities group active sales by city and state (8).
+  Top sales are the 5 most viewed in the window.
+
 ## Draft items from photos (Claude)
 
 - `POST /post/:id/items/suggest` `{ photoIds? }` (seller only) → `{ suggestions: [{ name, priceCents|null, photoId|null }], room, photosUsed }`.
