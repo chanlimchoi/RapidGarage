@@ -88,4 +88,4 @@ function createSessionStore(options) {
   };
 }
 
-module.exports = { createSessionStore, sessionMaxAgeMs, pruneIntervalSeconds, storeKind, SESSION_TABLE };
+module.exports = { createSessionStore, sessionMaxAgeMs, pruneIntervalSeconds, storeKind, connectionString, SESSION_TABLE };

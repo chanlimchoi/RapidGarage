@@ -67,7 +67,7 @@ router.post('/suggest', requireLogin, owner, async (req, res) => {
     if (oneTime !== undefined) {
       if (!ai.userKeys) return sendError(res, 404, 'feature_disabled', 'Using your own AI key is turned off on this server.');
       if (!keysOverHttps(req)) return badRequest(res, 'Keys can only be sent over HTTPS.');
-      if (!userAiKey.takeAttempt(req.user.id)) { res.set('Retry-After', '3600'); return sendError(res, 429, 'rate_limited', 'Too many key attempts. Please try again later.'); }
+      if (!(await userAiKey.takeAttempt(req.user.id))) { res.set('Retry-After', '3600'); return sendError(res, 429, 'rate_limited', 'Too many key attempts. Please try again later.'); }
       apiKey = userAiKey.normalize(oneTime);
       if (!apiKey) return badRequest(res, 'Invalid request.', { oneTimeKey: 'That does not look like an Anthropic API key (they start with "sk-ant-").' });
       source = 'one_time';
@@ -82,7 +82,7 @@ router.post('/suggest', requireLogin, owner, async (req, res) => {
     const photos = want ? all.filter((p) => want.map(Number).includes(p.id)) : all;
     if (!photos.length) return badRequest(res, 'Add photos to the sale first, then draft items from them.');
     const bucket = source === 'site' ? req.user.id : 'own:' + req.user.id;
-    if (!aiItems.takeSlot(bucket, source === 'site' ? aiItems.perDay() : aiItems.perDayOwnKey())) {
+    if (!(await aiItems.takeSlot(bucket, source === 'site' ? aiItems.perDay() : aiItems.perDayOwnKey()))) {
       res.set('Retry-After', '3600');
       return sendError(res, 429, 'rate_limited', "You've used today's item drafts. Try again tomorrow, or add items by hand.");
     }
@@ -92,7 +92,7 @@ router.post('/suggest', requireLogin, owner, async (req, res) => {
       const room = Math.max(0, items.MAX_ITEMS - (await models.SaleItem.count({ where: { postId: req.post.id } })));
       return res.json({ suggestions: out.suggestions, room, photosUsed: Math.min(photos.length, aiItems.MAX_PHOTOS), keySource: source });
     } catch (err) {
-      aiItems.giveBack(bucket);
+      await aiItems.giveBack(bucket);
       if (err.code === 'own_key_rejected') return sendError(res, 400, 'own_key_rejected', 'Anthropic rejected that key. Check it in the Anthropic Console, or update the one saved in Settings.');
       if (err.code === 'refused') return sendError(res, 422, 'ai_refused', "Couldn't draft items from these photos. Add items by hand instead.");
       if (err.code === 'truncated' || err.code === 'bad_output') return sendError(res, 502, 'ai_failed', 'The item draft came back incomplete. Please try again.');

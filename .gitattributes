@@ -1,0 +1,3 @@
+# Shell scripts run inside Linux containers (docker-compose mounts them):
+# keep LF even on Windows checkouts, or sh fails with "illegal option -".
+*.sh text eol=lf

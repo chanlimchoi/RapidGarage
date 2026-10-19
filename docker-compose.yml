@@ -52,13 +52,27 @@ services:
   backup:
     image: postgres:17-alpine
     restart: unless-stopped
-    entrypoint: ["/bin/sh", "/usr/local/bin/backup-db.sh", "--loop"]
+    # rclone is only installed when an offsite remote is configured.
+    entrypoint: ["/bin/sh", "-c", "if [ -n \"$$BACKUP_RCLONE_REMOTE\" ] && ! command -v rclone >/dev/null; then apk add --no-cache rclone >/dev/null; fi; exec /bin/sh /usr/local/bin/backup-db.sh --loop"]
     environment:
       DATABASE_URL: *db-url
       BACKUP_DIR: /backups
       BACKUP_UPLOADS_DIR: /uploads
       BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
       BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      # Offsite copies (DEPLOY.md "Backups"): only these variables reach this
+      # container, not the app's secrets.
+      BACKUP_RCLONE_REMOTE: ${BACKUP_RCLONE_REMOTE:-}
+      BACKUP_REMOTE_KEEP_DAYS: ${BACKUP_REMOTE_KEEP_DAYS:-30}
+      RCLONE_CONFIG_OFFSITE_TYPE: ${RCLONE_CONFIG_OFFSITE_TYPE:-}
+      RCLONE_CONFIG_OFFSITE_PROVIDER: ${RCLONE_CONFIG_OFFSITE_PROVIDER:-}
+      RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID: ${RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY: ${RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY:-}
+      RCLONE_CONFIG_OFFSITE_REGION: ${RCLONE_CONFIG_OFFSITE_REGION:-}
+      RCLONE_CONFIG_OFFSITE_ENDPOINT: ${RCLONE_CONFIG_OFFSITE_ENDPOINT:-}
+      RCLONE_CONFIG_OFFSITECRYPT_TYPE: ${RCLONE_CONFIG_OFFSITECRYPT_TYPE:-}
+      RCLONE_CONFIG_OFFSITECRYPT_REMOTE: ${RCLONE_CONFIG_OFFSITECRYPT_REMOTE:-}
+      RCLONE_CONFIG_OFFSITECRYPT_PASSWORD: ${RCLONE_CONFIG_OFFSITECRYPT_PASSWORD:-}
     volumes:
       - ./rapidgarage-backend/scripts/backup-db.sh:/usr/local/bin/backup-db.sh:ro
       - uploads:/uploads:ro

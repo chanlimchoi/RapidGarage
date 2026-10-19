@@ -145,6 +145,11 @@ if (require.main === module) {
         const mode = app.locals.frontendDir ? 'frontend + API' : 'API only';
         console.log(`Server is up and running on port: ${PORT} (session store: ${sessionStore.kind}, ${mode})`);
       });
+      // S3 photo storage: say so at once if the bucket can't be reached.
+      const storage = require('./lib/storage').getStorage();
+      if (storage.check) storage.check().then(() => console.log('Photo storage: S3 bucket ' + storage.bucket + ' reachable'), (err) => console.error('WARNING: S3 bucket ' + storage.bucket + ' is not reachable: ' + (err && (err.name || err.message))));
+      // Several instances: share live events through Postgres (LIVE_BROADCAST=postgres).
+      require('./lib/live').startBroadcast().catch(() => null);
       // Slow-client (slowloris) protection: see runtime.httpLimits.
       runtime.applyHttpLimits(server, process.env);
       // Sale alert email outbox (set ALERT_WORKER=off to run it elsewhere).
@@ -160,6 +165,7 @@ if (require.main === module) {
         app.locals.draining = true;
         // Open event streams would hold close() open; browsers reconnect to the next instance.
         require('./lib/live').closeAll();
+        require('./lib/live').stopBroadcast();
         server.close(() => {
           require('./lib/alerts').stopWorker();
           Promise.all([sessionStore.close(), models.sequelize.close()]).finally(() => process.exit(0));

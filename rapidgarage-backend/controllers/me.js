@@ -109,7 +109,7 @@ router.put('/ai-key', requireLogin, async (req, res) => {
   delete body.key; // keep it out of anything that might log the body
   if (!secretBox.isConfigured()) return sendError(res, 503, 'not_configured', 'Saving keys is disabled: the server has no KEY_ENCRYPTION_SECRET.');
   if (!keysOverHttps(req)) return badRequest(res, 'Keys can only be sent over HTTPS.');
-  if (!userAiKey.takeAttempt(req.user.id)) { res.set('Retry-After', '3600'); return sendError(res, 429, 'rate_limited', 'Too many key attempts. Please try again later.'); }
+  if (!(await userAiKey.takeAttempt(req.user.id))) { res.set('Retry-After', '3600'); return sendError(res, 429, 'rate_limited', 'Too many key attempts. Please try again later.'); }
   const key = userAiKey.normalize(raw);
   if (!key) return badRequest(res, 'Invalid request.', { key: 'That does not look like an Anthropic API key (they start with "sk-ant-").' });
   try {

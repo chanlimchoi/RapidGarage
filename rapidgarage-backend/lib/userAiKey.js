@@ -38,16 +38,15 @@ function normalize(raw) {
 }
 
 // ---- attempt limit (saving and one-time keys share it) --------------------
-const attempts = new Map(); // userId -> [timestamps]
-function takeAttempt(userId, now) {
-  const t = now || Date.now();
-  const recent = (attempts.get(userId) || []).filter((x) => t - x < 3600000);
-  if (recent.length >= attemptsPerHour()) { attempts.set(userId, recent); return false; }
-  recent.push(t);
-  attempts.set(userId, recent);
+const counters = require('./counters');
+async function takeAttempt(userId) {
+  const key = 'ai-key-attempts|' + userId;
+  const max = attemptsPerHour();
+  const e = await counters.hit(key, 3600000);
+  if (e.count > max) { await counters.decrement(key); return false; }
   return true;
 }
-const resetAttempts = () => attempts.clear();
+const resetAttempts = () => counters.reset();
 
 // ---- verification -----------------------------------------------------------
 // One free request (list one model) proves the key works before it's saved.

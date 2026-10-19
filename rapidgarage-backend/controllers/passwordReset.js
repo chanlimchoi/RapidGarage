@@ -15,7 +15,7 @@ router.post('/', async (req, res) => {
   noStore(res);
   const email = req.body && typeof req.body.email === 'string' ? req.body.email.trim() : '';
   if (!EMAIL_RE.test(email)) return badRequest(res, 'Invalid request.', { email: 'A valid email is required.' });
-  if (!reset.takeIpSlot(req.ip)) {
+  if (!(await reset.takeIpSlot(req.ip))) {
     res.set('Retry-After', '3600');
     return sendError(res, 429, 'rate_limited', 'Too many reset requests. Please try again later.');
   }

@@ -368,6 +368,22 @@ describe('Production readiness', function () {
         assert.notStrictEqual(r.status, 0);
         assert.deepStrictEqual(fs.existsSync(dest) ? fs.readdirSync(dest) : [], []);
       });
+      it('copies each new file offsite with rclone, prunes old remote copies, and never prints the remote', () => {
+        const log = path.join(tmp, 'rclone.log');
+        fs.writeFileSync(path.join(bin, 'rclone'), '#!/bin/sh\necho "$@" >> "' + log + '"\n', { mode: 0o755 });
+        const remote = ':s3,access_key_id=AKIASECRET:bucket/rg';
+        const r = run({ BACKUP_RCLONE_REMOTE: remote, BACKUP_REMOTE_KEEP_DAYS: '7' });
+        assert.strictEqual(r.status, 0, r.stderr.toString());
+        const calls = fs.readFileSync(log, 'utf8').trim().split('\n');
+        assert.strictEqual(calls.filter((c) => c.startsWith('copyto')).length, 2, 'dump + uploads');
+        assert.ok(calls.some((c) => c.startsWith('delete') && c.includes('--min-age 7d')));
+        assert.ok(!(r.stdout.toString() + r.stderr.toString()).includes('AKIASECRET'));
+      });
+      it('fails when an offsite remote is set but rclone is missing', () => {
+        const r = run({ BACKUP_RCLONE_REMOTE: 'offsite:bucket', PATH: bin + ':/usr/bin:/bin' });
+        assert.notStrictEqual(r.status, 0);
+        assert.ok(/rclone is not installed/.test(r.stdout.toString()));
+      });
       it('prunes backups older than BACKUP_KEEP_DAYS', () => {
         fs.mkdirSync(dest);
         const old = path.join(dest, 'rapidgarage-20200101-000000Z.dump');

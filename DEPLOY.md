@@ -289,6 +289,25 @@ Conversations show a short safety card at the start of a new conversation (peopl
 
 **Optional: nearby place search.** If you set `GOOGLE_PLACES_API_KEY` (a server key with the Places API (New) turned on), the meetup dialog adds a search box for nearby public places. Searches go through the server, are biased to the sale's area and limited to 30 an hour per person. The curated list works fine without this key. Leave it unset to turn search off.
 
+## Running more than one instance
+
+One instance is fine for most sites. For two or more behind a load balancer:
+
+- **`RATE_LIMIT_STORE=db`** keeps every rate limit (API, logins, password reset, AI drafts, key attempts)
+  in the `RateCounters` table, so all instances enforce one shared limit, and limits survive restarts.
+  It costs one small atomic upsert per limited request. Keys are SHA-256 hashes, so no emails or IPs
+  are stored.
+- **`LIVE_BROADCAST=postgres`** sends live updates through Postgres `LISTEN/NOTIFY`, so a message
+  handled on one instance reaches tabs connected to another. Each instance holds one extra database
+  connection to listen.
+- **`PHOTO_STORAGE=s3`** stores photos in a bucket (AWS S3, Cloudflare R2, Backblaze B2, MinIO) instead
+  of the `uploads` volume, so every instance sees the same photos. The `S3_*` settings are in
+  `.env.production.example`. Photos are still served through `/api/uploads` unless you point
+  `PHOTO_PUBLIC_BASE` at a CDN. Move existing photos once with
+  `node scripts/copy-uploads-to-s3.js` (try `--dry-run` first), then switch. The app checks that it can
+  reach the bucket at startup.
+- Sessions are already in Postgres, and the email worker uses row claims, so they need nothing extra.
+
 ## Backups and restore
 
 `rapidgarage-backend/scripts/backup-db.sh` (the compose `backup` service does
@@ -296,6 +315,14 @@ this every `BACKUP_INTERVAL_HOURS`). Output in `./backups`:
 
 - `rapidgarage-<UTC time>.dump` (`pg_dump` custom format, checked with `pg_restore --list`)
 - `uploads-<UTC time>.tar.gz` (the photos)
+
+**Offsite copies.** Set `BACKUP_RCLONE_REMOTE` and the backup container installs `rclone`, then copies
+each new file there right after it's made. It also deletes remote copies older than
+`BACKUP_REMOTE_KEEP_DAYS` (30). Configure a remote named `offsite` with `RCLONE_CONFIG_OFFSITE_*`
+(any rclone backend: S3, R2, B2, Google Drive, SFTP...). To encrypt before upload, add a `crypt` remote
+named `offsitecrypt` over it and use `offsitecrypt:` as the remote. Only these variables reach the
+backup container, and the remote string is never logged. A failed upload fails that backup run, so it
+shows up in the logs. Restore by copying a dump back with `rclone copy` and following the steps below.
 
 Older files are deleted after `BACKUP_KEEP_DAYS`. Take a manual backup before upgrades:
 

@@ -270,6 +270,15 @@ key is available) and an **Open in Google Maps** link with the stops as waypoint
 stops, Google's limit). Your saved list is private to you.
 
 
+## Scaling out and offsite backups
+
+- `RATE_LIMIT_STORE=db`: rate limits shared by every instance (atomic counters in Postgres).
+- `LIVE_BROADCAST=postgres`: live updates reach tabs on any instance (Postgres LISTEN/NOTIFY).
+- `PHOTO_STORAGE=s3`: photos in AWS S3, Cloudflare R2, Backblaze B2 or MinIO; `scripts/copy-uploads-to-s3.js` moves existing ones.
+- `BACKUP_RCLONE_REMOTE`: every backup is copied off the machine with rclone, optionally encrypted, with old copies pruned.
+
+See DEPLOY.md ("Running more than one instance", "Backups and restore").
+
 ## Live updates and push notifications
 
 While you're logged in, each tab keeps one live connection (`/api/live`, Server-Sent Events). New

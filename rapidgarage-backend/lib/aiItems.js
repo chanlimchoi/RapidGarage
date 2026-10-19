@@ -62,21 +62,20 @@ function setKeyClientFactory(fn) { keyFactory = fn || null; }
 const perDayOwnKey = () => intEnv('AI_ITEMS_PER_DAY_OWN_KEY', 50);
 
 // ---- daily budget ---------------------------------------------------------
-const uses = new Map(); // userId -> [timestamps]
+// Counted in lib/counters.js (shared by instances with RATE_LIMIT_STORE=db).
 // bucket: the user id for the site's key, 'own:<id>' for their own key
 // (own-key drafts cost the site nothing, so they have a higher cap).
-function takeSlot(bucket, limit, now) {
-  const t = now || Date.now();
+const counters = require('./counters');
+async function takeSlot(bucket, limit) {
+  const key = 'ai-drafts|' + bucket;
   const max = limit || perDay();
-  const recent = (uses.get(bucket) || []).filter((x) => t - x < 86400000);
-  if (recent.length >= max) { uses.set(bucket, recent); return false; }
-  recent.push(t);
-  uses.set(bucket, recent);
+  const e = await counters.hit(key, 86400000);
+  if (e.count > max) { await counters.decrement(key); return false; }
   return true;
 }
 // A failed call (our side or Anthropic's) doesn't use up a draft.
-function giveBack(userId) { const list = uses.get(userId); if (list && list.length) list.pop(); }
-const resetBudgets = () => uses.clear();
+const giveBack = (bucket) => counters.decrement('ai-drafts|' + bucket);
+const resetBudgets = () => counters.reset();
 
 // ---- request ----------------------------------------------------------------
 const LANGUAGE_NAMES = { en: 'English', es: 'Spanish', ko: 'Korean', 'zh-CN': 'Simplified Chinese' };
