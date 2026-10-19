@@ -1,3 +1,7 @@
+# DISABLED: GitHub Actions is unavailable because the account is locked for billing.
+# Every job is refused before it starts ("The job was not started because your account is locked due to a billing issue.").
+# Rename this file back to ci.yml after fixing billing to re-enable CI.
+
 # Tests, builds and checks for every pull request and every push to master.
 # Linux runners also cover the tests that only pass on POSIX systems
 # (backup-db.sh) and the Postgres-only behaviour SQLite can't show.
