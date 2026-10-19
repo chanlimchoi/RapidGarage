@@ -171,7 +171,12 @@
   "follow.manage": "查看你关注的人",
   "follow.manageText": "查看你关注的人：{url}",
   "follow.turnOff": "不再接收关于 {name} 的邮件",
-  "follow.turnOffText": "不再接收关于 {name} 的邮件：{url}"
+  "follow.turnOffText": "不再接收关于 {name} 的邮件：{url}",
+  "aikey.addedSubject": "你的 RapidGarage 账户添加了 AI 密钥",
+  "aikey.addedText": "一个以 {last4} 结尾的 Anthropic API 密钥已保存到你的账户，用于根据照片生成物品草稿。它以加密方式存储，包括你和网站管理员在内，任何人都无法查看。",
+  "aikey.removedSubject": "你的 RapidGarage 账户已删除 AI 密钥",
+  "aikey.removedText": "以 {last4} 结尾的 Anthropic API 密钥已从你的账户中删除。",
+  "aikey.notYou": "如果这不是你本人操作，请更改密码并在 Anthropic 控制台中删除该密钥。"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -539,6 +544,13 @@
   "Item drafting is busy right now. Please try again in a minute.": "物品草稿功能当前繁忙，请一分钟后再试。",
   "Item drafting isn't available right now. Please try again later.": "物品草稿功能当前不可用，请稍后再试。",
   "items must be a non-empty list.": "items 必须是非空列表。",
-  "days must be 7, 30 or 90.": "days 必须是 7、30 或 90。"
+  "days must be 7, 30 or 90.": "days 必须是 7、30 或 90。",
+  "Using your own AI key is turned off on this server.": "此服务器已关闭使用自有 AI 密钥。",
+  "Keys can only be sent over HTTPS.": "密钥只能通过 HTTPS 发送。",
+  "Too many key attempts. Please try again later.": "密钥尝试次数过多，请稍后再试。",
+  "That does not look like an Anthropic API key (they start with \"sk-ant-\").": "这不像 Anthropic API 密钥（应以 \"sk-ant-\" 开头）。",
+  "Add your own Anthropic key in Settings, or paste one to use just once.": "请在设置中添加你自己的 Anthropic 密钥，或粘贴一个仅本次使用的密钥。",
+  "Anthropic rejected that key. Check it in the Anthropic Console, or update the one saved in Settings.": "Anthropic 拒绝了该密钥。请在 Anthropic 控制台中检查，或在设置中更新已保存的密钥。",
+  "Couldn't check the key with Anthropic right now. Please try again.": "目前无法通过 Anthropic 验证该密钥，请重试。"
  }
 }

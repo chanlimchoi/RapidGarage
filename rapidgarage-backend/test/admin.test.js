@@ -139,12 +139,12 @@ describe('admin role', function () {
       await user.agent.put('/me/maps-key').send({ key: KEY });
 
       process.env.ENABLE_USER_MAPS_KEYS = 'false';
-      assert.deepStrictEqual((await admin.agent.get('/admin/settings')).body, { userMapsKeys: false, saleAlerts: true, wantedPosts: true, aiItems: true });
+      assert.deepStrictEqual((await admin.agent.get('/admin/settings')).body, { userMapsKeys: false, saleAlerts: true, wantedPosts: true, aiItems: true, userAiKeys: true });
       delete process.env.ENABLE_USER_MAPS_KEYS;
-      assert.deepStrictEqual((await admin.agent.get('/admin/settings')).body, { userMapsKeys: true, saleAlerts: true, wantedPosts: true, aiItems: true });
+      assert.deepStrictEqual((await admin.agent.get('/admin/settings')).body, { userMapsKeys: true, saleAlerts: true, wantedPosts: true, aiItems: true, userAiKeys: true });
 
       const off = await admin.agent.put('/admin/settings').send({ userMapsKeys: false });
-      assert.deepStrictEqual(off.body, { userMapsKeys: false, saleAlerts: true, wantedPosts: true, aiItems: true });
+      assert.deepStrictEqual(off.body, { userMapsKeys: false, saleAlerts: true, wantedPosts: true, aiItems: true, userAiKeys: true });
       // Stored value wins over the env default from now on.
       process.env.ENABLE_USER_MAPS_KEYS = 'true';
       assert.strictEqual((await request(app).get('/config')).body.userMapsKeys, false);

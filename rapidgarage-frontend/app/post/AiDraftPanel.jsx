@@ -1,6 +1,9 @@
 import React from 'react';
 import { Sparkles, Plus, RotateCcw } from 'lucide-react';
-import { suggestItems, addItemsBulk, errorMessage } from '../api';
+import { Link } from 'react-router-dom';
+import { suggestItems, addItemsBulk, fetchAiKey, errorMessage } from '../api';
+import { NO_SAVE } from '../user/AiKeySettings';
+import PasswordInput from '../user/PasswordInput';
 import { Alert, Spinner } from '../components/ui';
 import { centsInput, validateItemFields, ITEM_NAME_MAX } from '../lib/items';
 import toast from '../components/toast';
@@ -9,16 +12,40 @@ import { t } from '../i18n';
 // Items editor: "Draft items from photos". Claude suggests names and prices
 // from the sale's photos; the seller edits, unticks what they don't want and
 // adds the rest in one go. Nothing is saved until they press Add.
-// props: post, photos, room (items left before the limit), onAdded(items)
+// props: post, photos, room (items left before the limit), onAdded(items),
+//        config ({ aiSiteKey, userAiKeys, userAiKeySave })
+// Key: a one-time key typed here (sent once, then cleared from the page and
+// never stored), else the seller's saved key, else the site's.
 export default class AiDraftPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { busy: false, adding: false, error: '', drafts: null };
+    this.state = { busy: false, adding: false, error: '', drafts: null, saved: null, useOnce: false, oneTimeKey: '' };
+  }
+
+  componentDidMount() {
+    this.mounted = true;
+    if (this.props.config && this.props.config.userAiKeys) {
+      fetchAiKey().then(({ ok, data }) => { if (this.mounted && ok) this.setState({ saved: data }); }).catch(() => null);
+    }
+  }
+  componentWillUnmount() { this.mounted = false; }
+
+  // Which key the next draft uses, as the server will choose it.
+  source() {
+    const c = this.props.config || {};
+    if (c.userAiKeys && this.state.useOnce) return 'one_time';
+    if (c.userAiKeys && this.state.saved && this.state.saved.hasKey) return 'saved';
+    if (c.aiSiteKey) return 'site';
+    return c.userAiKeys ? 'one_time' : null;
   }
 
   draft() {
-    this.setState({ busy: true, error: '' });
-    suggestItems(this.props.post.id).then(({ ok, data }) => {
+    const once = this.source() === 'one_time';
+    const key = once ? this.state.oneTimeKey.trim() : null;
+    if (once && !key) return this.setState({ error: t('aikey.pasteKey') });
+    // The one-time key leaves the page's state the moment it is sent.
+    this.setState({ busy: true, error: '', oneTimeKey: '' });
+    suggestItems(this.props.post.id, null, key).then(({ ok, data }) => {
       if (!ok) return this.setState({ busy: false, error: errorMessage(data, t('ai.failed')) });
       const drafts = data.suggestions.map((s, i) => ({ key: i, keep: i < data.room, name: s.name, price: s.priceCents === null ? '' : centsInput(s.priceCents), photoId: s.photoId, errors: {} }));
       this.setState({ busy: false, drafts });
@@ -52,6 +79,35 @@ export default class AiDraftPanel extends React.Component {
     }).catch(() => this.setState({ adding: false, error: t('common.network') }));
   }
 
+  renderKeyChoice() {
+    const c = this.props.config || {};
+    const src = this.source();
+    const saved = this.state.saved;
+    const canChoose = c.userAiKeys && (c.aiSiteKey || (saved && saved.hasKey));
+    return (
+      <div className="ai-key-choice small">
+        {src === 'saved' ? <p>{t('aikey.usesSaved', { last4: saved.last4 })}</p> : null}
+        {src === 'site' ? <p className="muted">{t('aikey.usesSite')}</p> : null}
+        {src === 'one_time' ? (
+          <div className="stack">
+            <label htmlFor="ai-once-key" className="field-label">{t('aikey.onceLabel')}</label>
+            <PasswordInput id="ai-once-key" name="rg-ai-once" placeholder="sk-ant-…" value={this.state.oneTimeKey} {...NO_SAVE}
+              aria-describedby="ai-once-hint" onChange={(e) => this.setState({ oneTimeKey: e.target.value, error: '' })} />
+            <span id="ai-once-hint" className="field-hint">{t('aikey.onceHint')}</span>
+          </div>
+        ) : null}
+        <div className="row ai-key-links">
+          {canChoose ? (
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => this.setState({ useOnce: !this.state.useOnce, oneTimeKey: '' })}>
+              {this.state.useOnce ? t('aikey.cancelOnce') : t('aikey.useOnce')}
+            </button>
+          ) : null}
+          {c.userAiKeys && c.userAiKeySave ? <Link className="btn btn-ghost btn-sm" to="/settings#ai-key">{saved && saved.hasKey ? t('aikey.manage') : t('aikey.saveInSettings')}</Link> : null}
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const { photos, room } = this.props;
     const { busy, adding, error, drafts } = this.state;
@@ -61,9 +117,10 @@ export default class AiDraftPanel extends React.Component {
       <section className="card-form ai-draft" aria-labelledby="ai-draft-title" aria-busy={busy}>
         <h2 id="ai-draft-title" className="h4"><Sparkles size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('ai.title')}</h2>
         <p className="small muted">{t('ai.lead', { count: Math.min(photos.length, 5) })}</p>
+        {!drafts ? this.renderKeyChoice() : null}
         {!drafts ? (
           <div className="form-actions">
-            <button type="button" className="btn btn-secondary" disabled={busy || !room} onClick={() => this.draft()}>
+            <button type="button" className="btn btn-secondary" disabled={busy || !room || !this.source()} onClick={() => this.draft()}>
               {busy ? <Spinner /> : <Sparkles size={16} aria-hidden="true" />}{busy ? t('ai.working') : t('ai.draft')}
             </button>
           </div>

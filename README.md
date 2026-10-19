@@ -216,6 +216,22 @@ email, address or sale text goes along. It needs `ANTHROPIC_API_KEY` on the serv
 switched off in **Admin → Settings**. Each seller gets `AI_ITEMS_PER_DAY` (default 10) drafts a
 day, and failed attempts don't count.
 
+### Your own Anthropic key
+
+Sellers can use their own Anthropic key instead of the site's. It works even without `ANTHROPIC_API_KEY`:
+
+- **Saved** (**Settings → Your Anthropic key**): checked with Anthropic first, needs the account
+  password, then stored AES-256-GCM-encrypted and bound to that account. Nobody can view it
+  again, including the owner and admins; only its last 4 characters are shown. **Delete key**
+  erases it immediately. Adding or removing a key sends an email notice.
+- **One-time** (in the draft panel): pasted for a single draft, sent once, used for that one
+  request, then dropped. Never written to the database, session, logs or browser storage, and
+  the field is cleared as soon as it's sent.
+
+In production, keys are only accepted over HTTPS. Key submissions are rate-limited per account,
+`AI_ITEMS_PER_DAY_OWN_KEY` (default 50) caps own-key drafts, and **Admin → Settings** can turn
+own keys off.
+
 ## Install on phone
 
 RapidGarage can be installed like an app (Android/desktop Chrome and Edge: **Install**; iPhone:

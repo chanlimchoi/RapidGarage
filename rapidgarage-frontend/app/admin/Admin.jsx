@@ -61,6 +61,20 @@ export default class Admin extends React.Component {
       .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
   }
 
+  toggleUserAiKeys() {
+    const next = !this.state.settings.userAiKeys;
+    this.setState({ busy: true, error: '' });
+    apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify({ userAiKeys: next }) })
+      .then(({ ok, data }) => {
+        if (!ok) { this.setState({ busy: false }); toast.error(errorMessage(data, t('admin.settingFailed'))); return null; }
+        this.setState({ busy: false, settings: data });
+        toast.success(data.userAiKeys ? t('admin.userAiKeysOn') : t('admin.userAiKeysOff'));
+        if (this.props.onConfigChange) this.props.onConfigChange();
+        return null;
+      })
+      .catch(() => { this.setState({ busy: false }); toast.error(t('common.networkShort')); });
+  }
+
   toggleAiItems() {
     const next = !this.state.settings.aiItems;
     this.setState({ busy: true, error: '' });
@@ -197,6 +211,17 @@ export default class Admin extends React.Component {
                     <span>
                       <strong>{t('admin.aiItems')}</strong>
                       <span id="toggleAiItems-hint" className="field-hint" style={{ display: 'block' }}>{t('admin.aiItemsHint')}</span>
+                    </span>
+                  </label>
+                  <label className="checkbox-row" htmlFor="toggleUserAiKeys">
+                    <span className="switch">
+                      <input id="toggleUserAiKeys" type="checkbox" role="switch" checked={!!s.settings.userAiKeys} disabled={s.busy}
+                        onChange={() => this.toggleUserAiKeys()} aria-describedby="toggleUserAiKeys-hint" />
+                      <span className="switch-track" aria-hidden="true" />
+                    </span>
+                    <span>
+                      <strong>{t('admin.userAiKeys')}</strong>
+                      <span id="toggleUserAiKeys-hint" className="field-hint" style={{ display: 'block' }}>{t('admin.userAiKeysHint')}</span>
                     </span>
                   </label>
                 </div>

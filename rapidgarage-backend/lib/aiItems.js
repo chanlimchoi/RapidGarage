@@ -48,14 +48,30 @@ function getClient() {
 }
 function setClient(c) { override = c || null; }
 
+// A client for a person's own key (saved or one-time): made for this one
+// request and never cached, so the key isn't kept once the request is done.
+// Tests: setKeyClientFactory((apiKey) => fakeClient).
+let keyFactory = null;
+function clientForKey(apiKey) {
+  if (keyFactory) return keyFactory(apiKey);
+  const sdk = require('@anthropic-ai/sdk');
+  const Anthropic = sdk.default || sdk;
+  return new Anthropic({ apiKey, timeout: timeoutMs(), maxRetries: 1 });
+}
+function setKeyClientFactory(fn) { keyFactory = fn || null; }
+const perDayOwnKey = () => intEnv('AI_ITEMS_PER_DAY_OWN_KEY', 50);
+
 // ---- daily budget ---------------------------------------------------------
 const uses = new Map(); // userId -> [timestamps]
-function takeSlot(userId, now) {
+// bucket: the user id for the site's key, 'own:<id>' for their own key
+// (own-key drafts cost the site nothing, so they have a higher cap).
+function takeSlot(bucket, limit, now) {
   const t = now || Date.now();
-  const recent = (uses.get(userId) || []).filter((x) => t - x < 86400000);
-  if (recent.length >= perDay()) { uses.set(userId, recent); return false; }
+  const max = limit || perDay();
+  const recent = (uses.get(bucket) || []).filter((x) => t - x < 86400000);
+  if (recent.length >= max) { uses.set(bucket, recent); return false; }
   recent.push(t);
-  uses.set(userId, recent);
+  uses.set(bucket, recent);
   return true;
 }
 // A failed call (our side or Anthropic's) doesn't use up a draft.
@@ -120,8 +136,10 @@ function sanitize(list, photoIds) {
 // photos: PostPhoto rows (in display order). lang: seller's language.
 // Resolves to { suggestions } or rejects with err.code:
 //   not_configured | refused | truncated | bad_output | ai_unavailable | ai_rate_limited
-async function suggest(photos, lang) {
-  const c = getClient();
+// opts.apiKey: the person's own key (used for this call only).
+async function suggest(photos, lang, opts) {
+  const ownKey = opts && opts.apiKey;
+  const c = ownKey ? clientForKey(ownKey) : getClient();
   if (!c) { const e = new Error('AI is not configured'); e.code = 'not_configured'; throw e; }
   const use = photos.slice(0, MAX_PHOTOS);
   const storage = getStorage();
@@ -150,9 +168,10 @@ async function suggest(photos, lang) {
     const Anthropic = sdk.default || sdk;
     const e = new Error('AI request failed: ' + (err && err.message));
     if (err instanceof Anthropic.RateLimitError) e.code = 'ai_rate_limited';
-    else if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) e.code = 'not_configured';
+    else if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) e.code = ownKey ? 'own_key_rejected' : 'not_configured';
     else e.code = 'ai_unavailable'; // timeouts, connection errors, 5xx, 400s from a bad config
-    e.cause = err;
+    // Only the status and class name: nothing from the request (which carried the key).
+    e.cause = { status: err && err.status, name: err && err.name };
     throw e;
   }
   if (response.stop_reason === 'refusal') { const e = new Error('AI declined'); e.code = 'refused'; throw e; }
@@ -163,4 +182,4 @@ async function suggest(photos, lang) {
   return { suggestions: sanitize(parsed && parsed.items, use.map((p) => p.id)), model: response.model };
 }
 
-module.exports = { MAX_PHOTOS, MAX_SUGGESTIONS, SCHEMA, model, effort, perDay, isConfigured, getClient, setClient, takeSlot, giveBack, resetBudgets, prompt, sanitize, suggest };
+module.exports = { MAX_PHOTOS, MAX_SUGGESTIONS, SCHEMA, model, effort, perDay, isConfigured, getClient, setClient, setKeyClientFactory, perDayOwnKey, takeSlot, giveBack, resetBudgets, prompt, sanitize, suggest };

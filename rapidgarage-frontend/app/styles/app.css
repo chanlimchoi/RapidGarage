@@ -1274,3 +1274,8 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .rank-bar { height: 8px; border-radius: 4px; background: var(--color-surface-2); overflow: hidden; }
 .rank-bar span { display: block; height: 100%; border-radius: 4px; background: var(--color-chart); }
 .rank-value { font-size: var(--text-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+
+/* Own AI key */
+.ai-key-choice { display: grid; gap: var(--space-2); margin-bottom: var(--space-2); }
+.ai-key-choice p { margin: 0; }
+.ai-key-links { gap: var(--space-2); flex-wrap: wrap; }
