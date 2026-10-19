@@ -1,6 +1,5 @@
 import React from 'react';
-import { Redirect } from 'react-router';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { errorMessage } from '../api';
 import { Field, Alert, Spinner } from '../components/ui';
 import { rules, validateAll, serverFieldErrors, focusFirstError } from '../lib/validate';
@@ -68,7 +67,7 @@ class SignUp extends React.Component {
   }
 
   render() {
-    if (this.state.redirectToNewPage) return <Redirect to="/" />;
+    if (this.state.redirectToNewPage) return <Navigate replace to="/" />;
     const errors = Object.assign({}, this.state.serverErrors, validateAll(this.state.values, SCHEMA));
     const shown = (n) => (this.state.serverErrors[n] || ((this.state.submitted || this.state.touched[n]) ? errors[n] : ''));
     const v = this.state.values;

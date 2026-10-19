@@ -1,5 +1,5 @@
 import React from 'react';
-import { Redirect } from 'react-router';
+import { Navigate } from 'react-router-dom';
 import { apiFetch } from '../api';
 import { Spinner } from '../components/ui';
 import toast from '../components/toast';
@@ -24,6 +24,6 @@ export default class Logout extends React.Component {
   }
 
   render() {
-    return this.state.done ? <Redirect to="/" /> : <div className="container container-narrow"><p className="row muted"><Spinner />{t('logout.working')}</p></div>;
+    return this.state.done ? <Navigate replace to="/" /> : <div className="container container-narrow"><p className="row muted"><Spinner />{t('logout.working')}</p></div>;
   }
 }

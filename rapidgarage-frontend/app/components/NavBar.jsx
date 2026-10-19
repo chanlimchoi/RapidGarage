@@ -10,6 +10,10 @@ const badgeText = (n) => (n > 99 ? '99+' : String(n));
 const unreadLabel = (n) => t('nav.unreadMessages', { count: n });
 const wantedLabel = (n) => t('nav.wantedMatches', { count: n });
 
+// react-router 6 dropped NavLink's activeClassName/exact: the class now comes
+// from a callback. This keeps the same "nav-link ... active" output as RR4.
+const navClass = (base) => ({ isActive }) => (isActive ? base + ' active' : base);
+
 // Sticky top bar. Signed out: Log in / Sign up. Signed in: a user menu with
 // Profile, Settings, Admin (admins only) and Log out.
 export default class NavBar extends React.Component {
@@ -179,20 +183,20 @@ export default class NavBar extends React.Component {
             <span className="brand-name">RapidGarage</span>
           </Link>
           <nav className={'nav-links' + (user ? ' nav-has-user' : '')} aria-label={t('nav.main')}>
-            <NavLink exact to="/" className="nav-link" activeClassName="active" title={tip('nav.browse')}><Search size={16} aria-hidden="true" /><span className="nav-label">{t('nav.browse')}</span></NavLink>
+            <NavLink end to="/" className={navClass('nav-link')} title={tip('nav.browse')}><Search size={16} aria-hidden="true" /><span className="nav-label">{t('nav.browse')}</span></NavLink>
             {user ? (
-              <NavLink to="/messages" className="nav-link nav-messages" activeClassName="active" title={tip('nav.messages')}>
+              <NavLink to="/messages" className={navClass('nav-link nav-messages')} title={tip('nav.messages')}>
                 <MessageCircle size={16} aria-hidden="true" /><span className="nav-label">{t('nav.messages')}</span>
                 {this.props.unread ? <span className="nav-badge" aria-label={unreadLabel(this.props.unread)}>{badgeText(this.props.unread)}</span> : null}
               </NavLink>
             ) : null}
-            {user ? <NavLink to="/saved" className="nav-link nav-saved" activeClassName="active" title={tip('nav.saved')}><Star size={16} aria-hidden="true" /><span className="nav-label">{t('nav.saved')}</span></NavLink> : null}
-            {user ? <NavLink to="/dashboard" className="nav-link nav-dashboard" activeClassName="active" title={tip('nav.dashboard')}><LayoutDashboard size={16} aria-hidden="true" /><span className="nav-label">{t('nav.dashboard')}</span></NavLink> : null}
-            <NavLink to="/events" className="nav-link nav-events" activeClassName="active" title={tip('nav.events')}><UsersRound size={16} aria-hidden="true" /><span className="nav-label">{t('nav.events')}</span></NavLink>
-            <NavLink to="/wanted" className="nav-link nav-wanted" activeClassName="active" title={tip('nav.wanted')}><PackageSearch size={16} aria-hidden="true" /><span className="nav-label">{t('nav.wanted')}</span>
+            {user ? <NavLink to="/saved" className={navClass('nav-link nav-saved')} title={tip('nav.saved')}><Star size={16} aria-hidden="true" /><span className="nav-label">{t('nav.saved')}</span></NavLink> : null}
+            {user ? <NavLink to="/dashboard" className={navClass('nav-link nav-dashboard')} title={tip('nav.dashboard')}><LayoutDashboard size={16} aria-hidden="true" /><span className="nav-label">{t('nav.dashboard')}</span></NavLink> : null}
+            <NavLink to="/events" className={navClass('nav-link nav-events')} title={tip('nav.events')}><UsersRound size={16} aria-hidden="true" /><span className="nav-label">{t('nav.events')}</span></NavLink>
+            <NavLink to="/wanted" className={navClass('nav-link nav-wanted')} title={tip('nav.wanted')}><PackageSearch size={16} aria-hidden="true" /><span className="nav-label">{t('nav.wanted')}</span>
               {this.props.wantedNew ? <span className="nav-badge" aria-label={wantedLabel(this.props.wantedNew)}>{badgeText(this.props.wantedNew)}</span> : null}
             </NavLink>
-            <NavLink to="/about" className="nav-link nav-about" activeClassName="active" title={tip('nav.about')}><Info size={16} aria-hidden="true" /><span className="nav-label">{t('nav.about')}</span></NavLink>
+            <NavLink to="/about" className={navClass('nav-link nav-about')} title={tip('nav.about')}><Info size={16} aria-hidden="true" /><span className="nav-label">{t('nav.about')}</span></NavLink>
           </nav>
           <div className="nav-spacer" />
           <div className="nav-actions">
