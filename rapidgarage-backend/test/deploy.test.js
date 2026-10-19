@@ -77,7 +77,7 @@ describe('Production readiness', function () {
         assert.strictEqual(cfg.production.logging, false);
         assert.deepStrictEqual(cfg.production.dialectOptions, { ssl: { rejectUnauthorized: false } });
         assert.strictEqual(cfg.development.logging, undefined, 'development keeps SQL logging');
-        assert.strictEqual(cfg.test.dialect, 'sqlite');
+        assert.strictEqual(cfg.test.dialect, process.env.TEST_DATABASE_URL ? 'postgres' : 'sqlite');
       } finally {
         if (saved.s === undefined) delete process.env.DATABASE_SSL; else process.env.DATABASE_SSL = saved.s;
         if (saved.l !== undefined) process.env.DB_LOG_SQL = saved.l;

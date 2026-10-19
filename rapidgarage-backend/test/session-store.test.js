@@ -45,7 +45,8 @@ describe('session store', function () {
 
     it('postgres mode requires a postgres DATABASE_URL', () => {
       assert.throws(() => createSessionStore({ env: { NODE_ENV: 'development' } }), /DATABASE_URL/);
-      assert.throws(() => createSessionStore({ env: { NODE_ENV: 'test', SESSION_STORE: 'postgres' } }), /postgres/);
+      // In-memory SQLite: "needs a postgres config"; a Postgres test run: its URL is missing from env.
+      assert.throws(() => createSessionStore({ env: { NODE_ENV: 'test', SESSION_STORE: 'postgres' } }), /postgres|TEST_DATABASE_URL/);
     });
   });
 
