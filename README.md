@@ -36,6 +36,16 @@ TEST_DATABASE_URL=postgres://user:pass@localhost:5432/rapidgarage_test RG_ALLOW_
 
 Tests never read `DATABASE_URL`, so a live `.env` in the shell is ignored. Even so, keep a live `.env` out of your shell. Load it only in a subshell when you need it, e.g. `( set -a; . ./.env; set +a; npm run migrate )`.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and every push to `master`:
+
+- backend tests on SQLite with Node 22 and 24;
+- backend tests on Postgres 17, plus every migration applied, undone and reapplied on an empty database;
+- frontend tests, production build and PWA check;
+- a Docker image build (not pushed);
+- a production dependency audit, informational for now (`continue-on-error`).
+
 ## Production
 
 One Docker image runs the whole app on one port (frontend, API under `/api`,
