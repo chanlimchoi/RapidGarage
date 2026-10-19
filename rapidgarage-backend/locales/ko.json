@@ -195,7 +195,14 @@
   "summary.items": "목록의 물품 {total}개 중 {sold}개를 팔았어요 (표시 가격 기준 {value}).",
   "summary.reach": "조회 {views} · 저장 {saves} · 대화 {conversations}",
   "summary.curb": "남은 물건이 있나요? 문 앞에 무료로 내놓으세요: {url}",
-  "summary.again": "자세히 보거나 다음 세일용으로 복제하세요: {url}"
+  "summary.again": "자세히 보거나 다음 세일용으로 복제하세요: {url}",
+  "weekly.subject": {
+   "other": "이번 주말 내 주변 개러지 세일 {count}개"
+  },
+  "weekly.head": "이번 주말 세일",
+  "weekly.intro": {
+   "other": "이번 주말 RapidGarage 주말 요약에 맞는 세일 {count}개:"
+  }
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -589,6 +596,15 @@
   "Couldn't write a description for this sale. Please write it yourself.": "이 세일의 설명을 쓰지 못했어요. 직접 써 주세요.",
   "The AI answer came back incomplete. Please try again.": "AI 답변이 불완전하게 왔어요. 다시 시도해 주세요.",
   "The AI is busy right now. Please try again in a minute.": "지금 AI가 바빠요. 잠시 후 다시 시도해 주세요.",
-  "AI writing isn't available right now. Please try again later.": "지금은 AI 글쓰기를 사용할 수 없어요. 나중에 다시 시도해 주세요."
+  "AI writing isn't available right now. Please try again later.": "지금은 AI 글쓰기를 사용할 수 없어요. 나중에 다시 시도해 주세요.",
+  "Choose instant emails or a weekly digest.": "즉시 메일과 주간 요약 중에서 고르세요.",
+  "Enter an amount in dollars, like 5 or 4.50.": "5나 4.50처럼 달러 금액을 입력하세요.",
+  "This item is free.": "이 물건은 무료예요.",
+  "Offer less than the asking price, or just ask to hold it.": "판매 가격보다 낮게 제안하거나, 그냥 보관을 요청하세요.",
+  "A counteroffer has to be more than their offer.": "역제안은 상대 제안보다 높아야 해요.",
+  "A counteroffer can't be more than the asking price.": "역제안은 판매 가격보다 높을 수 없어요.",
+  "There is no offer to counter.": "역제안할 제안이 없어요.",
+  "There is no counteroffer to take.": "수락할 역제안이 없어요.",
+  "Invalid offer.": "잘못된 제안이에요."
  }
 }

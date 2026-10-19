@@ -878,6 +878,10 @@ html:lang(ko) body { word-break: keep-all; overflow-wrap: anywhere; }
 .hold-meta { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .hold-meta span { display: inline-flex; align-items: center; gap: 4px; }
 .hold-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-1); }
+.hold-offer { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 2px; }
+.hold-counter { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-2); flex-basis: 100%; }
+.hold-counter .field { max-width: 10rem; margin: 0; }
+.alert-frequency { border: 0; padding: 0; margin: 0; }
 .hold-length { display: inline-flex; align-items: center; gap: var(--space-1); }
 .select-sm { padding-block: 4px; min-height: 32px; font-size: var(--text-sm); }
 .hold-form { display: grid; gap: var(--space-2); padding: var(--space-2) 0; }

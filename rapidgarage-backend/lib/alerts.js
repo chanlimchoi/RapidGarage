@@ -22,6 +22,7 @@ function intEnv(name, dflt, min) {
 
 const RADIUS_MIN = 1;
 const RADIUS_MAX = 50;
+const FREQUENCIES = ['instant', 'weekly'];
 const maxPerUser = () => intEnv('ALERTS_MAX_PER_USER', 5);
 const digestMinutes = () => intEnv('ALERT_DIGEST_MINUTES', 15, 0);
 const dailyCap = () => intEnv('ALERT_DAILY_MAX_EMAILS', 6);
@@ -88,7 +89,8 @@ async function enqueueForPost(post) {
   if (!(await saleAlertsEnabled())) return 0;
   const dLat = RADIUS_MAX / 69.0;
   const candidates = await m.SaleAlert.findAll({
-    where: { enabled: true, userId: { [Op.ne]: post.userId }, lat: { [Op.between]: [post.lat - dLat, post.lat + dLat] } },
+    // Weekly alerts get the weekend digest instead (lib/weekendDigest.js).
+    where: { enabled: true, frequency: 'instant', userId: { [Op.ne]: post.userId }, lat: { [Op.between]: [post.lat - dLat, post.lat + dLat] } },
   });
   const byUser = new Map();
   candidates.forEach((a) => {
@@ -139,7 +141,9 @@ function alertName(alert, lang) {
 
 // items: [{ post, seller, alert, distanceMiles }]. Returns { subject, text, html, headers }.
 // Written in the recipient's saved language (User.locale), English if none.
-function renderEmail(user, items) {
+// opts.weekly: the weekend digest's wording (lib/weekendDigest.js).
+function renderEmail(user, items, opts) {
+  const weekly = !!(opts && opts.weekly);
   const lang = i18n.normalize(user.locale) || 'en';
   const L = (key, vars) => i18n.t(lang, key, vars);
   const name = (a) => alertName(a, lang);
@@ -147,9 +151,10 @@ function renderEmail(user, items) {
   const manage = base + '/settings#alerts';
   const alerts = Array.from(new Map(items.map((i) => [i.alert.id, i.alert])).values());
   const first = items[0];
-  const subject = items.length === 1
-    ? L('mail.subjectOne', { title: first.post.title })
-    : L('mail.subjectMany', { count: items.length });
+  const subject = weekly ? L('weekly.subject', { count: items.length })
+    : items.length === 1
+      ? L('mail.subjectOne', { title: first.post.title })
+      : L('mail.subjectMany', { count: items.length });
   // Sales of the same neighborhood sale (i.event) collapse into one entry that
   // links to the event page; a lone sale just says which event it is part of.
   const away = (d) => (d !== null && d !== undefined ? L('mail.away', { distance: i18n.formatNumber(lang, d) }) : null);
@@ -182,7 +187,7 @@ function renderEmail(user, items) {
   const hello = user.firstName ? L('mail.hi', { name: user.firstName }) : L('mail.hiAnon');
   const text = [
     hello, '',
-    items.length === 1 ? L('mail.introOne') : L('mail.introMany', { count: items.length }), '',
+    weekly ? L('weekly.intro', { count: items.length }) : items.length === 1 ? L('mail.introOne') : L('mail.introMany', { count: items.length }), '',
     ...lines.map((l) => '* ' + l.title + '\n  ' + l.meta + '\n  ' + l.url + '\n'),
     L('mail.manageText', { url: manage }),
     ...alerts.map((a) => L('mail.turnOffText', { name: name(a), url: unsubscribeUrl(a) })),
@@ -190,7 +195,7 @@ function renderEmail(user, items) {
   const html = `<!doctype html><html lang="${esc(lang)}"><body style="margin:0;padding:24px;background:#f6f5f2;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,'Apple SD Gothic Neo','Malgun Gothic','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif;color:#1c1b19">
 <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e7e4dd;border-radius:16px;padding:24px">
 <p style="margin:0 0 4px;font-weight:700;color:#c2410c;font-size:14px">RapidGarage</p>
-<h1 style="margin:0 0 16px;font-size:20px">${esc(items.length === 1 ? L('mail.headOne') : L('mail.headMany', { count: items.length }))}</h1>
+<h1 style="margin:0 0 16px;font-size:20px">${esc(weekly ? L('weekly.head') : items.length === 1 ? L('mail.headOne') : L('mail.headMany', { count: items.length }))}</h1>
 <p style="margin:0 0 16px">${esc(hello)}</p>
 ${lines.map((l) => `<div style="border:1px solid #e7e4dd;border-radius:12px;padding:12px 14px;margin:0 0 10px">
 <a href="${esc(l.url)}" style="color:#c2410c;font-weight:600;font-size:16px;text-decoration:none">${esc(l.title)}</a>
@@ -235,6 +240,10 @@ async function processQueue(now) {
   try { summary.reminders = await require('./reminders').processDue(now); } catch (err) {
     console.error('Sale reminder pass failed:', err && err.message);
     summary.reminders = { error: true };
+  }
+  try { summary.weekly = await require('./weekendDigest').processWeekly(now); } catch (err) {
+    console.error('Weekend digest pass failed:', err && err.message);
+    summary.weekly = { error: true };
   }
   try { summary.saleSummaries = await require('./sellerTools').processSummaries(now); } catch (err) {
     console.error('Sale summary pass failed:', err && err.message);
@@ -355,7 +364,7 @@ function startWorker() {
 function stopWorker() { if (timer) clearInterval(timer); timer = null; }
 
 module.exports = {
-  RADIUS_MIN, RADIUS_MAX, maxPerUser, digestMinutes, dailyCap, baseUrl,
+  RADIUS_MIN, RADIUS_MAX, FREQUENCIES, maxPerUser, digestMinutes, dailyCap, baseUrl,
   unsubscribeToken, verifyToken, unsubscribeUrl, enqueueForPost, schedulePostMatch, idle, track,
   renderEmail, processQueue, emailBudget, postsPerEmail, MAX_ATTEMPTS, EXPIRE_DAYS, startWorker, stopWorker,
 };

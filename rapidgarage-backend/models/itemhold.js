@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
     decidedAt: { type: DataTypes.DATE, allowNull: true },
     // Why it ended without the seller deciding: taken | sold | blocked | sale_ended | timeout
     endedReason: { type: DataTypes.STRING(16), allowNull: true },
+    // Make an offer: the buyer's price (cents) and the seller's counteroffer.
+    // Once accepted, offerCents is the agreed price.
+    offerCents: { type: DataTypes.INTEGER, allowNull: true },
+    counterCents: { type: DataTypes.INTEGER, allowNull: true },
   }, {
     indexes: [
       { name: 'item_holds_status_expires_idx', fields: ['status', 'expiresAt'] },

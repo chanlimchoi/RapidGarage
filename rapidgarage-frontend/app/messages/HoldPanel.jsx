@@ -1,8 +1,8 @@
 import React from 'react';
-import { Bookmark, Clock, Check, X, CalendarClock, Undo2 } from 'lucide-react';
+import { Bookmark, Clock, Check, X, CalendarClock, Undo2, HandCoins } from 'lucide-react';
 import { errorMessage, fetchHolds, requestHold, holdAction } from '../api';
 import { Alert, Spinner } from '../components/ui';
-import { formatCents } from '../lib/items';
+import { formatCents, parseCents } from '../lib/items';
 import toast from '../components/toast';
 import { t } from '../i18n';
 import { holdTime } from './holdText';
@@ -23,7 +23,7 @@ const localInput = (d) => { const p = (n) => String(n).padStart(2, '0'); return 
 export default class HoldPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { data: null, error: '', formOpen: false, itemId: '', pickup: '', formError: '', fieldErrors: {}, busy: null, lengths: {}, showPast: false };
+    this.state = { data: null, error: '', formOpen: false, itemId: '', pickup: '', offer: '', formError: '', fieldErrors: {}, busy: null, lengths: {}, showPast: false, counterFor: null, counter: '', counterError: '' };
   }
   componentDidMount() { this.load(); }
   componentDidUpdate(prev) { if (prev.refreshKey !== this.props.refreshKey || prev.conversationId !== this.props.conversationId) this.load(); }
@@ -37,7 +37,7 @@ export default class HoldPanel extends React.Component {
 
   done(msgKey) {
     toast.success(t(msgKey));
-    this.setState({ busy: null, formOpen: false, itemId: '', pickup: '', formError: '', fieldErrors: {} });
+    this.setState({ busy: null, formOpen: false, itemId: '', pickup: '', offer: '', formError: '', fieldErrors: {}, counterFor: null, counter: '', counterError: '' });
     this.load();
     if (this.props.onChange) this.props.onChange();
   }
@@ -47,25 +47,33 @@ export default class HoldPanel extends React.Component {
     if (!this.state.itemId) { this.setState({ fieldErrors: { itemId: t('hold.chooseItem') } }); return; }
     const body = { itemId: Number(this.state.itemId) };
     if (this.state.pickup) body.pickupAt = new Date(this.state.pickup).toISOString();
+    if (this.state.offer.trim()) {
+      const cents = parseCents(this.state.offer);
+      if (cents === null || cents < 1) { this.setState({ fieldErrors: { offerCents: t('offer.errAmount') } }); return; }
+      body.offerCents = cents;
+    }
     this.setState({ busy: 'new', formError: '', fieldErrors: {} });
     requestHold(this.props.conversationId, body)
       .then(({ ok, data }) => {
         if (this.unmounted) return;
-        if (ok) { this.done('hold.requested'); return; }
+        if (ok) { this.done(body.offerCents ? 'offer.sent' : 'hold.requested'); return; }
         const details = (data && data.error && data.error.details) || {};
         this.setState({ busy: null, fieldErrors: details, formError: Object.keys(details).length ? '' : errorMessage(data, t('hold.failed')) });
       })
       .catch(() => { if (!this.unmounted) this.setState({ busy: null, formError: t('common.networkShort') }); });
   }
 
-  act(hold, action, msgKey) {
+  act(hold, action, msgKey, extra) {
     const body = {};
     if (action === 'accept') { const h = this.state.lengths[hold.id]; if (h) body.hours = Number(h); }
     this.setState({ busy: hold.id });
+    if (action === 'counter') body.offerCents = extra;
     holdAction(hold.id, action, body)
       .then(({ ok, data }) => {
         if (this.unmounted) return;
         if (ok) { this.done(msgKey); return; }
+        const details = (data && data.error && data.error.details) || {};
+        if (action === 'counter' && details.offerCents) { this.setState({ busy: null, counterError: details.offerCents }); return; }
         this.setState({ busy: null });
         toast.error(errorMessage(data, t('hold.failed')));
         this.load();
@@ -92,6 +100,12 @@ export default class HoldPanel extends React.Component {
             {h.status === 'accepted' ? <span><Clock size={13} aria-hidden="true" /> {t('hold.until', { time: holdTime(h.expiresAt) })}</span> : null}
             {h.status === 'pending' ? <span><Clock size={13} aria-hidden="true" /> {t('hold.answerBy', { time: holdTime(h.expiresAt) })}</span> : null}
           </div>
+          {h.offerCents ? (
+            <div className="hold-offer small">
+              <HandCoins size={13} aria-hidden="true" /> {h.status === 'accepted' || h.status === 'completed' ? t('offer.agreed', { price: formatCents(h.offerCents) }) : t('offer.offered', { price: formatCents(h.offerCents) })}
+              {h.counterCents && h.status === 'pending' ? <span> · <strong>{t('offer.counter', { price: formatCents(h.counterCents) })}</strong></span> : null}
+            </div>
+          ) : null}
           {canAct && OPEN.includes(h.status) ? (
             <div className="hold-actions">
               {seller && h.status === 'pending' ? (
@@ -105,12 +119,23 @@ export default class HoldPanel extends React.Component {
                     </select>
                   </label>
                   <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => this.act(h, 'accept', 'hold.accepted')}>
-                    {busy ? <Spinner /> : <Check size={14} aria-hidden="true" />}{t('hold.accept')}
+                    {busy ? <Spinner /> : <Check size={14} aria-hidden="true" />}{h.offerCents ? t('offer.acceptAt', { price: formatCents(h.offerCents) }) : t('hold.accept')}
                   </button>
+                  {h.offerCents && this.state.counterFor !== h.id ? (
+                    <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => this.setState({ counterFor: h.id, counter: '', counterError: '' })}>
+                      <HandCoins size={14} aria-hidden="true" />{t('offer.counterButton')}
+                    </button>
+                  ) : null}
                   <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => this.act(h, 'decline', 'hold.declinedToast')}>
                     <X size={14} aria-hidden="true" />{t('hold.decline')}
                   </button>
                 </React.Fragment>
+              ) : null}
+              {seller && h.status === 'pending' && this.state.counterFor === h.id ? this.renderCounter(h) : null}
+              {!seller && h.status === 'pending' && h.counterCents ? (
+                <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => this.act(h, 'take', 'offer.taken')}>
+                  {busy ? <Spinner /> : <Check size={14} aria-hidden="true" />}{t('offer.take', { price: formatCents(h.counterCents) })}
+                </button>
               ) : null}
               {seller && h.status === 'accepted' ? (
                 <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => this.act(h, 'release', 'hold.releasedToast')}>
@@ -129,8 +154,32 @@ export default class HoldPanel extends React.Component {
     );
   }
 
+  renderCounter(h) {
+    const busy = this.state.busy === h.id;
+    const send = (e) => {
+      e.preventDefault();
+      const cents = parseCents(this.state.counter);
+      if (cents === null || cents < 1) { this.setState({ counterError: t('offer.errAmount') }); return; }
+      this.act(h, 'counter', 'offer.countered', cents);
+    };
+    return (
+      <form className="hold-counter" onSubmit={send} noValidate>
+        <label className="field" htmlFor={'hold-counter-' + h.id}>
+          <span className="field-label">{t('offer.counterLabel')}</span>
+          <input id={'hold-counter-' + h.id} className="input input-sm" inputMode="decimal" maxLength={9} placeholder={h.item.priceCents ? formatCents(h.item.priceCents) : ''}
+            value={this.state.counter} aria-invalid={this.state.counterError ? 'true' : undefined} onChange={(e) => this.setState({ counter: e.target.value, counterError: '' })} />
+          {this.state.counterError ? <span className="field-error" role="alert">{this.state.counterError}</span> : null}
+        </label>
+        <button type="submit" className="btn btn-primary btn-sm" disabled={busy}>{busy ? <Spinner /> : null}{t('offer.sendCounter')}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => this.setState({ counterFor: null, counterError: '' })}>{t('hold.cancelForm')}</button>
+      </form>
+    );
+  }
+
   renderForm() {
-    const { data, itemId, pickup, fieldErrors, formError, busy } = this.state;
+    const { data, itemId, pickup, offer, fieldErrors, formError, busy } = this.state;
+    const chosen = data.holdable.find((i) => String(i.id) === String(itemId));
+    const canOffer = !!(chosen && chosen.priceCents);
     const now = new Date();
     const max = data.saleEndsAt ? new Date(data.saleEndsAt) : new Date(now.getTime() + data.limits.pickupMaxDays * 86400000);
     return (
@@ -140,7 +189,7 @@ export default class HoldPanel extends React.Component {
           <label className="field" htmlFor="hold-item">
             <span className="field-label">{t('hold.item')}</span>
             <select id="hold-item" className="select" value={itemId} aria-invalid={fieldErrors.itemId ? 'true' : undefined}
-              onChange={(e) => this.setState({ itemId: e.target.value, fieldErrors: {} })}>
+              onChange={(e) => this.setState({ itemId: e.target.value, offer: '', fieldErrors: {} })}>
               <option value="">{t('hold.chooseItem')}</option>
               {data.holdable.map((i) => <option key={i.id} value={i.id}>{i.name}{i.priceCents !== null ? ' · ' + formatCents(i.priceCents) : ''}</option>)}
             </select>
@@ -154,10 +203,20 @@ export default class HoldPanel extends React.Component {
             {fieldErrors.pickupAt ? <span className="field-error" role="alert">{fieldErrors.pickupAt}</span>
               : <span id="hold-pickup-hint" className="field-hint">{t('hold.pickupHint')}</span>}
           </label>
+          {canOffer ? (
+            <label className="field" htmlFor="hold-offer">
+              <span className="field-label">{t('offer.label')} <span className="muted small">{t('ui.optional')}</span></span>
+              <input id="hold-offer" className="input" inputMode="decimal" maxLength={9} placeholder={formatCents(chosen.priceCents)} value={offer}
+                aria-describedby="hold-offer-hint" aria-invalid={fieldErrors.offerCents ? 'true' : undefined}
+                onChange={(e) => this.setState({ offer: e.target.value, fieldErrors: {} })} />
+              {fieldErrors.offerCents ? <span className="field-error" role="alert">{fieldErrors.offerCents}</span>
+                : <span id="hold-offer-hint" className="field-hint">{t('offer.hint', { price: formatCents(chosen.priceCents) })}</span>}
+            </label>
+          ) : null}
         </div>
         {formError ? <Alert tone="danger">{formError}</Alert> : null}
         <div className="hold-form-actions">
-          <button type="submit" className="btn btn-primary btn-sm" disabled={busy === 'new'}>{busy === 'new' ? <Spinner /> : <Bookmark size={14} aria-hidden="true" />}{t('hold.send')}</button>
+          <button type="submit" className="btn btn-primary btn-sm" disabled={busy === 'new'}>{busy === 'new' ? <Spinner /> : <Bookmark size={14} aria-hidden="true" />}{offer.trim() && canOffer ? t('offer.send') : t('hold.send')}</button>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => this.setState({ formOpen: false, formError: '', fieldErrors: {} })}>{t('hold.cancelForm')}</button>
         </div>
       </form>

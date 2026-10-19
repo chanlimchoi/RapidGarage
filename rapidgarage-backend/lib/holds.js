@@ -17,6 +17,7 @@
 // the seller declined within 24 h; at most 5 pending requests per item.
 const { Op } = require('sequelize');
 const schedule = require('./schedule');
+const { PRICE_CAP_CENTS } = require('./items');
 
 function models() { return require('../models'); }
 function intEnv(name, dflt, max) {
@@ -49,9 +50,12 @@ const capAt = (t, post) => { const e = saleEnd(post); return new Date(e === null
 
 // English summaries stored in Message.body (moderators, old clients); the
 // apps render their own localized text from holdEvent.
+const usd = (c) => '$' + (c / 100).toFixed(c % 100 ? 2 : 0);
 const SUMMARY = {
-  requested: (n) => 'Asked to hold “' + n + '”.',
-  accepted: (n) => 'Accepted the hold on “' + n + '”.',
+  requested: (n, c) => (c ? 'Offered ' + usd(c) + ' for “' + n + '”.' : 'Asked to hold “' + n + '”.'),
+  countered: (n, c) => 'Countered at ' + usd(c) + ' for “' + n + '”.',
+  agreed: (n, c) => 'Took the counteroffer: “' + n + '” for ' + usd(c) + '.',
+  accepted: (n, c) => (c ? 'Accepted ' + usd(c) + ' for “' + n + '”.' : 'Accepted the hold on “' + n + '”.'),
   declined: (n) => 'Declined the hold on “' + n + '”.',
   released: (n) => 'Released the hold on “' + n + '”.',
   cancelled: (n) => 'Cancelled the hold on “' + n + '”.',
@@ -62,11 +66,12 @@ const SUMMARY = {
 // Post an event into the hold's conversation. `by`: the user it is attributed
 // to; the other participant gets it as unread. System events (expiry, sold)
 // are attributed to the seller so the buyer is the one notified.
-async function postEvent(hold, event, by, itemName) {
+// cents: the offer amount at this step, if any.
+async function postEvent(hold, event, by, itemName, cents) {
   const m = models();
   const msg = await m.Message.create({
-    conversationId: hold.conversationId, senderId: by, kind: 'hold', holdId: hold.id, holdEvent: event,
-    body: SUMMARY[event](String(itemName || '').slice(0, 80) || 'an item'),
+    conversationId: hold.conversationId, senderId: by, kind: 'hold', holdId: hold.id, holdEvent: event, holdCents: cents || null,
+    body: SUMMARY[event](String(itemName || '').slice(0, 80) || 'an item', cents),
   });
   const conv = await m.Conversation.findByPk(hold.conversationId);
   if (conv) {
@@ -133,6 +138,8 @@ function holdJSON(h, me) {
     expiresAt: h.expiresAt,
     decidedAt: h.decidedAt,
     endedReason: h.endedReason,
+    offerCents: h.offerCents === undefined ? null : h.offerCents,
+    counterCents: h.counterCents === undefined ? null : h.counterCents,
     createdAt: h.createdAt,
   };
 }
@@ -149,6 +156,22 @@ function parsePickup(raw, post, t) {
   const end = saleEnd(post);
   if (end !== null && ms(d) > end) return { error: 'Pick a pickup time before the sale ends.' };
   return { value: d };
+}
+
+// An offer (buyer) or counteroffer (seller) in cents. -> { value: int|null } | { error }
+// Offers are below the asking price; a counter is above the offer and at most the asking price.
+function parseOffer(raw, item, floorCents) {
+  if (raw === undefined || raw === null || raw === '') return { value: null };
+  const n = typeof raw === 'string' && /^\s*\d+\s*$/.test(raw) ? Number(raw) : raw;
+  if (!Number.isInteger(n) || n < 1 || n > PRICE_CAP_CENTS) return { error: 'Enter an amount in dollars, like 5 or 4.50.' };
+  if (item.priceCents === 0) return { error: 'This item is free.' };
+  if (floorCents === undefined) {
+    if (item.priceCents !== null && item.priceCents !== undefined && n >= item.priceCents) return { error: 'Offer less than the asking price, or just ask to hold it.' };
+  } else {
+    if (n <= floorCents) return { error: 'A counteroffer has to be more than their offer.' };
+    if (item.priceCents !== null && item.priceCents !== undefined && n > item.priceCents) return { error: "A counteroffer can't be more than the asking price." };
+  }
+  return { value: n };
 }
 
 function parseHours(raw) {
@@ -171,5 +194,5 @@ function acceptExpiry(hold, post, hours, t) {
 module.exports = {
   MAX_PER_SALE, MAX_PENDING_PER_ITEM, DECLINE_COOLDOWN_MS, PICKUP_MAX_DAYS, ACCEPT_HOURS_MAX,
   requestHours, holdHours, maxActive, maxPerDay, now, saleEnd,
-  postEvent, clearReservation, sweep, itemSold, endBetween, holdJSON, parsePickup, parseHours, requestExpiry, acceptExpiry,
+  postEvent, clearReservation, sweep, itemSold, endBetween, holdJSON, parsePickup, parseOffer, parseHours, requestExpiry, acceptExpiry,
 };

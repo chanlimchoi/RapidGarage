@@ -195,7 +195,14 @@
   "summary.items": "清单上 {total} 件物品已售出 {sold} 件（按标价计 {value}）。",
   "summary.reach": "浏览：{views} · 收藏：{saves} · 对话：{conversations}",
   "summary.curb": "有剩下的东西吗？免费放在路边：{url}",
-  "summary.again": "查看详情，或复制此甩卖以便下次使用：{url}"
+  "summary.again": "查看详情，或复制此甩卖以便下次使用：{url}",
+  "weekly.subject": {
+   "other": "本周末你附近有 {count} 场车库甩卖"
+  },
+  "weekly.head": "本周末的甩卖",
+  "weekly.intro": {
+   "other": "本周末有 {count} 场甩卖符合你的 RapidGarage 周末摘要："
+  }
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -589,6 +596,15 @@
   "Couldn't write a description for this sale. Please write it yourself.": "无法为此甩卖撰写描述，请自行撰写。",
   "The AI answer came back incomplete. Please try again.": "AI 返回的内容不完整，请重试。",
   "The AI is busy right now. Please try again in a minute.": "AI 当前繁忙，请一分钟后再试。",
-  "AI writing isn't available right now. Please try again later.": "AI 撰写暂时不可用，请稍后再试。"
+  "AI writing isn't available right now. Please try again later.": "AI 撰写暂时不可用，请稍后再试。",
+  "Choose instant emails or a weekly digest.": "请选择即时邮件或每周摘要。",
+  "Enter an amount in dollars, like 5 or 4.50.": "请输入美元金额，例如 5 或 4.50。",
+  "This item is free.": "此物品免费。",
+  "Offer less than the asking price, or just ask to hold it.": "请出低于标价的价格，或直接请卖家保留。",
+  "A counteroffer has to be more than their offer.": "还价必须高于对方的出价。",
+  "A counteroffer can't be more than the asking price.": "还价不能高于标价。",
+  "There is no offer to counter.": "没有可以还价的出价。",
+  "There is no counteroffer to take.": "没有可以接受的还价。",
+  "Invalid offer.": "出价无效。"
  }
 }

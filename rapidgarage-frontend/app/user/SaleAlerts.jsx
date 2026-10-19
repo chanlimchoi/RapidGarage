@@ -7,12 +7,13 @@ import toast from '../components/toast';
 import { t } from '../i18n';
 
 const LABEL_MAX = 80;
-const EMPTY_FORM = { id: null, label: '', where: 'address', address: '', coords: null, radiusMiles: '10', maxPrice: '', freeOnly: false };
+const EMPTY_FORM = { id: null, label: '', where: 'address', address: '', coords: null, radiusMiles: '10', maxPrice: '', freeOnly: false, frequency: 'instant' };
 
 export function alertSummary(a) {
   const parts = [t('list.withinMi', { miles: a.radiusMiles })];
   if (a.freeOnly) parts.push(t('alerts.free'));
   else if (a.maxPrice !== null && a.maxPrice !== undefined) parts.push(t('alerts.maxPrice', { price: formatUSD(a.maxPrice) }));
+  if (a.frequency === 'weekly') parts.push(t('alerts.weeklyChip'));
   return parts.join(' · ');
 }
 
@@ -41,7 +42,7 @@ export default class SaleAlerts extends React.Component {
   openNew() { this.setState({ form: Object.assign({}, EMPTY_FORM), errors: {} }); }
   openEdit(a) {
     this.setState({ errors: {}, form: { id: a.id, label: a.label || '', where: 'keep', address: '', coords: null,
-      radiusMiles: String(a.radiusMiles), maxPrice: a.maxPrice === null || a.maxPrice === undefined ? '' : String(a.maxPrice), freeOnly: a.freeOnly } });
+      radiusMiles: String(a.radiusMiles), maxPrice: a.maxPrice === null || a.maxPrice === undefined ? '' : String(a.maxPrice), freeOnly: a.freeOnly, frequency: a.frequency || 'instant' } });
   }
   setForm(patch) { this.setState((s) => ({ form: Object.assign({}, s.form, patch), errors: {} })); }
 
@@ -72,7 +73,7 @@ export default class SaleAlerts extends React.Component {
     const f = this.state.form;
     const errors = this.validate(f);
     if (Object.keys(errors).length) return this.setState({ errors });
-    const body = { label: f.label.trim() || null, radiusMiles: Number(f.radiusMiles), freeOnly: f.freeOnly,
+    const body = { label: f.label.trim() || null, radiusMiles: Number(f.radiusMiles), freeOnly: f.freeOnly, frequency: f.frequency,
       maxPrice: f.freeOnly || !f.maxPrice.trim() ? null : Number(f.maxPrice) };
     if (f.where === 'address') body.address = f.address.trim();
     if (f.where === 'here') { body.lat = f.coords.lat; body.lng = f.coords.lng; }
@@ -154,6 +155,17 @@ export default class SaleAlerts extends React.Component {
           </span>
           <span><strong>{t('list.freeOnly')}</strong><span className="field-hint" style={{ display: 'block' }}>{t('alerts.freeHint')}</span></span>
         </label>
+        <fieldset className="alert-frequency">
+          <legend className="field-label">{t('alerts.frequency')}</legend>
+          <label className="radio-row" htmlFor="alert-freq-instant">
+            <input id="alert-freq-instant" type="radio" name="alert-frequency" value="instant" checked={f.frequency !== 'weekly'} onChange={() => this.setForm({ frequency: 'instant' })} />
+            <span><strong>{t('alerts.instant')}</strong><span className="field-hint" style={{ display: 'block' }}>{t('alerts.instantHint')}</span></span>
+          </label>
+          <label className="radio-row" htmlFor="alert-freq-weekly">
+            <input id="alert-freq-weekly" type="radio" name="alert-frequency" value="weekly" checked={f.frequency === 'weekly'} onChange={() => this.setForm({ frequency: 'weekly' })} />
+            <span><strong>{t('alerts.weekly')}</strong><span className="field-hint" style={{ display: 'block' }}>{t('alerts.weeklyHint')}</span></span>
+          </label>
+        </fieldset>
         {e.form ? <Alert tone="danger">{e.form}</Alert> : null}
         <div className="form-actions">
           <button type="submit" className="btn btn-primary" disabled={s.saving}>{s.saving ? <Spinner /> : null}{f.id ? t('edit.saveChanges') : t('alerts.create')}</button>

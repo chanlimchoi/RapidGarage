@@ -194,6 +194,11 @@ for each alert that works without logging in. Admins can switch alert emails off
 whole site in **Admin → Settings**. Email needs SMTP settings; without them the app works
 normally and alerts are just logged and skipped. See the backend README.
 
+**Weekend digest.** An alert can be set to **Weekend digest** instead of **As new sales are posted**:
+it then sends one email on Thursday evening (from `WEEKEND_DIGEST_HOUR`, default 17:00, in the site's
+time zone) listing up to 10 of that weekend's sales in its area, nearest first, and no email when
+there are none. Same filters, layout and one-click **Turn off** link as instant alerts.
+
 ## Sale dates & times
 
 Sellers add one or more **days** to a sale, each with a start and end time (**When** on the
@@ -350,6 +355,7 @@ From a conversation, a buyer can ask the seller to hold one item of the sale, op
 
 - **Expiry.** An unanswered request lapses after `HOLD_REQUEST_HOURS` (24); an accepted hold ends at the chosen time (default `HOLD_HOURS`, 24; at most 72 h) and never outlives the sale. Marking the item sold completes the hold. A sweep runs every minute and whenever the hold or unread endpoints are hit, so nothing depends on the timer alone.
 - **Abuse limits (per buyer).** `HOLD_MAX_ACTIVE` open holds overall (5), 3 per sale, `HOLD_MAX_PER_DAY` requests per 24 h (10), no new request for an item the seller declined within 24 h, and at most 5 pending requests per item. Accepting one request automatically declines the others for that item. Blocking someone, or a messaging ban, ends or prevents holds between the two of you.
+- **Make an offer.** When asking to hold a priced item, the buyer can offer less than the asking price. The seller can **Accept** the offer (the item is reserved at that price), **Counter** with a price above the offer and at most the asking price, or decline. The buyer can **Take** a counteroffer, which reserves the item at that price right away. The agreed price shows on the hold and on the seller's dashboard; every step is an event in the thread.
 - **Notifications.** Each step is posted into the conversation as an event message (shown as a centred line, worded for each side in the reader's language), so it counts toward the unread badge and appears in the inbox preview. No email is sent.
 
 ## Neighborhood sales

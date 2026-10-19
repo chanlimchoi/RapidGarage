@@ -215,7 +215,16 @@
   "summary.items": "Sold {sold} of {total} listed items ({value} at listed prices).",
   "summary.reach": "Views: {views} · Saves: {saves} · Conversations: {conversations}",
   "summary.curb": "Leftovers? Offer them free on the curb: {url}",
-  "summary.again": "See the details, or duplicate the sale for next time: {url}"
+  "summary.again": "See the details, or duplicate the sale for next time: {url}",
+  "weekly.subject": {
+   "one": "This weekend: {count} garage sale near you",
+   "other": "This weekend: {count} garage sales near you"
+  },
+  "weekly.head": "This weekend's sales",
+  "weekly.intro": {
+   "one": "{count} sale this weekend matches your RapidGarage weekend digest:",
+   "other": "{count} sales this weekend match your RapidGarage weekend digest:"
+  }
  },
  "messages": {
   "Login required.": "Login required.",
@@ -609,6 +618,15 @@
   "Couldn't write a description for this sale. Please write it yourself.": "Couldn't write a description for this sale. Please write it yourself.",
   "The AI answer came back incomplete. Please try again.": "The AI answer came back incomplete. Please try again.",
   "The AI is busy right now. Please try again in a minute.": "The AI is busy right now. Please try again in a minute.",
-  "AI writing isn't available right now. Please try again later.": "AI writing isn't available right now. Please try again later."
+  "AI writing isn't available right now. Please try again later.": "AI writing isn't available right now. Please try again later.",
+  "Choose instant emails or a weekly digest.": "Choose instant emails or a weekly digest.",
+  "Enter an amount in dollars, like 5 or 4.50.": "Enter an amount in dollars, like 5 or 4.50.",
+  "This item is free.": "This item is free.",
+  "Offer less than the asking price, or just ask to hold it.": "Offer less than the asking price, or just ask to hold it.",
+  "A counteroffer has to be more than their offer.": "A counteroffer has to be more than their offer.",
+  "A counteroffer can't be more than the asking price.": "A counteroffer can't be more than the asking price.",
+  "There is no offer to counter.": "There is no offer to counter.",
+  "There is no counteroffer to take.": "There is no counteroffer to take.",
+  "Invalid offer.": "Invalid offer."
  }
 }
