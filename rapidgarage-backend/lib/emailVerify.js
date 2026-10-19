@@ -35,8 +35,21 @@ const baseUrl = () => require('./alerts').baseUrl();
 const inflight = new Set();
 const idle = async () => { while (inflight.size) await Promise.all(Array.from(inflight)); };
 
+// Keep a promise visible to idle() until it settles. Signup fires a send
+// without awaiting it, so idle() has to see the whole operation -- the counter
+// hit and the row insert too, not just the mail attempt -- or it can return
+// while the send is still awaiting its first database round-trip.
+function track(promise) {
+  inflight.add(promise);
+  const done = () => inflight.delete(promise);
+  promise.then(done, done);
+  return promise;
+}
+
 // Email a fresh link. Resolves to 'sent' | 'verified' | 'limited' | 'not_configured'.
-async function send(user) {
+function send(user) { return track(sendLink(user)); }
+
+async function sendLink(user) {
   if (isVerified(user)) return 'verified';
   if (!mailer.isConfigured()) return 'not_configured';
   const key = 'verify-send|' + user.id;
@@ -48,14 +61,12 @@ async function send(user) {
   const L = (k, v) => i18n.t(lang, k, v);
   const url = baseUrl() + '/verify-email?t=' + encodeURIComponent(token);
   const hello = user.firstName ? L('mail.hi', { name: user.firstName }) : L('mail.hiAnon');
-  const p = mailer.send({
+  track(mailer.send({
     to: user.email,
     subject: L('verify.subject'),
     text: [hello, '', L('verify.intro'), '', url, '', L('verify.expires'), L('verify.ignore')].join('\n'),
     headers: { 'Content-Language': lang },
-  }).catch((err) => console.error('Verification email to user ' + user.id + ' failed:', err && (err.code || err.name)))
-    .finally(() => inflight.delete(p));
-  inflight.add(p);
+  }).catch((err) => console.error('Verification email to user ' + user.id + ' failed:', err && (err.code || err.name))));
   return 'sent';
 }
 
