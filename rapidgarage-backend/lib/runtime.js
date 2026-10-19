@@ -105,6 +105,9 @@ function checkConfig(env) {
   if (!e.KEY_ENCRYPTION_SECRET) warnings.push('KEY_ENCRYPTION_SECRET is not set: users cannot save their own Maps keys.');
   if (!e.SMTP_HOST) warnings.push('SMTP_HOST is not set: sale alert emails are logged and skipped.');
   if (trustProxy(e) === true) warnings.push('TRUST_PROXY=true trusts every X-Forwarded-For hop, so clients can fake their IP; prefer the number of proxies (e.g. 1).');
+  const storage = String(e.PHOTO_STORAGE || 'local').trim().toLowerCase();
+  if (storage === 's3' && !String(e.S3_BUCKET || '').trim()) errors.push('PHOTO_STORAGE=s3 needs S3_BUCKET.');
+  else if (storage !== 'local' && storage !== 's3') errors.push('PHOTO_STORAGE must be "local" or "s3".');
   const dir = frontendDir(e);
   if (dir && !fs.existsSync(path.join(dir, 'index.html'))) errors.push('SERVE_FRONTEND_DIR has no index.html: ' + dir);
   return { errors, warnings };

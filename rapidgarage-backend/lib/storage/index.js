@@ -1,5 +1,5 @@
-// Pluggable photo storage. Today only "local" exists; an S3 driver only needs
-// to implement put/remove/read with the same signatures and be added below.
+// Pluggable photo storage: "local" (disk, default) or "s3" (lib/storage/s3.js:
+// AWS S3, Cloudflare R2, Backblaze B2, MinIO). Both implement:
 //   put(key, buffer, contentType) -> Promise
 //   remove(key)                   -> Promise (missing keys are not an error)
 //   read(key)                     -> Promise<Buffer>
@@ -11,8 +11,9 @@ let instance = null;
 function getStorage() {
   if (instance) return instance;
   const driver = (process.env.PHOTO_STORAGE || 'local').toLowerCase();
-  if (driver !== 'local') throw new Error('Unknown PHOTO_STORAGE driver: ' + driver);
-  instance = new LocalStorage(uploadDir());
+  if (driver === 's3') instance = require('./s3').fromEnv(process.env);
+  else if (driver === 'local') instance = new LocalStorage(uploadDir());
+  else throw new Error('Unknown PHOTO_STORAGE driver: ' + driver);
   return instance;
 }
 

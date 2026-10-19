@@ -43,18 +43,15 @@ function passwordError(password) {
 }
 
 // ---- per-IP limit -------------------------------------------------------
-const ipHits = new Map(); // ip -> [timestamps]
-function takeIpSlot(ip, now) {
-  const t = now || Date.now();
-  const recent = (ipHits.get(ip) || []).filter((x) => t - x < 3600000);
-  if (recent.length >= perIpPerHour()) { ipHits.set(ip, recent); return false; }
-  recent.push(t);
-  ipHits.set(ip, recent);
-  // Keep the map from growing without bound.
-  if (ipHits.size > 10000) ipHits.delete(ipHits.keys().next().value);
+const counters = require('./counters');
+async function takeIpSlot(ip) {
+  const key = 'password-reset-ip|' + ip;
+  const max = perIpPerHour();
+  const e = await counters.hit(key, 3600000);
+  if (e.count > max) { await counters.decrement(key); return false; }
   return true;
 }
-const resetIpLimits = () => ipHits.clear();
+const resetIpLimits = () => counters.reset();
 
 // ---- email --------------------------------------------------------------
 const esc = (s) => String(s === null || s === undefined ? '' : s)

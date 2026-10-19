@@ -13,14 +13,20 @@
 #   BACKUP_KEEP_DAYS       delete dumps older than this (default 14; 0 = keep all)
 #   BACKUP_UPLOADS_DIR     if set, also tar this directory (post photos)
 #   BACKUP_INTERVAL_HOURS  for --loop (default 24)
+#   BACKUP_RCLONE_REMOTE   if set, copy each new file there with rclone, e.g.
+#                          "offsite:my-bucket/rapidgarage" (remote configured with
+#                          RCLONE_CONFIG_OFFSITE_* variables; see DEPLOY.md). A
+#                          "crypt" remote encrypts before upload. Never printed.
+#   BACKUP_REMOTE_KEEP_DAYS  delete remote copies older than this (default 30;
+#                          0 = keep all)
 #
 # Output: rapidgarage-YYYYmmdd-HHMMSSZ.dump (pg_dump custom format; restore with
 # pg_restore, see DEPLOY.md "Backups and restore") and uploads-*.tar.gz. Files
 # are written as *.partial and renamed only after they are complete and, for
 # dumps, readable by pg_restore. Mode 600.
 #
-# A backup on the same disk as the database is not a backup: copy BACKUP_DIR
-# off the machine (rclone/restic/rsync to object storage or another host).
+# A backup on the same disk as the database is not a backup: set
+# BACKUP_RCLONE_REMOTE (or copy BACKUP_DIR off the machine some other way).
 set -eu
 umask 077
 
@@ -30,7 +36,23 @@ INTERVAL_H="${BACKUP_INTERVAL_HOURS:-24}"
 
 log() { echo "[backup $(date -u +%Y-%m-%dT%H:%M:%SZ)] $*"; }
 
+# Copy the new files to BACKUP_RCLONE_REMOTE and prune old remote copies.
+# The remote string can contain credentials, so it is never logged.
+offsite() {
+  command -v rclone > /dev/null 2>&1 || { log "offsite: rclone is not installed"; return 1; }
+  for f in "$@"; do
+    [ -n "$f" ] || continue
+    rclone copyto --quiet "$f" "$BACKUP_RCLONE_REMOTE/$(basename "$f")" || { log "offsite: upload failed"; return 1; }
+    log "offsite  <- $(basename "$f")"
+  done
+  remote_keep="${BACKUP_REMOTE_KEEP_DAYS:-30}"
+  if [ "$remote_keep" -gt 0 ] 2>/dev/null; then
+    rclone delete --quiet --min-age "${remote_keep}d" --include 'rapidgarage-*.dump' --include 'uploads-*.tar.gz' "$BACKUP_RCLONE_REMOTE" || log "offsite: pruning old copies failed"
+  fi
+}
+
 backup_once() {
+  up=""
   # Explicit "|| return 1": set -e does not apply inside a function called
   # from "backup_once || ..." (the --loop case).
   mkdir -p "$BACKUP_DIR" || return 1
@@ -51,6 +73,10 @@ backup_once() {
     tar -czf "$up.partial" -C "$BACKUP_UPLOADS_DIR" . || { rm -f "$up.partial"; return 1; }
     mv "$up.partial" "$up" || return 1
     log "uploads  -> $up ($(wc -c < "$up" | tr -d ' ') bytes)"
+  fi
+
+  if [ -n "${BACKUP_RCLONE_REMOTE:-}" ]; then
+    offsite "$out" "${up:-}" || return 1
   fi
 
   if [ "$KEEP_DAYS" -gt 0 ] 2>/dev/null; then

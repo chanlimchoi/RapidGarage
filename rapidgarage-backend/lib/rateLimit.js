@@ -44,39 +44,10 @@ function clientKey(ip) {
   return full.slice(0, 4).map((h) => h.toLowerCase().replace(/^0+(?=.)/, '')).join(':') + '::/64';
 }
 
-// A Map of key -> { count, resetAt }, bounded in size.
-const MAX_KEYS = 50000;
-function createStore() {
-  const map = new Map();
-  function sweep(now) {
-    for (const [k, v] of map) if (v.resetAt <= now) map.delete(k);
-    // Still full (a flood of distinct keys): drop the oldest windows.
-    while (map.size >= MAX_KEYS) map.delete(map.keys().next().value);
-  }
-  return {
-    hit(key, windowMs, now) {
-      let entry = map.get(key);
-      if (!entry || entry.resetAt <= now) {
-        if (!entry && map.size >= MAX_KEYS) sweep(now);
-        entry = { count: 0, resetAt: now + windowMs };
-        map.set(key, entry);
-      }
-      entry.count++;
-      return entry;
-    },
-    peek(key, now) {
-      const entry = map.get(key);
-      return entry && entry.resetAt > now ? entry : null;
-    },
-    delete(key) { map.delete(key); },
-    clear() { map.clear(); },
-    get size() { return map.size; },
-  };
-}
-
-const stores = new Set();
-function newStore() { const s = createStore(); stores.add(s); return s; }
-function resetAll() { stores.forEach((s) => s.clear()); inflight.count = 0; }
+// Counters live in lib/counters.js: per process by default, or shared by every
+// instance with RATE_LIMIT_STORE=db.
+const counters = require('./counters');
+function resetAll() { inflight.count = 0; return counters.reset(); }
 
 function tooMany(res, resetAt, now, message) {
   res.set('Retry-After', String(Math.max(1, Math.ceil((resetAt - now) / 1000))));
@@ -86,7 +57,6 @@ function tooMany(res, resetAt, now, message) {
 // options: { name, windowMs, max: () => number, key?: (req) => string|null,
 //            skip?: (req) => boolean, message? }
 function limiter(options) {
-  const store = newStore();
   const windowMs = options.windowMs;
   return function rateLimit(req, res, next) {
     if (!enabled() || (options.skip && options.skip(req))) return next();
@@ -94,12 +64,13 @@ function limiter(options) {
     if (key === null || key === undefined) return next();
     const now = Date.now();
     const max = options.max();
-    const entry = store.hit(options.name + '|' + key, windowMs, now);
-    res.set('RateLimit-Limit', String(max));
-    res.set('RateLimit-Remaining', String(Math.max(0, max - entry.count)));
-    res.set('RateLimit-Reset', String(Math.ceil((entry.resetAt - now) / 1000)));
-    if (entry.count > max) return tooMany(res, entry.resetAt, now, options.message);
-    return next();
+    return counters.hit('rl|' + options.name + '|' + key, windowMs, now).then((entry) => {
+      res.set('RateLimit-Limit', String(max));
+      res.set('RateLimit-Remaining', String(Math.max(0, max - entry.count)));
+      res.set('RateLimit-Reset', String(Math.ceil((entry.resetAt - now) / 1000)));
+      if (entry.count > max) return tooMany(res, entry.resetAt, now, options.message);
+      return next();
+    }, next);
   };
 }
 
@@ -128,7 +99,6 @@ const authLimiter = limiter({
 // Only failures count; a successful login clears the (email, IP) counter.
 // The per-email cap is higher so a stranger can't lock someone out cheaply,
 // but it still stops a distributed attack on one account.
-const loginStore = newStore();
 const LOGIN_WINDOW = 15 * MINUTE;
 const perPairMax = () => intEnv('LOGIN_MAX_FAILURES', 5);
 const perEmailMax = () => intEnv('LOGIN_MAX_FAILURES_PER_EMAIL', 50);
@@ -141,20 +111,20 @@ const loginGuard = {
     const email = String((req.body && req.body.email) || '').trim().toLowerCase();
     if (!email) return next();
     const now = Date.now();
-    const pair = loginStore.peek('pair|' + email + '|' + clientKey(req.ip), now);
-    const all = loginStore.peek('email|' + email, now);
-    if (pair && pair.count >= perPairMax()) return tooMany(res, pair.resetAt, now, LOCKED);
-    if (all && all.count >= perEmailMax()) return tooMany(res, all.resetAt, now, LOCKED);
-    return next();
+    return Promise.all([counters.peek('login-pair|' + email + '|' + clientKey(req.ip), now), counters.peek('login-email|' + email, now)]).then(([pair, all]) => {
+      if (pair && pair.count >= perPairMax()) return tooMany(res, pair.resetAt, now, LOCKED);
+      if (all && all.count >= perEmailMax()) return tooMany(res, all.resetAt, now, LOCKED);
+      return next();
+    }, next);
   },
+  // Both resolve once counted, so the next attempt sees it (also across instances).
   failed(req, email) {
-    if (!enabled() || !email) return;
+    if (!enabled() || !email) return Promise.resolve();
     const now = Date.now();
-    loginStore.hit('pair|' + email + '|' + clientKey(req.ip), LOGIN_WINDOW, now);
-    loginStore.hit('email|' + email, LOGIN_WINDOW, now);
+    return Promise.all([counters.hit('login-pair|' + email + '|' + clientKey(req.ip), LOGIN_WINDOW, now), counters.hit('login-email|' + email, LOGIN_WINDOW, now)]).catch(() => null);
   },
   succeeded(req, email) {
-    if (email) loginStore.delete('pair|' + email + '|' + clientKey(req.ip));
+    return email ? counters.remove('login-pair|' + email + '|' + clientKey(req.ip)).catch(() => null) : Promise.resolve();
   },
 };
 
@@ -194,6 +164,6 @@ function sameOriginWrites(allowed) {
 }
 
 module.exports = {
-  enabled, clientKey, createStore, limiter, apiLimiter, writeLimiter, authLimiter, loginGuard, shedLoad, sameOriginWrites,
+  enabled, clientKey, limiter, apiLimiter, writeLimiter, authLimiter, loginGuard, shedLoad, sameOriginWrites,
   resetAll, inflight,
 };

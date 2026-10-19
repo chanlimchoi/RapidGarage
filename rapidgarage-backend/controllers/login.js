@@ -17,12 +17,11 @@ router.post('/', (req, res, next) => {
     if (err) return next(err);
     // Same message for unknown email and wrong password (no account enumeration).
     if (!user) {
-      loginGuard.failed(req, req.body.email);
-      return unauthorized(res, 'Incorrect email or password.');
+      // Answer after the failure is counted, so the next attempt sees it.
+      return loginGuard.failed(req, req.body.email).then(() => unauthorized(res, 'Incorrect email or password.'));
     }
-    loginGuard.succeeded(req, req.body.email);
     // Local emails are unverified: only promoted if ADMIN_BOOTSTRAP_LOCAL=true.
-    applyAdminBootstrap(user, false).then((u) => {
+    return loginGuard.succeeded(req, req.body.email).then(() => applyAdminBootstrap(user, false)).then((u) => {
       req.logIn(u, (loginErr) => {
         if (loginErr) return next(loginErr);
         return res.json({ success: true, user: u.toJSON() });
