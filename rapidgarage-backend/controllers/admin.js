@@ -4,6 +4,7 @@ const { badRequest, forbidden, notFound, conflict, serverError, requireLogin, pa
 const { ROLES, isAdmin } = require('../lib/roles');
 const { SETTINGS, getAllSettings, setSetting } = require('../lib/features');
 const { Op } = require('sequelize');
+const analytics = require('../lib/analytics');
 
 function requireAdmin(req, res, next) {
   if (!isAdmin(req.user)) return forbidden(res, 'Admins only.');
@@ -50,6 +51,13 @@ router.put('/users/:id/role', (req, res) => {
       return res.json(out);
     })
     .catch((err) => serverError(res, err));
+});
+
+// Site analytics (lib/analytics.js): ?days=7|30|90 (default 30).
+router.get('/analytics', async (req, res) => {
+  const days = req.query.days === undefined || req.query.days === '' ? 30 : Number(req.query.days);
+  if (analytics.RANGES.indexOf(days) === -1) return badRequest(res, 'Invalid filter.', { days: 'days must be 7, 30 or 90.' });
+  try { return res.json(await analytics.summary(days)); } catch (err) { return serverError(res, err); }
 });
 
 router.get('/settings', (req, res) => {

@@ -538,6 +538,7 @@
   "The item draft came back incomplete. Please try again.": "물품 초안이 불완전하게 왔어요. 다시 시도하세요.",
   "Item drafting is busy right now. Please try again in a minute.": "지금 물품 초안 기능이 바빠요. 1분 후에 다시 시도하세요.",
   "Item drafting isn't available right now. Please try again later.": "지금은 물품 초안 기능을 쓸 수 없어요. 나중에 다시 시도하세요.",
-  "items must be a non-empty list.": "items는 비어 있지 않은 목록이어야 해요."
+  "items must be a non-empty list.": "items는 비어 있지 않은 목록이어야 해요.",
+  "days must be 7, 30 or 90.": "days는 7, 30, 90 중 하나여야 해요."
  }
 }

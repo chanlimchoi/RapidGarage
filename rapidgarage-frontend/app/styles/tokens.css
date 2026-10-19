@@ -60,6 +60,7 @@
   --color-text-muted: #57534e;
   --color-text-subtle: #6b6660;
   --color-brand: #c2410c;          /* text/links on surface: 5.2:1 */
+  --color-chart: #c2410c;          /* single-series chart marks */
   --color-brand-hover: #9a3412;
   --color-brand-bg: #c2410c;       /* button fill */
   --color-on-brand: #ffffff;
@@ -97,6 +98,7 @@
     --color-text-muted: #b8b3ac;
     --color-text-subtle: #a19b93;
     --color-brand: #fb923c;
+    --color-chart: #e2702a;
     --color-brand-hover: #fdba74;
     --color-brand-bg: #fb923c;
     --color-on-brand: #1c1208;

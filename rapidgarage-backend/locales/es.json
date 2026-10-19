@@ -558,6 +558,7 @@
   "The item draft came back incomplete. Please try again.": "El borrador de artículos llegó incompleto. Inténtalo de nuevo.",
   "Item drafting is busy right now. Please try again in a minute.": "La creación de artículos está ocupada ahora. Inténtalo en un minuto.",
   "Item drafting isn't available right now. Please try again later.": "La creación de artículos no está disponible ahora. Inténtalo más tarde.",
-  "items must be a non-empty list.": "items debe ser una lista no vacía."
+  "items must be a non-empty list.": "items debe ser una lista no vacía.",
+  "days must be 7, 30 or 90.": "days debe ser 7, 30 o 90."
  }
 }
