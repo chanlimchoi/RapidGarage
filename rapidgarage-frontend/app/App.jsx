@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Route, Switch, withRouter } from 'react-router-dom';
 import { fetchMe, apiFetch, fetchBadges } from './api';
+import * as errorReporter from './lib/errorReporter';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import Toaster from './components/Toaster';
@@ -114,7 +115,12 @@ class App extends Component {
 
   refreshConfig() {
     return apiFetch('/config')
-      .then(({ ok, data }) => { if (ok && data) this.setState({ config: data }); })
+      .then(({ ok, data }) => {
+        if (!ok || !data) return;
+        this.setState({ config: data });
+        // Crash reports only when the server tracks errors (lib/errorReporter).
+        if (data.errorReporting) errorReporter.enable();
+      })
       .catch(() => {});
   }
 

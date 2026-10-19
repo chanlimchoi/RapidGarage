@@ -1843,4 +1843,8 @@ export default {
   "alerts.weekly": "Resumen del fin de semana",
   "alerts.weeklyHint": "Un correo el jueves por la tarde con las ventas de ese fin de semana.",
   "alerts.weeklyChip": "resumen semanal",
+  "crash.title": "Algo salió mal",
+  "crash.text": "Esta página tuvo un error. Volver a cargarla suele solucionarlo.",
+  "crash.reload": "Volver a cargar",
+  "crash.home": "Ir a la página de inicio",
 };

@@ -586,6 +586,20 @@ Google Maps starts from the phone's location. The location is only used for that
   `AI_ITEMS_EFFORT` (`medium`), `AI_ITEMS_TIMEOUT_MS` (90000, one SDK retry). `/config` reports `aiItems`.
 - Tests swap in a fake client (`aiItems.setClient`), so they never call the API.
 
+## Error tracking and uptime alerts
+
+- `lib/errorTracking.js`: `init()` (from `createApp`) loads `@sentry/node` only when `SENTRY_DSN` is set, with
+  default integrations off (uncaught exceptions, unhandled rejections and linked errors only; no tracing).
+  `capture(err, { req, source, tags })` is called by `serverError()` and the final error handler; `beforeSend`
+  keeps only the method and path of the request and the user id, and masks emails, keys and tokens.
+  Tests swap in a reporter with `setReporter({ capture })`.
+- `POST /client-errors` `{ kind: error|rejection|render, message, stack?, path?, release? }` → always 204.
+  Forwarded only when tracking is on (`/config` `errorReporting`), `CLIENT_ERRORS_PER_HOUR` (20) per IP.
+  The web app (`app/lib/errorReporter.js`, `components/ErrorBoundary.jsx`) sends each distinct error once,
+  at most 5 per page load, with the path but no query string.
+- `scripts/uptime-check.js`: see DEPLOY.md "Monitoring". `--once` for cron; otherwise a loop with
+  down / still down / back up notifications by webhook and/or email.
+
 ## Make an offer (lib/holds.js)
 
 - `POST /conversations/:id/holds` takes an optional `offerCents`: a whole number of cents, at least 1 and below the asking

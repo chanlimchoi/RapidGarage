@@ -20,6 +20,8 @@ const PORT = process.env.PORT || 8000;
 //     the built frontend at /, the API under /api/*, QR links at /s/<code>,
 //     on one port. URLs the frontend and emails use are the same in both.
 function createApp(env) {
+  // Error tracking (Sentry) when SENTRY_DSN is set; a no-op otherwise.
+  require('./lib/errorTracking').init(env || process.env);
   const e = env || process.env;
   const SESSION_SECRET = e.SESSION_SECRET;
   if (!SESSION_SECRET) {
@@ -120,6 +122,7 @@ function createApp(env) {
       return sendError(res, 413, 'payload_too_large', 'Request body is too large.');
     }
     console.error(err);
+    require('./lib/errorTracking').capture(err, { req });
     sendError(res, 500, 'server_error', 'Something went wrong.');
   });
   return app;
@@ -168,7 +171,7 @@ if (require.main === module) {
         require('./lib/live').stopBroadcast();
         server.close(() => {
           require('./lib/alerts').stopWorker();
-          Promise.all([sessionStore.close(), models.sequelize.close()]).finally(() => process.exit(0));
+          Promise.all([sessionStore.close(), models.sequelize.close(), require('./lib/errorTracking').flush(2000)]).finally(() => process.exit(0));
         });
         // Idle keep-alive sockets would hold close() open; give up after 10s.
         setTimeout(() => process.exit(0), 10000).unref();
@@ -179,6 +182,8 @@ if (require.main === module) {
     })
     .catch((err) => {
       console.error('Startup failed:', err.message);
-      process.exit(1);
+      const tracking = require('./lib/errorTracking');
+      tracking.capture(err, { tags: { phase: 'startup' } });
+      tracking.flush(2000).finally(() => process.exit(1));
     });
 }

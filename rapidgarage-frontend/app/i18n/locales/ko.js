@@ -1843,4 +1843,8 @@ export default {
   "alerts.weekly": "주말 요약",
   "alerts.weeklyHint": "목요일 저녁에 그 주말 세일을 담은 메일 한 통.",
   "alerts.weeklyChip": "주말 요약",
+  "crash.title": "문제가 생겼어요",
+  "crash.text": "이 페이지에서 오류가 났어요. 새로고침하면 대개 해결돼요.",
+  "crash.reload": "새로고침",
+  "crash.home": "홈으로 가기",
 };
