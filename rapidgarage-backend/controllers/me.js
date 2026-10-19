@@ -2,6 +2,8 @@ const router = require('express').Router();
 const models = require('../models');
 const secretBox = require('../lib/secretBox');
 const i18n = require('../lib/i18n');
+const bcrypt = require('bcrypt-nodejs');
+const passwordReset = require('../lib/passwordReset');
 const { userMapsKeysEnabled } = require('../lib/features');
 const { badRequest, unauthorized, notFound, sendError, serverError, requireLogin } = require('../lib/http');
 
@@ -79,6 +81,37 @@ router.put('/locale', requireLogin, (req, res) => {
       return user.update({ locale: code }).then((u) => res.json({ locale: u.locale }));
     })
     .catch((err) => serverError(res, err));
+});
+
+// Whether the account has a password of its own (Google-only accounts don't),
+// so Settings knows whether to ask for the current one.
+router.get('/password', requireLogin, (req, res) => {
+  noStore(res);
+  models.User.scope('withPassword').findByPk(req.user.id)
+    .then((user) => (user ? res.json({ hasPassword: !!user.password }) : notFound(res, 'User not found.')))
+    .catch((err) => serverError(res, err));
+});
+
+// Change (or, for Google-only accounts, add) a password. Signs out every other
+// session; this one stays logged in.
+router.put('/password', requireLogin, async (req, res, next) => {
+  noStore(res);
+  const body = req.body || {};
+  const pwError = passwordReset.passwordError(body.newPassword);
+  if (pwError) return badRequest(res, 'Invalid request.', { newPassword: pwError });
+  try {
+    const user = await models.User.scope('withPassword').findByPk(req.user.id);
+    if (!user) return notFound(res, 'User not found.');
+    if (user.password) {
+      let ok = false;
+      try { ok = typeof body.currentPassword === 'string' && bcrypt.compareSync(body.currentPassword, user.password); } catch (e) { ok = false; }
+      if (!ok) return badRequest(res, 'Invalid request.', { currentPassword: 'Your current password is incorrect.' });
+    }
+    const updated = await passwordReset.setPassword(user.id, body.newPassword);
+    return req.login(updated, (err) => (err ? next(err) : res.json({ ok: true })));
+  } catch (err) {
+    return serverError(res, err);
+  }
 });
 
 module.exports = router;

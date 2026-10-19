@@ -14,6 +14,8 @@ import Post from './post/Post';
 import Login from './user/Login';
 import Logout from './user/Logout';
 import SignUp from './user/SignUp';
+import ForgotPassword from './user/ForgotPassword';
+import ResetPassword from './user/ResetPassword';
 import NewPost from './post/NewPost';
 import EditPost from './post/EditPost';
 import Settings from './user/Settings';
@@ -144,6 +146,8 @@ class App extends Component {
             <Route path='/settings' render={(props) => <Settings {...props} {...common} config={config} onAuthChange={this.refreshUser} />} />
             <Route path='/signup' render={(props) => <SignUp {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/login' render={(props) => <Login {...props} onAuthChange={this.refreshUser} />} />
+            <Route path='/forgot-password' component={ForgotPassword} />
+            <Route path='/reset-password' render={(props) => <ResetPassword {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/logout' render={(props) => <Logout {...props} onAuthChange={this.refreshUser} />} />
             <Route path='/newpost' render={(props) => <NewPost {...props} {...common} />} />
             <Route path='/post/:id/print' render={(props) => <PrintFlyer {...props} {...common} />} />
@@ -170,7 +174,7 @@ class App extends Component {
           </Switch>
         </main>
         <Footer />
-        <PwaBanners offerInstall={!/^\/(login|signup|logout|alerts|admin|settings)/.test(this.props.location.pathname)} />
+        <PwaBanners offerInstall={!/^\/(login|signup|logout|forgot-password|reset-password|alerts|admin|settings)/.test(this.props.location.pathname)} />
         <Toaster />
       </div>
     );

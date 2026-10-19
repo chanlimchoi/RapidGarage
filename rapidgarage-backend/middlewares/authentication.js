@@ -40,13 +40,19 @@ passport.use(new LocalStrategy({
   })
 );
 
+// The session keeps the user id plus the account's authVersion at login.
+// Resetting or changing the password bumps authVersion, which signs out every
+// session made before it. Sessions from before this existed hold a bare id and
+// count as version 0.
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+  done(null, { id: user.id, v: user.authVersion || 0 });
 });
 
-passport.deserializeUser((id, done) => {
+passport.deserializeUser((stored, done) => {
+  const id = stored && typeof stored === 'object' ? stored.id : stored;
+  const version = stored && typeof stored === 'object' ? Number(stored.v) || 0 : 0;
   User.findByPk(id).then((user) => {
-    if (!user) {
+    if (!user || (user.authVersion || 0) !== version) {
       return done(null, false);
     }
 

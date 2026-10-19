@@ -113,6 +113,24 @@ by moderator") or ban a participant from messaging (they can still read, but not
 start conversations), and lift a ban later. Participants never see who else reported or any
 admin notes.
 
+## Forgot password
+
+**Log in → Forgot password?** asks for an email and sends a link to
+`/reset-password`. The page answers the same way whether or not the email has an account. Links
+work once and expire after `PASSWORD_RESET_TTL_MINUTES` (default 60). Only a SHA-256 of each
+token is stored. Requesting a new link doesn't void older ones, but setting a password voids all
+of them. Each account gets at most `PASSWORD_RESET_MAX_PER_HOUR` (default 3) emails an hour; over
+the limit, requests still answer normally but send nothing. Each IP gets
+`PASSWORD_RESET_MAX_PER_IP_HOUR` (default 20) requests an hour, after which it gets `429`. Emails
+are written in the account's language and sent after the response, so response time doesn't
+reveal whether an account exists.
+
+**Settings → Password** changes the password (the current one is required) or adds one to an
+account created with Google. Either way, and after a reset, every other session is signed out:
+sessions record the account's `authVersion`, which goes up with each new password. A short
+"your password was changed" email follows. Without SMTP, `/config` reports
+`passwordReset: false` and the reset request answers `503` with an explanation.
+
 ## Sale alerts (email)
 
 Logged-in users can save up to 5 **sale alerts** in **Settings → Sale alerts** (or press

@@ -159,7 +159,20 @@
   "share.wantedTitle": "Wanted: {title}",
   "share.near": "Near {area} · within {miles} mi",
   "share.photoAlt": "Photo from {title}",
-  "share.cardAlt": "RapidGarage preview card: {title}"
+  "share.cardAlt": "RapidGarage preview card: {title}",
+  "reset.subject": "Reset your RapidGarage password",
+  "reset.heading": "Reset your password",
+  "reset.intro": "Someone asked to reset the password for your RapidGarage account. Use the button or link below to choose a new one.",
+  "reset.button": "Choose a new password",
+  "reset.expires": {
+   "one": "The link works once and expires in {count} minute.",
+   "other": "The link works once and expires in {count} minutes."
+  },
+  "reset.ignore": "If you didn't ask for this, you can ignore this email. Your password stays the same.",
+  "reset.changedSubject": "Your RapidGarage password was changed",
+  "reset.changedHeading": "Your password was changed",
+  "reset.changedIntro": "The password for your RapidGarage account was just changed, and every other device was signed out.",
+  "reset.changedNotYou": "If this wasn't you, reset your password now: {url}"
  },
  "messages": {
   "Login required.": "Login required.",
@@ -496,6 +509,11 @@
   "This meetup suggestion is no longer open.": "This meetup suggestion is no longer open.",
   "Only the person it was suggested to can answer it.": "Only the person it was suggested to can answer it.",
   "Only the person who suggested it can withdraw it. You can decline it instead.": "Only the person who suggested it can withdraw it. You can decline it instead.",
-  "Photo description must be text.": "Photo description must be text."
+  "Photo description must be text.": "Photo description must be text.",
+  "Password must be 200 characters or fewer.": "Password must be 200 characters or fewer.",
+  "Too many reset requests. Please try again later.": "Too many reset requests. Please try again later.",
+  "Password reset emails aren't available on this server. Contact the site's administrator.": "Password reset emails aren't available on this server. Contact the site's administrator.",
+  "This reset link is invalid or has expired. Request a new one.": "This reset link is invalid or has expired. Request a new one.",
+  "Your current password is incorrect.": "Your current password is incorrect."
  }
 }

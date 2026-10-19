@@ -159,7 +159,20 @@
   "share.wantedTitle": "Se busca: {title}",
   "share.near": "Cerca de {area} · a {miles} mi",
   "share.photoAlt": "Foto de {title}",
-  "share.cardAlt": "Tarjeta de vista previa de RapidGarage: {title}"
+  "share.cardAlt": "Tarjeta de vista previa de RapidGarage: {title}",
+  "reset.subject": "Restablece tu contraseña de RapidGarage",
+  "reset.heading": "Restablece tu contraseña",
+  "reset.intro": "Alguien pidió restablecer la contraseña de tu cuenta de RapidGarage. Usa el botón o el enlace de abajo para elegir una nueva.",
+  "reset.button": "Elegir una nueva contraseña",
+  "reset.expires": {
+   "one": "El enlace funciona una sola vez y caduca en {count} minuto.",
+   "other": "El enlace funciona una sola vez y caduca en {count} minutos."
+  },
+  "reset.ignore": "Si no lo pediste, puedes ignorar este correo. Tu contraseña no cambia.",
+  "reset.changedSubject": "Se cambió tu contraseña de RapidGarage",
+  "reset.changedHeading": "Se cambió tu contraseña",
+  "reset.changedIntro": "Se acaba de cambiar la contraseña de tu cuenta de RapidGarage y se cerró la sesión en todos los demás dispositivos.",
+  "reset.changedNotYou": "Si no fuiste tú, restablece tu contraseña ahora: {url}"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -496,6 +509,11 @@
   "This meetup suggestion is no longer open.": "Esta sugerencia de encuentro ya no está abierta.",
   "Only the person it was suggested to can answer it.": "Solo la persona a la que se le sugirió puede responder.",
   "Only the person who suggested it can withdraw it. You can decline it instead.": "Solo quien lo sugirió puede retirarlo. Tú puedes rechazarlo.",
-  "Photo description must be text.": "La descripción de la foto debe ser texto."
+  "Photo description must be text.": "La descripción de la foto debe ser texto.",
+  "Password must be 200 characters or fewer.": "La contraseña debe tener 200 caracteres o menos.",
+  "Too many reset requests. Please try again later.": "Demasiadas solicitudes de restablecimiento. Inténtalo más tarde.",
+  "Password reset emails aren't available on this server. Contact the site's administrator.": "Este servidor no puede enviar correos para restablecer la contraseña. Contacta al administrador del sitio.",
+  "This reset link is invalid or has expired. Request a new one.": "Este enlace para restablecer no es válido o caducó. Pide uno nuevo.",
+  "Your current password is incorrect.": "Tu contraseña actual no es correcta."
  }
 }

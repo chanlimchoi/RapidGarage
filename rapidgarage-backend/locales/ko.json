@@ -143,7 +143,19 @@
   "share.wantedTitle": "구해요: {title}",
   "share.near": "{area} 근처 · {miles}마일 이내",
   "share.photoAlt": "{title} 사진",
-  "share.cardAlt": "RapidGarage 미리보기 카드: {title}"
+  "share.cardAlt": "RapidGarage 미리보기 카드: {title}",
+  "reset.subject": "RapidGarage 비밀번호 재설정",
+  "reset.heading": "비밀번호 재설정",
+  "reset.intro": "RapidGarage 계정의 비밀번호 재설정 요청이 있었어요. 아래 버튼이나 링크로 새 비밀번호를 정하세요.",
+  "reset.button": "새 비밀번호 정하기",
+  "reset.expires": {
+   "other": "링크는 한 번만 쓸 수 있고 {count}분 후에 만료돼요."
+  },
+  "reset.ignore": "직접 요청하지 않았다면 이 메일은 무시하셔도 돼요. 비밀번호는 바뀌지 않아요.",
+  "reset.changedSubject": "RapidGarage 비밀번호가 변경되었어요",
+  "reset.changedHeading": "비밀번호가 변경되었어요",
+  "reset.changedIntro": "RapidGarage 계정의 비밀번호가 방금 변경되어 다른 모든 기기에서 로그아웃되었어요.",
+  "reset.changedNotYou": "본인이 아니라면 지금 비밀번호를 재설정하세요: {url}"
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -480,6 +492,11 @@
   "This meetup suggestion is no longer open.": "이 만남 제안은 더 이상 열려 있지 않아요.",
   "Only the person it was suggested to can answer it.": "제안을 받은 사람만 답할 수 있어요.",
   "Only the person who suggested it can withdraw it. You can decline it instead.": "제안한 사람만 철회할 수 있어요. 대신 거절할 수 있어요.",
-  "Photo description must be text.": "사진 설명은 텍스트여야 해요."
+  "Photo description must be text.": "사진 설명은 텍스트여야 해요.",
+  "Password must be 200 characters or fewer.": "비밀번호는 200자 이하여야 해요.",
+  "Too many reset requests. Please try again later.": "재설정 요청이 너무 많아요. 나중에 다시 시도하세요.",
+  "Password reset emails aren't available on this server. Contact the site's administrator.": "이 서버에서는 비밀번호 재설정 메일을 보낼 수 없어요. 사이트 관리자에게 문의하세요.",
+  "This reset link is invalid or has expired. Request a new one.": "재설정 링크가 유효하지 않거나 만료되었어요. 새 링크를 요청하세요.",
+  "Your current password is incorrect.": "현재 비밀번호가 올바르지 않아요."
  }
 }

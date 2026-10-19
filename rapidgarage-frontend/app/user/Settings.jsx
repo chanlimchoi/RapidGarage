@@ -8,6 +8,7 @@ import PasswordInput from './PasswordInput';
 import toast from '../components/toast';
 import SaleAlerts from './SaleAlerts';
 import ReminderSettings from './ReminderSettings';
+import PasswordSettings from './PasswordSettings';
 import { t } from '../i18n';
 import { tx } from '../i18n/rich';
 
@@ -108,7 +109,7 @@ export default class Settings extends React.Component {
       return (
         <div className="container rg-settings">
           {this.header()}
-          <div className="stack-lg">{this.languageSection()}<SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} /></div>
+          <div className="stack-lg">{this.languageSection()}<SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} /><PasswordSettings user={this.props.user} /></div>
         </div>
       );
     }
@@ -119,6 +120,7 @@ export default class Settings extends React.Component {
         <div className="stack-lg">
           {this.languageSection()}
           <SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} />
+          <PasswordSettings user={this.props.user} />
           <section className="settings-section card-form" aria-labelledby="maps-key-heading">
             <header>
               <h2 id="maps-key-heading"><KeyRound size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('settings.mapsKey')}</h2>

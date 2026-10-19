@@ -88,6 +88,7 @@ export default class Login extends React.Component {
               <PasswordInput name="password" autoComplete="current-password" value={v.password}
                 onChange={this.set('password')} onBlur={this.touch('password')} required />
             </Field>
+            <p className="auth-forgot"><Link to="/forgot-password">{t('login.forgot')}</Link></p>
             {this.state.error ? <Alert tone="danger">{this.state.error}</Alert> : null}
             <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={this.state.busy}>
               {this.state.busy ? <Spinner /> : null}{t('nav.logIn')}
