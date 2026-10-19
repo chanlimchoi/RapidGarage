@@ -16,6 +16,7 @@ const crypto = require('crypto');
 const express = require('express');
 const security = require('./security');
 const share = require('./share');
+const seo = require('./seo');
 
 const HEAD_TIMEOUT_MS = 1500;
 
@@ -69,6 +70,7 @@ function mountFrontend(app, dir, env) {
       if (out) html = share.injectHead(html, out.head, out.lang);
     } catch (err) { /* keep the static tags */ }
     security.setPagePolicy(res, nonce, env);
+    if (seo.isPrivate(req.path)) res.setHeader('X-Robots-Tag', 'noindex');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Vary', 'Accept-Language');
     res.type('html');

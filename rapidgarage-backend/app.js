@@ -104,6 +104,7 @@ function createApp(env) {
   if (frontendDir) {
     app.use('/api', api);
     app.use('/s', require('./controllers/shortlinks')); // printed QR codes
+    app.use(require('./controllers/seo')); // /robots.txt, /sitemap.xml
     app.use('/api', (req, res) => sendError(res, 404, 'not_found', 'Not found.'));
     require('./lib/frontend').mountFrontend(app, frontendDir, e);
   } else {

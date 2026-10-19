@@ -28,6 +28,7 @@ const i18n = require('./i18n');
 const schedule = require('./schedule');
 const ft = require('./flyerText');
 const card = require('./shareCard');
+const seo = require('./seo');
 
 function models() { return require('../models'); }
 
@@ -127,6 +128,7 @@ async function postPreview(id, lang, at) {
       chip: curb ? { text: curbText, tone: 'free' } : price ? { text: price, tone: price === i18n.t(lang, 'price.free') ? 'free' : 'brand' } : null,
     },
     imageAlt: photo ? i18n.t(lang, 'share.photoAlt', { title: clean(post.title) }) : i18n.t(lang, 'share.cardAlt', { title: clean(post.title) }),
+    source: post,
   };
 }
 
@@ -143,6 +145,7 @@ async function eventPreview(id, lang, at) {
     description: clip(join([when, area, sales]) + (ev.description ? '. ' + clean(ev.description) : ''), DESC_MAX),
     card: { kicker: i18n.t(lang, 'share.kicker.event'), title: clean(ev.name), lines: [when, join([area, sales])], footer: hostLabel() },
     imageAlt: i18n.t(lang, 'share.cardAlt', { title: clean(ev.name) }),
+    source: ev,
   };
 }
 
@@ -222,7 +225,17 @@ function headTags(p, pathname, explicitLang) {
     m('name', 'twitter:image', image),
     m('name', 'twitter:image:alt', p.imageAlt),
   ];
-  if (p.generic && p.kind !== 'site') tags.push(m('name', 'robots', 'noindex'));
+  // Search engines (lib/seo.js): private pages and unavailable items are
+  // noindex; public ones get hreflang alternates and structured data.
+  const noindex = (p.generic && p.kind !== 'site') || seo.isPrivate(pagePath);
+  if (noindex) tags.push(m('name', 'robots', 'noindex'));
+  else {
+    tags.push(...seo.hreflangTags(pagePath));
+    const ld = p.kind === 'post' && p.source ? seo.postLd(p.source, p, image)
+      : p.kind === 'event' && p.source ? seo.eventLd(p.source, p, image)
+        : p.kind === 'site' && pagePath === '/' ? seo.siteLd(p.lang) : null;
+    if (ld) tags.push(seo.ldScript(ld));
+  }
   return tags.join('\n    ');
 }
 
