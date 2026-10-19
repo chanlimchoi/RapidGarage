@@ -195,6 +195,17 @@ The **What?** box on the home page (e.g. "bike") finds sales whose title, descri
 unsold items match every word, on the recent list or together with a location search, and
 the cards show the matching items.
 
+## Draft items from photos (Claude)
+
+On **Edit items**, **Draft items from photos** sends the sale's first 5 photos to Anthropic's Claude
+(`claude-opus-5-5`), which suggests item names, in the seller's language, with typical
+garage-sale prices. The seller edits names and prices, unticks what they don't want and presses
+**Add N items**, which saves the rest in one request. Nothing is saved before that. Only the
+stored photos are sent (already resized, with EXIF/GPS removed), and the page says so; no name,
+email, address or sale text goes along. It needs `ANTHROPIC_API_KEY` on the server and can be
+switched off in **Admin → Settings**. Each seller gets `AI_ITEMS_PER_DAY` (default 10) drafts a
+day, and failed attempts don't count.
+
 ## Install on phone
 
 RapidGarage can be installed like an app (Android/desktop Chrome and Edge: **Install**; iPhone:

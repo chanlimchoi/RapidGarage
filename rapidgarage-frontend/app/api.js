@@ -264,6 +264,10 @@ export const fetchTodayReminders = () => apiFetch('/reminders/today');
 export const markReminderSeen = (id) => apiFetch('/reminders/' + id + '/seen', jsonBody('POST', {}));
 export const unsubscribeReminders = (r, token) => apiFetch('/reminders/unsubscribe', jsonBody('POST', { r, t: token }));
 
+// ---- Item drafts from photos (lib/aiItems.js on the server) ----------------
+export const suggestItems = (postId, photoIds) => apiFetch('/post/' + postId + '/items/suggest', jsonBody('POST', photoIds ? { photoIds } : {}));
+export const addItemsBulk = (postId, items) => apiFetch('/post/' + postId + '/items/bulk', jsonBody('POST', { items }));
+
 // ---- Following sellers (lib/follows.js on the server) ----------------------
 export const fetchFollows = () => apiFetch('/follows');
 export const fetchFollowStatus = (sellerId) => apiFetch('/follows/' + sellerId);

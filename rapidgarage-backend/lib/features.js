@@ -16,6 +16,8 @@ const SETTINGS = {
   saleAlerts: { type: 'boolean', default: () => envFlag('ENABLE_SALE_ALERTS', true) },
   // Wanted posts: the board, new posts, contacting and match notifications.
   wantedPosts: { type: 'boolean', default: () => envFlag('ENABLE_WANTED_POSTS', true) },
+  // "Draft items from photos" with Claude (also needs ANTHROPIC_API_KEY).
+  aiItems: { type: 'boolean', default: () => envFlag('ENABLE_AI_ITEMS', true) },
 };
 
 function models() {
@@ -47,5 +49,7 @@ function setSetting(name, value) {
 const userMapsKeysEnabled = () => getSetting('userMapsKeys');
 const saleAlertsEnabled = () => getSetting('saleAlerts');
 const wantedEnabled = () => getSetting('wantedPosts');
+// On only when the admin switch is on and the server has an Anthropic key.
+const aiItemsEnabled = () => getSetting('aiItems').then((on) => on && require('./aiItems').isConfigured());
 
-module.exports = { envFlag, SETTINGS, getSetting, getAllSettings, setSetting, userMapsKeysEnabled, saleAlertsEnabled, wantedEnabled };
+module.exports = { envFlag, SETTINGS, getSetting, getAllSettings, setSetting, userMapsKeysEnabled, saleAlertsEnabled, wantedEnabled, aiItemsEnabled };

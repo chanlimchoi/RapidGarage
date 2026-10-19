@@ -1,14 +1,14 @@
 const router = require('express').Router();
 const passport = require('../middlewares/authentication');
-const { userMapsKeysEnabled, saleAlertsEnabled, wantedEnabled } = require('../lib/features');
+const { userMapsKeysEnabled, saleAlertsEnabled, wantedEnabled, aiItemsEnabled } = require('../lib/features');
 const { serverError } = require('../lib/http');
 const mailer = require('../lib/mailer');
 
 // Public, non-secret configuration the frontend uses to decide what to show.
 router.get('/', (req, res) => {
   res.set('Cache-Control', 'no-store');
-  Promise.all([userMapsKeysEnabled(), saleAlertsEnabled(), wantedEnabled()])
-    .then(([userMapsKeys, saleAlerts, wantedPosts]) => res.json({ googleLogin: !!passport.googleConfig(), userMapsKeys, saleAlerts, wantedPosts, passwordReset: mailer.isConfigured() }))
+  Promise.all([userMapsKeysEnabled(), saleAlertsEnabled(), wantedEnabled(), aiItemsEnabled()])
+    .then(([userMapsKeys, saleAlerts, wantedPosts, aiItems]) => res.json({ googleLogin: !!passport.googleConfig(), userMapsKeys, saleAlerts, wantedPosts, passwordReset: mailer.isConfigured(), aiItems }))
     .catch((err) => serverError(res, err));
 });
 

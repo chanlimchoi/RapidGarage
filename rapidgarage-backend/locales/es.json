@@ -549,6 +549,15 @@
   "Markdown start must be a time like 14:00.": "La hora de inicio del descuento debe ser como 14:00.",
   "markdownLastDay must be true or false.": "markdownLastDay debe ser true o false.",
   "Choose when the markdown starts.": "Elige cuándo empieza el descuento.",
-  "markdown must be true or false.": "markdown debe ser true o false."
+  "markdown must be true or false.": "markdown debe ser true o false.",
+  "Drafting items from photos is turned off on this server.": "Crear artículos a partir de fotos está desactivado en este servidor.",
+  "photoIds must be a list of photo ids.": "photoIds debe ser una lista de id de fotos.",
+  "Add photos to the sale first, then draft items from them.": "Primero agrega fotos a la venta y luego crea los artículos a partir de ellas.",
+  "You've used today's item drafts. Try again tomorrow, or add items by hand.": "Ya usaste los borradores de artículos de hoy. Inténtalo mañana o agrega los artículos a mano.",
+  "Couldn't draft items from these photos. Add items by hand instead.": "No se pudieron crear artículos con estas fotos. Agrégalos a mano.",
+  "The item draft came back incomplete. Please try again.": "El borrador de artículos llegó incompleto. Inténtalo de nuevo.",
+  "Item drafting is busy right now. Please try again in a minute.": "La creación de artículos está ocupada ahora. Inténtalo en un minuto.",
+  "Item drafting isn't available right now. Please try again later.": "La creación de artículos no está disponible ahora. Inténtalo más tarde.",
+  "items must be a non-empty list.": "items debe ser una lista no vacía."
  }
 }
