@@ -45,6 +45,25 @@ describe('service worker routing', () => {
       'assets/inter-latin.woff2', 'icons/icon-192.png', 'icons/icon.svg', 'favicon.ico', 'notes.txt'];
     assert.deepEqual(shellFiles(files), ['/assets/index-a.css', '/assets/index-a.js', '/assets/inter-latin.woff2', '/favicon.ico', '/icons/icon-192.png', '/icons/icon.svg', '/index.html', '/manifest.webmanifest']);
   });
+
+  test('with index.html it precaches the boot graph, not every chunk', () => {
+    const files = ['index.html', 'manifest.webmanifest', 'favicon.ico', 'icons/icon-192.png',
+      'assets/index-entry.js', 'assets/vendor.js', 'assets/preloaded.js', 'assets/index.css',
+      'assets/inter-latin.woff2', 'assets/inter-cyrillic.woff2',
+      'assets/Admin-lazy.js', 'assets/Messages-lazy.js', 'assets/ko-catalog.js', 'assets/notes.js.map'];
+    const html = '<link rel="stylesheet" href="/assets/index.css">'
+      + '<script type="module" src="/assets/index-entry.js"></script>'
+      + '<link rel="modulepreload" href="/assets/vendor.js">'
+      + '<link rel="modulepreload" href="/assets/preloaded.js">';
+    const css = "@font-face{src:url(/assets/inter-latin.woff2)}@font-face{src:url('/assets/inter-cyrillic.woff2')}";
+    assert.deepEqual(shellFiles(files, html, css), [
+      '/assets/index-entry.js', '/assets/index.css', '/assets/inter-cyrillic.woff2', '/assets/inter-latin.woff2',
+      '/assets/preloaded.js', '/assets/vendor.js', '/favicon.ico', '/icons/icon-192.png', '/index.html', '/manifest.webmanifest',
+    ]);
+    // The lazy route chunks and non-English catalogs are fetched on demand.
+    assert.ok(!shellFiles(files, html, css).includes('/assets/Admin-lazy.js'));
+    assert.ok(!shellFiles(files, html, css).includes('/assets/ko-catalog.js'));
+  });
 });
 
 // A minimal production-like build in a temp dir.
@@ -56,6 +75,13 @@ function fixture() {
   fs.writeFileSync(path.join(dir, 'assets', 'index-abc.js'), 'navigator.serviceWorker.register(`/sw.js`,{scope:`/`})');
   fs.writeFileSync(path.join(dir, 'assets', 'index-abc.js.map'), '{}');
   fs.writeFileSync(path.join(dir, 'assets', 'index-abc.css'), 'body{}');
+  fs.writeFileSync(path.join(dir, 'assets', 'About-lazy.js'), 'export default 1');
+  // Make it look like a real build: index.html names its boot graph, so
+  // shellFiles precaches the entry/css but not the lazy route chunk.
+  const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8')
+    .replace('/app/index.jsx', '/assets/index-abc.js')
+    .replace('</head>', '<link rel="stylesheet" href="/assets/index-abc.css"></head>');
+  fs.writeFileSync(path.join(dir, 'index.html'), html);
   return dir;
 }
 
@@ -106,6 +132,9 @@ describe('generated sw.js', () => {
     assert.match(version, /^[0-9a-f]{12}$/);
     assert.ok(files.includes('/index.html') && files.includes('/assets/index-abc.js'));
     assert.ok(!files.some((f) => f.endsWith('.map') || f === '/sw.js'));
+    // The boot graph is precached; the lazy route chunk is not.
+    assert.ok(files.includes('/assets/index-abc.css'));
+    assert.ok(!files.includes('/assets/About-lazy.js'), 'lazy chunks are fetched on demand');
     const w = loadWorker(dir, { online: true });
     await w.fire('install');
     await w.fire('activate');

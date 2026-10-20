@@ -26,17 +26,45 @@ function strategyFor(req, ctx) {
 }
 
 // Which built files make up the shell. `files` are paths relative to the
-// build dir ("assets/index-abc.js"). Source maps and anything not needed to
-// boot the app are left out.
-function shellFiles(files) {
-  const keep = (f) => (
+// build dir ("assets/index-abc.js"). Source maps are always left out.
+//
+// The shell is the BOOT GRAPH, not every asset: the entry, its statically
+// imported chunks, the CSS and the fonts the CSS pulls in. Vite writes that
+// graph into index.html as <script>, <link rel="modulepreload"> and
+// <link rel="stylesheet"> tags, so `html` names each boot file exactly.
+//
+// Everything else -- the lazy route chunks (Admin, Messages, Settings, ...)
+// and the non-English catalogs (es, ko, zh-CN) -- is fetched on demand by the
+// browser, which handles those requests normally, and is deliberately NOT
+// precached. Precaching them would download pages and languages the user may
+// never open (1531 kB -> 870 kB here, 81 files -> 27).
+//
+// `html` and `css` are the built index.html and its stylesheet. When they are
+// missing (older callers, tests) the function falls back to the previous
+// all-assets rule.
+function shellFiles(files, html, css) {
+  const base = (f) => (
     f === 'index.html'
     || f === 'manifest.webmanifest'
     || /^icons\/.+\.(png|svg)$/.test(f)
     || /^favicon\.ico$/.test(f)
-    || (/^assets\/.+\.(js|css|woff2)$/.test(f))
   );
-  return files.filter(keep).sort().map((f) => '/' + f);
+  if (typeof html !== 'string') {
+    // Fallback: no HTML to read the boot graph from, so keep every CSS/JS/font.
+    return files.filter((f) => base(f) || /^assets\/.+\.(js|css|woff2)$/.test(f)).sort().map((f) => '/' + f);
+  }
+  // Files index.html references (entry, preloaded chunks, stylesheet, icons).
+  const boot = new Set();
+  for (const m of String(html).matchAll(/(?:src|href)="(\/?[^"]+)"/g)) {
+    boot.add(m[1].replace(/^\//, '').split('?')[0]);
+  }
+  // Fonts the stylesheet's @font-face rules pull in. They are part of the boot
+  // graph (the CSS loads them on first paint), so they stay precached even
+  // though the browser fetches them lazily.
+  for (const m of String(css || '').matchAll(/url\(\s*['"]?(\/\/[^'")]+|\/[^'")]+)['"]?\s*\)/g)) {
+    boot.add(m[1].replace(/^\//, '').split('?')[0]);
+  }
+  return files.filter((f) => base(f) || boot.has(f)).sort().map((f) => '/' + f);
 }
 
 // Cache names are versioned by the shell's content; old ones are deleted.
