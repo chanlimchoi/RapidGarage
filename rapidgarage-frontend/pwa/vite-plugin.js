@@ -18,7 +18,12 @@ function walk(dir, base) {
 }
 
 export function buildServiceWorker(outDir) {
-  const files = shellFiles(walk(outDir, ''));
+  // The boot graph lives in index.html (entry, preloaded chunks, CSS) and the
+  // CSS's @font-face rules; shellFiles reads those to decide what to precache.
+  const html = fs.existsSync(path.join(outDir, 'index.html')) ? fs.readFileSync(path.join(outDir, 'index.html'), 'utf8') : undefined;
+  const cssHref = html && (html.match(/href="(\/?[^"]+\.css)"/) || [])[1];
+  const css = cssHref ? fs.readFileSync(path.join(outDir, cssHref.replace(/^\//, '').split('?')[0]), 'utf8') : undefined;
+  const files = shellFiles(walk(outDir, ''), html, css);
   const core = fs.readFileSync(path.join(here, 'sw-core.js'), 'utf8').replace(/^export \{[^}]*\};?\s*$/m, '');
   const template = fs.readFileSync(path.join(here, 'sw-template.js'), 'utf8');
   // Version = the shell's content plus the worker's own code.
