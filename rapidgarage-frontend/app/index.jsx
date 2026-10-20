@@ -13,6 +13,15 @@ import * as i18n from './i18n';
 // Production builds register the service worker (app shell only; see pwa/).
 pwa.init({ register: import.meta.env.PROD });
 
+// Opt into the v7 behaviors early so the two dev-console "future flag" notices
+// are gone and v6 already behaves like v7:
+//  - v7_startTransition wraps route state updates in React.startTransition, so
+//    navigation on React 19 is interruptible instead of blocking.
+//  - v7_relativeSplatPath changes relative resolution inside `path="*"` routes.
+//    The only splat here is the NotFound catch-all, which has no children and
+//    no relative links, so this is a no-op that just future-proofs the tree.
+const ROUTER_FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
+
 // StrictMode double-invokes renders and mount/unmount in development only (it is
 // a no-op in production builds). That is how the app's timers and
 // add/removeEventListener pairs in App, NavBar, Messages and ui.jsx Dialog are
@@ -21,7 +30,7 @@ pwa.init({ register: import.meta.env.PROD });
 function Root() {
   const tree = (
     <ErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter future={ROUTER_FUTURE}>
         <App />
       </BrowserRouter>
     </ErrorBoundary>
