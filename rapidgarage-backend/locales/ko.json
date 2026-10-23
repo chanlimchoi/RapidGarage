@@ -614,6 +614,18 @@
   "Pick a start time within the next {n} days.": "앞으로 {n}일 이내의 출발 시간을 고르세요.",
   "Minutes per stop must be a whole number from {min} to {max}.": "정류지당 시간은 {min}~{max} 사이의 정수(분)여야 합니다.",
   "Only the buyer rates the seller.": "구매자만 판매자를 평가할 수 있습니다.",
-  "You can rate the seller after a completed meetup or sale.": "만남이나 거래가 끝난 뒤 판매자를 평가할 수 있습니다."
+  "You can rate the seller after a completed meetup or sale.": "만남이나 거래가 끝난 뒤 판매자를 평가할 수 있습니다.",
+  "Only the buyer can ask for a bundle.": "묶음 구매는 구매자만 요청할 수 있습니다.",
+  "Invalid bundle.": "묶음 요청이 올바르지 않습니다.",
+  "Choose the items for your bundle.": "묶음에 넣을 물건을 고르세요.",
+  "A bundle can have up to {n} items.": "묶음에는 최대 {n}개까지 담을 수 있습니다.",
+  "This sale doesn't offer a bundle deal.": "이 세일은 묶음 할인을 제공하지 않습니다.",
+  "Choose at least {n} items for the bundle.": "묶음에 물건을 {n}개 이상 고르세요.",
+  "Every item in a bundle needs a price.": "묶음의 모든 물건에 가격이 있어야 합니다.",
+  "A bundle is accepted or declined as a whole. Message the buyer to change it.": "묶음은 전체를 수락하거나 거절해야 합니다. 변경하려면 구매자에게 메시지를 보내세요.",
+  "A bundle must be {n} to {m} items.": "묶음은 {n}~{m}개 물건이어야 합니다.",
+  "The bundle discount must be a whole percent from {n} to {m}.": "묶음 할인은 {n}~{m} 사이의 정수 퍼센트여야 합니다.",
+  "Choose how many items make a bundle.": "몇 개부터 묶음인지 고르세요.",
+  "Choose the bundle discount.": "묶음 할인율을 고르세요."
  }
 }

@@ -636,6 +636,18 @@
   "Pick a start time within the next {n} days.": "Elige una hora de salida dentro de los próximos {n} días.",
   "Minutes per stop must be a whole number from {min} to {max}.": "Los minutos por parada deben ser un número entero de {min} a {max}.",
   "Only the buyer rates the seller.": "Solo el comprador califica al vendedor.",
-  "You can rate the seller after a completed meetup or sale.": "Puedes calificar al vendedor después de un encuentro o una venta completados."
+  "You can rate the seller after a completed meetup or sale.": "Puedes calificar al vendedor después de un encuentro o una venta completados.",
+  "Only the buyer can ask for a bundle.": "Solo el comprador puede pedir un lote.",
+  "Invalid bundle.": "Lote no válido.",
+  "Choose the items for your bundle.": "Elige los artículos de tu lote.",
+  "A bundle can have up to {n} items.": "Un lote puede tener hasta {n} artículos.",
+  "This sale doesn't offer a bundle deal.": "Esta venta no ofrece descuento por lote.",
+  "Choose at least {n} items for the bundle.": "Elige al menos {n} artículos para el lote.",
+  "Every item in a bundle needs a price.": "Cada artículo del lote necesita un precio.",
+  "A bundle is accepted or declined as a whole. Message the buyer to change it.": "Un lote se acepta o se rechaza completo. Escribe al comprador para cambiarlo.",
+  "A bundle must be {n} to {m} items.": "Un lote debe tener de {n} a {m} artículos.",
+  "The bundle discount must be a whole percent from {n} to {m}.": "El descuento por lote debe ser un porcentaje entero de {n} a {m}.",
+  "Choose how many items make a bundle.": "Elige cuántos artículos forman un lote.",
+  "Choose the bundle discount.": "Elige el descuento por lote."
  }
 }
