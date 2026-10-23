@@ -70,4 +70,77 @@ function googleMapsUrl(start, posts) {
   return 'https://www.google.com/maps/dir/?' + q.join('&');
 }
 
-module.exports = { MAX_STOPS, WHEN, plan, googleMapsUrl, nextOpening, placeOf };
+// ---- Time-aware plan (POST /route) ---------------------------------------
+// A rough drive: straight-line miles x ROAD_FACTOR at AVG_MPH, plus the time
+// spent at each sale. Greedy: from where you are, go next to the sale that
+// costs the least time (drive + wait for it to open), among sales you'd reach
+// while still open with time to look around. Sales you can't reach in time
+// are listed as skipped with the reason, never silently dropped.
+const AVG_MPH = 20;
+const ROAD_FACTOR = 1.3;
+const DWELL = { min: 5, max: 120, default: 20 };
+const MIN_BROWSE_MIN = 10; // arriving later than 10 minutes before closing doesn't count
+
+const driveMinutes = (miles) => (miles * ROAD_FACTOR / AVG_MPH) * 60;
+const MIN = 60000;
+
+// The window a visit arriving at t can use: the first one still open at t
+// with at least MIN_BROWSE_MIN left (or a later one today/tomorrow...).
+function usableWindow(post, t) {
+  const w = schedule.windowsOf(post).filter((x) => x.endsAt - MIN_BROWSE_MIN * MIN >= t);
+  return w.length ? w[0] : null;
+}
+
+// posts: visible posts (with saleDays). start: {lat,lng}|null. departAt: ms.
+// dwell: minutes per stop. Returns { stops, skipped, totalMiles, finishAt }.
+function planTimed(posts, start, departAt, dwell) {
+  const left = [];
+  const skipped = [];
+  posts.forEach((p) => {
+    if (!hasCoords(p)) skipped.push({ post: p, reason: 'no_location' });
+    else if (!schedule.windowsOf(p).length) left.push(p); // no dates: treat as always open
+    else if (!usableWindow(p, departAt)) skipped.push({ post: p, reason: 'ended' });
+    else left.push(p);
+  });
+  const stops = [];
+  let here = start;
+  let t = departAt;
+  const cost = (p) => {
+    const miles = here ? haversineMiles(here, p) : 0;
+    const arrive = t + driveMinutes(miles) * MIN;
+    const dated = schedule.windowsOf(p).length > 0;
+    const w = dated ? usableWindow(p, arrive) : null;
+    if (dated && !w) return null;
+    const begin = w ? Math.max(arrive, w.startsAt) : arrive;
+    return { miles, arrive, begin, wait: begin - arrive, window: w, total: begin - t };
+  };
+  while (left.length && stops.length < MAX_STOPS) {
+    let best = -1;
+    let bestC = null;
+    left.forEach((p, i) => {
+      const c = cost(p);
+      if (!c) return;
+      // Least time first; then nearer; then the one that closes sooner.
+      if (!bestC || c.total < bestC.total - 1000 || (Math.abs(c.total - bestC.total) <= 1000 && (c.miles < bestC.miles - 1e-9
+        || (Math.abs(c.miles - bestC.miles) <= 1e-9 && c.window && bestC.window && c.window.endsAt < bestC.window.endsAt)))) { best = i; bestC = c; }
+    });
+    if (best < 0) break;
+    const p = left.splice(best, 1)[0];
+    const leave = bestC.window ? Math.min(bestC.begin + dwell * MIN, bestC.window.endsAt) : bestC.begin + dwell * MIN;
+    stops.push({
+      post: p, legMiles: here ? round(bestC.miles) : null,
+      arriveAt: new Date(bestC.arrive).toISOString(), waitMinutes: Math.round(bestC.wait / MIN),
+      leaveAt: new Date(leave).toISOString(),
+      opensAt: bestC.window ? new Date(bestC.window.startsAt).toISOString() : null,
+      closesAt: bestC.window ? new Date(bestC.window.endsAt).toISOString() : null,
+    });
+    here = p;
+    t = leave;
+  }
+  // What's left: closed by the time you'd get there, or over the stop limit.
+  left.forEach((p) => skipped.push({ post: p, reason: stops.length >= MAX_STOPS ? 'too_many' : 'closed_by_then' }));
+  const totalMiles = round(stops.reduce((s, x) => s + (x.legMiles || 0), 0));
+  return { stops, skipped, totalMiles, finishAt: stops.length ? stops[stops.length - 1].leaveAt : null };
+}
+
+module.exports = { MAX_STOPS, WHEN, AVG_MPH, ROAD_FACTOR, DWELL, MIN_BROWSE_MIN, plan, planTimed, driveMinutes, googleMapsUrl, nextOpening, placeOf };

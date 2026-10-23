@@ -628,6 +628,12 @@
   "There is no offer to counter.": "There is no offer to counter.",
   "There is no counteroffer to take.": "There is no counteroffer to take.",
   "Invalid offer.": "Invalid offer.",
-  "ids must be a list of notification ids.": "ids must be a list of notification ids."
+  "ids must be a list of notification ids.": "ids must be a list of notification ids.",
+  "Invalid route.": "Invalid route.",
+  "Pick {n} to {m} sales.": "Pick {n} to {m} sales.",
+  "postIds must be sale ids.": "postIds must be sale ids.",
+  "Enter a valid start time.": "Enter a valid start time.",
+  "Pick a start time within the next {n} days.": "Pick a start time within the next {n} days.",
+  "Minutes per stop must be a whole number from {min} to {max}.": "Minutes per stop must be a whole number from {min} to {max}."
  }
 }

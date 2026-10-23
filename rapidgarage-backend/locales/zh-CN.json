@@ -606,6 +606,12 @@
   "There is no offer to counter.": "没有可以还价的出价。",
   "There is no counteroffer to take.": "没有可以接受的还价。",
   "Invalid offer.": "出价无效。",
-  "ids must be a list of notification ids.": "ids 必须是通知 ID 列表。"
+  "ids must be a list of notification ids.": "ids 必须是通知 ID 列表。",
+  "Invalid route.": "路线无效。",
+  "Pick {n} to {m} sales.": "请选择 {n} 到 {m} 个甩卖。",
+  "postIds must be sale ids.": "postIds 必须是甩卖 ID。",
+  "Enter a valid start time.": "请输入有效的出发时间。",
+  "Pick a start time within the next {n} days.": "请选择未来 {n} 天内的出发时间。",
+  "Minutes per stop must be a whole number from {min} to {max}.": "每站分钟数必须是 {min} 到 {max} 之间的整数。"
  }
 }
