@@ -68,6 +68,7 @@ export default class Messages extends React.Component {
   }
 
   componentDidMount() {
+    this.unmounted = false; // StrictMode (dev) mounts, unmounts and mounts again
     if (this.props.user) this.init();
     // Live events fetch at once; polling is the fallback (every 10 s without a
     // live connection, every 60 s with one).

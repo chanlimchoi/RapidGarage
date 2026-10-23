@@ -29,6 +29,7 @@ export default class MeetupDialog extends React.Component {
       note: '', busy: false, error: '', fieldErrors: {}, q: '', searching: false, results: null, searchError: '' };
   }
   componentDidMount() {
+    this.unmounted = false; // StrictMode (dev) mounts, unmounts and mounts again
     fetchMeetupSpots(this.props.conversationId)
       .then(({ ok, data }) => {
         if (this.unmounted) return;

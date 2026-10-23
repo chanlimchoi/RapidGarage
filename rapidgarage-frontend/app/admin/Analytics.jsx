@@ -104,7 +104,7 @@ export default class Analytics extends React.Component {
             </section>
             <div className="analytics-lists">
               <section className="panel" aria-labelledby="an-cities">
-                <h3 id="an-cities" className="h4">{t('an.topCities')}</h3>
+                <h2 id="an-cities" className="h4">{t('an.topCities')}</h2>
                 {data.topCities.length ? (
                   <ol className="rank-list">
                     {data.topCities.map((c) => {
@@ -121,7 +121,7 @@ export default class Analytics extends React.Component {
                 ) : <p className="muted small">{t('an.noCities')}</p>}
               </section>
               <section className="panel" aria-labelledby="an-top">
-                <h3 id="an-top" className="h4">{t('an.topSales', { count: data.days })}</h3>
+                <h2 id="an-top" className="h4">{t('an.topSales', { count: data.days })}</h2>
                 {data.topSales.length ? (
                   <ol className="rank-list">
                     {data.topSales.map((s) => (

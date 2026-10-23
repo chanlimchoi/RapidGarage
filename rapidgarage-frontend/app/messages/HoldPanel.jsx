@@ -25,7 +25,7 @@ export default class HoldPanel extends React.Component {
     super(props);
     this.state = { data: null, error: '', formOpen: false, itemId: '', pickup: '', offer: '', formError: '', fieldErrors: {}, busy: null, lengths: {}, showPast: false, counterFor: null, counter: '', counterError: '' };
   }
-  componentDidMount() { this.load(); }
+  componentDidMount() { this.unmounted = false; this.load(); }
   componentDidUpdate(prev) { if (prev.refreshKey !== this.props.refreshKey || prev.conversationId !== this.props.conversationId) this.load(); }
   componentWillUnmount() { this.unmounted = true; }
 

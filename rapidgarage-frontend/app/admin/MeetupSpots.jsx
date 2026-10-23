@@ -16,7 +16,7 @@ export default class MeetupSpots extends React.Component {
     super(props);
     this.state = { list: null, geocoding: false, error: '', q: '', form: null, editId: null, busy: null, fieldErrors: {}, formError: '' };
   }
-  componentDidMount() { this.load(); }
+  componentDidMount() { this.unmounted = false; this.load(); }
   componentWillUnmount() { this.unmounted = true; }
 
   load() {
