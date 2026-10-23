@@ -6,6 +6,7 @@ import ScheduleEditor from './ScheduleEditor';
 import { priceErrors, toPriceNumber, formatPrice } from '../lib/price';
 import { PERCENT_CHOICES, markdownBody, markdownValues } from '../lib/markdown';
 import { markdownErrors, describe as describeMarkdown } from '../lib/markdownText';
+import { MIN_CHOICES as BUNDLE_MINS, PERCENT_CHOICES as BUNDLE_PERCENTS, bundleValues, bundleBody, bundleErrors, describe as describeBundle } from '../lib/bundles';
 import { t } from '../i18n';
 
 const SCHEMA = {
@@ -17,7 +18,7 @@ const SCHEMA = {
 
 // Price rules span three fields, so they run together (lib/price.js mirrors the server).
 function validateForm(values) {
-  return Object.assign(validateAll(values, SCHEMA), priceErrors(values), markdownErrors(values), validateDays(values.days));
+  return Object.assign(validateAll(values, SCHEMA), priceErrors(values), markdownErrors(values), values.isFree ? {} : bundleErrors(values), validateDays(values.days));
 }
 
 export function initialValues(post) {
@@ -29,6 +30,7 @@ export function initialValues(post) {
     priceMin: p.priceMin === null || p.priceMin === undefined ? '' : String(p.priceMin),
     priceMax: p.priceMax === null || p.priceMax === undefined ? '' : String(p.priceMax),
     ...markdownValues(p),
+    ...bundleValues(p),
   };
 }
 
@@ -43,6 +45,8 @@ export function toBody(v) {
     priceMax: v.isFree ? null : toPriceNumber(v.priceMax),
     // A free sale has nothing to mark down.
     ...markdownBody(v.isFree ? { markdownPercent: '' } : v),
+    // Bundle deal: N+ items, X% off (none on a free sale).
+    ...bundleBody(v.isFree ? {} : v),
   };
 }
 
@@ -206,6 +210,30 @@ export default class PostForm extends React.Component {
                   {v.markdownPercent && v.markdownFrom && !Object.keys(markdownErrors(v)).length
                     ? describeMarkdown({ percent: Number(v.markdownPercent), from: v.markdownFrom, lastDayOnly: v.markdownLastDay })
                     : t('md.hint')}
+                </span>
+              </fieldset>
+            ) : null}
+            {!v.isFree ? (
+              <fieldset className="markdown-fieldset bundle-fieldset" aria-describedby="bundle-hint">
+                <legend className="field-label">{t('bundle.legend')} <span className="optional"> {t('ui.optional')}</span></legend>
+                <div className="form-grid form-grid-2">
+                  <Field id="bundleMinItems" label={t('bundle.minItems')} error={this.shown('bundleMinItems', errors)}>
+                    <select className="input" name="bundleMinItems" value={v.bundleMinItems} onChange={this.change('bundleMinItems')} onBlur={this.blur('bundleMinItems')}>
+                      <option value="">{t('bundle.none')}</option>
+                      {BUNDLE_MINS.concat(v.bundleMinItems && BUNDLE_MINS.indexOf(Number(v.bundleMinItems)) === -1 ? [Number(v.bundleMinItems)] : [])
+                        .map((n) => <option key={n} value={String(n)}>{t('bundle.minOption', { count: n })}</option>)}
+                    </select>
+                  </Field>
+                  <Field id="bundlePercent" label={t('bundle.percent')} error={this.shown('bundlePercent', errors)}>
+                    <select className="input" name="bundlePercent" value={v.bundlePercent} onChange={this.change('bundlePercent')} onBlur={this.blur('bundlePercent')}>
+                      <option value="">{t('bundle.none')}</option>
+                      {BUNDLE_PERCENTS.concat(v.bundlePercent && BUNDLE_PERCENTS.indexOf(Number(v.bundlePercent)) === -1 ? [Number(v.bundlePercent)] : [])
+                        .map((p) => <option key={p} value={String(p)}>{t('md.percentOption', { percent: p })}</option>)}
+                    </select>
+                  </Field>
+                </div>
+                <span className="field-hint" id="bundle-hint">
+                  {v.bundleMinItems && v.bundlePercent ? describeBundle({ minItems: Number(v.bundleMinItems), percent: Number(v.bundlePercent) }) + '. ' : ''}{t('bundle.hint')}
                 </span>
               </fieldset>
             ) : null}

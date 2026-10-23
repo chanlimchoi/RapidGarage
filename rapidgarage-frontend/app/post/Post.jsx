@@ -8,6 +8,7 @@ import { BADGE_CLASS } from '../components/PostCard';
 import { formatPrice } from '../lib/price';
 import { isActive as markdownNow } from '../lib/markdown';
 import { chipLabel as markdownChip, describe as describeMarkdown } from '../lib/markdownText';
+import { describe as describeBundle } from '../lib/bundles';
 import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../components/ui';
 import toast from '../components/toast';
 import { RatingBadge } from '../ratings/Stars';
@@ -274,6 +275,7 @@ class Post extends Component {
             {formatPrice(post) ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{formatPrice(post)}</span> : null}
             {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
             {markdownChip(post) ? <span className={'chip chip-markdown' + (markdownNow(post) ? ' is-now' : '')}><Percent size={12} aria-hidden="true" />{markdownChip(post)}</span> : null}
+            {post.bundle && !post.isFree ? <span className="chip chip-bundle"><Package size={12} aria-hidden="true" />{describeBundle(post.bundle)}</span> : null}
             {liveOffer(post) ? <span className="chip chip-free chip-curb" title={t('curb.until', { time: holdTime(post.curbside.until) })}><Gift size={12} aria-hidden="true" />{t('curb.badge')}</span> : null}
             {address ? <span className="chip"><MapPin size={12} aria-hidden="true" />{[post.city, post.state].filter(Boolean).join(', ')}</span> : null}
             <span className="chip"><Clock size={12} aria-hidden="true" />{t('card.posted', { when: timeAgo(post.createdAt) })}</span>
@@ -286,6 +288,12 @@ class Post extends Component {
               <p className={'markdown-note' + (post.markdown.active ? ' is-now' : '')}>
                 <Percent size={16} aria-hidden="true" />
                 <span>{post.markdown.active ? t('md.runningNow', { percent: post.markdown.percent }) + ' ' : ''}{describeMarkdown(post.markdown)}</span>
+              </p>
+            ) : null}
+            {post.bundle && !post.isFree ? (
+              <p className="markdown-note bundle-note-post">
+                <Package size={16} aria-hidden="true" />
+                <span>{describeBundle(post.bundle)}. {t('bundle.postNote')}</span>
               </p>
             ) : null}
             {this.renderGallery(post)}
