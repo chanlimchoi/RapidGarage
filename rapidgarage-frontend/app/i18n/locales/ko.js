@@ -738,7 +738,7 @@ export default {
   "pr.removed": "관리자가 댓글을 삭제했습니다.",
   "pr.report": "신고",
   "pr.loginToReport": "평가를 신고하려면 {link}하세요.",
-  "save.login": "즐겨찾기에 추가하려면 로그인하세요",
+  "save.login": "로그인 후 즐겨찾기",
   "save.saved": "즐겨찾기됨",
   "save.save": "즐겨찾기",
   "save.removeNamed": "즐겨찾기에서 {title} 삭제",
