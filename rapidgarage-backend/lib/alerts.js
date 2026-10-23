@@ -265,6 +265,10 @@ async function processQueue(now) {
     console.error('Sale summary pass failed:', err && err.message);
     summary.saleSummaries = { error: true };
   }
+  try { summary.markdownDrops = await require('./favorites').markdownsStarted(now); } catch (err) {
+    console.error('Favorites markdown pass failed:', err && err.message);
+    summary.markdownDrops = { error: true };
+  }
   // In-app notifications older than KEEP_DAYS go away.
   try { await require('./notifications').prune(); } catch (err) { console.error('Notification prune failed:', err && err.message); }
   return summary;

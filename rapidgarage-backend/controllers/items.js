@@ -10,6 +10,7 @@ const schedule = require('../lib/schedule');
 const holds = require('../lib/holds');
 const wanted = require('../lib/wanted');
 const alerts = require('../lib/alerts');
+const favorites = require('../lib/favorites');
 const curbside = require('../lib/curbside');
 const aiItems = require('../lib/aiItems');
 const aiAccess = require('../lib/aiAccess');
@@ -166,6 +167,7 @@ router.put('/:itemId', requireLogin, owner, loadItem, async (req, res) => {
   delete value.sold;
   try {
     const becameSold = sold === true && !req.item.sold;
+    const before = { sold: !!req.item.sold, priceCents: req.item.priceCents };
     const updated = await req.item.update(Object.assign(value, soldFields(sold, req.item)));
     // Sold: an accepted hold is done; people waiting are told it's gone.
     if (becameSold) await holds.itemSold(updated);
@@ -174,6 +176,8 @@ router.put('/:itemId', requireLogin, owner, loadItem, async (req, res) => {
     res.json(updated);
     // Renamed, repriced or back on sale: it may match a wanted post now.
     if (!updated.sold && (value.name !== undefined || value.priceCents !== undefined || sold === false)) wanted.schedulePost(req.post.id);
+    // Sold or cheaper: people who favorited the sale hear about it.
+    favorites.schedule(() => favorites.itemChanged(req.post, updated, before));
     // Renamed or back on sale: a saved search's words may match it now.
     if (!updated.sold && (value.name !== undefined || sold === false)) alerts.schedulePostMatch(req.post, { keywordOnly: true });
     return undefined;

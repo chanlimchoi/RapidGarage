@@ -9,7 +9,9 @@ const { publicUser } = require('./people');
 
 function models() { return require('../models'); }
 
-const KINDS = ['search_match'];
+// search_match: a saved search matched a new sale. price_drop / item_sold: a
+// favorited sale got cheaper / had items sold (lib/favorites.js).
+const KINDS = ['search_match', 'price_drop', 'item_sold'];
 const LIST_MAX = 50;
 const KEEP_DAYS = 60;
 
@@ -31,6 +33,30 @@ async function add(rows) {
   return fresh.length;
 }
 
+// Coalescing update: one unseen notification per (user, kind, post). An
+// unseen one gets its data merged (merge(old, row.data)) and moves to the top;
+// otherwise a new one starts. rows: [{ userId, kind, postId, data }].
+async function bump(rows, merge) {
+  const m = models();
+  const live = require('./live');
+  let n = 0;
+  for (const r of rows) {
+    const open = await m.Notification.findOne({ where: { userId: r.userId, kind: r.kind, postId: r.postId, seenAt: null }, order: [['id', 'DESC']] });
+    if (open) {
+      let old = null;
+      try { old = open.data ? JSON.parse(open.data) : null; } catch (e) { old = null; }
+      open.changed('updatedAt', true);
+      await open.update({ data: JSON.stringify(merge(old, r.data)), updatedAt: new Date() });
+    } else {
+      await m.Notification.create({ userId: r.userId, kind: r.kind, postId: r.postId, data: JSON.stringify(merge(null, r.data)),
+        dedupeKey: r.kind + ':' + r.postId + ':' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8) });
+    }
+    live.emit(r.userId, 'badges', {});
+    n += 1;
+  }
+  return n;
+}
+
 async function blockedWith(userId) {
   const rows = await models().UserBlock.findAll({ where: { [Op.or]: [{ blockerId: userId }, { blockedId: userId }] }, raw: true });
   return new Set(rows.map((b) => (b.blockerId === userId ? b.blockedId : b.blockerId)));
@@ -41,7 +67,7 @@ async function list(user, opts) {
   const m = models();
   const limit = Math.min((opts && opts.limit) || LIST_MAX, LIST_MAX);
   const rows = await m.Notification.findAll({
-    where: { userId: user.id }, order: [['createdAt', 'DESC'], ['id', 'DESC']], limit: limit * 2,
+    where: { userId: user.id }, order: [['updatedAt', 'DESC'], ['id', 'DESC']], limit: limit * 2,
     include: [
       { model: m.Post, attributes: ['id', 'title', 'city', 'state', 'userId', 'hidden', 'priceMin', 'priceMax', 'isFree'], include: [{ model: m.User, attributes: ['id', 'firstName', 'lastName'] }] },
       { model: m.SaleAlert, attributes: ['id', 'label', 'keyword'] },
@@ -55,7 +81,7 @@ async function list(user, opts) {
     let data = null;
     try { data = n.data ? JSON.parse(n.data) : null; } catch (e) { data = null; }
     out.push({
-      id: n.id, kind: n.kind, createdAt: n.createdAt, seen: !!n.seenAt, data,
+      id: n.id, kind: n.kind, createdAt: n.updatedAt || n.createdAt, seen: !!n.seenAt, data,
       post: p ? { id: p.id, title: p.title, city: p.city, state: p.state, priceMin: p.priceMin, priceMax: p.priceMax, isFree: p.isFree, seller: publicUser(p.User) } : null,
       search: n.SaleAlert ? { id: n.SaleAlert.id, label: n.SaleAlert.label, keyword: n.SaleAlert.keyword || null } : null,
     });
@@ -80,4 +106,4 @@ async function prune(now) {
   return models().Notification.destroy({ where: { createdAt: { [Op.lt]: new Date((now || new Date()).getTime() - KEEP_DAYS * 86400000) } } });
 }
 
-module.exports = { KINDS, LIST_MAX, KEEP_DAYS, add, list, unreadCount, markSeen, prune };
+module.exports = { KINDS, LIST_MAX, KEEP_DAYS, add, bump, list, unreadCount, markSeen, prune };
