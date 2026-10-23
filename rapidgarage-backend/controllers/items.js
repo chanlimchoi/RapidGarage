@@ -9,6 +9,7 @@ const items = require('../lib/items');
 const schedule = require('../lib/schedule');
 const holds = require('../lib/holds');
 const wanted = require('../lib/wanted');
+const alerts = require('../lib/alerts');
 const curbside = require('../lib/curbside');
 const aiItems = require('../lib/aiItems');
 const aiAccess = require('../lib/aiAccess');
@@ -102,6 +103,7 @@ router.post('/', requireLogin, owner, async (req, res) => {
     res.status(201).json(item);
     // A new item may be what someone is looking for.
     if (!item.sold) wanted.schedulePost(req.post.id);
+    if (!item.sold) alerts.schedulePostMatch(req.post, { keywordOnly: true });
     require('../lib/aiReview').schedule(req.post.id);
     return undefined;
   } catch (err) { return serverError(res, err); }
@@ -131,6 +133,7 @@ router.post('/bulk', requireLogin, owner, async (req, res) => {
     const fresh = await models.SaleItem.findAll({ where: { id: created.map((c) => c.id).filter(Boolean) } });
     res.status(201).json({ items: sorted(fresh.length ? fresh : created).map((i) => i.toJSON()) });
     wanted.schedulePost(req.post.id);
+    alerts.schedulePostMatch(req.post, { keywordOnly: true });
     require('../lib/aiReview').schedule(req.post.id);
     return undefined;
   } catch (err) { return serverError(res, err); }
@@ -171,6 +174,8 @@ router.put('/:itemId', requireLogin, owner, loadItem, async (req, res) => {
     res.json(updated);
     // Renamed, repriced or back on sale: it may match a wanted post now.
     if (!updated.sold && (value.name !== undefined || value.priceCents !== undefined || sold === false)) wanted.schedulePost(req.post.id);
+    // Renamed or back on sale: a saved search's words may match it now.
+    if (!updated.sold && (value.name !== undefined || sold === false)) alerts.schedulePostMatch(req.post, { keywordOnly: true });
     return undefined;
   } catch (err) { return serverError(res, err); }
 });

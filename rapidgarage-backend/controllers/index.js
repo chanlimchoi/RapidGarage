@@ -21,6 +21,7 @@ router.use('/alerts', require('./alerts'));
 router.use('/wanted', require('./wanted'));
 router.use('/saved', require('./saved'));
 router.use('/follows', require('./follows'));
+router.use('/notifications', require('./notifications'));
 router.use('/push', require('./push'));
 router.use('/live', require('./live'));
 router.use('/reminders', require('./reminders'));

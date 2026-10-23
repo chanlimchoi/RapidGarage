@@ -63,6 +63,14 @@ function parseKeyword(raw) {
   return { words, keyword: k };
 }
 
+// In memory, for one sale: does every word appear in the title, the
+// description or an unsold item's name? (Same rule as keywordPostIds.)
+function matchesKeyword(post, itemNames, words) {
+  if (!words || !words.length) return true;
+  const hay = [post.title, post.description].concat(itemNames || []).map((x) => String(x || '').toLowerCase());
+  return words.every((w) => hay.some((h) => h.indexOf(w) >= 0));
+}
+
 // Case-insensitive, literal "field contains word": ILIKE with escaping on
 // Postgres; instr(lower()) on SQLite (whose LIKE has no default escape).
 function contains(models, field, word) {
@@ -105,4 +113,4 @@ async function matchedItems(models, words, postIds) {
   return out;
 }
 
-module.exports = { MAX_ITEMS, NAME_MAX, PRICE_CAP_CENTS, KEYWORD_MAX, parseCents, validateItem, parseKeyword, keywordPostIds, matchedItems };
+module.exports = { MAX_ITEMS, NAME_MAX, PRICE_CAP_CENTS, KEYWORD_MAX, parseCents, validateItem, parseKeyword, matchesKeyword, keywordPostIds, matchedItems };

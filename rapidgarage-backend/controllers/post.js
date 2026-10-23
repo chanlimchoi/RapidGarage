@@ -229,7 +229,8 @@ router.put('/:id', requireLogin, loadPost, requireOwner, async (req, res) => {
     res.json(post);
     // A sale that moved (or only now has coordinates) can match alerts;
     // the (user, post) unique index means nobody is told twice.
-    if (moved) alerts.schedulePostMatch(post);
+    // Saved searches with words are re-checked on any edit (the title may now match).
+    alerts.schedulePostMatch(post, moved ? undefined : { keywordOnly: true });
     // Any change (title, description, price, place, dates) may make it match a
     // wanted post now; each (wanted post, sale) pair is only ever told once.
     wanted.schedulePost(post.id);

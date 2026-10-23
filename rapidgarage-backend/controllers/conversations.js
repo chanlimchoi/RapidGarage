@@ -176,7 +176,9 @@ router.get('/unread', async (req, res) => {
     // New wanted-post matches ride along for the "Wanted" nav badge.
     // Today's morning-of reminders ride along too (the in-app notice).
     const reminders = (await require('../lib/reminders').notices(req.user)).length;
-    return res.json({ count, conversations: counts.size, wantedMatches: await wanted.newMatchCount(req.user.id), reminders });
+    // Unseen in-app notifications (saved-search matches) feed the bell.
+    const notifications = await require('../lib/notifications').unreadCount(req.user);
+    return res.json({ count, conversations: counts.size, wantedMatches: await wanted.newMatchCount(req.user.id), reminders, notifications });
   } catch (err) {
     return serverError(res, err);
   }

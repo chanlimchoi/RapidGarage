@@ -43,6 +43,7 @@ const PrintFlyer = lazy(() => import('./print/PrintFlyer'));
 const PersonRatings = lazy(() => import('./ratings/PersonRatings'));
 const Saved = lazy(() => import('./saved/Saved'));
 const Following = lazy(() => import('./follows/Following'));
+const Notifications = lazy(() => import('./notifications/Notifications'));
 const ItemsEditor = lazy(() => import('./post/ItemsEditor'));
 const EventsIndex = lazy(() => import('./events/EventsIndex'));
 const EventForm = lazy(() => import('./events/EventForm'));
@@ -97,6 +98,8 @@ class App extends Component {
       wantedNew: 0,
       // Today's morning-of reminders not yet dismissed (ReminderBanner).
       reminders: 0,
+      // New saved-search matches etc. (the bell).
+      notifications: 0,
       // Changing it re-mounts the page so every component re-renders its text.
       locale: i18n.locale(),
     };
@@ -131,11 +134,13 @@ class App extends Component {
 
   refreshUnread() {
     if (!this.state.user) {
-      if (this.state.unread || this.state.wantedNew || this.state.reminders) this.setState({ unread: 0, wantedNew: 0, reminders: 0 });
+      if (this.state.unread || this.state.wantedNew || this.state.reminders || this.state.notifications) this.setState({ unread: 0, wantedNew: 0, reminders: 0, notifications: 0 });
       return Promise.resolve();
     }
     return fetchBadges().then((b) => {
-      if (b && (b.count !== this.state.unread || b.wantedMatches !== this.state.wantedNew || b.reminders !== this.state.reminders)) this.setState({ unread: b.count, wantedNew: b.wantedMatches, reminders: b.reminders });
+      if (b && (b.count !== this.state.unread || b.wantedMatches !== this.state.wantedNew || b.reminders !== this.state.reminders || b.notifications !== this.state.notifications)) {
+        this.setState({ unread: b.count, wantedNew: b.wantedMatches, reminders: b.reminders, notifications: b.notifications });
+      }
     });
   }
 
@@ -186,7 +191,7 @@ class App extends Component {
     const common = { user, ready };
     return (
       <div className="app" key={this.state.locale}>
-        <NavBar user={user} ready={ready} unread={this.state.unread} wantedNew={this.state.wantedNew} location={this.props.location} />
+        <NavBar user={user} ready={ready} unread={this.state.unread} wantedNew={this.state.wantedNew} notifications={this.state.notifications} location={this.props.location} />
         <main id="main" className="app-main" tabIndex="-1">
           {user && config.emailVerification && !user.emailVerifiedAt && !/^\/verify-email/.test(this.props.location.pathname) ? <VerifyBanner user={user} onVerified={this.refreshUser} /> : null}
           {user && !/^\/(alerts|admin)/.test(this.props.location.pathname) ? <ReminderBanner userId={user.id} count={this.state.reminders} onChange={this.refreshUnread} /> : null}
@@ -224,6 +229,7 @@ class App extends Component {
                 <Route path='/alerts/unsubscribe' element={<RoutedInner component={Unsubscribe} />} />
                 <Route path='/following' element={<RoutedInner component={Following} />} />
                 <Route path='/saved' element={<RoutedInner component={Saved} />} />
+                <Route path='/notifications' element={<RoutedInner component={Notifications} onSeen={this.refreshUnread} />} />
                 <Route path='/people/:id' element={<RoutedInner component={PersonRatings} />} />
                 <Route path='/profile' element={<RoutedInner component={Profile} />} />
                 <Route path='*' element={<RoutedInner component={NotFound} />} />
