@@ -171,12 +171,27 @@ function states(d) {
 }
 
 // ---- Checks --------------------------------------------------------------------
+let skippedUnderPopover = 0;
 async function scan(page) {
   await page.addScriptTag({ content: AXE });
-  return page.evaluate(async (tags) => {
+  const out = await page.evaluate(async (tags) => {
     const r = await window.axe.run(document, { runOnly: { type: 'tag', values: tags }, resultTypes: ['violations'] });
-    return r.violations.map((v) => ({ id: v.id, impact: v.impact, help: v.help, tags: v.tags, nodes: v.nodes.map((n) => ({ target: n.target.join(' '), summary: (n.failureSummary || '').split('\n').slice(0, 3).join(' ') })) }));
+    // An open menu, popover or dialog covers part of the page on purpose. axe then
+    // reports the page controls under it as "partially obscured" targets (e.g. the
+    // home date filter under the Korean account menu). Those can't be used while
+    // the popover is open, so they are not target-size problems: skip only those
+    // nodes, only for target-size, and count them. Targets inside the popover, and
+    // targets that are simply too small, are still reported.
+    const open = Array.from(document.querySelectorAll('[role=menu], [role=dialog], [role=listbox]')).filter((e) => { const b = e.getBoundingClientRect(); return b.width > 0 && b.height > 0; });
+    const underPopover = (v, n) => v.id === 'target-size' && open.length && /obscured/.test(n.failureSummary || '')
+      && (() => { const el = document.querySelector(n.target.join(' ')); return el && !open.some((p) => p.contains(el)); })();
+    return r.violations.map((v) => {
+      const nodes = v.nodes.filter((n) => !underPopover(v, n));
+      return { id: v.id, impact: v.impact, help: v.help, tags: v.tags, skippedUnderPopover: v.nodes.length - nodes.length, nodes: nodes.map((n) => ({ target: n.target.join(' '), summary: (n.failureSummary || '').split('\n').slice(0, 3).join(' ') })) };
+    });
   }, TAGS);
+  out.forEach((v) => { skippedUnderPopover += v.skippedUnderPopover; delete v.skippedUnderPopover; });
+  return out.filter((v) => v.nodes.length);
 }
 async function extra(page, locale) {
   return page.evaluate((loc) => {
@@ -443,6 +458,7 @@ async function run() {
   const totals = {}; rules.forEach((r) => { totals[r.impact] = (totals[r.impact] || 0) + r.nodes; });
   fs.writeFileSync(REPORT, JSON.stringify({ base: B, when: new Date().toISOString(), states: results.length, totals, rules, results }, null, 2));
   console.log('\n' + results.length + ' states scanned. Issues by impact (nodes):', JSON.stringify(totals));
+  if (skippedUnderPopover) console.log('  (skipped ' + skippedUnderPopover + ' target-size node(s) covered by an open menu/dialog)');
   for (const r of rules) console.log(`  ${r.impact.padEnd(8)} ${r.id}: ${r.nodes} nodes in ${r.states} states — ${r.help}\n           e.g. ${r.examples.join('\n                ')}`);
   console.log('Report: ' + path.resolve(REPORT));
   const failing = rules.filter((r) => FAIL_ON.includes(r.impact));
