@@ -17,6 +17,7 @@ import { liveOffer } from '../lib/curbside';
 import { holdTime } from '../messages/holdText';
 import CurbsidePanel from './CurbsidePanel';
 import SaveButton from '../saved/SaveButton';
+import AddToRouteButton from '../route/AddToRouteButton';
 import RemindToggle from '../saved/RemindToggle';
 import AddToCalendar from '../components/AddToCalendar';
 import ShareButton from '../components/ShareButton';
@@ -320,6 +321,7 @@ class Post extends Component {
                   </button>
                 ) : null}
                 {!isOwner ? <SaveButton post={post} /> : null}
+                {!post.hidden && !(badge && badge.kind === 'ended') ? <AddToRouteButton post={post} /> : null}
                 {!isOwner && post.seller ? <FollowButton sellerId={post.seller.id} user={this.props.user} /> : null}
                 <AddToCalendar item={post} kind="post" />
                 <ShareButton kind="post" item={post} title={post.title} />

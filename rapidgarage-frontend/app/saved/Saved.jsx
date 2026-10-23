@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, LogIn, Route as RouteIcon, ExternalLink, LocateFixed, MapPin, Navigation, Search, EyeOff, CalendarPlus } from 'lucide-react';
+import { Clock, Heart, LogIn, Route as RouteIcon, ExternalLink, LocateFixed, MapPin, Navigation, Search, EyeOff, CalendarPlus } from 'lucide-react';
 import { apiFetch, errorMessage } from '../api';
 import PostCard, { BADGE_CLASS } from '../components/PostCard';
 import Map from '../components/Map';
@@ -14,6 +14,8 @@ import { savedIcsPath } from '../lib/calendar';
 import RouteSketch from './RouteSketch';
 import { t } from '../i18n';
 import FavoritesTabs from '../favorites/FavoritesTabs';
+import * as routePlan from '../lib/routePlan';
+import AddToRouteButton from '../route/AddToRouteButton';
 
 const WHEN = [
   { value: 'weekend', labelKey: 'when.weekend' },
@@ -127,6 +129,11 @@ class Saved extends Component {
             {WHEN.map((w) => <button key={w.value} type="button" aria-pressed={when === w.value} onClick={() => this.changeWhen(w.value)}>{t(w.labelKey)}</button>)}
           </div>
         </div>
+        {live.length ? (
+          <p className="small route-timed-link">
+            <Link to="/route" onClick={() => routePlan.addMany(live.map((p) => p.id))}><Clock size={14} aria-hidden="true" /> {t('rt.fromFavorites')}</Link>
+          </p>
+        ) : null}
         <div className="route-start row">
           {start ? (
             <React.Fragment>
@@ -220,7 +227,7 @@ class Saved extends Component {
     const { loading, error, results, unavailable } = this.state;
     const upcoming = results.filter((p) => p.status !== 'ended');
     const ended = results.filter((p) => p.status === 'ended');
-    const card = (p) => <PostCard key={p.id} post={p} actions={<React.Fragment><SaveButton post={p} />{p.status !== 'ended' ? <RemindToggle post={p} compact /> : null}</React.Fragment>} />;
+    const card = (p) => <PostCard key={p.id} post={p} actions={<React.Fragment><SaveButton post={p} />{p.status !== 'ended' ? <RemindToggle post={p} compact /> : null}{p.status !== 'ended' ? <AddToRouteButton post={p} compact /> : null}</React.Fragment>} />;
     return (
       <div className="container page saved-page">
         <header className="page-header">

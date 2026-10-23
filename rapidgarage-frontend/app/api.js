@@ -249,6 +249,9 @@ export function fetchBadges() {
     .catch(() => null);
 }
 
+// ---- Route planner (controllers/route.js) ----------------------------------
+export const planRoute = (body) => apiFetch('/route', jsonBody('POST', body));
+
 // ---- In-app notifications (controllers/notifications.js) --------------------
 export const fetchNotifications = () => apiFetch('/notifications');
 export const markNotificationsSeen = (ids) => apiFetch('/notifications/seen', jsonBody('POST', ids ? { ids } : {}));
