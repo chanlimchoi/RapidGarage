@@ -9,6 +9,7 @@ const msg = require('../lib/messaging');
 const { publicUser } = require('../lib/people');
 const ratings = require('../lib/ratings');
 const holds = require('../lib/holds');
+const bundles = require('../lib/bundles');
 const meetups = require('../lib/meetups');
 const follows = require('../lib/follows');
 const schedule = require('../lib/schedule');
@@ -51,6 +52,11 @@ function messageJSON(m, me, holdMap) {
     const h = holdMap && m.holdId ? holdMap.get(m.holdId) : null;
     out.kind = 'hold';
     out.hold = { id: m.holdId, event: m.holdEvent, itemName: h && h.item ? h.item.name : null, pickupAt: h ? h.pickupAt : null, expiresAt: h ? h.expiresAt : null, status: h ? h.status : null, endedReason: h ? h.endedReason : null, cents: m.holdCents || null };
+    // A bundle event names every item in the bundle.
+    if (h && h.bundleKey && holdMap.bundles && String(m.holdEvent || '').indexOf('bundle_') === 0) {
+      const names = holdMap.bundles.get(h.bundleKey) || [];
+      out.hold.bundle = { count: names.length, items: names };
+    }
   }
   if (m.kind === 'meetup') {
     const p = holdMap && holdMap.meetups && m.meetupId ? holdMap.meetups.get(m.meetupId) : null;
@@ -66,6 +72,12 @@ async function withHolds(messages) {
   const mids = Array.from(new Set(messages.filter((m) => m && m.kind === 'meetup' && m.meetupId).map((m) => m.meetupId)));
   const rows = ids.length ? await models.ItemHold.findAll({ where: { id: ids }, include: [{ model: models.SaleItem, as: 'item', attributes: ['id', 'name'] }] }) : [];
   const map = new Map(rows.map((h) => [h.id, h]));
+  const keys = Array.from(new Set(rows.map((h) => h.bundleKey).filter(Boolean)));
+  map.bundles = new Map();
+  if (keys.length) {
+    const sib = await models.ItemHold.findAll({ where: { bundleKey: keys }, include: [{ model: models.SaleItem, as: 'item', attributes: ['id', 'name'] }], order: [['id', 'ASC']] });
+    sib.forEach((x) => { if (!map.bundles.has(x.bundleKey)) map.bundles.set(x.bundleKey, []); map.bundles.get(x.bundleKey).push(x.item ? x.item.name : null); });
+  }
   map.meetups = new Map(mids.length ? (await models.MeetupProposal.findAll({ where: { id: mids } })).map((p) => [p.id, p]) : []);
   return map;
 }
@@ -431,7 +443,8 @@ router.get('/:id/holds', loadConversation, async (req, res) => {
       const t = holds.now();
       const mineOpen = new Set(rows.filter((h) => models.ItemHold.ACTIVE.includes(h.status)).map((h) => h.itemId));
       const items = await models.SaleItem.findAll({ where: { postId: post.id, sold: false }, order: [['position', 'ASC'], ['id', 'ASC']] });
-      holdable = items.filter((i) => !(i.reservedUntil && new Date(i.reservedUntil) > t) && !mineOpen.has(i.id)).map((i) => i.toJSON());
+      holdable = items.filter((i) => !(i.reservedUntil && new Date(i.reservedUntil) > t) && !mineOpen.has(i.id))
+        .map((i) => Object.assign(i.toJSON(), { nowCents: bundles.currentCents(post, i, t) }));
       // The sale still has unsold items; holdable may be empty when they are all
       // reserved or already requested (the UI says so).
       canRequest = items.length > 0;
@@ -440,6 +453,7 @@ router.get('/:id/holds', loadConversation, async (req, res) => {
     return res.json({
       results: rows.map((h) => holds.holdJSON(h, me)),
       holdable, canRequest,
+      bundle: post && bundles.state(post) ? Object.assign({ maxItems: bundles.MAX_ITEMS }, bundles.state(post)) : null,
       saleEndsAt: end === null ? null : new Date(end),
       limits: { requestHours: holds.requestHours(), holdHours: holds.holdHours(), maxHours: holds.ACCEPT_HOURS_MAX, pickupMaxDays: holds.PICKUP_MAX_DAYS },
     });
@@ -495,6 +509,68 @@ router.post('/:id/holds', loadConversation, async (req, res) => {
     hold.item = item;
     await holds.postEvent(hold, 'requested', me, item.name, offer.value);
     return res.status(201).json(holds.holdJSON(hold, me));
+  } catch (err) { return serverError(res, err); }
+});
+
+// POST /conversations/:id/bundles { itemIds, pickupAt? } : the buyer asks for a
+// bundle deal (lib/bundles.js): at least the seller's minimum number of unsold,
+// unreserved, priced items, each held at its bundle price. One hold per item,
+// sharing a bundleKey; one event message in the conversation. The seller
+// accepts or declines the whole bundle.
+router.post('/:id/bundles', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  const conv = req.conversation;
+  const body = req.body || {};
+  if (me !== conv.buyerId) return sendError(res, 403, 'forbidden', 'Only the buyer can ask for a bundle.');
+  if (req.user.messagingBanned) return sendError(res, 403, 'messaging_banned', BANNED_MSG);
+  const raw = Array.isArray(body.itemIds) ? body.itemIds : null;
+  const ids = raw ? Array.from(new Set(raw.map(parseId))) : [];
+  if (!raw || !ids.length || ids.some((x) => !x)) return badRequest(res, 'Invalid bundle.', { itemIds: 'Choose the items for your bundle.' });
+  if (ids.length > bundles.MAX_ITEMS) return badRequest(res, 'Invalid bundle.', { itemIds: 'A bundle can have up to ' + bundles.MAX_ITEMS + ' items.' });
+  try {
+    await holds.sweep();
+    const blocks = await msg.blockState(me, conv.sellerId);
+    if (blocks.byMe || blocks.byThem) return sendError(res, 403, 'blocked', "You can't message this person.");
+    const post = await models.Post.findByPk(conv.postId, { include: [{ model: models.SaleDay, as: 'saleDays' }] });
+    if (!post || !mod.canSee(req.user, post)) return notFound(res, 'Post not found.');
+    if (post.hidden) return sendError(res, 403, 'post_unavailable', "This sale is unavailable, so you can't hold items from it.");
+    if (schedule.isEnded(post)) return sendError(res, 409, 'sale_ended', 'This sale has ended.');
+    const deal = bundles.state(post);
+    if (!deal) return sendError(res, 409, 'no_bundle', "This sale doesn't offer a bundle deal.");
+    if (ids.length < deal.minItems) return badRequest(res, 'Invalid bundle.', { itemIds: 'Choose at least ' + deal.minItems + ' items for the bundle.' });
+    const t = holds.now();
+    const pickup = holds.parsePickup(body.pickupAt, post, t);
+    if (pickup.error) return badRequest(res, 'Invalid bundle.', { pickupAt: pickup.error });
+    const found = await models.SaleItem.findAll({ where: { id: ids, postId: post.id } });
+    if (found.length !== ids.length) return notFound(res, 'Item not found.');
+    const items = ids.map((id) => found.find((i) => i.id === id));
+    if (items.some((i) => i.sold)) return sendError(res, 409, 'item_unavailable', 'This item is no longer available.');
+    if (items.some((i) => i.reservedUntil && new Date(i.reservedUntil) > t)) return sendError(res, 409, 'item_reserved', 'This item is already reserved.');
+    if (items.some((i) => i.priceCents === null || i.priceCents === undefined)) return badRequest(res, 'Invalid bundle.', { itemIds: 'Every item in a bundle needs a price.' });
+    const H = models.ItemHold;
+    if (await H.count({ where: { itemId: ids, buyerId: me, status: H.ACTIVE } })) return sendError(res, 409, 'already_requested', 'You already asked to hold this item.');
+    if (await H.count({ where: { buyerId: me, status: H.ACTIVE } }) + ids.length > holds.maxActive()) {
+      return sendError(res, 429, 'too_many', 'You can have up to ' + holds.maxActive() + ' open holds. Cancel one first.');
+    }
+    if (await H.count({ where: { buyerId: me, createdAt: { [Op.gt]: new Date(t - 24 * 3600000) } } }) + ids.length > holds.maxPerDay()) {
+      res.set('Retry-After', '3600');
+      return sendError(res, 429, 'rate_limited', 'You have asked for a lot of holds today. Please try again tomorrow.');
+    }
+    const q = bundles.quote(post, items, t);
+    const key = bundles.newKey();
+    const expiresAt = holds.requestExpiry(post, t);
+    const created = [];
+    for (const l of q.lines) {
+      // A free item rides along at no cost (no offer); priced items offer their bundle price.
+      const h = await H.create({ itemId: l.item.id, postId: post.id, conversationId: conv.id, buyerId: me, sellerId: conv.sellerId, status: 'pending', pickupAt: pickup.value, offerCents: l.bundleCents > 0 ? l.bundleCents : null, expiresAt, bundleKey: key });
+      h.item = l.item;
+      created.push(h);
+    }
+    await holds.postEvent(created[0], 'bundle_requested', me, items.map((i) => i.name).join(', '), q.bundleTotalCents);
+    return res.status(201).json({
+      bundleKey: key, percent: deal.percent, totalCents: q.totalCents, bundleTotalCents: q.bundleTotalCents,
+      results: created.map((h) => holds.holdJSON(h, me)),
+    });
   } catch (err) { return serverError(res, err); }
 });
 

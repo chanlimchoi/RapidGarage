@@ -61,6 +61,12 @@ const SUMMARY = {
   cancelled: (n) => 'Cancelled the hold on “' + n + '”.',
   expired: (n) => 'The hold on “' + n + '” expired.',
   sold: (n) => '“' + n + '” was sold.',
+  // Bundle deals (lib/bundles.js): n is the item list, c the bundle total.
+  bundle_requested: (n, c) => 'Asked for a bundle: ' + n + (c ? ' for ' + usd(c) : '') + '.',
+  bundle_accepted: (n, c) => 'Accepted the bundle: ' + n + (c ? ' for ' + usd(c) : '') + '.',
+  bundle_declined: (n) => 'Declined the bundle: ' + n + '.',
+  bundle_released: (n) => 'Released the bundle: ' + n + '.',
+  bundle_cancelled: (n) => 'Cancelled the bundle: ' + n + '.',
 };
 
 // Post an event into the hold's conversation. `by`: the user it is attributed
@@ -71,7 +77,7 @@ async function postEvent(hold, event, by, itemName, cents) {
   const m = models();
   const msg = await m.Message.create({
     conversationId: hold.conversationId, senderId: by, kind: 'hold', holdId: hold.id, holdEvent: event, holdCents: cents || null,
-    body: SUMMARY[event](String(itemName || '').slice(0, 80) || 'an item', cents),
+    body: SUMMARY[event](String(itemName || '').slice(0, event.indexOf('bundle_') === 0 ? 400 : 80) || 'an item', cents),
   });
   const conv = await m.Conversation.findByPk(hold.conversationId);
   if (conv) {
@@ -140,6 +146,7 @@ function holdJSON(h, me) {
     endedReason: h.endedReason,
     offerCents: h.offerCents === undefined ? null : h.offerCents,
     counterCents: h.counterCents === undefined ? null : h.counterCents,
+    bundleKey: h.bundleKey || null,
     createdAt: h.createdAt,
   };
 }

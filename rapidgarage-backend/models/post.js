@@ -23,6 +23,9 @@ module.exports = (sequelize, DataTypes) => {
     priceMax: { type: DataTypes.INTEGER, allowNull: true },
     isFree: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     // Last-hour markdown (lib/markdown.js): X% off from a local time. Serialized as `markdown`.
+    // Bundle deal (lib/bundles.js): N+ items, X% off.
+    bundleMinItems: { type: DataTypes.INTEGER, allowNull: true },
+    bundlePercent: { type: DataTypes.INTEGER, allowNull: true },
     markdownPercent: { type: DataTypes.INTEGER, allowNull: true },
     markdownFrom: { type: DataTypes.STRING(5), allowNull: true },
     markdownLastDay: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
@@ -93,6 +96,9 @@ module.exports = (sequelize, DataTypes) => {
     delete out.markdownPercent;
     delete out.markdownFrom;
     delete out.markdownLastDay;
+    out.bundle = require('../lib/bundles').state(this);
+    delete out.bundleMinItems;
+    delete out.bundlePercent;
     ['aiFlagStatus', 'aiFlagCategories', 'aiFlagReason', 'aiFlaggedAt', 'aiReviewHash', 'summarySentAt'].forEach((k) => { delete out[k]; });
     delete out.saleDays;
     return out;

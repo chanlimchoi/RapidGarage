@@ -18,12 +18,15 @@ module.exports = (sequelize, DataTypes) => {
     // Once accepted, offerCents is the agreed price.
     offerCents: { type: DataTypes.INTEGER, allowNull: true },
     counterCents: { type: DataTypes.INTEGER, allowNull: true },
+    // Holds asked for together as a bundle deal share a key (lib/bundles.js).
+    bundleKey: { type: DataTypes.STRING(24), allowNull: true },
   }, {
     indexes: [
       { name: 'item_holds_status_expires_idx', fields: ['status', 'expiresAt'] },
       { name: 'item_holds_item_status_idx', fields: ['itemId', 'status'] },
       { name: 'item_holds_buyer_created_idx', fields: ['buyerId', 'createdAt'] },
       { name: 'item_holds_conversation_idx', fields: ['conversationId'] },
+      { name: 'item_holds_bundle_idx', fields: ['bundleKey'] },
     ],
   });
   ItemHold.associate = (models) => {

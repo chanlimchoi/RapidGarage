@@ -18,7 +18,7 @@ const { getStorage } = require('./storage');
 function models() { return require('../models'); }
 
 const COPY_FIELDS = ['title', 'street', 'city', 'state', 'zipCode', 'description', 'lat', 'lng', 'geocodeStatus', 'geocodedAt', 'priceMin', 'priceMax', 'isFree',
-  'markdownPercent', 'markdownFrom', 'markdownLastDay', 'timeZone'];
+  'markdownPercent', 'markdownFrom', 'markdownLastDay', 'bundleMinItems', 'bundlePercent', 'timeZone'];
 
 // Resolves to the new post id. Photos are copied byte for byte.
 async function duplicate(post) {

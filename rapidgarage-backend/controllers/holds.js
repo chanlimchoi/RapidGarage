@@ -70,6 +70,69 @@ async function reserve(req, res, hours, fields, event, cents, guard) {
   return res.json(json(req, h));
 }
 
+// ---- bundles (lib/bundles.js): the seller answers the whole bundle ---------
+const withItem = { include: [{ model: models.SaleItem, as: 'item' }], order: [['id', 'ASC']] };
+const names = (rows) => rows.map((x) => (x.item && x.item.name) || 'an item').join(', ');
+const total = (rows) => rows.reduce((s, x) => s + (x.offerCents || 0), 0);
+
+async function bundleRows(h, statuses) {
+  return models.ItemHold.findAll(Object.assign({ where: { bundleKey: h.bundleKey, status: statuses } }, withItem));
+}
+
+// Accept every pending hold in the bundle, or none: each item is reserved
+// atomically and the reservations are undone if any item was taken meanwhile.
+async function acceptBundle(req, res, hours) {
+  const h = req.hold;
+  const rows = await bundleRows(h, ['pending']);
+  const post = await models.Post.findByPk(h.postId, { include: [{ model: models.SaleDay, as: 'saleDays' }] });
+  const t = holds.now();
+  if (!post || rows.some((x) => !x.item || x.item.sold)) return sendError(res, 409, 'item_unavailable', 'This item is no longer available.');
+  const expiresAt = holds.acceptExpiry(h, post, hours, t);
+  if (expiresAt <= t) return sendError(res, 409, 'sale_ended', 'This sale has ended.');
+  const done = [];
+  const undo = async () => { for (const x of done) await models.SaleItem.update({ reservedUntil: null }, { where: { id: x.itemId, reservedUntil: expiresAt } }); };
+  for (const x of rows) {
+    const [ok] = await models.SaleItem.update({ reservedUntil: expiresAt },
+      { where: { id: x.itemId, sold: false, [Op.or]: [{ reservedUntil: null }, { reservedUntil: { [Op.lte]: t } }] } });
+    if (!ok) { await undo(); return sendError(res, 409, 'item_reserved', 'This item is already reserved.'); }
+    done.push(x);
+  }
+  const [changed] = await models.ItemHold.update({ status: 'accepted', expiresAt, decidedAt: t, counterCents: null }, { where: { id: rows.map((x) => x.id), status: 'pending' } });
+  if (changed !== rows.length) {
+    // Someone cancelled part of it meanwhile: put everything back.
+    await models.ItemHold.update({ status: 'pending', decidedAt: null }, { where: { id: rows.map((x) => x.id), status: 'accepted', decidedAt: t } });
+    await undo();
+    return stateError(res);
+  }
+  await holds.postEvent(h, 'bundle_accepted', req.user.id, names(rows), total(rows));
+  const others = await models.ItemHold.findAll({ where: { itemId: rows.map((x) => x.itemId), status: 'pending', id: { [Op.notIn]: rows.map((x) => x.id) } }, include: [{ model: models.SaleItem, as: 'item' }] });
+  for (const o of others) {
+    await o.update({ status: 'declined', endedReason: 'taken', decidedAt: t });
+    await holds.postEvent(o, 'declined', o.sellerId, o.item && o.item.name);
+  }
+  await h.reload({ include: [{ model: models.SaleItem, as: 'item' }] });
+  return res.json(json(req, h));
+}
+
+// Decline, release or cancel every hold of the bundle still in `from`.
+async function closeBundle(req, res, from, status, event) {
+  const h = req.hold;
+  const rows = await bundleRows(h, from);
+  if (!rows.length) return stateError(res);
+  const t = holds.now();
+  const ended = [];
+  for (const x of rows) {
+    const [changed] = await models.ItemHold.update({ status, decidedAt: t }, { where: { id: x.id, status: x.status } });
+    if (!changed) continue;
+    if (x.status === 'accepted') await holds.clearReservation(x);
+    ended.push(x);
+  }
+  if (!ended.length) return stateError(res);
+  await holds.postEvent(h, event, req.user.id, names(ended));
+  await h.reload({ include: [{ model: models.SaleItem, as: 'item' }] });
+  return res.json(json(req, h));
+}
+
 // Accepting an offer agrees to the buyer's price (any counteroffer is dropped).
 router.post('/:id/accept', loadHold, asSeller, async (req, res) => {
   const h = req.hold;
@@ -78,6 +141,7 @@ router.post('/:id/accept', loadHold, asSeller, async (req, res) => {
   try {
     if (h.status !== 'pending') return stateError(res);
     if (!(await canAct(req, res))) return undefined;
+    if (h.bundleKey) return await acceptBundle(req, res, hours.value);
     return await reserve(req, res, hours.value, { counterCents: null }, 'accepted', h.offerCents);
   } catch (err) { return serverError(res, err); }
 });
@@ -89,6 +153,7 @@ router.post('/:id/counter', loadHold, asSeller, async (req, res) => {
   const h = req.hold;
   try {
     if (h.status !== 'pending') return stateError(res);
+    if (h.bundleKey) return sendError(res, 409, 'bundle', 'A bundle is accepted or declined as a whole. Message the buyer to change it.');
     if (!h.offerCents) return sendError(res, 409, 'no_offer', 'There is no offer to counter.');
     if (!h.item || h.item.sold) return sendError(res, 409, 'item_unavailable', 'This item is no longer available.');
     const counter = holds.parseOffer((req.body || {}).offerCents, h.item, h.offerCents);
@@ -124,6 +189,7 @@ async function close(req, res, from, status, event) {
   try {
     if (from.indexOf(h.status) === -1) return stateError(res);
     if (!(await canAct(req, res))) return undefined;
+    if (h.bundleKey) return await closeBundle(req, res, from, status, 'bundle_' + event);
     const wasAccepted = h.status === 'accepted';
     const [changed] = await models.ItemHold.update({ status, decidedAt: holds.now() }, { where: { id: h.id, status: h.status } });
     if (!changed) return stateError(res);
