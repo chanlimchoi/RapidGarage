@@ -132,11 +132,9 @@ describe('saved sales & route', function () {
 
     it('caps how many sales one person can save', async () => {
       const p = await sale('Yard', 1, WEEKEND);
-      const many = [];
-      for (let i = 0; i < 200; i += 1) many.push({ userId: bobId, postId: p.id + 1000 + i });
-      await models.sequelize.query('PRAGMA foreign_keys = OFF');
-      await models.SavedPost.bulkCreate(many);
-      await models.sequelize.query('PRAGMA foreign_keys = ON');
+      // 200 real (minimal) posts, so this works with foreign keys on (SQLite and Postgres).
+      const others = await models.Post.bulkCreate(Array.from({ length: 200 }, (x, i) => ({ title: 'Filler ' + i, zipCode: '10036', userId: p.userId })));
+      await models.SavedPost.bulkCreate(others.map((o) => ({ userId: bobId, postId: o.id })));
       const r = await save(p.id);
       assert.strictEqual(r.status, 400);
       assert.strictEqual(r.body.error.code, 'too_many');

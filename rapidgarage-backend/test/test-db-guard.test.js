@@ -82,9 +82,10 @@ describe('test database guard', () => {
     it('leaves normal queries alone (they just fail to connect here)', async () => {
       await assert.rejects(live.models.Thing.destroy({ where: { id: 1 } }), (e) => !(e instanceof UnsafeDatabaseError));
     });
-    it('the app models are guarded and, on the in-memory test DB, allowed', async () => {
+    it('the app models are guarded and, on the test DB, allowed', async () => {
       assert.strictEqual(models.sequelize.__rgGuarded, true);
-      assert.strictEqual(describeDb(models.sequelize).dialect, 'sqlite');
+      // In-memory SQLite, or the opted-in Postgres test DB from TEST_DATABASE_URL.
+      assert.strictEqual(describeDb(models.sequelize).dialect, process.env.TEST_DATABASE_URL ? 'postgres' : 'sqlite');
       await models.sequelize.sync({ force: true });
       await models.Subscriber.destroy({ where: {} });
     });
