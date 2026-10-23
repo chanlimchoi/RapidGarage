@@ -229,6 +229,8 @@ class App extends Component {
                 <Route path='/alerts/unsubscribe' element={<RoutedInner component={Unsubscribe} />} />
                 <Route path='/following' element={<RoutedInner component={Following} />} />
                 <Route path='/saved' element={<RoutedInner component={Saved} />} />
+                <Route path='/favorites' element={<RoutedInner component={Saved} />} />
+                <Route path='/favorites/sellers' element={<RoutedInner component={Following} />} />
                 <Route path='/notifications' element={<RoutedInner component={Notifications} onSeen={this.refreshUnread} />} />
                 <Route path='/people/:id' element={<RoutedInner component={PersonRatings} />} />
                 <Route path='/profile' element={<RoutedInner component={Profile} />} />

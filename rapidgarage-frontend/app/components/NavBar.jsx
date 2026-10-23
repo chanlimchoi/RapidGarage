@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, Star, UsersRound, LayoutDashboard, PackageSearch, UserCheck, Bell } from 'lucide-react';
+import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, UsersRound, LayoutDashboard, PackageSearch, UserCheck, Bell, Heart } from 'lucide-react';
 import { initials, displayName } from '../lib/format';
 import InstallMenuItem from '../pwa/InstallMenuItem';
 import LanguagePicker from './LanguagePicker';
@@ -157,8 +157,8 @@ export default class NavBar extends React.Component {
               {unread ? <span className="nav-badge menu-badge" aria-label={unreadLabel(unread)}>{badgeText(unread)}</span> : null}</Link>
             <Link role="menuitem" className="menu-item" to="/notifications" onClick={close}><Bell size={18} aria-hidden="true" />{t('nav.notifications')}
               {notifs ? <span className="nav-badge menu-badge" aria-label={notifLabel(notifs)}>{badgeText(notifs)}</span> : null}</Link>
-            <Link role="menuitem" className="menu-item" to="/saved" onClick={close}><Star size={18} aria-hidden="true" />{t('nav.savedSales')}</Link>
-            <Link role="menuitem" className="menu-item" to="/following" onClick={close}><UserCheck size={18} aria-hidden="true" />{t('nav.following')}</Link>
+            <Link role="menuitem" className="menu-item" to="/favorites" onClick={close}><Heart size={18} aria-hidden="true" />{t('nav.savedSales')}</Link>
+            <Link role="menuitem" className="menu-item" to="/favorites/sellers" onClick={close}><UserCheck size={18} aria-hidden="true" />{t('nav.following')}</Link>
             <Link role="menuitem" className="menu-item" to="/dashboard" onClick={close}><LayoutDashboard size={18} aria-hidden="true" />{t('nav.sellerDashboard')}</Link>
             <Link role="menuitem" className="menu-item" to="/profile" onClick={close}><User size={18} aria-hidden="true" />{t('nav.profileListings')}</Link>
             <Link role="menuitem" className="menu-item" to="/settings" onClick={close}><SettingsIcon size={18} aria-hidden="true" />{t('nav.settings')}</Link>
@@ -195,7 +195,7 @@ export default class NavBar extends React.Component {
                 {this.props.unread ? <span className="nav-badge" aria-label={unreadLabel(this.props.unread)}>{badgeText(this.props.unread)}</span> : null}
               </NavLink>
             ) : null}
-            {user ? <NavLink to="/saved" className={navClass('nav-link nav-saved')} title={tip('nav.saved')}><Star size={16} aria-hidden="true" /><span className="nav-label">{t('nav.saved')}</span></NavLink> : null}
+            {user ? <NavLink to="/favorites" className={navClass('nav-link nav-saved')} title={tip('nav.saved')}><Heart size={16} aria-hidden="true" /><span className="nav-label">{t('nav.saved')}</span></NavLink> : null}
             {user ? <NavLink to="/dashboard" className={navClass('nav-link nav-dashboard')} title={tip('nav.dashboard')}><LayoutDashboard size={16} aria-hidden="true" /><span className="nav-label">{t('nav.dashboard')}</span></NavLink> : null}
             <NavLink to="/events" className={navClass('nav-link nav-events')} title={tip('nav.events')}><UsersRound size={16} aria-hidden="true" /><span className="nav-label">{t('nav.events')}</span></NavLink>
             <NavLink to="/wanted" className={navClass('nav-link nav-wanted')} title={tip('nav.wanted')}><PackageSearch size={16} aria-hidden="true" /><span className="nav-label">{t('nav.wanted')}</span>
@@ -244,8 +244,8 @@ export default class NavBar extends React.Component {
                   {this.props.unread ? <span className="nav-badge menu-badge" aria-label={unreadLabel(this.props.unread)}>{badgeText(this.props.unread)}</span> : null}</Link>
                 <Link className="menu-item" to="/notifications"><Bell size={18} aria-hidden="true" />{t('nav.notifications')}
                   {this.props.notifications ? <span className="nav-badge menu-badge" aria-label={notifLabel(this.props.notifications)}>{badgeText(this.props.notifications)}</span> : null}</Link>
-                <Link className="menu-item" to="/saved"><Star size={18} aria-hidden="true" />{t('nav.savedSales')}</Link>
-                <Link className="menu-item" to="/following"><UserCheck size={18} aria-hidden="true" />{t('nav.following')}</Link>
+                <Link className="menu-item" to="/favorites"><Heart size={18} aria-hidden="true" />{t('nav.savedSales')}</Link>
+                <Link className="menu-item" to="/favorites/sellers"><UserCheck size={18} aria-hidden="true" />{t('nav.following')}</Link>
                 <Link className="menu-item" to="/dashboard"><LayoutDashboard size={18} aria-hidden="true" />{t('nav.sellerDashboard')}</Link>
                 <Link className="menu-item" to="/profile"><User size={18} aria-hidden="true" />{t('nav.profileListings')}</Link>
                 <Link className="menu-item" to="/settings"><SettingsIcon size={18} aria-hidden="true" />{t('nav.settings')}</Link>
