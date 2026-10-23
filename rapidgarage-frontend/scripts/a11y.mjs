@@ -94,8 +94,14 @@ async function seed(browser) {
   await api(b, 'PUT', '/saved/' + post.id);
   // A favorite sale gets cheaper: a price-drop notification for the buyer.
   await api(s, 'PUT', '/post/' + post.id + '/items/' + bookcase.id, { price: '30' });
+  // A bundle deal (2+ items, 20% off) and a few small items to bundle.
+  await api(s, 'PUT', '/post/' + post.id, { bundleMinItems: 2, bundlePercent: 20 });
+  const small = [];
+  for (const [name, price] of [['Side table', '25'], ['Kids books (box)', '5'], ['Picture frames', '8'], ['Plant pots', '6']]) small.push(await api(s, 'POST', '/post/' + post.id + '/items', { name, price }));
   const conv = await api(b, 'POST', '/conversations', { postId: post.id });
   await api(b, 'POST', '/conversations/' + conv.id + '/messages', { body: 'Hi! Is the bike still available? I could come by on Saturday morning.' });
+  // The buyer asks for a bundle: the seller's view shows it with whole-bundle answers.
+  await api(b, 'POST', '/conversations/' + conv.id + '/bundles', { itemIds: [small[2].id, small[3].id] }).catch((e) => console.warn('bundle:', e.message));
   await api(s, 'POST', '/conversations/' + conv.id + '/messages', { body: 'Yes, it is. Saturday works.' });
   await api(b, 'POST', '/conversations/' + conv.id + '/holds', { itemId: (item.id || (item.item && item.item.id)), pickupAt: new Date(Date.now() + 2 * 864e5 + 3600e3).toISOString() }).catch((e) => console.warn('hold:', e.message));
   await api(b, 'POST', '/conversations/' + conv.id + '/meetups', { place: { name: 'Brooklyn Heights Library', address: '286 Cadman Plaza W' }, meetAt: new Date(Date.now() + 2 * 864e5).toISOString(), note: 'By the front desk.' }).catch((e) => console.warn('meetup:', e.message));
@@ -174,7 +180,17 @@ function states(d) {
       const btn = p.locator('.meet-card .btn-secondary').first(); // "Suggest another" on the pending suggestion
       if (await btn.count()) await btn.click(); else await p.locator('.meet-suggest').click();
     }, waitAfter: '.dialog .meet-choice, .dialog .meet-other' },
-    { name: 'hold-form', path: '/messages/' + d.conv, who: 'buyer', wait: '.hold-panel', act: click('.hold-panel .btn-secondary') },
+    { name: 'hold-form', path: '/messages/' + d.conv, who: 'buyer', wait: '.hold-head-actions', act: click('.hold-head-actions > .btn:last-child'), waitAfter: '#hold-item' },
+    { name: 'bundle-form', path: '/messages/' + d.conv, who: 'buyer', wait: '.hold-head-actions', act: async (p) => {
+      await p.locator('.hold-head-actions > .btn').first().click();
+      await p.waitForSelector('.bundle-form');
+      const boxes = p.locator('.bundle-pick input[type=checkbox]');
+      await boxes.nth(0).check(); await boxes.nth(1).check();
+    } },
+    { name: 'bundle-form-errors', path: '/messages/' + d.conv, who: 'buyer', wait: '.hold-head-actions', act: async (p) => {
+      await p.locator('.hold-head-actions > .btn').first().click();
+      await p.locator('.bundle-form button[type=submit]').click();
+    }, waitAfter: '.bundle-pick .field-error' },
     { name: 'send-nudge', path: '/messages/' + d.conv, who: 'buyer', wait: '#composer-input', act: async (p) => { await p.fill('#composer-input', 'Text me at 718 555 0142'); await p.press('#composer-input', 'Enter'); }, waitAfter: '.send-nudge' },
     { name: 'post-print', path: '/post/' + d.post + '/print', who: 'seller' },
     { name: 'event-print', path: '/events/' + d.event + '/print', who: 'seller' },
