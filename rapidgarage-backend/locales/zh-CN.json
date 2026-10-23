@@ -605,6 +605,7 @@
   "A counteroffer can't be more than the asking price.": "还价不能高于标价。",
   "There is no offer to counter.": "没有可以还价的出价。",
   "There is no counteroffer to take.": "没有可以接受的还价。",
-  "Invalid offer.": "出价无效。"
+  "Invalid offer.": "出价无效。",
+  "ids must be a list of notification ids.": "ids 必须是通知 ID 列表。"
  }
 }

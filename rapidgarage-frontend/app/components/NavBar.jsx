@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, Star, UsersRound, LayoutDashboard, PackageSearch, UserCheck } from 'lucide-react';
+import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, Star, UsersRound, LayoutDashboard, PackageSearch, UserCheck, Bell } from 'lucide-react';
 import { initials, displayName } from '../lib/format';
 import InstallMenuItem from '../pwa/InstallMenuItem';
 import LanguagePicker from './LanguagePicker';
@@ -9,6 +9,7 @@ import { t } from '../i18n';
 const badgeText = (n) => (n > 99 ? '99+' : String(n));
 const unreadLabel = (n) => t('nav.unreadMessages', { count: n });
 const wantedLabel = (n) => t('nav.wantedMatches', { count: n });
+const notifLabel = (n) => t('nav.newNotifications', { count: n });
 
 // react-router 6 dropped NavLink's activeClassName/exact: the class now comes
 // from a callback. This keeps the same "nav-link ... active" output as RR4.
@@ -63,10 +64,11 @@ export default class NavBar extends React.Component {
       const parts = [];
       if ((this.props.unread || 0) > (prev.unread || 0)) parts.push(unreadLabel(this.props.unread));
       if ((this.props.wantedNew || 0) > (prev.wantedNew || 0)) parts.push(wantedLabel(this.props.wantedNew));
+      if ((this.props.notifications || 0) > (prev.notifications || 0)) parts.push(notifLabel(this.props.notifications));
       if (parts.length) this.setState({ announce: parts.join('. ') + (this.state.announce.endsWith('\u00a0') ? '' : '\u00a0') });
     }
     // Text changes (language, login, badges) can change what fits.
-    if (prev.user !== this.props.user || prev.ready !== this.props.ready || prev.unread !== this.props.unread || prev.wantedNew !== this.props.wantedNew) this.onResize();
+    if (prev.user !== this.props.user || prev.ready !== this.props.ready || prev.unread !== this.props.unread || prev.wantedNew !== this.props.wantedNew || prev.notifications !== this.props.notifications) this.onResize();
     else if (prevState.fit !== this.state.fit) this.fit();
   }
 
@@ -133,6 +135,7 @@ export default class NavBar extends React.Component {
   renderUserMenu(user, isAdmin) {
     const close = () => this.setState({ menuOpen: false });
     const unread = this.props.unread || 0;
+    const notifs = this.props.notifications || 0;
     return (
       <div className="menu user-menu" ref={this.menuRef}>
         <button type="button" className="menu-trigger" ref={this.triggerRef} aria-haspopup="menu" aria-expanded={this.state.menuOpen}
@@ -152,6 +155,8 @@ export default class NavBar extends React.Component {
             </div>
             <Link role="menuitem" className="menu-item" to="/messages" onClick={close}><MessageCircle size={18} aria-hidden="true" />{t('nav.messages')}
               {unread ? <span className="nav-badge menu-badge" aria-label={unreadLabel(unread)}>{badgeText(unread)}</span> : null}</Link>
+            <Link role="menuitem" className="menu-item" to="/notifications" onClick={close}><Bell size={18} aria-hidden="true" />{t('nav.notifications')}
+              {notifs ? <span className="nav-badge menu-badge" aria-label={notifLabel(notifs)}>{badgeText(notifs)}</span> : null}</Link>
             <Link role="menuitem" className="menu-item" to="/saved" onClick={close}><Star size={18} aria-hidden="true" />{t('nav.savedSales')}</Link>
             <Link role="menuitem" className="menu-item" to="/following" onClick={close}><UserCheck size={18} aria-hidden="true" />{t('nav.following')}</Link>
             <Link role="menuitem" className="menu-item" to="/dashboard" onClick={close}><LayoutDashboard size={18} aria-hidden="true" />{t('nav.sellerDashboard')}</Link>
@@ -203,6 +208,13 @@ export default class NavBar extends React.Component {
             <span className="hide-mobile"><LanguagePicker id="nav-language" user={user} /></span>
             <Link to="/newpost" className="btn btn-primary hide-mobile"><Plus size={16} aria-hidden="true" />{t('nav.postSale')}</Link>
             <Link to="/newpost" className="btn btn-primary btn-icon show-mobile" aria-label={t('nav.postSale')}><Plus size={20} aria-hidden="true" /></Link>
+            {ready && user ? (
+              <Link to="/notifications" className="btn btn-ghost btn-icon nav-bell" title={t('nav.notifications')}
+                aria-label={t('nav.notifications') + (this.props.notifications ? ', ' + notifLabel(this.props.notifications) : '')}>
+                <Bell size={20} aria-hidden="true" />
+                {this.props.notifications ? <span className="nav-badge avatar-badge" aria-hidden="true">{badgeText(this.props.notifications)}</span> : null}
+              </Link>
+            ) : null}
             {!ready ? null : user ? this.renderUserMenu(user, isAdmin) : (
               <React.Fragment>
                 <Link to="/login" className="btn btn-ghost hide-mobile">{t('nav.logIn')}</Link>
@@ -230,6 +242,8 @@ export default class NavBar extends React.Component {
               <React.Fragment>
                 <Link className="menu-item" to="/messages"><MessageCircle size={18} aria-hidden="true" />{t('nav.messages')}
                   {this.props.unread ? <span className="nav-badge menu-badge" aria-label={unreadLabel(this.props.unread)}>{badgeText(this.props.unread)}</span> : null}</Link>
+                <Link className="menu-item" to="/notifications"><Bell size={18} aria-hidden="true" />{t('nav.notifications')}
+                  {this.props.notifications ? <span className="nav-badge menu-badge" aria-label={notifLabel(this.props.notifications)}>{badgeText(this.props.notifications)}</span> : null}</Link>
                 <Link className="menu-item" to="/saved"><Star size={18} aria-hidden="true" />{t('nav.savedSales')}</Link>
                 <Link className="menu-item" to="/following"><UserCheck size={18} aria-hidden="true" />{t('nav.following')}</Link>
                 <Link className="menu-item" to="/dashboard"><LayoutDashboard size={18} aria-hidden="true" />{t('nav.sellerDashboard')}</Link>

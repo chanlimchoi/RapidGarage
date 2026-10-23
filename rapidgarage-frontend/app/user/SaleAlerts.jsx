@@ -5,12 +5,14 @@ import { Field, Alert, EmptyState, SkeletonBlock, Spinner } from '../components/
 import { priceFieldError, formatUSD } from '../lib/price';
 import toast from '../components/toast';
 import { t } from '../i18n';
+import { cleanKeyword, KEYWORD_MAX } from '../lib/savedSearch';
 
 const LABEL_MAX = 80;
-const EMPTY_FORM = { id: null, label: '', where: 'address', address: '', coords: null, radiusMiles: '10', maxPrice: '', freeOnly: false, frequency: 'instant' };
+const EMPTY_FORM = { id: null, label: '', keyword: '', where: 'address', address: '', coords: null, radiusMiles: '10', maxPrice: '', freeOnly: false, frequency: 'instant' };
 
 export function alertSummary(a) {
   const parts = [t('list.withinMi', { miles: a.radiusMiles })];
+  if (a.keyword) parts.unshift('“' + a.keyword + '”');
   if (a.freeOnly) parts.push(t('alerts.free'));
   else if (a.maxPrice !== null && a.maxPrice !== undefined) parts.push(t('alerts.maxPrice', { price: formatUSD(a.maxPrice) }));
   if (a.frequency === 'weekly') parts.push(t('alerts.weeklyChip'));
@@ -41,7 +43,7 @@ export default class SaleAlerts extends React.Component {
 
   openNew() { this.setState({ form: Object.assign({}, EMPTY_FORM), errors: {} }); }
   openEdit(a) {
-    this.setState({ errors: {}, form: { id: a.id, label: a.label || '', where: 'keep', address: '', coords: null,
+    this.setState({ errors: {}, form: { id: a.id, label: a.label || '', keyword: a.keyword || '', where: 'keep', address: '', coords: null,
       radiusMiles: String(a.radiusMiles), maxPrice: a.maxPrice === null || a.maxPrice === undefined ? '' : String(a.maxPrice), freeOnly: a.freeOnly, frequency: a.frequency || 'instant' } });
   }
   setForm(patch) { this.setState((s) => ({ form: Object.assign({}, s.form, patch), errors: {} })); }
@@ -59,6 +61,7 @@ export default class SaleAlerts extends React.Component {
   validate(f) {
     const errors = {};
     if (f.label.trim().length > LABEL_MAX) errors.label = t('alerts.nameLong', { max: LABEL_MAX });
+    if (cleanKeyword(f.keyword).length > KEYWORD_MAX) errors.keyword = t('alerts.keywordLong', { max: KEYWORD_MAX });
     if (f.where === 'address' && !f.address.trim()) errors.location = t('alerts.needAddress');
     if (f.where === 'here' && !f.coords) errors.location = t('alerts.needLocation');
     const r = Number(f.radiusMiles);
@@ -73,7 +76,7 @@ export default class SaleAlerts extends React.Component {
     const f = this.state.form;
     const errors = this.validate(f);
     if (Object.keys(errors).length) return this.setState({ errors });
-    const body = { label: f.label.trim() || null, radiusMiles: Number(f.radiusMiles), freeOnly: f.freeOnly, frequency: f.frequency,
+    const body = { label: f.label.trim() || null, keyword: cleanKeyword(f.keyword) || null, radiusMiles: Number(f.radiusMiles), freeOnly: f.freeOnly, frequency: f.frequency,
       maxPrice: f.freeOnly || !f.maxPrice.trim() ? null : Number(f.maxPrice) };
     if (f.where === 'address') body.address = f.address.trim();
     if (f.where === 'here') { body.lat = f.coords.lat; body.lng = f.coords.lng; }
@@ -120,6 +123,9 @@ export default class SaleAlerts extends React.Component {
         <h3 id="alert-form-heading">{f.id ? t('alerts.edit') : t('alerts.new')}</h3>
         <Field id="alert-label" label={t('alerts.name')} optional error={e.label} hint={t('alerts.nameHint')}>
           <input className="input" type="text" maxLength={LABEL_MAX} value={f.label} onChange={(ev) => this.setForm({ label: ev.target.value })} />
+        </Field>
+        <Field id="alert-keyword" label={t('alerts.keyword')} optional error={e.keyword} hint={t('alerts.keywordHint')}>
+          <input className="input" type="search" maxLength={KEYWORD_MAX} autoComplete="off" value={f.keyword} onChange={(ev) => this.setForm({ keyword: ev.target.value })} />
         </Field>
         <div className="field">
           <span className="field-label" id="alert-where-label">{t('alerts.location')}</span>

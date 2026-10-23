@@ -605,6 +605,7 @@
   "A counteroffer can't be more than the asking price.": "역제안은 판매 가격보다 높을 수 없어요.",
   "There is no offer to counter.": "역제안할 제안이 없어요.",
   "There is no counteroffer to take.": "수락할 역제안이 없어요.",
-  "Invalid offer.": "잘못된 제안이에요."
+  "Invalid offer.": "잘못된 제안이에요.",
+  "ids must be a list of notification ids.": "ids는 알림 ID 목록이어야 합니다."
  }
 }
