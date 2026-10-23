@@ -715,7 +715,7 @@ export default {
   "rate.outOf5": "5 分中的 {n} 分，{word}",
   "rate.removedChip": "评论已被管理员删除",
   "rate.how": "和 {name} 打交道感觉如何？",
-  "rate.once": "见面后再评价。",
+  "rate.once": "本次交易可评价一次。",
   "rate.theyRated": "{name} 评价了你",
   "rate.nOutOf5": "5 分中的 {n} 分",
   "rate.edit": "编辑评价",
@@ -1925,4 +1925,5 @@ export default {
   "rt.badTime": "请输入有效时间。",
   "rt.pastTime": "请选择尚未过去的时间。",
   "rt.badDwell": "请选择在每个甩卖停留的时间。",
+  "rate.afterSale": "见面后，或 {name} 将你的物品标记为已售出后，即可评价。",
 };

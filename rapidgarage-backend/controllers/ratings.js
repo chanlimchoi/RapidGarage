@@ -16,7 +16,8 @@ const PERSON = ['id', 'firstName', 'lastName'];
 const PAGE_SIZE = 20;
 
 const WHY = {
-  needs_messages: 'You can rate each other once you have both sent a message.',
+  buyer_only: 'Only the buyer rates the seller.',
+  needs_transaction: 'You can rate the seller after a completed meetup or sale.',
   blocked: "You can't rate someone you've blocked or who blocked you.",
   former_user: 'This person has left RapidGarage.',
 };
@@ -103,8 +104,8 @@ router.get('/users/:id', async (req, res) => {
     if (!user) return notFound(res, 'Person not found.');
     const [summary, dist, { count, rows }] = await Promise.all([
       ratings.summaryOf(id),
-      models.Rating.findAll({ attributes: ['stars', [models.sequelize.fn('COUNT', models.sequelize.col('id')), 'n']], where: { rateeId: id }, group: ['stars'], raw: true }),
-      models.Rating.findAndCountAll({ where: { rateeId: id }, include: [{ model: models.User, as: 'rater', attributes: PERSON }], order: [['updatedAt', 'DESC'], ['id', 'DESC']], limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
+      models.Rating.findAll({ attributes: ['stars', [models.sequelize.fn('COUNT', models.sequelize.col('id')), 'n']], where: Object.assign({ rateeId: id }, ratings.PUBLIC), group: ['stars'], raw: true }),
+      models.Rating.findAndCountAll({ where: Object.assign({ rateeId: id }, ratings.PUBLIC), include: [{ model: models.User, as: 'rater', attributes: PERSON }], order: [['updatedAt', 'DESC'], ['id', 'DESC']], limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
     ]);
     const me = req.user ? req.user.id : null;
     const reported = me ? new Set((await models.RatingReport.findAll({ where: { reporterId: me, status: 'open', ratingId: rows.map((r) => r.id) }, attributes: ['ratingId'], raw: true })).map((r) => r.ratingId)) : new Set();

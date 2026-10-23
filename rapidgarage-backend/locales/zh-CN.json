@@ -612,6 +612,8 @@
   "postIds must be sale ids.": "postIds 必须是甩卖 ID。",
   "Enter a valid start time.": "请输入有效的出发时间。",
   "Pick a start time within the next {n} days.": "请选择未来 {n} 天内的出发时间。",
-  "Minutes per stop must be a whole number from {min} to {max}.": "每站分钟数必须是 {min} 到 {max} 之间的整数。"
+  "Minutes per stop must be a whole number from {min} to {max}.": "每站分钟数必须是 {min} 到 {max} 之间的整数。",
+  "Only the buyer rates the seller.": "只有买家可以评价卖家。",
+  "You can rate the seller after a completed meetup or sale.": "完成见面或交易后即可评价卖家。"
  }
 }

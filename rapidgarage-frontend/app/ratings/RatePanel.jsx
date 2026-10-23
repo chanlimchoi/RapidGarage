@@ -5,6 +5,7 @@ import { Dialog, Field, Spinner } from '../components/ui';
 import toast from '../components/toast';
 import { Stars, StarInput, STAR_WORDS } from './Stars';
 import { t } from '../i18n';
+import { ratePrompt } from '../lib/ratePrompt';
 
 // Strip shown in a conversation: invites a rating once both sides have
 // written, shows mine (editable) and theirs. `refreshKey` changes when the
@@ -90,14 +91,11 @@ export default class RatePanel extends React.Component {
 
   render() {
     const d = this.state.data;
-    if (!d || !d.other) return null;
+    const show = ratePrompt(d);
+    if (show === 'none') return null;
+    // The buyer gets a quiet hint that rating opens after the meetup or sale.
+    if (show === 'hint') return <div className="rate-strip rate-strip-quiet small muted"><Star size={14} aria-hidden="true" />{t('rate.afterSale', { name: d.other.name })}</div>;
     const { mine, theirs } = d;
-    if (!mine && !theirs && !d.canRate) {
-      // Nothing to show yet; a quiet hint once the user has written but the other side hasn't.
-      return d.reason === 'needs_messages' && this.props.iWrote
-        ? <div className="rate-strip rate-strip-quiet small muted"><Star size={14} aria-hidden="true" />{t('rate.afterReply', { name: d.other.name })}</div>
-        : null;
-    }
     return (
       <div className="rate-strip" aria-label={t('rep.ratings')}>
         <div className="rate-strip-main">

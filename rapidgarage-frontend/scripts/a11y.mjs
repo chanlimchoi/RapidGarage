@@ -101,9 +101,19 @@ async function seed(browser) {
   await api(b, 'POST', '/conversations/' + conv.id + '/meetups', { place: { name: 'Brooklyn Heights Library', address: '286 Cadman Plaza W' }, meetAt: new Date(Date.now() + 2 * 864e5).toISOString(), note: 'By the front desk.' }).catch((e) => console.warn('meetup:', e.message));
   const me = await api(s, 'GET', '/me');
   const sellerId = (me.user || me).id;
+  // A second buyer completes a sale (hold accepted, item marked sold), so they can rate the seller.
+  const buyer2 = await user('Rae', 'Rater');
+  const b2 = await login(browser, buyer2);
+  const lamp = await api(s, 'POST', '/post/' + post.id + '/items', { name: 'Desk lamp', price: '15' });
+  const conv2 = await api(b2, 'POST', '/conversations', { postId: post.id });
+  await api(b2, 'POST', '/conversations/' + conv2.id + '/messages', { body: 'Could I pick up the desk lamp today?' });
+  const hold = await api(b2, 'POST', '/conversations/' + conv2.id + '/holds', { itemId: lamp.id, pickupAt: new Date(Date.now() + 3 * 3600e3).toISOString() });
+  await api(s, 'POST', '/holds/' + (hold.hold || hold).id + '/accept', {});
+  await api(s, 'PUT', '/post/' + post.id + '/items/' + lamp.id, { sold: true });
+  await b2.close();
   await api(b, 'PUT', '/follows/' + sellerId, {}).catch((e) => console.warn('follow:', e.message));
   await Promise.all([s.close(), b.close(), ctx.close()]);
-  return { seller, buyer, post: post.id, event: event.id, wanted: wanted.id, conv: conv.id, sellerId };
+  return { seller, buyer, buyer2, conv2: conv2.id, post: post.id, event: event.id, wanted: wanted.id, conv: conv.id, sellerId };
 }
 
 async function login(browser, who, opts) {
@@ -156,6 +166,8 @@ function states(d) {
     { name: 'inbox', path: '/messages', who: 'buyer' },
     { name: 'conversation', path: '/messages/' + d.conv, who: 'buyer', wait: '.composer, .thread-log' },
     { name: 'conversation-seller', path: '/messages/' + d.conv, who: 'seller', wait: '.composer, .thread-log' },
+    { name: 'conversation-can-rate', path: '/messages/' + d.conv2, who: 'buyer2', wait: '.rate-strip' },
+    { name: 'rate-dialog', path: '/messages/' + d.conv2, who: 'buyer2', wait: '.rate-strip-actions .btn', act: click('.rate-strip-actions .btn'), waitAfter: '.dialog' },
     { name: 'conversation-menu', path: '/messages/' + d.conv, who: 'buyer', wait: '.thread-menu', act: click('.thread-menu > button') },
     { name: 'report-dialog', path: '/messages/' + d.conv, who: 'buyer', wait: '.thread-menu', act: async (p) => { await p.locator('.thread-menu > button').click(); await p.locator('.thread-menu [role=menuitem]').last().click(); }, waitAfter: '.dialog' },
     { name: 'meetup-dialog', path: '/messages/' + d.conv, who: 'seller', wait: '.composer-tools', act: async (p) => {
@@ -400,7 +412,7 @@ async function run() {
   const list = states(d).filter((s) => !ONLY || ONLY.test(s.name));
   const combos = [];
   for (const vp of VIEWPORTS) for (const loc of LOCALES) {
-    for (const who of ['out', 'buyer', 'seller', 'admin']) {
+    for (const who of ['out', 'buyer', 'buyer2', 'seller', 'admin']) {
       if (who === 'admin' && !admin) continue;
       const mine = list.filter((s) => (s.who === who || (s.who === 'any' && (who === 'out' || who === 'buyer'))) && !(s.mobileOnly && vp !== 'mobile'));
       if (mine.length) combos.push({ vp, loc, who, mine, scheme: 'light' });

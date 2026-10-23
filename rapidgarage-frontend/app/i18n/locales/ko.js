@@ -715,7 +715,7 @@ export default {
   "rate.outOf5": "5점 만점에 {n}점, {word}",
   "rate.removedChip": "관리자가 삭제한 댓글",
   "rate.how": "{name} 님과의 거래는 어땠나요?",
-  "rate.once": "만난 후에 평가해 주세요.",
+  "rate.once": "이 거래에 대해 한 번 평가할 수 있습니다.",
   "rate.theyRated": "{name} 님이 나를 평가함",
   "rate.nOutOf5": "5점 만점에 {n}점",
   "rate.edit": "평가 수정",
@@ -1925,4 +1925,5 @@ export default {
   "rt.badTime": "올바른 시간을 입력하세요.",
   "rt.pastTime": "지나지 않은 시간을 고르세요.",
   "rt.badDwell": "세일마다 머무를 시간을 고르세요.",
+  "rate.afterSale": "만난 뒤나 {name} 님이 물건을 판매 완료로 표시하면 평가할 수 있습니다.",
 };

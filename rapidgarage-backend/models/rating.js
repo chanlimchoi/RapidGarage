@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     indexes: [
       { name: 'ratings_conv_rater_uniq', unique: true, fields: ['conversationId', 'raterId'] },
       { name: 'ratings_ratee_idx', fields: ['rateeId', 'createdAt'] },
+      { name: 'ratings_ratee_role_idx', fields: ['rateeId', 'raterRole'] },
     ],
   });
   Rating.associate = (models) => {

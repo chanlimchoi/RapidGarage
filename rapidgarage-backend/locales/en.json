@@ -634,6 +634,8 @@
   "postIds must be sale ids.": "postIds must be sale ids.",
   "Enter a valid start time.": "Enter a valid start time.",
   "Pick a start time within the next {n} days.": "Pick a start time within the next {n} days.",
-  "Minutes per stop must be a whole number from {min} to {max}.": "Minutes per stop must be a whole number from {min} to {max}."
+  "Minutes per stop must be a whole number from {min} to {max}.": "Minutes per stop must be a whole number from {min} to {max}.",
+  "Only the buyer rates the seller.": "Only the buyer rates the seller.",
+  "You can rate the seller after a completed meetup or sale.": "You can rate the seller after a completed meetup or sale."
  }
 }

@@ -25,21 +25,36 @@ function validate(body) {
   return { errors, value };
 }
 
-// May `me` rate the other participant of `conv`? { canRate, reason }
-//   reason: needs_messages | blocked | former_user
+// Was there a completed transaction in this conversation? A hold the seller
+// marked sold ('completed'), or an accepted meetup whose time has passed.
+async function completedTransaction(conv, at) {
+  const m = models();
+  const t = at || require('./schedule').now();
+  const [hold, meetup] = await Promise.all([
+    m.ItemHold.count({ where: { conversationId: conv.id, status: 'completed' } }),
+    m.MeetupProposal.count({ where: { conversationId: conv.id, status: 'accepted', meetAt: { [Op.lte]: t } } }),
+  ]);
+  return hold > 0 || meetup > 0;
+}
+
+// May `me` rate the seller in `conv`? { canRate, reason }
+//   reason: former_user | blocked | buyer_only | needs_transaction
+// Only the buyer rates, and only after a completed meetup or sale; one rating
+// per conversation (a conversation is one buyer and one seller about one sale).
 async function eligibility(conv, me) {
   const other = conv.otherId(me);
   const otherUser = await models().User.findByPk(other, { attributes: ['id'] });
   if (!otherUser) return { canRate: false, reason: 'former_user' };
   const blocks = await msg.blockState(me, other);
   if (blocks.byMe || blocks.byThem) return { canRate: false, reason: 'blocked' };
-  const [mine, theirs] = await Promise.all([
-    models().Message.count({ where: { conversationId: conv.id, senderId: me } }),
-    models().Message.count({ where: { conversationId: conv.id, senderId: other } }),
-  ]);
-  if (!mine || !theirs) return { canRate: false, reason: 'needs_messages' };
+  if (me !== conv.buyerId) return { canRate: false, reason: 'buyer_only' };
+  if (!(await completedTransaction(conv))) return { canRate: false, reason: 'needs_transaction' };
   return { canRate: true, reason: null };
 }
+
+// Public seller ratings are the buyers' (older seller-to-buyer ratings stay
+// visible to the two people in the conversation only).
+const PUBLIC = { raterRole: 'buyer' };
 
 const round1 = (n) => Math.round(n * 10) / 10;
 
@@ -50,7 +65,7 @@ async function summaries(userIds) {
   if (!ids.length) return out;
   const rows = await models().Rating.findAll({
     attributes: ['rateeId', [fn('AVG', col('stars')), 'avg'], [fn('COUNT', col('id')), 'n']],
-    where: { rateeId: { [Op.in]: ids } }, group: ['rateeId'], raw: true,
+    where: Object.assign({ rateeId: { [Op.in]: ids } }, PUBLIC), group: ['rateeId'], raw: true,
   });
   rows.forEach((r) => out.set(r.rateeId, { average: round1(Number(r.avg)), count: Number(r.n) }));
   return out;
@@ -75,4 +90,4 @@ function ratingJSON(r, viewerId) {
   };
 }
 
-module.exports = { COMMENT_MAX, validate, eligibility, summaries, summaryOf, ratingJSON };
+module.exports = { COMMENT_MAX, PUBLIC, validate, completedTransaction, eligibility, summaries, summaryOf, ratingJSON };

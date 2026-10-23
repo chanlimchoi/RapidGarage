@@ -5,7 +5,7 @@ const models = require('../models');
 
 const PW = 'correct-horse';
 
-describe('ratings after a chat', function () {
+describe('seller ratings after a completed meetup or sale', function () {
   this.timeout(30000);
   let seller, buyer, other, admin, sellerId, buyerId, postId, conv;
 
@@ -18,6 +18,11 @@ describe('ratings after a chat', function () {
   }
   const say = (agent, id, body) => agent.post('/conversations/' + id + '/messages').send({ body: body || 'hi' });
   const rate = (agent, body, id) => agent.put('/ratings/conversations/' + (id || conv)).send(body);
+  // A meetup the two agreed on whose time has passed: a completed transaction.
+  const meetup = (id, status, meetAt) => models.Conversation.findByPk(id || conv).then((c) => models.MeetupProposal.create({
+    conversationId: c.id, proposerId: c.buyerId, recipientId: c.sellerId, placeName: 'Library', placeKind: 'library', timeZone: 'America/New_York',
+    meetAt: meetAt || new Date(Date.now() - 3600000), status: status || 'accepted' }));
+  const done = (id) => meetup(id);
 
   beforeEach(async () => {
     await models.sequelize.sync({ force: true });
@@ -32,20 +37,51 @@ describe('ratings after a chat', function () {
     conv = c.body.id;
   });
 
-  it('needs a message from each side first', async () => {
+  it('needs a completed meetup or sale; only the buyer rates the seller', async () => {
+    await say(buyer, conv); await say(seller, conv, 'hello back');
     let s = await buyer.get('/ratings/conversations/' + conv);
-    assert.deepStrictEqual([s.body.canRate, s.body.reason], [false, 'needs_messages']);
-    await say(buyer, conv);
-    assert.strictEqual((await rate(buyer, { stars: 5 })).status, 403);
-    assert.strictEqual((await rate(buyer, { stars: 5 })).body.error.code, 'needs_messages');
-    await say(seller, conv, 'hello back');
+    assert.deepStrictEqual([s.body.canRate, s.body.reason], [false, 'needs_transaction'], 'chatting is not enough');
+    assert.strictEqual((await rate(buyer, { stars: 5 })).body.error.code, 'needs_transaction');
+    await meetup(conv, 'pending');
+    await meetup(conv, 'accepted', new Date(Date.now() + 3600000));
+    assert.strictEqual((await buyer.get('/ratings/conversations/' + conv)).body.canRate, false, 'a meetup still to come is not complete');
+    await meetup(conv, 'declined', new Date(Date.now() - 7200000));
+    assert.strictEqual((await buyer.get('/ratings/conversations/' + conv)).body.canRate, false, 'a declined meetup never happened');
+    await done();
     s = await buyer.get('/ratings/conversations/' + conv);
     assert.strictEqual(s.body.canRate, true);
     assert.deepStrictEqual(s.body.other, { id: sellerId, name: 'Sam S.' });
+    // The seller can't rate the buyer.
+    s = await seller.get('/ratings/conversations/' + conv);
+    assert.deepStrictEqual([s.body.canRate, s.body.reason], [false, 'buyer_only']);
+    assert.strictEqual((await rate(seller, { stars: 1 })).status, 403);
+  });
+
+  it('a sale completed through a hold (accepted, then marked sold) counts', async () => {
+    const item = (await seller.post('/post/' + postId + '/items').send({ name: 'Lamp', price: '20' })).body;
+    const h = await buyer.post('/conversations/' + conv + '/holds').send({ itemId: item.id, pickupAt: new Date(Date.now() + 86400000).toISOString() });
+    assert.strictEqual(h.status, 201, JSON.stringify(h.body));
+    const holdId = (h.body.hold || h.body).id;
+    assert.strictEqual((await buyer.get('/ratings/conversations/' + conv)).body.reason, 'needs_transaction', 'a pending hold is not a sale');
+    assert.strictEqual((await seller.post('/holds/' + holdId + '/accept').send({})).status, 200);
+    assert.strictEqual((await buyer.get('/ratings/conversations/' + conv)).body.canRate, false, 'accepted is not sold yet');
+    assert.strictEqual((await seller.put('/post/' + postId + '/items/' + item.id).send({ sold: true })).status, 200);
+    assert.strictEqual((await models.ItemHold.findByPk(holdId)).status, 'completed');
+    const r = await rate(buyer, { stars: 5, comment: 'Smooth pickup' });
+    assert.strictEqual(r.status, 201, JSON.stringify(r.body));
+  });
+
+  it('older seller-to-buyer ratings stay private to the conversation and are not in public averages', async () => {
+    await done();
+    await models.Rating.create({ conversationId: conv, raterId: sellerId, rateeId: buyerId, raterRole: 'seller', stars: 1 });
+    const pub = await request(app).get('/ratings/users/' + buyerId);
+    assert.deepStrictEqual([pub.body.summary, pub.body.total], [{ average: null, count: 0 }, 0]);
+    const mine = await buyer.get('/ratings/conversations/' + conv);
+    assert.strictEqual(mine.body.theirs.stars, 1, 'the two people still see it');
   });
 
   it('rates once per conversation, editable, with an optional comment', async () => {
-    await say(buyer, conv); await say(seller, conv);
+    await say(buyer, conv); await say(seller, conv); await done();
     const r = await rate(buyer, { stars: 4, comment: '  Friendly,   on time ' });
     assert.strictEqual(r.status, 201, JSON.stringify(r.body));
     assert.deepStrictEqual([r.body.mine.stars, r.body.mine.comment, r.body.mine.raterRole, r.body.mine.mine], [4, 'Friendly, on time', 'buyer', true]);
@@ -53,19 +89,18 @@ describe('ratings after a chat', function () {
     assert.strictEqual(e.status, 200);
     assert.deepStrictEqual([e.body.mine.stars, e.body.mine.comment], [5, null]);
     assert.strictEqual(await models.Rating.count(), 1);
-    // The seller rates the buyer separately and sees the buyer's rating of them.
-    const s = await rate(seller, { stars: 3 });
-    assert.strictEqual(s.status, 201);
+    // The seller sees the buyer's rating of them but can't rate back.
+    const s = await seller.get('/ratings/conversations/' + conv);
     assert.strictEqual(s.body.theirs.stars, 5);
-    assert.strictEqual(s.body.mine.raterRole, 'seller');
+    assert.strictEqual((await rate(seller, { stars: 3 })).status, 403);
     // Delete mine.
     const d = await buyer.delete('/ratings/conversations/' + conv);
     assert.strictEqual(d.body.mine, null);
-    assert.strictEqual(await models.Rating.count(), 1);
+    assert.strictEqual(await models.Rating.count(), 0);
   });
 
   it('validates stars and comments', async () => {
-    await say(buyer, conv); await say(seller, conv);
+    await say(buyer, conv); await say(seller, conv); await done();
     for (const stars of [0, 6, 2.5, '5', null]) assert.strictEqual((await rate(buyer, { stars })).status, 400, String(stars));
     const long = await rate(buyer, { stars: 3, comment: 'x'.repeat(281) });
     assert.ok(long.body.error.details.comment);
@@ -73,7 +108,7 @@ describe('ratings after a chat', function () {
   });
 
   it('only participants; nobody rates themselves', async () => {
-    await say(buyer, conv); await say(seller, conv);
+    await say(buyer, conv); await say(seller, conv); await done();
     assert.strictEqual((await request(app).put('/ratings/conversations/' + conv).send({ stars: 5 })).status, 401);
     assert.strictEqual((await rate(other, { stars: 1 })).status, 404);
     assert.strictEqual((await rate(admin, { stars: 1 })).status, 404);
@@ -87,7 +122,7 @@ describe('ratings after a chat', function () {
   });
 
   it('blocked either way: no new ratings and no edits', async () => {
-    await say(buyer, conv); await say(seller, conv);
+    await say(buyer, conv); await say(seller, conv); await done();
     await rate(buyer, { stars: 2 });
     await seller.post('/conversations/' + conv + '/block');
     let s = await buyer.get('/ratings/conversations/' + conv);
@@ -103,10 +138,10 @@ describe('ratings after a chat', function () {
   });
 
   it('shows average and count on the profile, post seller and conversations, without emails', async () => {
-    await say(buyer, conv); await say(seller, conv);
+    await say(buyer, conv); await say(seller, conv); await done();
     await rate(buyer, { stars: 5, comment: 'Great lamp' });
     const c2 = (await other.post('/conversations').send({ postId })).body.id;
-    await say(other, c2); await say(seller, c2);
+    await say(other, c2); await say(seller, c2); await done(c2);
     await rate(other, { stars: 4 }, c2);
     const p = await request(app).get('/ratings/users/' + sellerId);
     assert.deepStrictEqual(p.body.user, { id: sellerId, name: 'Sam S.' });
@@ -125,7 +160,7 @@ describe('ratings after a chat', function () {
   });
 
   it('ratings are reportable; admins remove abusive comments', async () => {
-    await say(buyer, conv); await say(seller, conv);
+    await say(buyer, conv); await say(seller, conv); await done();
     await rate(buyer, { stars: 1, comment: 'Total idiot' });
     const id = (await models.Rating.findOne()).id;
     assert.strictEqual((await request(app).post('/ratings/' + id + '/report').send({ reason: 'harassment' })).status, 401);
@@ -159,7 +194,7 @@ describe('ratings after a chat', function () {
   });
 
   it('admins can dismiss reports or remove a rating entirely', async () => {
-    await say(buyer, conv); await say(seller, conv);
+    await say(buyer, conv); await say(seller, conv); await done();
     await rate(buyer, { stars: 1, comment: 'Meh' });
     const id = (await models.Rating.findOne()).id;
     await seller.post('/ratings/' + id + '/report').send({ reason: 'fake' });

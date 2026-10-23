@@ -715,7 +715,7 @@ export default {
   "rate.outOf5": "{n} out of 5, {word}",
   "rate.removedChip": "Comment removed by a moderator",
   "rate.how": "How was dealing with {name}?",
-  "rate.once": "Rate them once you've met up.",
+  "rate.once": "One rating for this sale.",
   "rate.theyRated": "{name} rated you",
   "rate.nOutOf5": "{n} out of 5",
   "rate.edit": "Edit rating",
@@ -1925,4 +1925,5 @@ export default {
   "rt.badTime": "Enter a valid time.",
   "rt.pastTime": "Pick a time that hasn't passed.",
   "rt.badDwell": "Choose how long you'll stay at each sale.",
+  "rate.afterSale": "You can rate {name} after your meetup or once they mark your item sold.",
 };
