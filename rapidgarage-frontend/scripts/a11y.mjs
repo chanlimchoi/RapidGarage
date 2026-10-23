@@ -163,8 +163,10 @@ function states(d) {
     { name: 'admin-conversation-reports', path: '/admin', who: 'admin', act: click('.report-kind > button:nth-child(2)') },
     { name: 'admin-spots', path: '/admin', who: 'admin', act: click('.admin-tabs:not(.report-kind) > button:nth-child(2)') },
     { name: 'admin-spot-form', path: '/admin', who: 'admin', act: async (p) => { await p.locator('.admin-tabs:not(.report-kind) > button:nth-child(2)').click(); await p.locator('.rg-admin-spots .btn-primary').first().click(); } },
-    { name: 'admin-users', path: '/admin', who: 'admin', act: click('.admin-tabs:not(.report-kind) > button:nth-child(3)') },
-    { name: 'admin-settings', path: '/admin', who: 'admin', act: click('.admin-tabs:not(.report-kind) > button:nth-child(4)') },
+    // Tabs: reports, spots, analytics, users, settings.
+    { name: 'admin-analytics', path: '/admin', who: 'admin', act: click('.admin-tabs:not(.report-kind) > button:nth-child(3)'), waitAfter: '#an-cities, .rg-analytics, [aria-labelledby="an-cities"]' },
+    { name: 'admin-users', path: '/admin', who: 'admin', act: click('.admin-tabs:not(.report-kind) > button:nth-child(4)') },
+    { name: 'admin-settings', path: '/admin', who: 'admin', act: click('.admin-tabs:not(.report-kind) > button:nth-child(5)') },
   ];
 }
 
