@@ -41,10 +41,10 @@ export function notificationLink(n) {
 
 // One line for a notification, in the reader's language.
 export function notificationText(n) {
-  const title = n.post ? n.post.title || t('notif.untitled') : '';
+  const title = n.post ? n.post.title || t('bell.untitled') : '';
   if (n.kind === 'search_match') {
     const search = n.search ? (n.search.label || (n.search.keyword ? '“' + n.search.keyword + '”' : '')) : '';
-    return search ? t('notif.searchMatch', { search, title }) : t('notif.searchMatchPlain', { title });
+    return search ? t('bell.searchMatch', { search, title }) : t('bell.searchMatchPlain', { title });
   }
   return title;
 }
