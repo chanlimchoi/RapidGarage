@@ -612,6 +612,8 @@
   "postIds must be sale ids.": "postIds는 세일 ID여야 합니다.",
   "Enter a valid start time.": "올바른 출발 시간을 입력하세요.",
   "Pick a start time within the next {n} days.": "앞으로 {n}일 이내의 출발 시간을 고르세요.",
-  "Minutes per stop must be a whole number from {min} to {max}.": "정류지당 시간은 {min}~{max} 사이의 정수(분)여야 합니다."
+  "Minutes per stop must be a whole number from {min} to {max}.": "정류지당 시간은 {min}~{max} 사이의 정수(분)여야 합니다.",
+  "Only the buyer rates the seller.": "구매자만 판매자를 평가할 수 있습니다.",
+  "You can rate the seller after a completed meetup or sale.": "만남이나 거래가 끝난 뒤 판매자를 평가할 수 있습니다."
  }
 }

@@ -634,6 +634,8 @@
   "postIds must be sale ids.": "postIds debe contener identificadores de ventas.",
   "Enter a valid start time.": "Introduce una hora de salida válida.",
   "Pick a start time within the next {n} days.": "Elige una hora de salida dentro de los próximos {n} días.",
-  "Minutes per stop must be a whole number from {min} to {max}.": "Los minutos por parada deben ser un número entero de {min} a {max}."
+  "Minutes per stop must be a whole number from {min} to {max}.": "Los minutos por parada deben ser un número entero de {min} a {max}.",
+  "Only the buyer rates the seller.": "Solo el comprador califica al vendedor.",
+  "You can rate the seller after a completed meetup or sale.": "Puedes calificar al vendedor después de un encuentro o una venta completados."
  }
 }

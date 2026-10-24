@@ -715,7 +715,7 @@ export default {
   "rate.outOf5": "{n} de 5, {word}",
   "rate.removedChip": "Comentario eliminado por un moderador",
   "rate.how": "¿Qué tal fue tratar con {name}?",
-  "rate.once": "Valóralo cuando se hayan visto.",
+  "rate.once": "Una calificación por esta venta.",
   "rate.theyRated": "{name} te valoró",
   "rate.nOutOf5": "{n} de 5",
   "rate.edit": "Editar valoración",
@@ -1925,4 +1925,5 @@ export default {
   "rt.badTime": "Introduce una hora válida.",
   "rt.pastTime": "Elige una hora que no haya pasado.",
   "rt.badDwell": "Elige cuánto tiempo estarás en cada venta.",
+  "rate.afterSale": "Podrás calificar a {name} después de vuestro encuentro o cuando marque tu artículo como vendido.",
 };
