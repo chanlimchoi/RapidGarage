@@ -4,6 +4,8 @@ module.exports = (sequelize, DataTypes) => {
   const SaleAlert = sequelize.define('SaleAlert', {
     userId: { type: DataTypes.INTEGER, allowNull: false },
     label: { type: DataTypes.STRING(80), allowNull: true },
+    // Saved-search words (lib/items.js parseKeyword); each must match the title, description or an unsold item.
+    keyword: { type: DataTypes.STRING(100), allowNull: true },
     lat: { type: DataTypes.DOUBLE, allowNull: false },
     lng: { type: DataTypes.DOUBLE, allowNull: false },
     radiusMiles: { type: DataTypes.INTEGER, allowNull: false },
@@ -26,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
   SaleAlert.prototype.toJSON = function() {
     const v = this.get();
     return {
-      id: v.id, label: v.label, lat: v.lat, lng: v.lng, radiusMiles: v.radiusMiles,
+      id: v.id, label: v.label, keyword: v.keyword || null, lat: v.lat, lng: v.lng, radiusMiles: v.radiusMiles,
       maxPrice: v.maxPrice, freeOnly: v.freeOnly, enabled: v.enabled, frequency: v.frequency || 'instant', createdAt: v.createdAt, updatedAt: v.updatedAt,
     };
   };

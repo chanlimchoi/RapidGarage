@@ -77,6 +77,8 @@ async function seed(browser) {
   const buyer = await user('Bea', 'Buyer');
   const s = await login(browser, seller);
   const b = await login(browser, buyer);
+  // A saved search first, so the new sale below lands in the buyer's notifications (the bell).
+  await api(b, 'POST', '/alerts', { address: '12 Hicks St, Brooklyn, NY 11201', radiusMiles: 5, keyword: 'road bike', label: 'Bikes nearby' });
   const post = await api(s, 'POST', '/post', {
     title: 'Moving sale: furniture, books & bikes', street: '12 Hicks St', city: 'Brooklyn', state: 'NY', zipCode: '11201',
     description: 'Couch, bookcases, a blue road bike and kids books. Cash or a payment app.', priceMin: 2, priceMax: 150,
@@ -159,6 +161,8 @@ function states(d) {
     { name: 'dashboard-sale', path: '/dashboard/sales/' + d.post, who: 'seller' },
     { name: 'profile', path: '/profile', who: 'seller' },
     { name: 'settings', path: '/settings', who: 'buyer' },
+    { name: 'settings-saved-search', path: '/settings', who: 'buyer', wait: '.alert-item', act: click('.alert-item-actions .btn-secondary'), waitAfter: '#alert-keyword' },
+    { name: 'notifications', path: '/notifications', who: 'buyer', wait: '.notification-list, .empty' },
     { name: 'admin-reports', path: '/admin', who: 'admin' },
     { name: 'admin-conversation-reports', path: '/admin', who: 'admin', act: click('.report-kind > button:nth-child(2)') },
     { name: 'admin-spots', path: '/admin', who: 'admin', act: click('.admin-tabs:not(.report-kind) > button:nth-child(2)') },

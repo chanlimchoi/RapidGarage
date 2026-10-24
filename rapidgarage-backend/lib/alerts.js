@@ -10,6 +10,7 @@ const { publicName } = require('./people');
 const { saleAlertsEnabled } = require('./features');
 const mailer = require('./mailer');
 const schedule = require('./schedule');
+const itemsLib = require('./items');
 
 function models() { return require('../models'); }
 
@@ -81,38 +82,53 @@ function oneClickUrl(alert) {
 // ---- matching -----------------------------------------------------------
 // Queue a notification for every user with an enabled alert that matches the
 // post. One row per (user, post); the nearest matching alert wins.
-async function enqueueForPost(post) {
+// opts.keywordOnly: only saved searches with a keyword (an edit or a new item
+// can make a sale match words it didn't before; area matches were done at
+// create/move time). Every matching enabled alert (instant or weekly) gets an
+// in-app notification; instant alerts also queue the email as before.
+async function enqueueForPost(post, opts) {
   const m = models();
+  const keywordOnly = !!(opts && opts.keywordOnly);
   if (!post || post.hidden || typeof post.lat !== 'number' || typeof post.lng !== 'number') return 0;
   // Only sales that haven't ended (upcoming or open now).
   if (schedule.isEnded(post)) return 0;
   if (!(await saleAlertsEnabled())) return 0;
   const dLat = RADIUS_MAX / 69.0;
-  const candidates = await m.SaleAlert.findAll({
-    // Weekly alerts get the weekend digest instead (lib/weekendDigest.js).
-    where: { enabled: true, frequency: 'instant', userId: { [Op.ne]: post.userId }, lat: { [Op.between]: [post.lat - dLat, post.lat + dLat] } },
-  });
-  const byUser = new Map();
+  const where = { enabled: true, userId: { [Op.ne]: post.userId }, lat: { [Op.between]: [post.lat - dLat, post.lat + dLat] } };
+  if (keywordOnly) where.keyword = { [Op.ne]: null };
+  const candidates = await m.SaleAlert.findAll({ where });
+  let itemNames = null;
+  if (candidates.some((a) => a.keyword)) {
+    itemNames = (await m.SaleItem.findAll({ where: { postId: post.id, sold: false }, attributes: ['name'], raw: true })).map((i) => i.name);
+  }
+  const inApp = new Map();
+  const email = new Map();
+  const better = (map, a, d) => { const prev = map.get(a.userId); if (!prev || d < prev.d) map.set(a.userId, { alert: a, d }); };
   candidates.forEach((a) => {
     const d = geo.haversineMiles({ lat: a.lat, lng: a.lng }, { lat: post.lat, lng: post.lng });
     if (d > a.radiusMiles) return;
     if (!matchesPrice(post, { maxPrice: a.maxPrice, freeOnly: a.freeOnly })) return;
-    const prev = byUser.get(a.userId);
-    if (!prev || d < prev.d) byUser.set(a.userId, { alert: a, d });
+    if (a.keyword && !itemsLib.matchesKeyword(post, itemNames, itemsLib.parseKeyword(a.keyword).words)) return;
+    better(inApp, a, d);
+    // Weekly alerts get the weekend digest instead (lib/weekendDigest.js).
+    if (a.frequency === 'instant') better(email, a, d);
   });
-  if (!byUser.size) return 0;
-  const userIds = Array.from(byUser.keys());
+  if (!inApp.size) return 0;
+  const userIds = Array.from(inApp.keys());
   const blocks = await m.UserBlock.findAll({
     where: { [Op.or]: [{ blockerId: post.userId, blockedId: userIds }, { blockedId: post.userId, blockerId: userIds }] },
     raw: true,
   });
-  blocks.forEach((b) => { byUser.delete(b.blockerId === post.userId ? b.blockedId : b.blockerId); });
-  const rows = Array.from(byUser.entries()).map(([userId, v]) => ({
-    userId, alertId: v.alert.id, postId: post.id, distanceMiles: Math.round(v.d * 10) / 10, status: 'pending',
+  blocks.forEach((b) => { const other = b.blockerId === post.userId ? b.blockedId : b.blockerId; inApp.delete(other); email.delete(other); });
+  const miles = (d) => Math.round(d * 10) / 10;
+  const rows = Array.from(email.entries()).map(([userId, v]) => ({
+    userId, alertId: v.alert.id, postId: post.id, distanceMiles: miles(v.d), status: 'pending',
   }));
-  if (!rows.length) return 0;
-  await m.AlertNotification.bulkCreate(rows, { ignoreDuplicates: true });
-  return rows.length;
+  if (rows.length) await m.AlertNotification.bulkCreate(rows, { ignoreDuplicates: true });
+  await require('./notifications').add(Array.from(inApp.entries()).map(([userId, v]) => ({
+    userId, kind: 'search_match', postId: post.id, alertId: v.alert.id, dedupeKey: 'search:' + post.id, data: { distanceMiles: miles(v.d) },
+  })));
+  return inApp.size;
 }
 
 // Fire-and-forget from request handlers; tests can await idle().
@@ -125,8 +141,8 @@ function track(fn, what) {
   inflight.add(p);
   return p;
 }
-function schedulePostMatch(post) {
-  return track(() => enqueueForPost(post), 'Sale alert matching failed for post ' + (post && post.id));
+function schedulePostMatch(post, opts) {
+  return track(() => enqueueForPost(post, opts), 'Sale alert matching failed for post ' + (post && post.id));
 }
 const idle = () => Promise.all(Array.from(inflight));
 
@@ -249,6 +265,8 @@ async function processQueue(now) {
     console.error('Sale summary pass failed:', err && err.message);
     summary.saleSummaries = { error: true };
   }
+  // In-app notifications older than KEEP_DAYS go away.
+  try { await require('./notifications').prune(); } catch (err) { console.error('Notification prune failed:', err && err.message); }
   return summary;
 }
 

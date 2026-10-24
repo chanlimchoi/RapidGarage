@@ -12,6 +12,7 @@ const schedule = require('./schedule');
 const geo = require('./geo');
 const mailer = require('./mailer');
 const { matchesPrice } = require('./price');
+const itemsLib = require('./items');
 const { saleAlertsEnabled } = require('./features');
 
 function models() { return require('../models'); }
@@ -46,7 +47,14 @@ async function salesFor(alert, at) {
   });
   const blocks = await m.UserBlock.findAll({ where: { [Op.or]: [{ blockerId: alert.userId }, { blockedId: alert.userId }] }, raw: true });
   const blocked = new Set(blocks.map((b) => (b.blockerId === alert.userId ? b.blockedId : b.blockerId)));
+  const words = alert.keyword ? itemsLib.parseKeyword(alert.keyword).words : null;
+  const names = {};
+  if (words) {
+    (await m.SaleItem.findAll({ where: { postId: posts.map((p) => p.id), sold: false }, attributes: ['postId', 'name'], raw: true }))
+      .forEach((i) => { (names[i.postId] = names[i.postId] || []).push(i.name); });
+  }
   return posts
+    .filter((p) => !words || itemsLib.matchesKeyword(p, names[p.id], words))
     .filter((p) => !blocked.has(p.userId) && matchesPrice(p, { maxPrice: alert.maxPrice, freeOnly: alert.freeOnly }) && schedule.matchesWhen(p, 'weekend', at))
     .map((p) => ({ post: p, d: geo.haversineMiles({ lat: alert.lat, lng: alert.lng }, { lat: p.lat, lng: p.lng }) }))
     .filter((x) => x.d <= alert.radiusMiles)

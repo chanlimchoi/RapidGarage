@@ -33,7 +33,7 @@ async function exportData(userId) {
   const messages = convs.length ? await m.Message.findAll({ where: { conversationId: convs.map((c) => c.id) }, order: [['id', 'ASC']] }) : [];
   const byConv = new Map();
   messages.forEach((msg) => { if (!byConv.has(msg.conversationId)) byConv.set(msg.conversationId, []); byConv.get(msg.conversationId).push(msg); });
-  const [wanted, events, saved, alerts, follows, ratingsGiven, ratingsReceived, devices] = await Promise.all([
+  const [wanted, events, saved, alerts, follows, ratingsGiven, ratingsReceived, devices, inbox] = await Promise.all([
     m.WantedPost.findAll({ where: { userId } }),
     m.SaleEvent.findAll({ where: { organizerId: userId } }),
     m.SavedPost.findAll({ where: { userId }, attributes: ['postId', 'remind', 'createdAt'] }),
@@ -42,6 +42,7 @@ async function exportData(userId) {
     m.Rating.findAll({ where: { raterId: userId } }),
     m.Rating.findAll({ where: { rateeId: userId } }),
     m.PushSubscription.findAll({ where: { userId }, attributes: ['label', 'createdAt', 'lastSentAt'] }),
+    m.Notification.findAll({ where: { userId }, attributes: ['kind', 'postId', 'createdAt', 'seenAt'], order: [['id', 'ASC']] }),
   ]);
   const profile = user.toJSON();
   return {
@@ -57,6 +58,7 @@ async function exportData(userId) {
     ratingsGiven: plain(ratingsGiven),
     ratingsReceived: plain(ratingsReceived),
     notificationDevices: plain(devices),
+    notifications: plain(inbox),
     conversations: convs.map((c) => {
       const other = others.get(c.buyerId === userId ? c.sellerId : c.buyerId);
       return {
@@ -82,6 +84,7 @@ async function deleteAccount(userId) {
     await removePhotoFiles(p.photos || []);
     await require('./moderation').closeOpenReports(p.id, { status: 'actioned', action: 'deleted', reviewerId: null, resolutionNote: 'Account deleted.' });
     await m.SaleItem.destroy({ where: { postId: p.id } });
+    await m.Notification.destroy({ where: { postId: p.id } });
     await m.PostPhoto.destroy({ where: { postId: p.id } });
     await p.destroy();
   }
@@ -95,6 +98,7 @@ async function deleteAccount(userId) {
   await Promise.all([
     m.Follow.destroy({ where: { [Op.or]: [{ followerId: userId }, { sellerId: userId }] } }),
     m.SavedPost.destroy({ where: { userId } }),
+    m.Notification.destroy({ where: { userId } }),
     m.SaleAlert.destroy({ where: { userId } }),
     m.PushSubscription.destroy({ where: { userId } }),
     m.PasswordReset.destroy({ where: { userId } }),

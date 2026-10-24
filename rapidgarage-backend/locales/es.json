@@ -627,6 +627,7 @@
   "A counteroffer can't be more than the asking price.": "La contraoferta no puede ser mayor que el precio pedido.",
   "There is no offer to counter.": "No hay ninguna oferta para contraofertar.",
   "There is no counteroffer to take.": "No hay ninguna contraoferta para aceptar.",
-  "Invalid offer.": "Oferta no válida."
+  "Invalid offer.": "Oferta no válida.",
+  "ids must be a list of notification ids.": "ids debe ser una lista de identificadores de notificaciones."
  }
 }

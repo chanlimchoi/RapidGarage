@@ -6,6 +6,7 @@ const area = require('../lib/area');
 const { PRICE_CAP } = require('../lib/price');
 const { saleAlertsEnabled } = require('../lib/features');
 const alerts = require('../lib/alerts');
+const itemsLib = require('../lib/items');
 
 const LABEL_MAX = 80;
 
@@ -19,6 +20,15 @@ function validate(body, partial) {
     if (body.label !== null && typeof body.label !== 'string') errors.label = 'Name must be text.';
     else if (body.label && body.label.trim().length > LABEL_MAX) errors.label = 'Keep the name under ' + LABEL_MAX + ' characters.';
     else values.label = body.label ? body.label.trim() : null;
+  }
+  // Saved-search words: the same rule as the search box (lib/items.js parseKeyword).
+  if (has('keyword')) {
+    if (body.keyword === null) values.keyword = null;
+    else {
+      const k = itemsLib.parseKeyword(body.keyword);
+      if (k.error) errors.keyword = k.error;
+      else values.keyword = k.keyword || null;
+    }
   }
   area.readLocation(body, errors, values, !partial);
   if (has('radiusMiles') || !partial) {

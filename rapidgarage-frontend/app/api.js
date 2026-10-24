@@ -245,9 +245,13 @@ export const moderateWanted = (id, action, note) => apiFetch('/admin/wanted/' + 
 // { count, wantedMatches } for the nav badges, or null.
 export function fetchBadges() {
   return apiFetch('/conversations/unread')
-    .then(({ ok, data }) => (ok && data ? { count: data.count, wantedMatches: data.wantedMatches || 0, reminders: data.reminders || 0 } : null))
+    .then(({ ok, data }) => (ok && data ? { count: data.count, wantedMatches: data.wantedMatches || 0, reminders: data.reminders || 0, notifications: data.notifications || 0 } : null))
     .catch(() => null);
 }
+
+// ---- In-app notifications (controllers/notifications.js) --------------------
+export const fetchNotifications = () => apiFetch('/notifications');
+export const markNotificationsSeen = (ids) => apiFetch('/notifications/seen', jsonBody('POST', ids ? { ids } : {}));
 
 // ---- Free on the curb (controllers/curbside.js) ------------------------------
 // Each answers { id, items, curbside } for the caller, to merge into the post.

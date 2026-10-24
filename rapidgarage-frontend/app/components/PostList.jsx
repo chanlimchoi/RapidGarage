@@ -12,6 +12,7 @@ import { WHEN_FILTERS } from '../lib/schedule';
 import { KEYWORD_MAX } from '../lib/items';
 import { scrollBehavior } from '../lib/a11y';
 import { t } from '../i18n';
+import { searchAlertBody, searchKey } from '../lib/savedSearch';
 
 const PAGE_SIZE = 10;
 
@@ -176,29 +177,24 @@ class PostList extends React.Component {
     this.setState({ radius }, () => { if (this.state.lastWhere) this.runSearch(this.state.lastWhere, 1); });
   }
 
-  // Save the current distance search (center, radius, price filters) as an alert.
-  searchKey() {
+  // Save the current distance search (center, radius, price filters and the
+  // words searched for) as a saved search with alerts (lib/savedSearch.js).
+  searchSpec() {
     const s = this.state;
-    const f = s.resultFilter || {};
-    return s.center ? [s.center.lat, s.center.lng, s.resultRadius, f.freeOnly ? 1 : 0, f.maxPrice].join('|') : null;
+    return { center: s.center, radius: s.resultRadius, filter: s.resultFilter || {}, keyword: s.activeKeyword, place: s.lastWhere && s.lastWhere.q };
   }
+  searchKey() { return this.state.center ? searchKey(this.searchSpec()) : null; }
 
   alertHere() {
     const s = this.state;
     if (!s.center) return;
-    const f = s.resultFilter || {};
-    const q = s.lastWhere && s.lastWhere.q;
-    const body = {
-      label: (q ? t('list.alertNear', { place: q }) : t('list.alertNearMe')).slice(0, 80),
-      lat: s.center.lat, lng: s.center.lng, radiusMiles: s.resultRadius,
-      freeOnly: !!f.freeOnly, maxPrice: !f.freeOnly && f.maxPrice !== null && f.maxPrice !== undefined ? f.maxPrice : null,
-    };
+    const body = searchAlertBody(this.searchSpec());
     const key = this.searchKey();
     this.setState({ alertBusy: true });
     createAlert(body).then(({ ok, data }) => {
       if (!this.mounted) return;
       this.setState({ alertBusy: false, alertSavedFor: ok ? key : this.state.alertSavedFor });
-      if (ok) toast.success(t('list.alertSaved', { miles: body.radiusMiles }));
+      if (ok) toast.success(body.keyword ? t('list.searchSaved', { miles: body.radiusMiles }) : t('list.alertSaved', { miles: body.radiusMiles }));
       else toast.error(errorMessage(data, t('list.alertFailed')));
     }).catch(() => { if (this.mounted) this.setState({ alertBusy: false }); toast.error(t('common.networkShort')); });
   }
@@ -206,8 +202,8 @@ class PostList extends React.Component {
   renderAlertCta() {
     const s = this.state;
     const config = this.props.config || {};
-    // Alerts match by area and price only, so don't offer one for a keyword search.
-    if (config.saleAlerts === false || s.loading || s.mode !== 'distance' || !s.center || s.activeKeyword) return null;
+    // Saved searches need an area (center + radius); the words are optional.
+    if (config.saleAlerts === false || s.loading || s.mode !== 'distance' || !s.center) return null;
     if (!this.props.user) {
       return <Link className="btn btn-secondary btn-sm search-alert-cta" to="/login"><BellRing size={16} aria-hidden="true" />{t('list.loginForAlerts')}</Link>;
     }
@@ -216,7 +212,7 @@ class PostList extends React.Component {
     }
     return (
       <button type="button" className="btn btn-secondary btn-sm search-alert-cta" onClick={this.alertHere} disabled={s.alertBusy}>
-        {s.alertBusy ? <Spinner /> : <BellRing size={16} aria-hidden="true" />}{t('list.alertMe')}
+        {s.alertBusy ? <Spinner /> : <BellRing size={16} aria-hidden="true" />}{s.activeKeyword ? t('list.saveSearch') : t('list.alertMe')}
       </button>
     );
   }

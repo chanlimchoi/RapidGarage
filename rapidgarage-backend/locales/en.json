@@ -627,6 +627,7 @@
   "A counteroffer can't be more than the asking price.": "A counteroffer can't be more than the asking price.",
   "There is no offer to counter.": "There is no offer to counter.",
   "There is no counteroffer to take.": "There is no counteroffer to take.",
-  "Invalid offer.": "Invalid offer."
+  "Invalid offer.": "Invalid offer.",
+  "ids must be a list of notification ids.": "ids must be a list of notification ids."
  }
 }
