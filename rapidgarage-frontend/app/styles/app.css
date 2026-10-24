@@ -1324,3 +1324,7 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .route-times { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
 .route-skipped { margin: var(--space-2) 0 0; padding-left: var(--space-4); }
 .route-skipped li { margin: var(--space-1) 0; }
+/* Route form at 400% zoom: the datetime input must not widen the grid column. */
+.route-form .alert-form-row { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 560px) { .route-form .alert-form-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.route-form .alert-form-row .input { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
