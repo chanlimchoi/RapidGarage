@@ -44,6 +44,7 @@ const PersonRatings = lazy(() => import('./ratings/PersonRatings'));
 const Saved = lazy(() => import('./saved/Saved'));
 const Following = lazy(() => import('./follows/Following'));
 const Notifications = lazy(() => import('./notifications/Notifications'));
+const RoutePlanner = lazy(() => import('./route/RoutePlanner'));
 const ItemsEditor = lazy(() => import('./post/ItemsEditor'));
 const EventsIndex = lazy(() => import('./events/EventsIndex'));
 const EventForm = lazy(() => import('./events/EventForm'));
@@ -231,6 +232,7 @@ class App extends Component {
                 <Route path='/saved' element={<RoutedInner component={Saved} />} />
                 <Route path='/favorites' element={<RoutedInner component={Saved} />} />
                 <Route path='/favorites/sellers' element={<RoutedInner component={Following} />} />
+                <Route path='/route' element={<RoutedInner component={RoutePlanner} />} />
                 <Route path='/notifications' element={<RoutedInner component={Notifications} onSeen={this.refreshUnread} />} />
                 <Route path='/people/:id' element={<RoutedInner component={PersonRatings} />} />
                 <Route path='/profile' element={<RoutedInner component={Profile} />} />

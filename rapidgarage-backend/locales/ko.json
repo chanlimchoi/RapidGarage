@@ -606,6 +606,12 @@
   "There is no offer to counter.": "역제안할 제안이 없어요.",
   "There is no counteroffer to take.": "수락할 역제안이 없어요.",
   "Invalid offer.": "잘못된 제안이에요.",
-  "ids must be a list of notification ids.": "ids는 알림 ID 목록이어야 합니다."
+  "ids must be a list of notification ids.": "ids는 알림 ID 목록이어야 합니다.",
+  "Invalid route.": "경로가 올바르지 않습니다.",
+  "Pick {n} to {m} sales.": "세일을 {n}~{m}개 고르세요.",
+  "postIds must be sale ids.": "postIds는 세일 ID여야 합니다.",
+  "Enter a valid start time.": "올바른 출발 시간을 입력하세요.",
+  "Pick a start time within the next {n} days.": "앞으로 {n}일 이내의 출발 시간을 고르세요.",
+  "Minutes per stop must be a whole number from {min} to {max}.": "정류지당 시간은 {min}~{max} 사이의 정수(분)여야 합니다."
  }
 }

@@ -147,6 +147,11 @@ function states(d) {
     { name: 'wanted-new', path: '/wanted/new', who: 'buyer' },
     { name: 'saved-route', path: '/saved', who: 'buyer' },
     { name: 'favorites', path: '/favorites', who: 'buyer' },
+    { name: 'route-empty', path: '/route', who: 'out' },
+    { name: 'route', path: '/route', who: 'buyer', act: async (p) => {
+      await p.evaluate((id) => localStorage.setItem('rg-route', JSON.stringify([id, 999999])), d.post);
+      await p.reload(); await p.waitForSelector('.route-stops, .route-skipped', { timeout: 10000 });
+    } },
     { name: 'favorites-sellers', path: '/favorites/sellers', who: 'buyer', wait: '.following-list, .empty' },
     { name: 'inbox', path: '/messages', who: 'buyer' },
     { name: 'conversation', path: '/messages/' + d.conv, who: 'buyer', wait: '.composer, .thread-log' },

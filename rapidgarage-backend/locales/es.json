@@ -628,6 +628,12 @@
   "There is no offer to counter.": "No hay ninguna oferta para contraofertar.",
   "There is no counteroffer to take.": "No hay ninguna contraoferta para aceptar.",
   "Invalid offer.": "Oferta no válida.",
-  "ids must be a list of notification ids.": "ids debe ser una lista de identificadores de notificaciones."
+  "ids must be a list of notification ids.": "ids debe ser una lista de identificadores de notificaciones.",
+  "Invalid route.": "Ruta no válida.",
+  "Pick {n} to {m} sales.": "Elige de {n} a {m} ventas.",
+  "postIds must be sale ids.": "postIds debe contener identificadores de ventas.",
+  "Enter a valid start time.": "Introduce una hora de salida válida.",
+  "Pick a start time within the next {n} days.": "Elige una hora de salida dentro de los próximos {n} días.",
+  "Minutes per stop must be a whole number from {min} to {max}.": "Los minutos por parada deben ser un número entero de {min} a {max}."
  }
 }
