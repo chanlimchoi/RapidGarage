@@ -636,6 +636,18 @@
   "Pick a start time within the next {n} days.": "Pick a start time within the next {n} days.",
   "Minutes per stop must be a whole number from {min} to {max}.": "Minutes per stop must be a whole number from {min} to {max}.",
   "Only the buyer rates the seller.": "Only the buyer rates the seller.",
-  "You can rate the seller after a completed meetup or sale.": "You can rate the seller after a completed meetup or sale."
+  "You can rate the seller after a completed meetup or sale.": "You can rate the seller after a completed meetup or sale.",
+  "Only the buyer can ask for a bundle.": "Only the buyer can ask for a bundle.",
+  "Invalid bundle.": "Invalid bundle.",
+  "Choose the items for your bundle.": "Choose the items for your bundle.",
+  "A bundle can have up to {n} items.": "A bundle can have up to {n} items.",
+  "This sale doesn't offer a bundle deal.": "This sale doesn't offer a bundle deal.",
+  "Choose at least {n} items for the bundle.": "Choose at least {n} items for the bundle.",
+  "Every item in a bundle needs a price.": "Every item in a bundle needs a price.",
+  "A bundle is accepted or declined as a whole. Message the buyer to change it.": "A bundle is accepted or declined as a whole. Message the buyer to change it.",
+  "A bundle must be {n} to {m} items.": "A bundle must be {n} to {m} items.",
+  "The bundle discount must be a whole percent from {n} to {m}.": "The bundle discount must be a whole percent from {n} to {m}.",
+  "Choose how many items make a bundle.": "Choose how many items make a bundle.",
+  "Choose the bundle discount.": "Choose the bundle discount."
  }
 }

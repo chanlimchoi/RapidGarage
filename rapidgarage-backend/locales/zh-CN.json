@@ -614,6 +614,18 @@
   "Pick a start time within the next {n} days.": "请选择未来 {n} 天内的出发时间。",
   "Minutes per stop must be a whole number from {min} to {max}.": "每站分钟数必须是 {min} 到 {max} 之间的整数。",
   "Only the buyer rates the seller.": "只有买家可以评价卖家。",
-  "You can rate the seller after a completed meetup or sale.": "完成见面或交易后即可评价卖家。"
+  "You can rate the seller after a completed meetup or sale.": "完成见面或交易后即可评价卖家。",
+  "Only the buyer can ask for a bundle.": "只有买家可以申请组合优惠。",
+  "Invalid bundle.": "组合无效。",
+  "Choose the items for your bundle.": "请选择组合中的物品。",
+  "A bundle can have up to {n} items.": "一个组合最多 {n} 件物品。",
+  "This sale doesn't offer a bundle deal.": "此甩卖不提供组合优惠。",
+  "Choose at least {n} items for the bundle.": "组合至少需要选择 {n} 件物品。",
+  "Every item in a bundle needs a price.": "组合中的每件物品都需要标价。",
+  "A bundle is accepted or declined as a whole. Message the buyer to change it.": "组合只能整体接受或拒绝。如需更改，请给买家发消息。",
+  "A bundle must be {n} to {m} items.": "组合必须包含 {n} 到 {m} 件物品。",
+  "The bundle discount must be a whole percent from {n} to {m}.": "组合折扣必须是 {n} 到 {m} 之间的整数百分比。",
+  "Choose how many items make a bundle.": "请选择几件物品构成组合。",
+  "Choose the bundle discount.": "请选择组合折扣。"
  }
 }

@@ -121,6 +121,8 @@ export const fetchConversation = (id) => apiFetch('/conversations/' + id);
 // Item holds (lib/holds.js on the server).
 export const fetchHolds = (conversationId) => apiFetch('/conversations/' + conversationId + '/holds');
 export const requestHold = (conversationId, body) => apiFetch('/conversations/' + conversationId + '/holds', { method: 'POST', body: JSON.stringify(body) });
+// { itemIds, pickupAt? } : ask for a bundle deal (lib/bundles.js).
+export const requestBundle = (conversationId, body) => apiFetch('/conversations/' + conversationId + '/bundles', { method: 'POST', body: JSON.stringify(body) });
 export const holdAction = (holdId, action, body) => apiFetch('/holds/' + holdId + '/' + action, { method: 'POST', body: JSON.stringify(body || {}) });
 // Meetup suggestions (see the backend's lib/meetups.js).
 export const fetchMeetups = (conversationId) => apiFetch('/conversations/' + conversationId + '/meetups');

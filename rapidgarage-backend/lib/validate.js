@@ -1,5 +1,6 @@
 const { validatePrice } = require('./price');
 const { validateMarkdown } = require('./markdown');
+const { validateBundle } = require('./bundles');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ZIP_RE = /^\d{5}(-\d{4})?$/;
 
@@ -48,6 +49,9 @@ function validatePost(body, partial, existing) {
   const markdown = validateMarkdown(body, existing);
   Object.assign(errors, markdown.errors);
   Object.assign(out, markdown.values);
+  const bundle = validateBundle(body, existing);
+  Object.assign(errors, bundle.errors);
+  Object.assign(out, bundle.values);
   return { errors, values: out };
 }
 

@@ -1324,6 +1324,17 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .route-times { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
 .route-skipped { margin: var(--space-2) 0 0; padding-left: var(--space-4); }
 .route-skipped li { margin: var(--space-1) 0; }
+
+/* Bundle deals (lib/bundles.js) */
+.hold-head { flex-wrap: wrap; }
+.hold-head-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chip-bundle { background: var(--color-brand-soft); color: var(--color-brand-soft-text); }
+.bundle-offer { display: flex; align-items: center; gap: var(--space-1); }
+.bundle-pick { border: 0; margin: 0; padding: 0; display: grid; gap: var(--space-1); min-width: 0; }
+.bundle-pick .checkbox-row span { overflow-wrap: anywhere; }
+.bundle-summary { margin: var(--space-2) 0; font-weight: 600; }
+.bundle-items { margin: var(--space-1) 0; padding-inline-start: var(--space-4); overflow-wrap: anywhere; }
+.bundle-note { margin: var(--space-1) 0 0; }
 /* Route form at 400% zoom: the datetime input must not widen the grid column. */
 .route-form .alert-form-row { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 560px) { .route-form .alert-form-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
