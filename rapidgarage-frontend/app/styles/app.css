@@ -1216,6 +1216,11 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .following-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
 .following-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
 .following-row:first-child { border-top: 0; }
+/* Favorites tabs (sales / sellers) */
+.fav-tabs { display: flex; gap: var(--space-2); margin: 0 0 var(--space-4); border-bottom: 1px solid var(--color-border); flex-wrap: wrap; }
+.fav-tab { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-3); color: var(--color-text-muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; }
+.fav-tab:hover { color: var(--color-text); }
+.fav-tab.is-active { color: var(--color-brand-soft-text); border-bottom-color: currentColor; font-weight: 600; }
 /* Notifications (the bell) */
 .nav-bell { position: relative; }
 .notification-list { list-style: none; margin: 0; padding: var(--space-2) var(--space-4); }
@@ -1303,3 +1308,5 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 /* Email verification banner */
 .verify-banner { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin: 0 auto var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-warning); border-radius: var(--radius-md); background: var(--color-warning-soft); color: var(--color-text); }
 .verify-banner span { flex: 1; min-width: 200px; }
+/* Long "log in to add favorites" labels (es, ko) wrap instead of widening the page at 400% zoom. */
+.save-btn-full { white-space: normal; max-width: 100%; text-align: center; line-height: 1.25; padding-block: var(--space-2); }

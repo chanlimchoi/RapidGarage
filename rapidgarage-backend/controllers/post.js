@@ -7,6 +7,7 @@ const { removePhotoFiles } = require('./photos');
 const { geocodePost } = require('../lib/geo');
 const mod = require('../lib/moderation');
 const alerts = require('../lib/alerts');
+const favorites = require('../lib/favorites');
 const schedule = require('../lib/schedule');
 const ratings = require('../lib/ratings');
 const { publicUser } = require('../lib/people');
@@ -220,6 +221,7 @@ router.put('/:id', requireLogin, loadPost, requireOwner, async (req, res) => {
   if (!Object.keys(values).length && !sched.value) return badRequest(res, 'Nothing to update.');
   const moved = ADDRESS_FIELDS.some((f) => values[f] !== undefined && values[f] !== req.post[f]);
   try {
+    const before = { priceMin: req.post.priceMin, priceMax: req.post.priceMax, isFree: req.post.isFree };
     let post = await req.post.update(values);
     if (sched.value) await schedule.saveSchedule(models, post, sched.value);
     // Legacy startDate/endDate replace any day-by-day schedule.
@@ -231,6 +233,8 @@ router.put('/:id', requireLogin, loadPost, requireOwner, async (req, res) => {
     // the (user, post) unique index means nobody is told twice.
     // Saved searches with words are re-checked on any edit (the title may now match).
     alerts.schedulePostMatch(post, moved ? undefined : { keywordOnly: true });
+    // Cheaper (or now free): people who favorited it hear about it.
+    favorites.schedule(() => favorites.postEdited(post, before));
     // Any change (title, description, price, place, dates) may make it match a
     // wanted post now; each (wanted post, sale) pair is only ever told once.
     wanted.schedulePost(post.id);

@@ -1,7 +1,7 @@
 // Saved searches and the notification list (pure helpers; see
 // test/saved-search.test.js). The server (controllers/alerts.js,
 // lib/notifications.js) has the final say.
-import { t } from '../i18n/index.js';
+import { t, intlLocale } from '../i18n/index.js';
 
 export const KEYWORD_MAX = 60;
 export const LABEL_MAX = 80;
@@ -39,9 +39,36 @@ export function notificationLink(n) {
   return n.post ? '/post/' + n.post.id : '/settings#alerts';
 }
 
+// 4550 -> "$45.50", 300 -> "$3", 0 -> "Free" (cents); dollars(25) -> "$25".
+export function money(cents) {
+  if (cents === null || cents === undefined) return '';
+  if (cents === 0) return t('price.free');
+  const digits = cents % 100 ? 2 : 0;
+  return new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol', minimumFractionDigits: digits, maximumFractionDigits: digits }).format(cents / 100);
+}
+const dollars = (d) => (d === null || d === undefined ? '' : money(Math.round(d * 100)));
+
 // One line for a notification, in the reader's language.
 export function notificationText(n) {
   const title = n.post ? n.post.title || t('bell.untitled') : '';
+  const d = n.data || {};
+  if (n.kind === 'price_drop') {
+    if (d.markdown) return t('bell.markdown', { title, percent: d.markdown });
+    if (d.items && d.items.length === 1) {
+      const i = d.items[0];
+      return i.to === 0 ? t('bell.itemFree', { title, item: i.name }) : t('bell.itemDrop', { title, item: i.name, from: money(i.from), to: money(i.to) });
+    }
+    if (d.items && d.items.length > 1) return t('bell.itemsDrop', { title, count: d.items.length });
+    if (d.price && d.price.to === 0) return t('bell.nowFree', { title });
+    if (d.price && d.price.from !== null && d.price.from !== undefined) return t('bell.priceDrop', { title, from: dollars(d.price.from), to: dollars(d.price.to) });
+    return t('bell.cheaper', { title });
+  }
+  if (n.kind === 'item_sold') {
+    if (d.soldOut) return t('bell.soldOut', { title });
+    const items = d.items || [];
+    if (items.length === 1) return t('bell.itemSold', { title, item: items[0].name });
+    return t('bell.itemsSold', { title, count: items.length });
+  }
   if (n.kind === 'search_match') {
     const search = n.search ? (n.search.label || (n.search.keyword ? '“' + n.search.keyword + '”' : '')) : '';
     return search ? t('bell.searchMatch', { search, title }) : t('bell.searchMatchPlain', { title });

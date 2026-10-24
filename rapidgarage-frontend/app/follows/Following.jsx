@@ -7,6 +7,7 @@ import SaveButton from '../saved/SaveButton';
 import { EmptyState, SkeletonGrid, SkeletonBlock, Alert } from '../components/ui';
 import toast from '../components/toast';
 import { t } from '../i18n';
+import FavoritesTabs from '../favorites/FavoritesTabs';
 
 // /following: current sales by people I follow, and the people themselves
 // (email switch and unfollow per person).
@@ -16,7 +17,7 @@ export default class Following extends React.Component {
     this.state = { loading: true, error: '', people: [], sales: [] };
   }
 
-  componentDidMount() { this.mounted = true; document.title = t('follow.pageTitle') + ' · RapidGarage'; this.load(); }
+  componentDidMount() { this.mounted = true; document.title = t('fav.sellers') + ' · ' + t('fav.title') + ' · RapidGarage'; this.load(); }
   componentDidUpdate(prev) { if ((prev.user && prev.user.id) !== (this.props.user && this.props.user.id)) this.load(); }
   componentWillUnmount() { this.mounted = false; }
 
@@ -62,8 +63,9 @@ export default class Following extends React.Component {
     return (
       <div className="container page following-page">
         <header className="page-header">
-          <div><h1>{t('follow.pageTitle')}</h1><p>{t('follow.pageLead')}</p></div>
+          <div><h1>{t('fav.title')}</h1><p>{t('follow.pageLead')}</p></div>
         </header>
+        <FavoritesTabs current="sellers" />
         {error ? <Alert tone="danger">{error}</Alert> : null}
         {loading ? <SkeletonGrid count={3} /> : !people.length ? (
           <EmptyState icon={UsersRound} title={t('follow.none')} action={<Link className="btn btn-primary" to="/"><Search size={16} aria-hidden="true" />{t('nav.browseSales')}</Link>}>

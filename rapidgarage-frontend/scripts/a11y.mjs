@@ -86,12 +86,14 @@ async function seed(browser) {
   });
   await api(s, 'POST', '/post/' + post.id + '/photos', null, { photos: { name: 'couch.png', mimeType: 'image/png', buffer: png(64, 48, [46, 110, 90]) } });
   const item = await api(s, 'POST', '/post/' + post.id + '/items', { name: 'Blue road bike', price: '120' });
-  await api(s, 'POST', '/post/' + post.id + '/items', { name: 'Bookcase', price: '40' });
+  const bookcase = await api(s, 'POST', '/post/' + post.id + '/items', { name: 'Bookcase', price: '40' });
   const event = await api(s, 'POST', '/events', { name: 'Brooklyn Heights block sale', description: 'Twenty-plus stoops on Hicks and Henry.', areaLabel: 'Brooklyn Heights 11201',
     lat: 40.6939, lng: -73.9897, radiusMiles: 1, joinMode: 'open', schedule: { timeZone: 'America/New_York', days: [{ date: day(2), start: '08:00', end: '15:00' }] } });
   await api(s, 'POST', '/events/' + event.id + '/join', { postId: post.id }).catch(() => {});
   const wanted = await api(b, 'POST', '/wanted', { title: 'Toddler car seat', keywords: 'car seat', category: 'kids', maxPriceCents: 5000, areaLabel: 'Brooklyn Heights', lat: 40.694, lng: -73.99, radiusMiles: 3, emailEnabled: false });
   await api(b, 'PUT', '/saved/' + post.id);
+  // A favorite sale gets cheaper: a price-drop notification for the buyer.
+  await api(s, 'PUT', '/post/' + post.id + '/items/' + bookcase.id, { price: '30' });
   const conv = await api(b, 'POST', '/conversations', { postId: post.id });
   await api(b, 'POST', '/conversations/' + conv.id + '/messages', { body: 'Hi! Is the bike still available? I could come by on Saturday morning.' });
   await api(s, 'POST', '/conversations/' + conv.id + '/messages', { body: 'Yes, it is. Saturday works.' });
@@ -99,6 +101,7 @@ async function seed(browser) {
   await api(b, 'POST', '/conversations/' + conv.id + '/meetups', { place: { name: 'Brooklyn Heights Library', address: '286 Cadman Plaza W' }, meetAt: new Date(Date.now() + 2 * 864e5).toISOString(), note: 'By the front desk.' }).catch((e) => console.warn('meetup:', e.message));
   const me = await api(s, 'GET', '/me');
   const sellerId = (me.user || me).id;
+  await api(b, 'PUT', '/follows/' + sellerId, {}).catch((e) => console.warn('follow:', e.message));
   await Promise.all([s.close(), b.close(), ctx.close()]);
   return { seller, buyer, post: post.id, event: event.id, wanted: wanted.id, conv: conv.id, sellerId };
 }
@@ -143,6 +146,8 @@ function states(d) {
     { name: 'event-new', path: '/events/new', who: 'seller' },
     { name: 'wanted-new', path: '/wanted/new', who: 'buyer' },
     { name: 'saved-route', path: '/saved', who: 'buyer' },
+    { name: 'favorites', path: '/favorites', who: 'buyer' },
+    { name: 'favorites-sellers', path: '/favorites/sellers', who: 'buyer', wait: '.following-list, .empty' },
     { name: 'inbox', path: '/messages', who: 'buyer' },
     { name: 'conversation', path: '/messages/' + d.conv, who: 'buyer', wait: '.composer, .thread-log' },
     { name: 'conversation-seller', path: '/messages/' + d.conv, who: 'seller', wait: '.composer, .thread-log' },

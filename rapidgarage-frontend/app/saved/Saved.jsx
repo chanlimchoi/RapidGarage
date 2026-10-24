@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, LogIn, Route as RouteIcon, ExternalLink, LocateFixed, MapPin, Navigation, Search, EyeOff, CalendarPlus } from 'lucide-react';
+import { Heart, LogIn, Route as RouteIcon, ExternalLink, LocateFixed, MapPin, Navigation, Search, EyeOff, CalendarPlus } from 'lucide-react';
 import { apiFetch, errorMessage } from '../api';
 import PostCard, { BADGE_CLASS } from '../components/PostCard';
 import Map from '../components/Map';
@@ -13,6 +13,7 @@ import RemindToggle from './RemindToggle';
 import { savedIcsPath } from '../lib/calendar';
 import RouteSketch from './RouteSketch';
 import { t } from '../i18n';
+import FavoritesTabs from '../favorites/FavoritesTabs';
 
 const WHEN = [
   { value: 'weekend', labelKey: 'when.weekend' },
@@ -42,6 +43,7 @@ class Saved extends Component {
   }
 
   componentDidMount() {
+    document.title = t('fav.title') + ' · RapidGarage';
     this.unsub = saved.subscribe(this.onStore);
     this.load();
   }
@@ -222,9 +224,10 @@ class Saved extends Component {
     return (
       <div className="container page saved-page">
         <header className="page-header">
-          <h1><Star size={26} aria-hidden="true" />{t('nav.savedSales')}</h1>
+          <h1><Heart size={26} aria-hidden="true" />{t('fav.title')}</h1>
           {!loading && results.length ? <p className="muted">{t('sv.count', { count: results.length })}</p> : null}
         </header>
+        <FavoritesTabs current="sales" />
         {!loading && upcoming.length ? (
           <div className="row saved-cal">
             <a className="btn btn-secondary btn-sm saved-ics" href={savedIcsPath('all')} download><CalendarPlus size={14} aria-hidden="true" />{t('cal.savedAll')}</a>
@@ -235,7 +238,7 @@ class Saved extends Component {
         {unavailable ? <Alert tone="info"><EyeOff size={14} aria-hidden="true" /> {t('sv.unavailable', { count: unavailable })}</Alert> : null}
         {loading ? <SkeletonGrid count={3} /> : null}
         {!loading && !error && !results.length ? (
-          <EmptyState icon={Star} title={t('sv.none')} action={<Link className="btn btn-primary" to="/"><Search size={16} aria-hidden="true" />{t('nav.browseSales')}</Link>}>
+          <EmptyState icon={Heart} title={t('sv.none')} action={<Link className="btn btn-primary" to="/"><Search size={16} aria-hidden="true" />{t('nav.browseSales')}</Link>}>
             {t('sv.noneText')}
           </EmptyState>
         ) : null}
