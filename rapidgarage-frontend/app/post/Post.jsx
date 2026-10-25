@@ -28,6 +28,7 @@ import FollowButton from '../follows/FollowButton';
 import DuplicateButton from './DuplicateButton';
 import { scrollBehavior, photoAlt } from '../lib/a11y';
 import { t } from '../i18n';
+import * as activity from '../lib/activity';
 
 // GET /post/:id with a photo gallery and a details sidebar.
 class Post extends Component {
@@ -322,7 +323,7 @@ class Post extends Component {
                 {typeof post.lat === 'number' && typeof post.distanceMiles === 'number' ? <div><dt><Navigation size={18} aria-hidden="true" /><span>{t('post.distance')}</span></dt><dd>{formatMiles(post.distanceMiles)}</dd></div> : null}
               </dl>
               <div className="form-actions">
-                {mapsHref ? <a className="btn btn-primary" href={mapsHref} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" />{t('post.directions')}</a> : null}
+                {mapsHref ? <a className="btn btn-primary" href={mapsHref} target="_blank" rel="noopener noreferrer" onClick={() => activity.track('directions', { type: 'post', id: post.id })}><ExternalLink size={16} aria-hidden="true" />{t('post.directions')}</a> : null}
                 {!isOwner && !post.hidden ? (
                   <button type="button" className="btn btn-secondary message-seller" disabled={this.state.starting} onClick={() => this.messageSeller()}>
                     {this.state.starting ? <Spinner /> : <MessageCircle size={16} aria-hidden="true" />}{t('post.messageSeller')}

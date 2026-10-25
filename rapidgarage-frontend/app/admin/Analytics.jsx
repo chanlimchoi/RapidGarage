@@ -31,6 +31,74 @@ const CHARTS = [
   { key: 'shares', label: 'an.shares' },
 ];
 
+// Buyer activity that's already stored (holds, offers, ...): period totals.
+const ACTIVITY_TILES = [
+  { key: 'holds', label: 'an.holds' },
+  { key: 'offers', label: 'an.offers' },
+  { key: 'bundles', label: 'an.bundles' },
+  { key: 'meetups', label: 'an.meetups' },
+  { key: 'ratings', label: 'an.ratings' },
+  { key: 'savedSearches', label: 'an.savedSearches' },
+  { key: 'wantedPosts', label: 'an.wantedPosts' },
+];
+// Counted actions and pages (backend lib/activity.js). Literal keys for i18n.
+const ACTION_LABEL = {
+  message_start: 'an.act.message_start', offer: 'an.act.offer', hold: 'an.act.hold', bundle: 'an.act.bundle',
+  save_search: 'an.act.save_search', route_plan: 'an.act.route_plan', directions: 'an.act.directions',
+  route_add: 'an.act.route_add', calendar: 'an.act.calendar', print: 'an.act.print', bell: 'an.act.bell',
+};
+const PAGE_LABEL = {
+  home: 'an.page.home', search: 'an.page.search', map: 'an.page.map', favorites: 'an.page.favorites', route: 'an.page.route',
+  notifications: 'an.page.notifications', inbox: 'an.page.inbox', events: 'an.page.events', wanted: 'an.page.wanted',
+  about: 'an.page.about', safety: 'an.page.safety',
+};
+
+// A ranked list with proportional bars; rows: [{ id, label, total }].
+function RankPanel({ id, title, rows, empty, note }) {
+  const max = rows.length ? Math.max(1, rows[0].total) : 1;
+  return (
+    <section className="panel" aria-labelledby={id}>
+      <h2 id={id} className="h4">{title}</h2>
+      {note ? <p className="small muted">{note}</p> : null}
+      {rows.length ? (
+        <ol className="rank-list">
+          {rows.map((r) => (
+            <li key={r.id}>
+              <span className="rank-name">{r.label}</span>
+              <span className="rank-bar" aria-hidden="true"><span style={{ width: Math.max(4, (r.total / max) * 100) + '%' }} /></span>
+              <span className="rank-value">{fmt(r.total)}</span>
+            </li>
+          ))}
+        </ol>
+      ) : <p className="muted small">{empty}</p>}
+    </section>
+  );
+}
+
+function ActivityLists({ a }) {
+  if (!a) return null;
+  const actions = a.actions.filter((x) => x.total > 0 && ACTION_LABEL[x.kind]).map((x) => ({ id: x.kind, label: t(ACTION_LABEL[x.kind]), total: x.total }));
+  const pages = a.pages.filter((x) => x.total > 0 && PAGE_LABEL[x.page]).map((x) => ({ id: x.page, label: t(PAGE_LABEL[x.page]), total: x.total }));
+  const n = (o, k) => (o && o[k] ? o[k].total : 0);
+  const other = [
+    { id: 'ev', label: t('an.vs.eventViews'), total: n(a.views, 'event') },
+    { id: 'wv', label: t('an.vs.wantedViews'), total: n(a.views, 'wanted') },
+    { id: 'pv', label: t('an.vs.profileViews'), total: n(a.views, 'user') },
+    { id: 'es', label: t('an.vs.eventShares'), total: n(a.shares, 'event') },
+    { id: 'ws', label: t('an.vs.wantedShares'), total: n(a.shares, 'wanted') },
+  ].filter((x) => x.total > 0).sort((x, y) => y.total - x.total);
+  const cities = a.emptySearches.cities.map((c) => ({ id: c.city || '-', label: c.city ? c.city.replace(/\b\w/g, (m) => m.toUpperCase()) : t('an.unknownCity'), total: c.total }));
+  return (
+    <div className="analytics-lists">
+      <RankPanel id="an-actions" title={t('an.topActions')} rows={actions} empty={t('an.noActions')} />
+      <RankPanel id="an-pages" title={t('an.pageLoads')} rows={pages} empty={t('an.noPages')} />
+      <RankPanel id="an-other" title={t('an.viewsShares')} rows={other} empty={t('an.noOther')} />
+      <RankPanel id="an-empty" title={t('an.emptySearches')} rows={cities} empty={t('an.noEmpty')}
+        note={a.emptySearches.total ? t('an.emptyTotal', { count: a.emptySearches.total }) : null} />
+    </div>
+  );
+}
+
 function Delta({ metric, days }) {
   const d = delta(metric.total, metric.previous);
   const Icon = d.dir === 'up' ? ArrowUpRight : d.dir === 'down' ? ArrowDownRight : Minus;
@@ -97,6 +165,20 @@ export default class Analytics extends React.Component {
                   : <span className="stat-delta is-flat">{t('an.rightNow')}</span>}
               </div>
             </section>
+            {ACTIVITY_TILES.some((x) => data.metrics[x.key]) ? (
+              <section aria-labelledby="an-buyers" className="stack-tight">
+                <h2 id="an-buyers" className="h4">{t('an.activityHeading')}</h2>
+                <div className="stat-grid">
+                  {ACTIVITY_TILES.filter((x) => data.metrics[x.key]).map((x) => (
+                    <div key={x.key} className="stat-tile">
+                      <span className="stat-label">{t(x.label)}</span>
+                      <strong className="stat-value">{fmt(data.metrics[x.key].total)}</strong>
+                      <Delta metric={data.metrics[x.key]} days={data.days} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
             <section aria-label={t('an.trends')} className="trend-grid">
               {CHARTS.filter((c) => data.metrics[c.key]).map((c) => (
                 <TrendChart key={c.key + days} id={'trend-' + c.key} title={t(c.label)} series={data.metrics[c.key].series} showTable={showTables} />
@@ -137,6 +219,8 @@ export default class Analytics extends React.Component {
                 ) : <p className="muted small">{t('an.noViews')}</p>}
               </section>
             </div>
+            <ActivityLists a={data.activity} />
+            {data.activity ? <p className="small muted">{t('an.countsNote')}</p> : null}
           </div>
         )}
       </div>

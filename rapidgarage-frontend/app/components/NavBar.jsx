@@ -5,6 +5,7 @@ import { initials, displayName } from '../lib/format';
 import InstallMenuItem from '../pwa/InstallMenuItem';
 import LanguagePicker from './LanguagePicker';
 import { t } from '../i18n';
+import * as activity from '../lib/activity';
 
 const badgeText = (n) => (n > 99 ? '99+' : String(n));
 const unreadLabel = (n) => t('nav.unreadMessages', { count: n });
@@ -209,7 +210,7 @@ export default class NavBar extends React.Component {
             <Link to="/newpost" className="btn btn-primary hide-mobile"><Plus size={16} aria-hidden="true" />{t('nav.postSale')}</Link>
             <Link to="/newpost" className="btn btn-primary btn-icon show-mobile" aria-label={t('nav.postSale')}><Plus size={20} aria-hidden="true" /></Link>
             {ready && user ? (
-              <Link to="/notifications" className="btn btn-ghost btn-icon nav-bell" title={t('nav.notifications')}
+              <Link to="/notifications" className="btn btn-ghost btn-icon nav-bell" title={t('nav.notifications')} onClick={() => activity.track('bell')}
                 aria-label={t('nav.notifications') + (this.props.notifications ? ', ' + notifLabel(this.props.notifications) : '')}>
                 <Bell size={20} aria-hidden="true" />
                 {this.props.notifications ? <span className="nav-badge avatar-badge" aria-hidden="true">{badgeText(this.props.notifications)}</span> : null}

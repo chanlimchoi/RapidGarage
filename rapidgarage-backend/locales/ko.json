@@ -626,6 +626,9 @@
   "A bundle must be {n} to {m} items.": "묶음은 {n}~{m}개 물건이어야 합니다.",
   "The bundle discount must be a whole percent from {n} to {m}.": "묶음 할인은 {n}~{m} 사이의 정수 퍼센트여야 합니다.",
   "Choose how many items make a bundle.": "몇 개부터 묶음인지 고르세요.",
-  "Choose the bundle discount.": "묶음 할인율을 고르세요."
+  "Choose the bundle discount.": "묶음 할인율을 고르세요.",
+  "Unknown activity.": "알 수 없는 활동이에요.",
+  "Unknown page.": "알 수 없는 페이지예요.",
+  "Unknown target.": "알 수 없는 대상이에요."
  }
 }

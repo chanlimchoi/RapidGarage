@@ -8,9 +8,17 @@ const activity = require('../lib/activity');
 
 const loaders = { post: 1, event: 1, wanted: 1, user: 1 };
 
-router.post('/', async (req, res) => {
+// navigator.sendBeacon sends a text/plain body (a CORS-safelisted type, so
+// every browser sends it); it holds the same small JSON.
+const text = require('body-parser').text({ type: 'text/plain', limit: '1kb' });
+function bodyOf(req) {
+  if (typeof req.body !== 'string') return req.body;
+  try { return JSON.parse(req.body); } catch (e) { return null; }
+}
+
+router.post('/', text, async (req, res) => {
   res.set('Cache-Control', 'no-store');
-  const parsed = activity.parseBeacon(req.body);
+  const parsed = activity.parseBeacon(bodyOf(req));
   if (parsed.error) return badRequest(res, parsed.error);
   try {
     const what = parsed.what;

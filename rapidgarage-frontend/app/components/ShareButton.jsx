@@ -4,6 +4,7 @@ import { shareUrl, quickLinks, canShare } from '../lib/share';
 import { recordShare } from '../api';
 import toast from './toast';
 import { t, locale } from '../i18n';
+import * as activity from '../lib/activity';
 
 // Share a sale, a neighborhood sale or a wanted post. Phones (and browsers
 // with the Web Share API) get the system share sheet; everywhere else a menu
@@ -41,6 +42,7 @@ export default class ShareButton extends React.Component {
 
   track(channel) {
     if (this.props.kind === 'post') recordShare(this.props.item.id, channel);
+    else if (this.props.kind === 'event' || this.props.kind === 'wanted') activity.track('share', { type: this.props.kind, id: this.props.item.id });
   }
 
   async click() {

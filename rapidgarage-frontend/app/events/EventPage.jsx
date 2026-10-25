@@ -14,6 +14,7 @@ import ScanStats from '../print/ScanStats';
 import EventSketch from './EventSketch';
 import ReportEventDialog from './ReportEventDialog';
 import { t } from '../i18n';
+import * as activity from '../lib/activity';
 
 const PART_STATUS = { pending: 'ev.status.pending', approved: 'ev.status.approved' };
 const DONE = { approve: 'ev.approvedToast', decline: 'ev.declinedToast', remove: 'ev.removedToast', leave: 'ev.leftToast' };
@@ -37,6 +38,7 @@ export default class EventPage extends React.Component {
       if (!this.mounted) return;
       if (!ok) { this.setState({ error: errorMessage(data, t('ev.notFound')) }); return; }
       this.setState({ event: data, error: '' });
+      activity.track('view', { type: 'event', id: data.id });
       const user = this.props.user;
       if (user) {
         apiFetch('/allbyuserId/' + user.id).then((r) => { if (this.mounted) this.setState({ myPosts: r.ok && Array.isArray(r.data) ? r.data : [] }); }).catch(() => null);

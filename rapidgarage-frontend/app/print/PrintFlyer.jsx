@@ -7,6 +7,7 @@ import { HEADLINES, HEADLINE_KEYS, flyerLines, signLines, priceIn, centsIn } fro
 import { LOCALES, loadCatalog, t, tIn, locale, intlLocale } from '../i18n';
 import toast from '../components/toast';
 import ScanStats from './ScanStats';
+import * as activity from '../lib/activity';
 
 const LAYOUTS = [
   { value: 'letter', labelKey: 'pf.flyer', sizeKey: 'pf.letter', icon: FileText },
@@ -50,6 +51,9 @@ export default class PrintFlyer extends React.Component {
     if (download) p.download = 1;
     return p;
   }
+
+  // Count a flyer printed or downloaded (owners included: printing is the point).
+  printed() { if (this.state.post) activity.track('print', { type: 'post', id: this.state.post.id }); }
 
   renderSheet() {
     const { post, info, layout, photo, items, headline, arrow, lang } = this.state;
@@ -185,9 +189,9 @@ export default class PrintFlyer extends React.Component {
                   </div>
                 )}
                 <div className="form-actions">
-                  <a className="btn btn-primary" href={pdf(true)} download><Download size={16} aria-hidden="true" />{t('pf.download')}</a>
-                  <a className="btn btn-secondary" href={pdf(false)} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" />{t('pf.open')}</a>
-                  <button type="button" className="btn btn-ghost" onClick={() => window.print()}><Printer size={16} aria-hidden="true" />{t('pf.printPreview')}</button>
+                  <a className="btn btn-primary" href={pdf(true)} download onClick={() => this.printed()}><Download size={16} aria-hidden="true" />{t('pf.download')}</a>
+                  <a className="btn btn-secondary" href={pdf(false)} target="_blank" rel="noopener noreferrer" onClick={() => this.printed()}><ExternalLink size={16} aria-hidden="true" />{t('pf.open')}</a>
+                  <button type="button" className="btn btn-ghost" onClick={() => { this.printed(); window.print(); }}><Printer size={16} aria-hidden="true" />{t('pf.printPreview')}</button>
                 </div>
                 <p className="small muted">{t('pf.pdfHint')}</p>
               </section>

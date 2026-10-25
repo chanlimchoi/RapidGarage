@@ -3,6 +3,7 @@ import { CalendarPlus, Download, ExternalLink, ChevronDown } from 'lucide-react'
 import { calendarEvents, googleUrl, outlookUrl, icsPath } from '../lib/calendar';
 import { dayLabel } from '../lib/schedule';
 import { t } from '../i18n';
+import * as activity from '../lib/activity';
 
 // "Add to calendar" menu for a sale (kind="post") or a neighborhood sale
 // (kind="event"): an .ics download (every day, in the sale's time zone, kept
@@ -38,6 +39,13 @@ export default class AddToCalendar extends React.Component {
   toggle() { const open = !this.state.open; this.setState({ open }); this.listen(open); }
   close() { if (this.state.open) { this.setState({ open: false }); this.listen(false); } }
 
+  // Count "added to a calendar" (once a day per visitor; never who).
+  picked() {
+    const { item, kind } = this.props;
+    activity.track('calendar', { type: kind === 'event' ? 'event' : 'post', id: item.id });
+    this.close();
+  }
+
   render() {
     const { item, kind } = this.props;
     if (!item || item.hidden) return null;
@@ -46,7 +54,7 @@ export default class AddToCalendar extends React.Component {
     const many = events.length > 1;
     const id = 'cal-menu-' + kind + '-' + item.id;
     const link = (href, label, cls) => (
-      <a className={'cal-menu-item ' + (cls || '')} href={href} target="_blank" rel="noopener noreferrer" onClick={() => this.close()}>
+      <a className={'cal-menu-item ' + (cls || '')} href={href} target="_blank" rel="noopener noreferrer" onClick={() => this.picked()}>
         <ExternalLink size={14} aria-hidden="true" />{label}
       </a>
     );
@@ -59,7 +67,7 @@ export default class AddToCalendar extends React.Component {
         </button>
         {this.state.open ? (
           <div className="cal-menu-list" id={id} role="group" aria-label={t('cal.add')}>
-            <a className="cal-menu-item cal-ics" href={icsPath(item, kind)} download onClick={() => this.close()}>
+            <a className="cal-menu-item cal-ics" href={icsPath(item, kind)} download onClick={() => this.picked()}>
               <Download size={14} aria-hidden="true" />
               <span><strong>{t('cal.ics')}</strong><span className="small muted cal-menu-hint">{many ? t('cal.icsAllDays', { count: events.length }) : t('cal.icsHint')}</span></span>
             </a>

@@ -82,6 +82,18 @@ describe('activity counters (lib/activity.js)', function () {
     assert.strictEqual(await count({ kind: 'page', key: 'home' }), 1);
   });
 
+  it('accepts the text/plain body navigator.sendBeacon sends; refuses cross-site beacons', async () => {
+    const r = await request(app).post('/activity').set('User-Agent', PHONE).set('Content-Type', 'text/plain;charset=UTF-8')
+      .send(JSON.stringify({ kind: 'page', page: 'map' }));
+    assert.strictEqual(r.status, 204);
+    assert.strictEqual(await count({ kind: 'page', key: 'map' }), 1);
+    assert.strictEqual((await request(app).post('/activity').set('Content-Type', 'text/plain').send('not json')).status, 400);
+    const x = await request(app).post('/activity').set('Origin', 'https://evil.example').set('User-Agent', PHONE).set('X-Forwarded-For', '198.51.100.60')
+      .set('Content-Type', 'text/plain').send(JSON.stringify({ kind: 'page', page: 'home' }));
+    assert.strictEqual(x.status, 403);
+    assert.strictEqual(await count({ kind: 'page', key: 'home' }), 0);
+  });
+
   it("owners and admins don't inflate their own numbers (except printing and sharing)", async () => {
     await beacon(seller, { kind: 'directions', targetType: 'post', targetId: postId }, '198.51.100.1');
     await beacon(admin, { kind: 'route_add', targetType: 'post', targetId: postId }, '198.51.100.2');

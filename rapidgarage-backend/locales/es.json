@@ -648,6 +648,9 @@
   "A bundle must be {n} to {m} items.": "Un lote debe tener de {n} a {m} artículos.",
   "The bundle discount must be a whole percent from {n} to {m}.": "El descuento por lote debe ser un porcentaje entero de {n} a {m}.",
   "Choose how many items make a bundle.": "Elige cuántos artículos forman un lote.",
-  "Choose the bundle discount.": "Elige el descuento por lote."
+  "Choose the bundle discount.": "Elige el descuento por lote.",
+  "Unknown activity.": "Actividad desconocida.",
+  "Unknown page.": "Página desconocida.",
+  "Unknown target.": "Destino desconocido."
  }
 }

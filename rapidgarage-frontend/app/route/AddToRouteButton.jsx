@@ -4,6 +4,7 @@ import { Route as RouteIcon, Check } from 'lucide-react';
 import * as plan from '../lib/routePlan';
 import toast from '../components/toast';
 import { t } from '../i18n';
+import * as activity from '../lib/activity';
 
 // "Add to route" toggle for one sale (sale page, Favorites). Works logged out:
 // the picks stay on this device.
@@ -17,6 +18,7 @@ export default class AddToRouteButton extends React.Component {
     if (plan.isPicked(post.id)) { plan.remove(post.id); toast.success(t('rt.removedToast')); return; }
     if (plan.isFull()) { toast.error(t('rt.fullToast', { max: plan.MAX_STOPS })); return; }
     plan.add(post.id);
+    activity.track('route_add', { type: 'post', id: post.id });
     toast.success(t('rt.addedToast', { count: plan.picked().length }));
   }
 
