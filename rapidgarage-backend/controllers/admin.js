@@ -205,6 +205,7 @@ router.post('/posts/:id/moderate', async (req, res) => {
       closed = await mod.closeOpenReports(id, { status: 'actioned', action: 'deleted', reviewerId: by, resolutionNote: note });
       await removePhotoFiles(post.photos || []);
       await models.PostPhoto.destroy({ where: { postId: id } });
+      await require('../lib/activity').forget('post', id);
       await post.destroy();
       return res.json({ action: 'delete', postId: id, resolved: closed[0], post: null });
     }

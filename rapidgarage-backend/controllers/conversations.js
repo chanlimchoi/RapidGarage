@@ -9,6 +9,7 @@ const msg = require('../lib/messaging');
 const { publicUser } = require('../lib/people');
 const ratings = require('../lib/ratings');
 const holds = require('../lib/holds');
+const activity = require('../lib/activity');
 const bundles = require('../lib/bundles');
 const meetups = require('../lib/meetups');
 const follows = require('../lib/follows');
@@ -266,6 +267,7 @@ router.post('/', require('../lib/emailVerify').requireVerified, async (req, res)
       where: { postId, buyerId: me, sellerId: post.userId },
       defaults: { postTitle: post.title },
     });
+    if (created) await activity.onPost(req, 'message_start', post);
     return res.status(created ? 201 : 200).json({ id: conv.id, created });
   } catch (err) {
     if (err && err.name === 'SequelizeUniqueConstraintError') {
@@ -508,6 +510,7 @@ router.post('/:id/holds', loadConversation, async (req, res) => {
     const hold = await H.create({ itemId, postId: post.id, conversationId: conv.id, buyerId: me, sellerId: conv.sellerId, status: 'pending', pickupAt: pickup.value, offerCents: offer.value, expiresAt: holds.requestExpiry(post, t) });
     hold.item = item;
     await holds.postEvent(hold, 'requested', me, item.name, offer.value);
+    await activity.onPost(req, offer.value ? 'offer' : 'hold', post);
     return res.status(201).json(holds.holdJSON(hold, me));
   } catch (err) { return serverError(res, err); }
 });
@@ -567,6 +570,7 @@ router.post('/:id/bundles', loadConversation, async (req, res) => {
       created.push(h);
     }
     await holds.postEvent(created[0], 'bundle_requested', me, items.map((i) => i.name).join(', '), q.bundleTotalCents);
+    await activity.onPost(req, 'bundle', post);
     return res.status(201).json({
       bundleKey: key, percent: deal.percent, totalCents: q.totalCents, bundleTotalCents: q.bundleTotalCents,
       results: created.map((h) => holds.holdJSON(h, me)),

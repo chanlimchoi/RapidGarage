@@ -260,6 +260,8 @@ router.get('/', async (req, res) => {
     const pageInfo = paginate(ranked, values.page, values.pageSize);
     pageInfo.results = await curbside.annotate(await withEvents(await loadPage(pageInfo.results, values.words), req.user), req.user);
     const events = await nearbyEvents(center, values.radius, req.user);
+    // No results: counted by the nearest known city only, never the search text.
+    if (!pageInfo.total && (values.page || 1) === 1) await require('../lib/activity').searchEmpty(req, center);
     return res.json(Object.assign({ mode: 'distance', center, radius: values.radius, filter: filterOf(values), notice: null }, pageInfo, { events }));
   } catch (err) {
     return serverError(res, err);

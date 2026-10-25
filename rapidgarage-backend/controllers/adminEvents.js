@@ -78,6 +78,7 @@ router.post('/events/:id/moderate', async (req, res) => {
         closed = await close({ status: 'actioned', action: 'deleted' }, t);
         await models.EventParticipant.destroy({ where: { eventId: id }, transaction: t });
         await models.EventScanDay.destroy({ where: { eventId: id }, transaction: t });
+        await require('../lib/activity').forget('event', id, t);
         await models.EventReport.destroy({ where: { eventId: id }, transaction: t });
         await e.destroy({ transaction: t });
       }

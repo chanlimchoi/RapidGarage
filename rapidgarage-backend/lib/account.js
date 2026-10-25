@@ -86,6 +86,7 @@ async function deleteAccount(userId) {
     await m.SaleItem.destroy({ where: { postId: p.id } });
     await m.Notification.destroy({ where: { postId: p.id } });
     await m.PostPhoto.destroy({ where: { postId: p.id } });
+    await require('./activity').forget('post', p.id);
     await p.destroy();
   }
   // Rows whose foreign keys may not cascade on every database.
@@ -105,6 +106,11 @@ async function deleteAccount(userId) {
     m.EmailVerification.destroy({ where: { userId } }),
     m.UserBlock.destroy({ where: { [Op.or]: [{ blockerId: userId }, { blockedId: userId }] } }),
   ]);
+  // Activity counts about this person's wanted posts, events and profile.
+  const act = require('./activity');
+  await act.forget('wanted', (await m.WantedPost.findAll({ where: { userId }, attributes: ['id'], raw: true })).map((r) => r.id));
+  await act.forget('event', (await m.SaleEvent.findAll({ where: { organizerId: userId }, attributes: ['id'], raw: true })).map((r) => r.id));
+  await act.forget('user', userId);
   await m.WantedPost.destroy({ where: { userId } });
   await m.SaleEvent.destroy({ where: { organizerId: userId } });
   const email = user.email;

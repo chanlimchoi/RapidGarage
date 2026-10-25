@@ -113,6 +113,7 @@ router.post('/', async (req, res) => {
     if (count >= alerts.maxPerUser()) return sendError(res, 409, 'limit_reached', 'You can have up to ' + alerts.maxPerUser() + ' alerts. Delete one to add another.');
     if (!(await resolveAddress(req, res, body, values))) return undefined;
     const alert = await models.SaleAlert.create(Object.assign({ enabled: true, freeOnly: false, maxPrice: null, frequency: 'instant' }, values, { userId: req.user.id }));
+    await require('../lib/activity').record(req, 'save_search');
     return res.status(201).json(alert);
   } catch (err) {
     return serverError(res, err);
