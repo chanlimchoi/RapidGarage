@@ -13,6 +13,7 @@ import { KEYWORD_MAX } from '../lib/items';
 import { scrollBehavior } from '../lib/a11y';
 import { t } from '../i18n';
 import { searchAlertBody, searchKey } from '../lib/savedSearch';
+import * as activity from '../lib/activity';
 
 const PAGE_SIZE = 10;
 
@@ -68,6 +69,7 @@ class PostList extends React.Component {
   // where: { coords } or { q }
   runSearch(where, page) {
     if (priceFieldError(this.state.maxPrice, t('list.maxPrice'))) return Promise.resolve();
+    if ((page || 1) === 1) activity.track('page', { page: 'search' });
     const params = Object.assign({ radius: this.state.radius, page: page || 1, pageSize: PAGE_SIZE },
       where.coords ? { lat: where.coords.lat, lng: where.coords.lng } : { q: where.q },
       this.state.freeOnly ? { free: 'true' } : {},
@@ -390,7 +392,7 @@ class PostList extends React.Component {
           {this.renderAlertCta()}
           <div className="segmented view-toggle" role="group" aria-label={t('list.view')}>
             <button type="button" aria-pressed={s.view === 'list'} onClick={() => this.setState({ view: 'list' })}><List size={16} aria-hidden="true" />{t('list.list')}</button>
-            <button type="button" aria-pressed={s.view === 'map'} onClick={() => this.setState({ view: 'map' })}><MapIcon size={16} aria-hidden="true" />{t('card.map')}</button>
+            <button type="button" aria-pressed={s.view === 'map'} onClick={() => { activity.track('page', { page: 'map' }); this.setState({ view: 'map' }); }}><MapIcon size={16} aria-hidden="true" />{t('card.map')}</button>
           </div>
         </div>
 

@@ -239,6 +239,7 @@ router.delete('/:id', requireLogin, loadWanted, async (req, res) => {
     await models.sequelize.transaction(async (transaction) => {
       await models.WantedMatch.destroy({ where: { wantedId: w.id }, transaction });
       await models.WantedReport.destroy({ where: { wantedId: w.id }, transaction });
+      await require('../lib/activity').forget('wanted', w.id, transaction);
       await w.destroy({ transaction });
     });
     return res.status(204).end();

@@ -5,7 +5,7 @@ import { fetchDashboardSale, errorMessage } from '../api';
 import { Alert, EmptyState, SkeletonBlock } from '../components/ui';
 import { dayLines } from '../lib/schedule';
 import { timeAgo } from '../lib/format';
-import { METRICS } from '../lib/dashboard';
+import { METRICS, funnelRows } from '../lib/dashboard';
 import { formatCents } from '../lib/items';
 import BarChart from './BarChart';
 import SaleRecap from './SaleRecap';
@@ -15,6 +15,41 @@ import { t, intlLocale } from '../i18n';
 
 const HOLD_STATUS = { get pending() { return t('hold.status.pendingSeller'); }, get accepted() { return t('hold.status.accepted'); } };
 const when = (v) => new Date(v).toLocaleString(intlLocale(), { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+// Literal keys (the i18n test reads them from source).
+const FUNNEL_LABEL = { views: 'dash.f.views', saves: 'dash.f.saves', messages: 'dash.f.messages', holds: 'dash.f.holds', sold: 'dash.f.sold' };
+
+// Views -> saves -> buyers who messaged -> hold/offer requests -> items sold.
+function Funnel({ funnel }) {
+  if (!funnel) return null;
+  const fmt = (n) => new Intl.NumberFormat(intlLocale()).format(n);
+  const rows = funnelRows(funnel);
+  const i = funnel.interest || {};
+  return (
+    <section className="panel stack" aria-labelledby="dd-funnel">
+      <h2 id="dd-funnel" className="h4">{t('dash.funnel')}</h2>
+      <p className="small muted">{t('dash.funnelLead')}</p>
+      <ol className="funnel-list">
+        {rows.map((r) => (
+          <li key={r.key}>
+            <span className="funnel-name">{t(FUNNEL_LABEL[r.key])}</span>
+            <span className="funnel-bar" aria-hidden="true"><span style={{ width: r.width + '%' }} /></span>
+            <span className="funnel-value">
+              <strong>{r.of !== null ? t('dash.f.soldOf', { n: fmt(r.count), m: fmt(r.of) }) : fmt(r.count)}</strong>
+              {r.pct !== null ? <span className="small muted">{t('dash.f.ofViews', { pct: fmt(r.pct) })}</span> : null}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <h3 className="h5">{t('dash.interest')}</h3>
+      <ul className="funnel-extra small">
+        <li>{t('dash.i.directions')}: <strong>{fmt(i.directions || 0)}</strong></li>
+        <li>{t('dash.i.routeAdds')}: <strong>{fmt(i.routeAdds || 0)}</strong></li>
+        <li>{t('dash.i.calendar')}: <strong>{fmt(i.calendar || 0)}</strong></li>
+      </ul>
+    </section>
+  );
+}
 
 // /dashboard/sales/:id: one of my sales in detail (404 for anyone else, admins too).
 export default class DashboardSale extends React.Component {
@@ -76,6 +111,7 @@ export default class DashboardSale extends React.Component {
           ))}
         </div>
         <div className="dash-detail-panels">
+          <Funnel funnel={s.funnel} />
           <section className="panel stack" aria-labelledby="dd-items">
             <h2 id="dd-items" className="h4"><Package size={18} aria-hidden="true" />{t('dash.items')}</h2>
             <ItemsBar items={s.items} />

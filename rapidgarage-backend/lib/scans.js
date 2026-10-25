@@ -63,6 +63,9 @@ function currentSalt() {
   return { day, salt };
 }
 
+// Wait for a pending stale-row cleanup (after a new salt) before inserting.
+async function settle() { if (purging) { await purging; purging = null; } }
+
 // Tests: forget the salt (as on a restart).
 function resetSalt() { saltDay = null; salt = null; }
 
@@ -166,4 +169,4 @@ async function stats(post, n, kind) {
   return { total: total || 0, today: by.get(today) || 0, timeZone: tz, days };
 }
 
-module.exports = { setClock, resetSalt, staleWhere, purgeStale, isBot, isPrefetch, clientIp, skipReason, record, stats, BOT_RE };
+module.exports = { setClock, resetSalt, visitorHash, settle, staleWhere, purgeStale, isBot, isPrefetch, clientIp, skipReason, record, stats, BOT_RE };

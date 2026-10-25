@@ -77,6 +77,7 @@ router.post('/wanted/:id/moderate', async (req, res) => {
         closed = await close({ status: 'actioned', action: 'deleted' }, t);
         await models.WantedMatch.destroy({ where: { wantedId: id }, transaction: t });
         await models.WantedReport.destroy({ where: { wantedId: id }, transaction: t });
+        await require('../lib/activity').forget('wanted', id, t);
         await w.destroy({ transaction: t });
       }
     });

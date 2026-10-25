@@ -626,6 +626,9 @@
   "A bundle must be {n} to {m} items.": "组合必须包含 {n} 到 {m} 件物品。",
   "The bundle discount must be a whole percent from {n} to {m}.": "组合折扣必须是 {n} 到 {m} 之间的整数百分比。",
   "Choose how many items make a bundle.": "请选择几件物品构成组合。",
-  "Choose the bundle discount.": "请选择组合折扣。"
+  "Choose the bundle discount.": "请选择组合折扣。",
+  "Unknown activity.": "未知的活动。",
+  "Unknown page.": "未知的页面。",
+  "Unknown target.": "未知的对象。"
  }
 }

@@ -43,3 +43,17 @@ export function filterSales(sales, filter) {
   if (filter === 'ended') return sales.filter((s) => s.ended);
   return sales;
 }
+
+// Funnel rows for a sale ({ steps: [{ key, count, of? }] } from the API):
+// each step with its share of page views (null when there were no views) and
+// a bar width relative to the largest step.
+export function funnelRows(funnel) {
+  const steps = (funnel && funnel.steps) || [];
+  const views = steps.length && steps[0].key === 'views' ? steps[0].count : 0;
+  const max = Math.max(1, ...steps.map((s) => s.count || 0));
+  return steps.map((s, i) => ({
+    key: s.key, count: s.count || 0, of: s.of === undefined ? null : s.of,
+    pct: i === 0 || !views ? null : Math.round(((s.count || 0) / views) * 100),
+    width: Math.max(2, Math.round(((s.count || 0) / max) * 100)),
+  }));
+}

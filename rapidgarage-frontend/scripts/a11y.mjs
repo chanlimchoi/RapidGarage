@@ -118,6 +118,15 @@ async function seed(browser) {
   await api(s, 'PUT', '/post/' + post.id + '/items/' + lamp.id, { sold: true });
   await b2.close();
   await api(b, 'PUT', '/follows/' + sellerId, {}).catch((e) => console.warn('follow:', e.message));
+  // A visitor's counted actions, so Admin -> Analytics and the sale funnel have rows.
+  const v = await browser.newContext({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' });
+  for (const body of [{ kind: 'directions', targetType: 'post', targetId: post.id }, { kind: 'calendar', targetType: 'post', targetId: post.id },
+    { kind: 'route_add', targetType: 'post', targetId: post.id }, { kind: 'view', targetType: 'event', targetId: event.id },
+    { kind: 'share', targetType: 'wanted', targetId: wanted.id }, { kind: 'page', page: 'home' }, { kind: 'page', page: 'map' }, { kind: 'bell' }]) {
+    await api(v, 'POST', '/activity', body).catch((e) => console.warn('activity:', e.message));
+  }
+  await api(v, 'GET', '/search?lat=47.6062&lng=-122.3321&radius=5').catch((e) => console.warn('empty search:', e.message));
+  await v.close();
   await Promise.all([s.close(), b.close(), ctx.close()]);
   return { seller, buyer, buyer2, conv2: conv2.id, post: post.id, event: event.id, wanted: wanted.id, conv: conv.id, sellerId };
 }
@@ -197,6 +206,7 @@ function states(d) {
     { name: 'calendar-menu', path: '/post/' + d.post, who: 'buyer', act: click('.cal-menu-btn') },
     { name: 'dashboard', path: '/dashboard', who: 'seller' },
     { name: 'dashboard-sale', path: '/dashboard/sales/' + d.post, who: 'seller' },
+    { name: 'dashboard-sale-funnel', path: '/dashboard/sales/' + d.post, who: 'seller', wait: '#dd-funnel', act: async (p) => { await p.locator('#dd-funnel').scrollIntoViewIfNeeded(); } },
     { name: 'profile', path: '/profile', who: 'seller' },
     { name: 'settings', path: '/settings', who: 'buyer' },
     { name: 'settings-saved-search', path: '/settings', who: 'buyer', wait: '.alert-item', act: click('.alert-item-actions .btn-secondary'), waitAfter: '#alert-keyword' },
@@ -207,6 +217,11 @@ function states(d) {
     { name: 'admin-spot-form', path: '/admin', who: 'admin', act: async (p) => { await p.locator('.admin-tabs:not(.report-kind) > button:nth-child(2)').click(); await p.locator('.rg-admin-spots .btn-primary').first().click(); } },
     // Tabs: reports, spots, analytics, users, settings.
     { name: 'admin-analytics', path: '/admin', who: 'admin', act: click('.admin-tabs:not(.report-kind) > button:nth-child(3)'), waitAfter: '#an-cities, .rg-analytics, [aria-labelledby="an-cities"]' },
+    { name: 'admin-analytics-activity', path: '/admin', who: 'admin', act: async (p) => {
+      await p.locator('.admin-tabs:not(.report-kind) > button:nth-child(3)').first().click();
+      await p.waitForSelector('#an-actions', { timeout: 10000 });
+      await p.locator('#an-empty').scrollIntoViewIfNeeded();
+    } },
     { name: 'admin-users', path: '/admin', who: 'admin', act: click('.admin-tabs:not(.report-kind) > button:nth-child(4)') },
     { name: 'admin-settings', path: '/admin', who: 'admin', act: click('.admin-tabs:not(.report-kind) > button:nth-child(5)') },
   ];

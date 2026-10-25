@@ -55,6 +55,7 @@ router.post('/', async (req, res) => {
     const byId = new Map(rows.filter((p) => canSee(req.user, p)).map((p) => [p.id, p]));
     const posts = v.postIds.filter((id) => byId.has(id)).map((id) => byId.get(id));
     const r = route.planTimed(posts, v.start, v.departAt, v.dwellMinutes);
+    await require('../lib/activity').record(req, 'route_plan');
     const skipped = v.postIds.filter((id) => !byId.has(id)).map((postId) => ({ postId, reason: 'unavailable' }))
       .concat(r.skipped.map((x) => ({ postId: x.post.id, title: x.post.title, reason: x.reason })));
     return res.json({

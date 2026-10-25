@@ -261,6 +261,7 @@ router.delete('/:id', requireLogin, loadPost, requireOwnerOrAdmin, (req, res) =>
       resolutionNote: byAdmin ? null : 'Deleted by the owner.' }))
     .then(() => models.SaleItem.destroy({ where: { postId: req.post.id } }))
     .then(() => models.PostPhoto.destroy({ where: { postId: req.post.id } }))
+    .then(() => require('../lib/activity').forget('post', req.post.id))
     .then(() => req.post.destroy())
     .then(() => res.status(204).end())
     .catch((err) => serverError(res, err));

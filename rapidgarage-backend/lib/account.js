@@ -45,6 +45,8 @@ async function exportData(userId) {
     m.Notification.findAll({ where: { userId }, attributes: ['kind', 'postId', 'createdAt', 'seenAt'], order: [['id', 'ASC']] }),
   ]);
   const profile = user.toJSON();
+  // Aggregate view counts of this person's profile (no visitor data exists).
+  const profileViews = (await m.ActivityDay.sum('count', { where: { kind: 'view', targetType: 'user', targetId: userId } })) || 0;
   return {
     format: 'rapidgarage-export-v1',
     exportedAt: new Date().toISOString(),
@@ -59,6 +61,7 @@ async function exportData(userId) {
     ratingsReceived: plain(ratingsReceived),
     notificationDevices: plain(devices),
     notifications: plain(inbox),
+    profileViews,
     conversations: convs.map((c) => {
       const other = others.get(c.buyerId === userId ? c.sellerId : c.buyerId);
       return {
@@ -86,6 +89,7 @@ async function deleteAccount(userId) {
     await m.SaleItem.destroy({ where: { postId: p.id } });
     await m.Notification.destroy({ where: { postId: p.id } });
     await m.PostPhoto.destroy({ where: { postId: p.id } });
+    await require('./activity').forget('post', p.id);
     await p.destroy();
   }
   // Rows whose foreign keys may not cascade on every database.
@@ -105,6 +109,11 @@ async function deleteAccount(userId) {
     m.EmailVerification.destroy({ where: { userId } }),
     m.UserBlock.destroy({ where: { [Op.or]: [{ blockerId: userId }, { blockedId: userId }] } }),
   ]);
+  // Activity counts about this person's wanted posts, events and profile.
+  const act = require('./activity');
+  await act.forget('wanted', (await m.WantedPost.findAll({ where: { userId }, attributes: ['id'], raw: true })).map((r) => r.id));
+  await act.forget('event', (await m.SaleEvent.findAll({ where: { organizerId: userId }, attributes: ['id'], raw: true })).map((r) => r.id));
+  await act.forget('user', userId);
   await m.WantedPost.destroy({ where: { userId } });
   await m.SaleEvent.destroy({ where: { organizerId: userId } });
   const email = user.email;

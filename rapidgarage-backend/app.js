@@ -99,6 +99,7 @@ function createApp(env) {
   api.use(rateLimit.sameOriginWrites([FRONTEND_ORIGIN, runtime.origin(e.APP_BASE_URL)]));
   api.use(rateLimit.apiLimiter);
   api.use(rateLimit.writeLimiter);
+  api.use(rateLimit.beaconLimiter);
   api.use(['/login', '/signup', '/password-reset', '/verify-email'], rateLimit.authLimiter);
   // Load up all of the controllers
   api.use(require('./controllers'));

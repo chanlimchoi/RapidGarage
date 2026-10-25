@@ -12,6 +12,7 @@ import { STATUS_CHIP, statusLabel, categoryLabel, expiryText } from './WantedCar
 import ShareButton from '../components/ShareButton';
 import { t } from '../i18n';
 import { holdTime } from '../messages/holdText';
+import * as activity from '../lib/activity';
 
 // /wanted/:id: what a buyer is looking for. Sellers message them; the owner
 // sees the sales that matched and can edit, renew, mark found or delete.
@@ -33,6 +34,7 @@ export default class WantedPage extends React.Component {
       this.setState(ok ? { wanted: data, error: '' } : { wanted: null, error: errorMessage(data, t('want.notFound')) });
       // Opening my own post marks its matches seen; refresh the nav badge.
       if (ok && data.mine && this.props.onSeen) this.props.onSeen();
+      if (ok && !data.mine) activity.track('view', { type: 'wanted', id: data.id });
     }).catch(() => this.mounted && this.setState({ error: t('common.network') }));
   }
 

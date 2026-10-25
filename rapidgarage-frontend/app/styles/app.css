@@ -1296,6 +1296,15 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .rank-bar { height: 8px; border-radius: 4px; background: var(--color-surface-2); overflow: hidden; }
 .rank-bar span { display: block; height: 100%; border-radius: 4px; background: var(--color-chart); }
 .rank-value { font-size: var(--text-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+/* Seller sale funnel */
+.funnel-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.funnel-list li { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(40px, 1fr) auto; gap: var(--space-2); align-items: center; }
+.funnel-name { min-width: 0; overflow-wrap: anywhere; }
+.funnel-bar { height: 10px; border-radius: 5px; background: var(--color-surface-2); overflow: hidden; }
+.funnel-bar span { display: block; height: 100%; border-radius: 5px; background: var(--color-chart); }
+.funnel-value { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
+.funnel-extra { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
+@media (max-width: 420px) { .funnel-list li { grid-template-columns: minmax(0, 1fr) auto; } .funnel-bar { grid-column: 1 / -1; grid-row: 2; } }
 
 /* Own AI key */
 .ai-key-choice { display: grid; gap: var(--space-2); margin-bottom: var(--space-2); }

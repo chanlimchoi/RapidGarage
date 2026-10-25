@@ -9,6 +9,7 @@ import { Stars } from './Stars';
 import FollowButton from '../follows/FollowButton';
 import { t } from '../i18n';
 import { tx } from '../i18n/rich';
+import * as activity from '../lib/activity';
 
 // Public page: /people/:id. Name is "First L."; no email anywhere.
 export default class PersonRatings extends React.Component {
@@ -25,6 +26,7 @@ export default class PersonRatings extends React.Component {
     return fetchPersonRatings(this.props.match.params.id, page).then(({ ok, status, data }) => {
       if (!ok) return this.setState({ loading: false, error: status === 404 ? 'not_found' : errorMessage(data, t('pr.loadFailed')) });
       document.title = t('pr.docTitle', { name: data.user.name });
+      if (page === 1 && data.user.id) activity.track('view', { type: 'user', id: data.user.id });
       return this.setState({ loading: false, data });
     }).catch(() => this.setState({ loading: false, error: t('common.networkShort') }));
   }

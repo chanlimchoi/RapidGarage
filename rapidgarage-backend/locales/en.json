@@ -648,6 +648,9 @@
   "A bundle must be {n} to {m} items.": "A bundle must be {n} to {m} items.",
   "The bundle discount must be a whole percent from {n} to {m}.": "The bundle discount must be a whole percent from {n} to {m}.",
   "Choose how many items make a bundle.": "Choose how many items make a bundle.",
-  "Choose the bundle discount.": "Choose the bundle discount."
+  "Choose the bundle discount.": "Choose the bundle discount.",
+  "Unknown activity.": "Unknown activity.",
+  "Unknown page.": "Unknown page.",
+  "Unknown target.": "Unknown target."
  }
 }

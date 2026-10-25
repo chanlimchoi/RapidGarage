@@ -16,6 +16,7 @@ import { SkeletonBlock } from './components/ui';
 import * as savedStore from './lib/saved';
 import * as i18n from './i18n';
 import * as liveClient from './lib/liveClient';
+import * as activity from './lib/activity';
 
 // The app shell (nav, footer, toaster, banners) and the two pages people land
 // on first -- the home list and a sale page opened from a shared link or QR
@@ -111,6 +112,7 @@ class App extends Component {
   }
 
   componentDidMount() {
+    activity.trackPage(this.props.location.pathname, this.props.location.search);
     this.refreshUser();
     this.refreshConfig();
     // With a live connection the badge refreshes on events; poll every 60 s as a fallback.
@@ -148,6 +150,7 @@ class App extends Component {
   componentDidUpdate(prevProps) {
     // Re-check on navigation so the nav never goes stale.
     if (prevProps.location.pathname !== this.props.location.pathname) {
+      activity.trackPage(this.props.location.pathname, this.props.location.search);
       this.refreshUser();
       this.refreshConfig();
       window.scrollTo(0, 0);

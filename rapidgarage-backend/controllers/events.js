@@ -198,6 +198,7 @@ router.delete('/:id', requireLogin, loadEvent, async (req, res) => {
         { where: { eventId: id, status: 'open' }, transaction });
       await models.EventParticipant.destroy({ where: { eventId: id }, transaction });
       await models.EventScanDay.destroy({ where: { eventId: id }, transaction });
+      await require('../lib/activity').forget('event', id, transaction);
       await models.EventReport.destroy({ where: { eventId: id }, transaction });
       await req.event.destroy({ transaction });
     });

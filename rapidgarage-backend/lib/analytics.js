@@ -73,6 +73,54 @@ function dayMetric(byDay, w) {
   return { total: series.reduce((s, d) => s + d.count, 0), previous: sumDays(byDay, isoDay(w.prevStart), isoDay(w.start)), series };
 }
 
+// Holds, offers and bundle requests, agreed meetups, ratings, saved searches
+// and wanted posts created in the window (rows that already exist).
+async function stored(m, w) {
+  const [holds, offers, bundles, meetups, ratings, savedSearches, wantedPosts] = await Promise.all([
+    createdMetric(m.ItemHold, w, { offerCents: null, bundleKey: null }),
+    createdMetric(m.ItemHold, w, { offerCents: { [Op.ne]: null }, bundleKey: null }),
+    createdMetric(m.Message, w, { kind: 'hold', holdEvent: 'bundle_requested' }),
+    createdMetric(m.MeetupProposal, w, { status: 'accepted' }),
+    createdMetric(m.Rating, w),
+    createdMetric(m.SaleAlert, w),
+    createdMetric(m.WantedPost, w),
+  ]);
+  return { holds, offers, bundles, meetups, ratings, savedSearches, wantedPosts };
+}
+
+// ActivityDays in the window vs the previous one.
+async function activityReport(w) {
+  const act = require('./activity');
+  const from = isoDay(w.start);
+  const prev = isoDay(w.prevStart);
+  const to = isoDay(w.end);
+  const pair = async (where, group) => {
+    const [cur, before] = await Promise.all([act.totals(where, from, to, group), act.totals(where, prev, from, group)]);
+    const k = (r) => group.map((g) => r[g]).join('|');
+    const prevBy = new Map(before.map((r) => [k(r), r.n]));
+    return cur.map((r) => Object.assign({}, r, { total: r.n, previous: prevBy.get(k(r)) || 0 }));
+  };
+  const [actions, pages, viewRows, shareRows, empty] = await Promise.all([
+    pair({ kind: act.ACTIONS }, ['kind']),
+    pair({ kind: 'page' }, ['key']),
+    pair({ kind: 'view' }, ['targetType']),
+    pair({ kind: 'share' }, ['targetType']),
+    pair({ kind: 'search_empty' }, ['key']),
+  ]);
+  const sorted = (rows) => rows.sort((a, b) => b.total - a.total || String(a.kind || a.key).localeCompare(String(b.kind || b.key)));
+  const byType = (rows) => rows.reduce((o, r) => Object.assign(o, { [r.targetType]: { total: r.total, previous: r.previous } }), {});
+  return {
+    actions: sorted(actions).map((r) => ({ kind: r.kind, total: r.total, previous: r.previous })),
+    pages: sorted(pages).map((r) => ({ page: r.key, total: r.total, previous: r.previous })),
+    views: byType(viewRows),
+    shares: byType(shareRows),
+    emptySearches: {
+      total: empty.reduce((s2, r) => s2 + r.total, 0),
+      cities: sorted(empty).slice(0, 8).map((r) => ({ city: r.key || null, total: r.total })),
+    },
+  };
+}
+
 async function summary(days, now) {
   const m = models();
   now = now || schedule.now();
@@ -92,6 +140,11 @@ async function summary(days, now) {
     m.Report.count({ where: { status: 'open' } }),
     m.Follow ? createdMetric(m.Follow, w) : null,
   ]);
+
+  // Already-stored activity (holds, offers, bundles, meetups, ratings, ...).
+  const activityMetrics = await stored(m, w);
+  // Counters (lib/activity.js): top actions, page loads, views/shares, empty searches.
+  const activity = await activityReport(w);
 
   // Where the current sales are.
   const cities = await m.Post.findAll({
@@ -124,7 +177,8 @@ async function summary(days, now) {
     from: w.dates[0],
     to: w.dates[w.dates.length - 1],
     totals: { users, activeSales, openReports },
-    metrics: Object.assign({ signups, posts, messages, conversations, saves, views, scans, shares }, follows ? { follows } : {}),
+    metrics: Object.assign({ signups, posts, messages, conversations, saves, views, scans, shares }, follows ? { follows } : {}, activityMetrics),
+    activity,
     topCities: cities.map((c) => ({ city: c.city, state: c.state || null, sales: Number(c.n) })),
     topSales: topViews.filter((r) => byId.has(r.postId)).map((r) => {
       const p = byId.get(r.postId);
