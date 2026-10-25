@@ -85,8 +85,14 @@ const apiLimiter = limiter({
 });
 
 // Writes (POST/PUT/DELETE) on top of that.
+// Activity beacons (POST /activity) have their own budget so page-load and
+// click counting never uses up a person's real writes.
+const isBeacon = (req) => req.method === 'POST' && /^\/activity\/?$/.test(req.path);
 const writeLimiter = limiter({
-  name: 'write', windowMs: MINUTE, max: () => intEnv('RATE_LIMIT_WRITES_PER_MINUTE', 60), skip: isRead,
+  name: 'write', windowMs: MINUTE, max: () => intEnv('RATE_LIMIT_WRITES_PER_MINUTE', 60), skip: (req) => isRead(req) || isBeacon(req),
+});
+const beaconLimiter = limiter({
+  name: 'beacon', windowMs: MINUTE, max: () => intEnv('RATE_LIMIT_BEACONS_PER_MINUTE', 120), skip: (req) => !isBeacon(req),
 });
 
 // Login, signup and password reset requests per IP.
@@ -164,6 +170,6 @@ function sameOriginWrites(allowed) {
 }
 
 module.exports = {
-  enabled, clientKey, limiter, apiLimiter, writeLimiter, authLimiter, loginGuard, shedLoad, sameOriginWrites,
+  enabled, clientKey, limiter, apiLimiter, writeLimiter, beaconLimiter, authLimiter, loginGuard, shedLoad, sameOriginWrites,
   resetAll, inflight,
 };
