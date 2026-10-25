@@ -169,6 +169,29 @@ async function forSeller(me, tz, at) {
 }
 
 // GET /dashboard/sales/:id: one of my sales, plus its open holds and conversations.
+// All-time funnel for one sale: page views -> saves -> buyers who messaged ->
+// hold/offer/bundle requests -> items sold, plus other interest (directions,
+// added to a route, added to a calendar). Counts only; never who.
+async function funnel(post, sale) {
+  const M = models();
+  const [single, bundled, clicks] = await Promise.all([
+    M.ItemHold.count({ where: { postId: post.id, bundleKey: null } }),
+    M.ItemHold.count({ where: { postId: post.id, bundleKey: { [Op.ne]: null } }, distinct: true, col: 'bundleKey' }),
+    require('./activity').byTarget('post', [post.id], ['directions', 'route_add', 'calendar']),
+  ]);
+  const c = clicks[post.id] || {};
+  return {
+    steps: [
+      { key: 'views', count: sale.totals.views || 0 },
+      { key: 'saves', count: sale.totals.saves || 0 },
+      { key: 'messages', count: sale.conversations || 0 },
+      { key: 'holds', count: single + bundled },
+      { key: 'sold', count: sale.items.sold || 0, of: sale.items.total || 0 },
+    ],
+    interest: { directions: c.directions || 0, routeAdds: c.route_add || 0, calendar: c.calendar || 0 },
+  };
+}
+
 async function forSale(me, post, at) {
   const M = models();
   const per = await collect(me, [post], SPAN, at);
@@ -187,6 +210,7 @@ async function forSale(me, post, at) {
     offerCents: h.offerCents || null, counterCents: h.counterCents || null,
   }));
   sale.conversationList = convs.map((c) => ({ id: c.id, buyer: c.buyer ? publicName(c.buyer) : null, lastMessageAt: c.lastMessageAt, unread: unread.get(c.id) || 0 }));
+  sale.funnel = await funnel(post, sale);
   return { span: SPAN, metrics: METRICS, sale };
 }
 

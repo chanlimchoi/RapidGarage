@@ -45,6 +45,8 @@ async function exportData(userId) {
     m.Notification.findAll({ where: { userId }, attributes: ['kind', 'postId', 'createdAt', 'seenAt'], order: [['id', 'ASC']] }),
   ]);
   const profile = user.toJSON();
+  // Aggregate view counts of this person's profile (no visitor data exists).
+  const profileViews = (await m.ActivityDay.sum('count', { where: { kind: 'view', targetType: 'user', targetId: userId } })) || 0;
   return {
     format: 'rapidgarage-export-v1',
     exportedAt: new Date().toISOString(),
@@ -59,6 +61,7 @@ async function exportData(userId) {
     ratingsReceived: plain(ratingsReceived),
     notificationDevices: plain(devices),
     notifications: plain(inbox),
+    profileViews,
     conversations: convs.map((c) => {
       const other = others.get(c.buyerId === userId ? c.sellerId : c.buyerId);
       return {
