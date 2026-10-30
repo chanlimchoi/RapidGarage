@@ -851,7 +851,7 @@ blockquote.rating-comment { padding: var(--space-2) var(--space-3); border-left:
 /* Language switcher */
 .language-select { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-muted, #5b6472); }
 .language-select select {
-  appearance: none; border: 1px solid var(--color-border, #d9dee5); border-radius: var(--radius-md, 8px);
+  appearance: none; border: 1px solid var(--color-border, #d9dee5); border-radius: var(--radius-md);
   background: var(--color-surface, #fff); color: var(--color-text, #111827); font: inherit; font-size: var(--text-sm, 14px);
   padding: 6px 10px; cursor: pointer;
 }
@@ -1389,3 +1389,23 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
   .cal-thumb { display: none; }
   .cal-action { grid-column: 2; }
 }
+
+/* Pickup scheduling (messages/PickupPanel.jsx, dashboard/UpcomingPickups.jsx) */
+.pickup-slots { border: 0; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
+.pickup-slot-input { display: flex; align-items: center; gap: var(--space-2); max-width: 22rem; }
+.pickup-length { max-width: 12rem; margin: 0; }
+.pickup-state { display: flex; align-items: center; gap: var(--space-2); font-weight: 600; }
+.pickup-booked { color: var(--color-success); }
+.pickup-cancelled { color: var(--color-text-muted); font-weight: 400; }
+.pickup-choose fieldset { border: 0; padding: 0; margin: 0; }
+.pickup-choose legend { margin-bottom: var(--space-1); }
+.pickup-slot-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.pickup-slot-list-plain li { padding: 2px 0; }
+.pickup-slot { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; }
+.pickup-slot.is-chosen { border-color: var(--color-brand); background: var(--color-brand-soft); }
+.dash-pickups { margin-bottom: var(--space-4); }
+.dash-pickups h2 { display: flex; align-items: center; gap: var(--space-2); }
+.dash-pickup-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.dash-pickup { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+.dash-pickup:first-child { border-top: 0; }
+.dash-pickup-main { display: grid; gap: 2px; min-width: 0; }

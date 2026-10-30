@@ -612,6 +612,21 @@ Google Maps starts from the phone's location. The location is only used for that
 - Hold JSON has `offerCents` and `counterCents`; thread events have `hold.cents` (`Messages.holdCents`, the amount at that
   step) and the new events `countered` and `agreed`. Migration `20261018100000-offers-and-weekend-digest`.
 
+## Pickup scheduling (lib/pickups.js)
+
+- `PickupPlans`: one per conversation (`slots` JSON of ISO starts, `slotMinutes`, `timeZone`, `status` offered | booked |
+  cancelled, `chosenAt`). Migration `20261030150000-pickup-plans` also adds `Messages.pickupId/pickupEvent/pickupStart`.
+- `GET /conversations/:id/pickup` -> `{ pickup, items, canOffer, canAct, timeZone, saleEndsAt, limits }`.
+- `POST /conversations/:id/pickup { slots: [iso], minutes? }` (seller, needs an accepted unexpired hold in the
+  conversation): offer 1-6 times (each validated like a hold's pickup time); replaces earlier ones, and a booked pickup goes
+  back to offered (event `rescheduled`, else `offered`).
+- `POST /conversations/:id/pickup/book { start }` (buyer): one of the offered future slots. Sets every accepted hold's
+  `pickupAt` and extends (never shortens) `expiresAt` / `reservedUntil` as `acceptExpiry` would.
+- `POST /conversations/:id/pickup/reschedule` (either, booked) -> offered; `POST /conversations/:id/pickup/cancel`
+  (either). Blocks and messaging bans stop all of these; 20 pickup steps per person per conversation per day.
+- `GET /pickups/upcoming`: my offered/booked pickups with accepted holds, as seller or buyer, with the other person as
+  "First L." and the item names, for the dashboard.
+
 ## Weekend digest (lib/weekendDigest.js)
 
 - `SaleAlerts.frequency`: `instant` (default) or `weekly`. Weekly alerts never queue instant notifications.

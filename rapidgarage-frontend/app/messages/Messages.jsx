@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, ArrowLeft, Send, Ban, ImageOff, LogIn, Inbox, AlertTriangle, Flag, MoreHorizontal, ShieldOff, Bookmark, MapPin, ExternalLink } from 'lucide-react';
+import { MessageCircle, ArrowLeft, Send, Ban, ImageOff, LogIn, Inbox, AlertTriangle, Flag, MoreHorizontal, ShieldOff, Bookmark, MapPin, ExternalLink, CalendarClock } from 'lucide-react';
 import {
   errorMessage, fetchConversations, fetchConversation, fetchMessagesAfter, fetchMessagesBefore,
   sendMessage, setBlocked, MESSAGE_MAX, reportConversation, CONVERSATION_REPORT_REASONS, REPORT_NOTE_MAX, meetupAction,
@@ -12,6 +12,8 @@ import linkify from './linkify';
 import RatePanel from '../ratings/RatePanel';
 import { RatingBadge } from '../ratings/Stars';
 import HoldPanel from './HoldPanel';
+import PickupPanel from './PickupPanel';
+import { pickupEventText } from './pickupText';
 import { holdEventText } from './holdText';
 import SafetyTips, { SafetyLink } from './SafetyTips';
 import MeetupDialog from './MeetupDialog';
@@ -421,6 +423,7 @@ export default class Messages extends React.Component {
           const preview = !c.lastMessage ? t('msg.noneTitle') : c.lastMessage.removed ? t('msg.removed')
             : c.lastMessage.kind === 'hold' ? holdEventText(c.lastMessage, c.other ? c.other.name : t('msg.formerUser'))
               : c.lastMessage.kind === 'meetup' ? meetupEventText(c.lastMessage, c.other ? c.other.name : t('msg.formerUser'))
+              : c.lastMessage.kind === 'pickup' ? pickupEventText(c.lastMessage, c.other ? c.other.name : t('msg.formerUser'))
               : c.lastMessage.mine ? t('msg.youPrefix', { text: c.lastMessage.body }) : c.lastMessage.body;
           return (
             <li key={c.id}>
@@ -492,6 +495,8 @@ export default class Messages extends React.Component {
           refreshKey={[messages.some((m) => m.mine), messages.some((m) => !m.mine), blocked.byMe, blocked.byThem].join()} /> : null}
         {conv.post.wanted ? null : <HoldPanel conversationId={conv.id} role={conv.role} canAct={conv.canSend}
           refreshKey={messages.filter((m) => m.kind === 'hold').map((m) => m.id).join()} onChange={() => this.poll()} />}
+        {conv.post.wanted ? null : <PickupPanel conversationId={conv.id} role={conv.role} other={otherName}
+          refreshKey={messages.filter((m) => m.kind === 'hold' || m.kind === 'pickup').map((m) => m.id).join() + (conv.canSend ? '' : ':off')} onChange={() => this.poll()} />}
         {label && !conv.post.canView ? <Alert tone="warning">{t('msg.postGone')}</Alert> : null}
         {agreed ? (
           <div className="meet-agreed" role="status">
@@ -515,6 +520,12 @@ export default class Messages extends React.Component {
             <div key={m.id} className={'thread-event meet-event meet-event-' + (m.meetup && m.meetup.event)}>
               <MapPin size={14} aria-hidden="true" />
               <span>{meetupEventText(m, otherName)}</span>
+              <time className="bubble-time" dateTime={m.createdAt}>{clock(m.createdAt)}</time>
+            </div>
+          ) : m.kind === 'pickup' && !m.removed ? (
+            <div key={m.id} className={'thread-event pickup-event pickup-event-' + (m.pickup && m.pickup.event)}>
+              <CalendarClock size={14} aria-hidden="true" />
+              <span>{pickupEventText(m, otherName)}</span>
               <time className="bubble-time" dateTime={m.createdAt}>{clock(m.createdAt)}</time>
             </div>
           ) : m.kind === 'hold' && !m.removed ? (

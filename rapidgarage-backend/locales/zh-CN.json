@@ -654,6 +654,19 @@
   "alert must be a saved search id.": "alert 必须是已保存搜索的 id。",
   "date must be YYYY-MM-DD.": "date 必须为 YYYY-MM-DD 格式。",
   "view must be one of: weekend, day, week.": "view 必须是 weekend、day 或 week 之一。",
-  "nightBefore must be true or false.": "nightBefore 必须为 true 或 false。"
+  "nightBefore must be true or false.": "nightBefore 必须为 true 或 false。",
+  "Only the seller offers pickup times.": "只有卖家可以提供取货时间。",
+  "Accept a hold or an offer first, then offer pickup times.": "请先接受预留或出价，再提供取货时间。",
+  "Invalid pickup times.": "取货时间无效。",
+  "Pick a slot length of 15, 30, 60 or 120 minutes.": "请选择 15、30、60 或 120 分钟的时段。",
+  "Offer at least one pickup time.": "请至少提供一个取货时间。",
+  "Offer at most 6 pickup times.": "最多提供 6 个取货时间。",
+  "Each pickup time can only be offered once.": "每个取货时间只能提供一次。",
+  "Too many pickup changes today. Try again tomorrow.": "今天的取货更改太多了，请明天再试。",
+  "Only the buyer books a pickup time.": "只有买家可以预约取货时间。",
+  "This pickup changed. Refresh and try again.": "此取货已更改，请刷新后重试。",
+  "Invalid pickup time.": "取货时间无效。",
+  "Pick one of the offered times.": "请从提供的时间中选择一个。",
+  "That time has passed. Pick another one.": "该时间已过，请选择其他时间。"
  }
 }

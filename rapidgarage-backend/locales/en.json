@@ -676,6 +676,19 @@
   "alert must be a saved search id.": "alert must be a saved search id.",
   "date must be YYYY-MM-DD.": "date must be YYYY-MM-DD.",
   "view must be one of: weekend, day, week.": "view must be one of: weekend, day, week.",
-  "nightBefore must be true or false.": "nightBefore must be true or false."
+  "nightBefore must be true or false.": "nightBefore must be true or false.",
+  "Only the seller offers pickup times.": "Only the seller offers pickup times.",
+  "Accept a hold or an offer first, then offer pickup times.": "Accept a hold or an offer first, then offer pickup times.",
+  "Invalid pickup times.": "Invalid pickup times.",
+  "Pick a slot length of 15, 30, 60 or 120 minutes.": "Pick a slot length of 15, 30, 60 or 120 minutes.",
+  "Offer at least one pickup time.": "Offer at least one pickup time.",
+  "Offer at most 6 pickup times.": "Offer at most 6 pickup times.",
+  "Each pickup time can only be offered once.": "Each pickup time can only be offered once.",
+  "Too many pickup changes today. Try again tomorrow.": "Too many pickup changes today. Try again tomorrow.",
+  "Only the buyer books a pickup time.": "Only the buyer books a pickup time.",
+  "This pickup changed. Refresh and try again.": "This pickup changed. Refresh and try again.",
+  "Invalid pickup time.": "Invalid pickup time.",
+  "Pick one of the offered times.": "Pick one of the offered times.",
+  "That time has passed. Pick another one.": "That time has passed. Pick another one."
  }
 }
