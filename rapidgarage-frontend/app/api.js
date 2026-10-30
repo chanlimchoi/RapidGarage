@@ -312,3 +312,10 @@ export function suggestListing(file, hint) {
       return { ok: response.ok, status: response.status, data };
     }));
 }
+
+// "This weekend" calendar (GET /calendar): see rapidgarage-backend/controllers/saleCalendar.js.
+export const fetchCalendar = (params) => {
+  const q = new URLSearchParams();
+  Object.keys(params || {}).forEach((k) => { if (params[k] !== undefined && params[k] !== null && params[k] !== '') q.set(k, String(params[k])); });
+  return apiFetch('/calendar?' + q.toString());
+};

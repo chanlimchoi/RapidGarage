@@ -1,5 +1,6 @@
 import React from 'react';
-import { BellRing, BellOff, Plus, Pencil, Trash2, LocateFixed, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BellRing, BellOff, Plus, Pencil, Trash2, LocateFixed, MapPin, CalendarDays } from 'lucide-react';
 import { fetchAlerts, createAlert, updateAlert, deleteAlert, errorMessage, ALERT_RADIUS } from '../api';
 import { Field, Alert, EmptyState, SkeletonBlock, Spinner } from '../components/ui';
 import { priceFieldError, formatUSD } from '../lib/price';
@@ -215,6 +216,7 @@ export default class SaleAlerts extends React.Component {
                         </span>
                       </label>
                       <div className="row alert-item-actions">
+                        <Link className="btn btn-ghost btn-sm" to={'/calendar?alert=' + a.id}><CalendarDays size={14} aria-hidden="true" />{t('cal.alertLink')}</Link>
                         <button type="button" className="btn btn-secondary btn-sm" onClick={() => this.openEdit(a)} disabled={s.busyId === a.id}><Pencil size={14} aria-hidden="true" />{t('common.edit')}</button>
                         <button type="button" className="btn btn-danger btn-sm" onClick={() => this.remove(a)} disabled={s.busyId === a.id}><Trash2 size={14} aria-hidden="true" />{t('common.delete')}</button>
                       </div>

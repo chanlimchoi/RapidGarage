@@ -257,6 +257,10 @@ async function processQueue(now) {
     console.error('Sale reminder pass failed:', err && err.message);
     summary.reminders = { error: true };
   }
+  try { summary.eveReminders = await require('./eveReminders').processDue(now); } catch (err) {
+    console.error('Night-before reminder pass failed:', err && err.message);
+    summary.eveReminders = { error: true };
+  }
   try { summary.weekly = await require('./weekendDigest').processWeekly(now); } catch (err) {
     console.error('Weekend digest pass failed:', err && err.message);
     summary.weekly = { error: true };

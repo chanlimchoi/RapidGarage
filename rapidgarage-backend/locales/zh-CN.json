@@ -215,7 +215,8 @@
   "suggest.title.toys": "玩具和游戏",
   "suggest.title.garden": "花园和庭院用品",
   "suggest.title.music": "乐器出售",
-  "suggest.title.decor": "家居装饰出售"
+  "suggest.title.decor": "家居装饰出售",
+  "push.reminderEveTitle": "明天：你设置了提醒的出售"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -642,6 +643,12 @@
   "Choose the bundle discount.": "请选择组合折扣。",
   "Unknown activity.": "未知的活动。",
   "Unknown page.": "未知的页面。",
-  "Unknown target.": "未知的对象。"
+  "Unknown target.": "未知的对象。",
+  "Invalid calendar request.": "日历请求无效。",
+  "Saved search not found.": "找不到已保存的搜索。",
+  "alert must be a saved search id.": "alert 必须是已保存搜索的 id。",
+  "date must be YYYY-MM-DD.": "date 必须为 YYYY-MM-DD 格式。",
+  "view must be one of: weekend, day, week.": "view 必须是 weekend、day 或 week 之一。",
+  "nightBefore must be true or false.": "nightBefore 必须为 true 或 false。"
  }
 }

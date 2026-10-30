@@ -22,6 +22,8 @@ module.exports = (sequelize, DataTypes) => {
     // UI, email and flyer language: 'en' | 'es' | 'ko' | 'zh-CN' (lib/i18n.js); null = not chosen.
     // New saved sales get a morning-of reminder (lib/reminders.js).
     remindSaved: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    // Sales with "Remind me" on also get a reminder the evening before (lib/eveReminders.js).
+    remindEve: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     locale: { type: DataTypes.STRING(8), allowNull: true, validate: { isIn: [['en', 'es', 'ko', 'zh-CN']] } },
     // Bumped when the password is reset or changed; sessions made under an
     // older value are signed out (middlewares/authentication.js).

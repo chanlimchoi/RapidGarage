@@ -26,6 +26,7 @@ import * as activity from './lib/activity';
 // shows a skeleton while a chunk loads; repeat visits get the chunks from the
 // service worker's precache.
 const About = lazy(() => import('./components/About'));
+const SaleCalendar = lazy(() => import('./calendar/SaleCalendar'));
 const SafetyPage = lazy(() => import('./safety/SafetyPage'));
 const Profile = lazy(() => import('./components/Profile'));
 const Login = lazy(() => import('./user/Login'));
@@ -236,6 +237,7 @@ class App extends Component {
                 <Route path='/favorites' element={<RoutedInner component={Saved} />} />
                 <Route path='/favorites/sellers' element={<RoutedInner component={Following} />} />
                 <Route path='/route' element={<RoutedInner component={RoutePlanner} />} />
+                <Route path='/calendar' element={<RoutedInner component={SaleCalendar} />} />
                 <Route path='/notifications' element={<RoutedInner component={Notifications} onSeen={this.refreshUnread} />} />
                 <Route path='/people/:id' element={<RoutedInner component={PersonRatings} />} />
                 <Route path='/profile' element={<RoutedInner component={Profile} />} />

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag, BellRing, Check, Package, X, UsersRound, Gift, Percent } from 'lucide-react';
+import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag, BellRing, Check, Package, X, UsersRound, Gift, Percent, CalendarDays } from 'lucide-react';
 import Map from './Map';
 import PostCard from './PostCard';
 import { Alert, EmptyState, SkeletonGrid, Spinner } from './ui';
@@ -316,6 +316,7 @@ class PostList extends React.Component {
         <section className="hero">
           <h1>{t('list.heroTitle')}</h1>
           <p>{t('list.heroLead')}</p>
+          <p className="hero-links"><Link className="btn btn-ghost btn-sm" to="/calendar"><CalendarDays size={16} aria-hidden="true" />{t('cal.heroLink')}</Link></p>
           <form className="search-bar map-search" onSubmit={this.handleSubmit} role="search" aria-label={t('list.searchSales')}>
             <div className="search-field search-field-what">
               <Package size={18} aria-hidden="true" />
