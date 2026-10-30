@@ -332,11 +332,17 @@ minute and takes over again if the connection is lost.
 
 **Settings → Notifications** turns on push notifications for the current phone or computer
 (Web Push, so they arrive even with the app closed; iPhone/iPad need RapidGarage on the Home
-Screen first). You choose what to hear about: new messages, new sales from people you follow,
-and saved sales happening today. A **Send a test** button checks the setup. Notifications say who
+Screen first). You choose what to hear about, one switch each: new messages, new sales from people
+you follow, reminders for sales you saved, offers (a new offer on your item, a counteroffer, an
+accepted offer) and new sales matching your saved searches. A **Send a test** button checks the setup. Notifications say who
 wrote and which sale, never the message text, because they can show on a lock screen. Message
 notifications are skipped while you have the app open. Push needs `VAPID_PUBLIC_KEY` and
 `VAPID_PRIVATE_KEY` on the server (`npx web-push generate-vapid-keys`).
+
+**Offline at a sale.** The installed app (and the website, once loaded) keeps the app shell and
+the last 20 sale pages you opened, with their photos, so a sale you looked at still opens with no
+signal; the page says it's a saved copy and when it was saved. Nothing else from your account
+(messages, saved lists, settings) is stored, and signing out deletes the saved sales.
 
 ## Following sellers
 

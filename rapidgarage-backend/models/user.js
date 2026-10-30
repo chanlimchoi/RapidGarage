@@ -37,6 +37,8 @@ module.exports = (sequelize, DataTypes) => {
     pushMessages: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     pushFollows: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     pushReminders: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    pushOffers: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    pushSearches: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     // When the address was confirmed (lib/emailVerify.js); Google sign-in counts.
     emailVerifiedAt: { type: DataTypes.DATE, allowNull: true },
   }, {

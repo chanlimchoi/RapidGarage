@@ -14,7 +14,8 @@ const i18n = require('./i18n');
 
 function models() { return require('../models'); }
 
-const KINDS = { message: 'pushMessages', follow: 'pushFollows', reminder: 'pushReminders' };
+// offer: offers, counteroffers and accepted offers in a conversation; search: a saved search matched a new sale.
+const KINDS = { message: 'pushMessages', follow: 'pushFollows', reminder: 'pushReminders', offer: 'pushOffers', search: 'pushSearches' };
 const MAX_PER_USER = 10;
 const MAX_FAILURES = 5;
 
@@ -143,6 +144,32 @@ function reminder(userId, { title, postId }) {
   });
 }
 
+// An offer step in a conversation (lib/notify.js). Like messages, an open tab shows it live instead.
+const OFFER_TITLES = { requested: 'push.offerTitle', countered: 'push.counterTitle', accepted: 'push.offerAcceptedTitle', agreed: 'push.offerAcceptedTitle' };
+function offer(recipientId, { senderName, postTitle, conversationId, event }) {
+  return track(async () => {
+    if (require('./live').isConnected(recipientId)) return 0;
+    const lang = await langOf(recipientId);
+    return sendTo(recipientId, 'offer', {
+      title: i18n.t(lang, OFFER_TITLES[event] || 'push.offerTitle', { name: senderName }),
+      body: postTitle ? i18n.t(lang, 'push.messageAbout', { title: postTitle }) : i18n.t(lang, 'push.messageOpen'),
+      url: '/messages/' + conversationId,
+      tag: 'conversation-' + conversationId,
+    });
+  });
+}
+
+// A saved search matched a new sale (lib/alerts.js); says which search, never where the person is.
+function searchMatch(userId, { title, postId, label }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'search', {
+      title: label ? i18n.t(lang, 'push.searchTitleNamed', { name: label }) : i18n.t(lang, 'push.searchTitle'),
+      body: title, url: '/post/' + postId, tag: 'search-' + postId,
+    });
+  });
+}
+
 // The evening before a saved sale (lib/eveReminders.js); same switch as reminders.
 function reminderEve(userId, { title, postId }) {
   return track(async () => {
@@ -152,7 +179,7 @@ function reminderEve(userId, { title, postId }) {
 }
 
 module.exports = {
-  reminderEve,
+  reminderEve, offer, searchMatch, OFFER_TITLES,
   KINDS, MAX_PER_USER, allowedEndpoint, validKeys, publicKey, isConfigured, setSender,
   subscribe, unsubscribe, deviceCount, sendTo, message, newSale, reminder, idle, track,
 };

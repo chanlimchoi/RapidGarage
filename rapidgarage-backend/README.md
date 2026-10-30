@@ -519,7 +519,7 @@ Google Maps starts from the phone's location. The location is only used for that
   first on shutdown. They're per process: with several instances, the clients' 60 s fallback poll covers events from
   another instance.
 - Events come from a `Message` `afterCreate` hook, run after commit (`lib/notify.js`). That covers text, hold and meetup messages.
-- Push (`lib/push.js`, `web-push`, VAPID): `GET|PUT /push/settings` (`messages`, `follows`, `reminders`), `POST|DELETE
+- Push (`lib/push.js`, `web-push`, VAPID): `GET|PUT /push/settings` (`messages`, `follows`, `reminders`, `offers`, `searches`; offer steps with an amount use `offers`, saved-search matches new in the bell use `searches`), `POST|DELETE
   /push/subscriptions`, `POST /push/test` (5 per hour). Endpoints must be https on a known push service (FCM, Mozilla, Apple, WNS,
   plus `PUSH_EXTRA_HOSTS`): no credentials, no other ports, so the server can't be pointed at arbitrary hosts. Up to 10
   devices per person. A 404/410 from the push service, or 5 failures in a row, deletes the subscription. Triggers: a new message

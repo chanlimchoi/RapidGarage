@@ -216,7 +216,12 @@
   "suggest.title.garden": "花园和庭院用品",
   "suggest.title.music": "乐器出售",
   "suggest.title.decor": "家居装饰出售",
-  "push.reminderEveTitle": "明天：你设置了提醒的出售"
+  "push.reminderEveTitle": "明天：你设置了提醒的出售",
+  "push.offerTitle": "{name} 发来新出价",
+  "push.counterTitle": "{name} 发来还价",
+  "push.offerAcceptedTitle": "{name} 接受了出价",
+  "push.searchTitle": "有新甩卖符合你保存的搜索",
+  "push.searchTitleNamed": "“{name}”有新匹配"
  },
  "messages": {
   "Login required.": "需要登录。",

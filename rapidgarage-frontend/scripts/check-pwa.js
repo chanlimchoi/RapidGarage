@@ -2,7 +2,8 @@
 //   npm run build && npm run check:pwa
 // Exits 1 if any required check fails. Mirrors Chrome's install criteria
 // (manifest fields, icons, service worker with a fetch handler) plus this
-// app's own rule: the worker must never cache API or private data.
+// app's own rule: the worker never caches private data. The only runtime
+// cache is recently viewed sales (GET /api/post/<id>) and their photos.
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -85,8 +86,10 @@ export function checkPwa(dir) {
   check('sw-precache-files', !gone.length, gone.length ? 'Precached files missing from the build: ' + gone.join(', ') : 'Every precached file exists');
   const bad = list.filter((p) => /^\/(api|uploads|auth)(\/|$)/.test(p) || /\.map$/.test(p));
   check('sw-no-private-precache', !bad.length, bad.length ? 'Precache includes data/private paths: ' + bad.join(', ') : 'Precache holds no API, upload or auth paths');
-  check('sw-never-cache-api', /NEVER_CACHE\s*=\s*\[[^\]]*\\\/api/.test(sw), 'sw.js bypasses /api/* (never cached)');
-  check('sw-no-runtime-put', !/cache\.put\(|\.put\(\s*(event\.)?req/.test(sw), 'sw.js never stores responses at runtime');
+  check('sw-never-cache-api', /NEVER_CACHE\s*=\s*\[[^\]]*\\\/api/.test(sw), 'sw.js bypasses /api/* (only sale pages are kept, below)');
+  const puts = (sw.match(/\.put\(/g) || []).length;
+  const recentPuts = (sw.match(/\brecent(Sales|Photos)\.put\(/g) || []).length;
+  check('sw-runtime-recent-only', puts === recentPuts && /RECENT_SALE = \/\^\\\/api\\\/post\\\/\\d\+\$\//.test(sw), puts === recentPuts ? 'sw.js stores only recently viewed sales (/api/post/<id>) and their photos at runtime' : 'sw.js stores other responses at runtime');
 
   // Registration in the bundle.
   const assets = path.join(dir, 'assets');

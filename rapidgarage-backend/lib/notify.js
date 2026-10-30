@@ -18,6 +18,11 @@ async function messageCreated(msg) {
   live.emit(recipientId, 'message', { conversationId: conv.id });
   live.emit(recipientId, 'badges', {});
   const sender = await m.User.findByPk(msg.senderId, { attributes: ['id', 'firstName', 'lastName'] });
+  // Offer steps (an amount was asked, countered or accepted) use the "offers" push switch.
+  if (msg.kind === 'hold' && msg.holdCents !== null && msg.holdCents !== undefined && push.OFFER_TITLES[msg.holdEvent]) {
+    push.offer(recipientId, { senderName: publicName(sender), postTitle: conv.postTitle, conversationId: conv.id, event: msg.holdEvent });
+    return;
+  }
   push.message(recipientId, { senderName: publicName(sender), postTitle: conv.postTitle, conversationId: conv.id });
 }
 

@@ -125,9 +125,13 @@ async function enqueueForPost(post, opts) {
     userId, alertId: v.alert.id, postId: post.id, distanceMiles: miles(v.d), status: 'pending',
   }));
   if (rows.length) await m.AlertNotification.bulkCreate(rows, { ignoreDuplicates: true });
+  // Push only for matches that are new in the bell (a sale edit doesn't buzz anyone twice).
+  const inAppIds = Array.from(inApp.keys());
+  const already = inAppIds.length ? new Set((await m.Notification.findAll({ where: { userId: inAppIds, dedupeKey: 'search:' + post.id }, attributes: ['userId'], raw: true })).map((r) => r.userId)) : new Set();
   await require('./notifications').add(Array.from(inApp.entries()).map(([userId, v]) => ({
     userId, kind: 'search_match', postId: post.id, alertId: v.alert.id, dedupeKey: 'search:' + post.id, data: { distanceMiles: miles(v.d) },
   })));
+  inApp.forEach((v, userId) => { if (!already.has(userId)) require('./push').searchMatch(userId, { title: post.title, postId: post.id, label: v.alert.label || v.alert.keyword || null }); });
   return inApp.size;
 }
 

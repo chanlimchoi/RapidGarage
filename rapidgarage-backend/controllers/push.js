@@ -1,6 +1,6 @@
 // Push notifications (lib/push.js).
 //   GET    /push/settings        { available, publicKey, prefs, devices }
-//   PUT    /push/settings        { messages?, follows?, reminders? }
+//   PUT    /push/settings        { messages?, follows?, reminders?, offers?, searches? }
 //   POST   /push/subscriptions   { endpoint, keys: { p256dh, auth }, label? } this browser
 //   DELETE /push/subscriptions   { endpoint }
 //   POST   /push/test            send a test notification to my devices
@@ -9,7 +9,7 @@ const models = require('../models');
 const push = require('../lib/push');
 const { badRequest, sendError, serverError, requireLogin } = require('../lib/http');
 
-const PREFS = { messages: 'pushMessages', follows: 'pushFollows', reminders: 'pushReminders' };
+const PREFS = { messages: 'pushMessages', follows: 'pushFollows', reminders: 'pushReminders', offers: 'pushOffers', searches: 'pushSearches' };
 
 router.use(requireLogin, (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
