@@ -12,6 +12,7 @@ const holds = require('../lib/holds');
 const activity = require('../lib/activity');
 const bundles = require('../lib/bundles');
 const meetups = require('../lib/meetups');
+const pickups = require('../lib/pickups');
 const follows = require('../lib/follows');
 const schedule = require('../lib/schedule');
 const wanted = require('../lib/wanted');
@@ -63,6 +64,10 @@ function messageJSON(m, me, holdMap) {
     const p = holdMap && holdMap.meetups && m.meetupId ? holdMap.meetups.get(m.meetupId) : null;
     out.kind = 'meetup';
     out.meetup = Object.assign({ event: m.meetupEvent }, p ? meetups.proposalJSON(p, me) : { id: m.meetupId, status: null });
+  }
+  if (m.kind === 'pickup') {
+    out.kind = 'pickup';
+    out.pickup = { id: m.pickupId, event: m.pickupEvent, start: m.pickupStart || null };
   }
   return out;
 }
@@ -657,6 +662,121 @@ router.post('/:id/meetups', loadConversation, async (req, res) => {
     }));
     await meetups.postEvent(p, 'proposed', me);
     return res.status(201).json(meetups.proposalJSON(p, me));
+  } catch (err) { return serverError(res, err); }
+});
+
+// ---- pickup scheduling (lib/pickups.js) --------------------------------------
+async function pickupContext(req) {
+  const conv = req.conversation;
+  const t = holds.now();
+  await holds.sweep();
+  const [plan, accepted, post] = await Promise.all([
+    models.PickupPlan.findOne({ where: { conversationId: conv.id } }),
+    pickups.acceptedHolds(conv.id, t),
+    conv.postId ? models.Post.findByPk(conv.postId, { include: [{ model: models.SaleDay, as: 'saleDays' }] }) : null,
+  ]);
+  return { conv, t, plan, accepted, post };
+}
+const PICKUP_STATE = (res) => sendError(res, 409, 'invalid_state', 'This pickup changed. Refresh and try again.');
+
+// GET /conversations/:id/pickup : the pickup plan, if any, and what I can do.
+router.get('/:id/pickup', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  try {
+    const { conv, t, plan, accepted, post } = await pickupContext(req);
+    const b = await msg.blockState(me, conv.otherId(me));
+    const canSend = !b.byMe && !b.byThem && !req.user.messagingBanned;
+    const end = post ? holds.saleEnd(post) : null;
+    return res.json({
+      pickup: pickups.planJSON(plan, me, t),
+      items: accepted.map((h) => (h.item && h.item.name) || null).filter(Boolean),
+      canOffer: canSend && me === conv.sellerId && accepted.length > 0,
+      canAct: canSend && accepted.length > 0,
+      timeZone: pickups.zoneOf(post && post.timeZone),
+      saleEndsAt: end === null ? null : new Date(end),
+      limits: { maxSlots: pickups.MAX_SLOTS, minutes: pickups.MINUTES, pickupMaxDays: holds.PICKUP_MAX_DAYS },
+    });
+  } catch (err) { return serverError(res, err); }
+});
+
+// POST /conversations/:id/pickup { slots: [iso], minutes? } seller: offer pickup
+// times (replaces any earlier ones; a booked pickup goes back to "offered").
+router.post('/:id/pickup', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  try {
+    const { conv, t, plan, accepted, post } = await pickupContext(req);
+    if (me !== conv.sellerId) return forbidden(res, 'Only the seller offers pickup times.');
+    if (!(await canAct(req, res, conv))) return undefined;
+    if (!accepted.length || !post) return sendError(res, 409, 'no_accepted_hold', 'Accept a hold or an offer first, then offer pickup times.');
+    const parsed = pickups.parseSlots(req.body, post, t);
+    if (parsed.errors) return badRequest(res, 'Invalid pickup times.', parsed.errors);
+    if (await pickups.overLimit(conv.id, me, t)) return sendError(res, 429, 'rate_limited', 'Too many pickup changes today. Try again tomorrow.');
+    const values = {
+      slots: JSON.stringify(parsed.value.slots.map((d) => d.toISOString())), slotMinutes: parsed.value.minutes,
+      timeZone: pickups.zoneOf(post.timeZone), status: 'offered', chosenAt: null, updatedBy: me,
+    };
+    let p = plan;
+    const wasBooked = !!(p && p.status === 'booked');
+    if (p) await p.update(values);
+    else p = await models.PickupPlan.create(Object.assign({ conversationId: conv.id, postId: post.id, sellerId: conv.sellerId, buyerId: conv.buyerId }, values));
+    await pickups.postEvent(p, wasBooked ? 'rescheduled' : 'offered', me);
+    return res.status(201).json({ pickup: pickups.planJSON(p, me, t) });
+  } catch (err) { return serverError(res, err); }
+});
+
+// POST /conversations/:id/pickup/book { start } buyer: book one of the offered slots.
+router.post('/:id/pickup/book', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  try {
+    const { conv, t, plan, accepted, post } = await pickupContext(req);
+    if (me !== conv.buyerId) return forbidden(res, 'Only the buyer books a pickup time.');
+    if (!(await canAct(req, res, conv))) return undefined;
+    if (!plan || plan.status !== 'offered' || !accepted.length || !post) return PICKUP_STATE(res);
+    const raw = (req.body || {}).start;
+    const want = typeof raw === 'string' ? new Date(raw) : null;
+    const slot = want && !isNaN(want.getTime()) ? plan.slotList().find((s) => Math.abs(new Date(s).getTime() - want.getTime()) < 1000) : null;
+    if (!slot) return badRequest(res, 'Invalid pickup time.', { start: 'Pick one of the offered times.' });
+    if (new Date(slot) <= t) return badRequest(res, 'Invalid pickup time.', { start: 'That time has passed. Pick another one.' });
+    if (await pickups.overLimit(conv.id, me, t)) return sendError(res, 429, 'rate_limited', 'Too many pickup changes today. Try again tomorrow.');
+    const [changed] = await models.PickupPlan.update({ status: 'booked', chosenAt: new Date(slot), updatedBy: me }, { where: { id: plan.id, status: 'offered' } });
+    if (!changed) return PICKUP_STATE(res);
+    await plan.reload();
+    await pickups.applyToHolds(plan, post, t);
+    await pickups.postEvent(plan, 'booked', me);
+    return res.json({ pickup: pickups.planJSON(plan, me, t) });
+  } catch (err) { return serverError(res, err); }
+});
+
+// POST /conversations/:id/pickup/reschedule : either person, on a booked pickup:
+// back to "offered" (the buyer picks another slot, or the seller offers new ones).
+router.post('/:id/pickup/reschedule', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  try {
+    const { conv, t, plan } = await pickupContext(req);
+    if (!(await canAct(req, res, conv))) return undefined;
+    if (!plan || plan.status !== 'booked') return PICKUP_STATE(res);
+    if (await pickups.overLimit(conv.id, me, t)) return sendError(res, 429, 'rate_limited', 'Too many pickup changes today. Try again tomorrow.');
+    const [changed] = await models.PickupPlan.update({ status: 'offered', chosenAt: null, updatedBy: me }, { where: { id: plan.id, status: 'booked' } });
+    if (!changed) return PICKUP_STATE(res);
+    await plan.reload();
+    await pickups.postEvent(plan, 'reschedule', me);
+    return res.json({ pickup: pickups.planJSON(plan, me, t) });
+  } catch (err) { return serverError(res, err); }
+});
+
+// POST /conversations/:id/pickup/cancel : either person calls off the pickup
+// (offered or booked). The holds themselves are unchanged.
+router.post('/:id/pickup/cancel', loadConversation, async (req, res) => {
+  const me = req.user.id;
+  try {
+    const { conv, t, plan } = await pickupContext(req);
+    if (!(await canAct(req, res, conv))) return undefined;
+    if (!plan || plan.status === 'cancelled') return PICKUP_STATE(res);
+    const [changed] = await models.PickupPlan.update({ status: 'cancelled', updatedBy: me }, { where: { id: plan.id, status: plan.status } });
+    if (!changed) return PICKUP_STATE(res);
+    await plan.reload();
+    await pickups.postEvent(plan, 'cancelled', me);
+    return res.json({ pickup: pickups.planJSON(plan, me, t) });
   } catch (err) { return serverError(res, err); }
 });
 

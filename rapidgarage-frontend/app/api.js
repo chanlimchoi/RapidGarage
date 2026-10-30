@@ -130,6 +130,11 @@ export const fetchMeetupSpots = (conversationId) => apiFetch('/conversations/' +
 export const searchMeetupPlaces = (conversationId, q) => apiFetch('/conversations/' + conversationId + '/meetup-places?q=' + encodeURIComponent(q));
 export const proposeMeetup = (conversationId, body) => apiFetch('/conversations/' + conversationId + '/meetups', { method: 'POST', body: JSON.stringify(body) });
 export const meetupAction = (id, action, body) => apiFetch('/meetups/' + id + '/' + action, { method: 'POST', body: JSON.stringify(body || {}) });
+// Pickup scheduling after an accepted hold (see the backend's lib/pickups.js).
+export const fetchPickup = (conversationId) => apiFetch('/conversations/' + conversationId + '/pickup');
+export const offerPickup = (conversationId, body) => apiFetch('/conversations/' + conversationId + '/pickup', { method: 'POST', body: JSON.stringify(body) });
+export const pickupAction = (conversationId, action, body) => apiFetch('/conversations/' + conversationId + '/pickup/' + action, { method: 'POST', body: JSON.stringify(body || {}) });
+export const fetchUpcomingPickups = () => apiFetch('/pickups/upcoming');
 // Admin: safe meetup spots.
 export const adminSpots = (q) => apiFetch('/admin/meetup-spots' + (q ? '?q=' + encodeURIComponent(q) : ''));
 export const adminSaveSpot = (id, body) => apiFetch('/admin/meetup-spots' + (id ? '/' + id : ''), { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });

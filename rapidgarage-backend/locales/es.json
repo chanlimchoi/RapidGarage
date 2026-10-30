@@ -676,6 +676,19 @@
   "alert must be a saved search id.": "alert debe ser el id de una búsqueda guardada.",
   "date must be YYYY-MM-DD.": "date debe tener el formato AAAA-MM-DD.",
   "view must be one of: weekend, day, week.": "view debe ser weekend, day o week.",
-  "nightBefore must be true or false.": "nightBefore debe ser true o false."
+  "nightBefore must be true or false.": "nightBefore debe ser true o false.",
+  "Only the seller offers pickup times.": "Solo el vendedor ofrece horarios de recogida.",
+  "Accept a hold or an offer first, then offer pickup times.": "Primero acepta una reserva o una oferta y luego ofrece horarios de recogida.",
+  "Invalid pickup times.": "Horarios de recogida no válidos.",
+  "Pick a slot length of 15, 30, 60 or 120 minutes.": "Elige una duración de 15, 30, 60 o 120 minutos.",
+  "Offer at least one pickup time.": "Ofrece al menos un horario de recogida.",
+  "Offer at most 6 pickup times.": "Ofrece como máximo 6 horarios de recogida.",
+  "Each pickup time can only be offered once.": "Cada horario solo se puede ofrecer una vez.",
+  "Too many pickup changes today. Try again tomorrow.": "Demasiados cambios de recogida hoy. Inténtalo mañana.",
+  "Only the buyer books a pickup time.": "Solo el comprador reserva un horario de recogida.",
+  "This pickup changed. Refresh and try again.": "Esta recogida cambió. Actualiza e inténtalo de nuevo.",
+  "Invalid pickup time.": "Horario de recogida no válido.",
+  "Pick one of the offered times.": "Elige uno de los horarios ofrecidos.",
+  "That time has passed. Pick another one.": "Ese horario ya pasó. Elige otro."
  }
 }

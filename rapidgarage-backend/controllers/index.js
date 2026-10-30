@@ -17,6 +17,7 @@ router.use('/search', require('./search'));
 router.use('/conversations', require('./conversations'));
 router.use('/holds', require('./holds'));
 router.use('/meetups', require('./meetups'));
+router.use('/pickups', require('./pickups'));
 router.use('/events', require('./events'));
 router.use('/alerts', require('./alerts'));
 router.use('/wanted', require('./wanted'));

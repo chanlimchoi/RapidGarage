@@ -654,6 +654,19 @@
   "alert must be a saved search id.": "alert는 저장한 검색의 id여야 해요.",
   "date must be YYYY-MM-DD.": "date는 YYYY-MM-DD 형식이어야 해요.",
   "view must be one of: weekend, day, week.": "view는 weekend, day, week 중 하나여야 해요.",
-  "nightBefore must be true or false.": "nightBefore는 true 또는 false여야 해요."
+  "nightBefore must be true or false.": "nightBefore는 true 또는 false여야 해요.",
+  "Only the seller offers pickup times.": "픽업 시간은 판매자만 제안할 수 있어요.",
+  "Accept a hold or an offer first, then offer pickup times.": "먼저 보류나 제안을 수락한 다음 픽업 시간을 제안하세요.",
+  "Invalid pickup times.": "픽업 시간이 올바르지 않아요.",
+  "Pick a slot length of 15, 30, 60 or 120 minutes.": "시간대 길이는 15, 30, 60, 120분 중에서 고르세요.",
+  "Offer at least one pickup time.": "픽업 시간을 하나 이상 제안하세요.",
+  "Offer at most 6 pickup times.": "픽업 시간은 최대 6개까지 제안할 수 있어요.",
+  "Each pickup time can only be offered once.": "같은 픽업 시간은 한 번만 제안할 수 있어요.",
+  "Too many pickup changes today. Try again tomorrow.": "오늘 픽업 변경이 너무 많아요. 내일 다시 시도하세요.",
+  "Only the buyer books a pickup time.": "픽업 시간은 구매자만 예약할 수 있어요.",
+  "This pickup changed. Refresh and try again.": "픽업 정보가 바뀌었어요. 새로고침 후 다시 시도하세요.",
+  "Invalid pickup time.": "픽업 시간이 올바르지 않아요.",
+  "Pick one of the offered times.": "제안된 시간 중 하나를 고르세요.",
+  "That time has passed. Pick another one.": "그 시간은 지났어요. 다른 시간을 고르세요."
  }
 }

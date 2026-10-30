@@ -20,6 +20,11 @@ module.exports = (sequelize, DataTypes) => {
     // countered | accepted | declined | cancelled | expired).
     meetupId: { type: DataTypes.INTEGER, allowNull: true },
     meetupEvent: { type: DataTypes.STRING(16), allowNull: true },
+    // 'pickup' messages: a pickup scheduling step (lib/pickups.js; pickupEvent:
+    // offered | rescheduled | booked | reschedule | cancelled), pickupStart the booked slot.
+    pickupId: { type: DataTypes.INTEGER, allowNull: true },
+    pickupEvent: { type: DataTypes.STRING(16), allowNull: true },
+    pickupStart: { type: DataTypes.DATE, allowNull: true },
   }, {
     updatedAt: false,
     indexes: [
