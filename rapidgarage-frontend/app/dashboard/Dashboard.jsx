@@ -7,6 +7,7 @@ import { browserTimeZone, shortWhen } from '../lib/schedule';
 import { METRICS, filterSales, sum } from '../lib/dashboard';
 import BarChart from './BarChart';
 import UpcomingPickups from './UpcomingPickups';
+import RainChecks from './RainChecks';
 import { MetricCard, ItemsBar, METRIC_ICON, METRIC_LABEL, METRIC_TOTAL, STATUS_LABEL, STATUS_CLASS } from './parts';
 import { t } from '../i18n';
 
@@ -86,6 +87,7 @@ export default class Dashboard extends React.Component {
           </div>
           <Link className="btn btn-primary" to="/newpost"><Plus size={16} aria-hidden="true" />{t('nav.postSale')}</Link>
         </header>
+        <RainChecks onChange={() => this.load()} />
         <UpcomingPickups />
         {!data.sales.length ? (
           <EmptyState icon={Store} title={t('dash.noneTitle')} action={<Link className="btn btn-primary" to="/newpost"><Plus size={16} aria-hidden="true" />{t('nav.postSale')}</Link>}>{t('dash.noneText')}</EmptyState>

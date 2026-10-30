@@ -221,7 +221,9 @@
   "push.counterTitle": "{name}님이 역제안을 보냈어요",
   "push.offerAcceptedTitle": "{name}님이 제안을 수락했어요",
   "push.searchTitle": "저장한 검색과 맞는 새 세일이 있어요",
-  "push.searchTitleNamed": "“{name}”에 맞는 새 세일"
+  "push.searchTitleNamed": "“{name}”에 맞는 새 세일",
+  "push.rainCheckTitle": "세일 날 궂은 날씨가 예보됐어요",
+  "push.postponedTitle": "저장한 세일이 연기됐어요"
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -667,6 +669,11 @@
   "This pickup changed. Refresh and try again.": "픽업 정보가 바뀌었어요. 새로고침 후 다시 시도하세요.",
   "Invalid pickup time.": "픽업 시간이 올바르지 않아요.",
   "Pick one of the offered times.": "제안된 시간 중 하나를 고르세요.",
-  "That time has passed. Pick another one.": "그 시간은 지났어요. 다른 시간을 고르세요."
+  "That time has passed. Pick another one.": "그 시간은 지났어요. 다른 시간을 고르세요.",
+  "This sale has no upcoming days to postpone.": "이 세일에는 연기할 예정된 날이 없어요.",
+  "Postpone by 1 to 14 days.": "1일에서 14일 사이로 연기하세요.",
+  "Pick at least one new day.": "새 날짜를 하나 이상 고르세요.",
+  "Pick a later start than the current one to postpone.": "연기하려면 지금보다 늦은 시작 시간을 고르세요.",
+  "Invalid schedule.": "일정이 올바르지 않아요."
  }
 }

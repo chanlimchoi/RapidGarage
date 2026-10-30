@@ -28,6 +28,8 @@ import FollowButton from '../follows/FollowButton';
 import DuplicateButton from './DuplicateButton';
 import { scrollBehavior, photoAlt } from '../lib/a11y';
 import { categoryLabel } from '../wanted/WantedCard';
+import SaleWeather from './SaleWeather';
+import { postponedNote } from '../lib/weatherText';
 import { t } from '../i18n';
 import * as activity from '../lib/activity';
 
@@ -326,6 +328,8 @@ class Post extends Component {
                     <ul className="schedule-list">{lines.map((l, i) => <li key={i}>{l}</li>)}</ul>
                   ) : t('post.datesNotSet')}
                   {zone ? <span className="small muted schedule-zone">{zone}</span> : null}
+                  {postponedNote(post) ? <span className="chip chip-warning postponed-chip"><CalendarDays size={12} aria-hidden="true" />{postponedNote(post)}</span> : null}
+                  {lines.length && !post.offlineSavedAt && !(badge && badge.kind === 'ended') ? <SaleWeather postId={post.id} onPostponed={() => this.load()} /> : null}
                 </dd></div>
                 {typeof post.lat === 'number' && typeof post.distanceMiles === 'number' ? <div><dt><Navigation size={18} aria-hidden="true" /><span>{t('post.distance')}</span></dt><dd>{formatMiles(post.distanceMiles)}</dd></div> : null}
               </dl>

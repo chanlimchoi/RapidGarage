@@ -243,7 +243,9 @@
   "push.counterTitle": "{name} envió una contraoferta",
   "push.offerAcceptedTitle": "{name} aceptó la oferta",
   "push.searchTitle": "Una venta nueva coincide con tu búsqueda guardada",
-  "push.searchTitleNamed": "Nueva coincidencia para «{name}»"
+  "push.searchTitleNamed": "Nueva coincidencia para «{name}»",
+  "push.rainCheckTitle": "Se pronostica mal tiempo para tu venta",
+  "push.postponedTitle": "Una venta que guardaste se aplazó"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -689,6 +691,11 @@
   "This pickup changed. Refresh and try again.": "Esta recogida cambió. Actualiza e inténtalo de nuevo.",
   "Invalid pickup time.": "Horario de recogida no válido.",
   "Pick one of the offered times.": "Elige uno de los horarios ofrecidos.",
-  "That time has passed. Pick another one.": "Ese horario ya pasó. Elige otro."
+  "That time has passed. Pick another one.": "Ese horario ya pasó. Elige otro.",
+  "This sale has no upcoming days to postpone.": "Esta venta no tiene días próximos que aplazar.",
+  "Postpone by 1 to 14 days.": "Aplaza entre 1 y 14 días.",
+  "Pick at least one new day.": "Elige al menos un día nuevo.",
+  "Pick a later start than the current one to postpone.": "Para aplazar, elige un inicio posterior al actual.",
+  "Invalid schedule.": "Horario no válido."
  }
 }

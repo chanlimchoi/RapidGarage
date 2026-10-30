@@ -28,4 +28,13 @@ router.get('/sales/:id', async (req, res) => {
   } catch (err) { return serverError(res, err); }
 });
 
+// GET /dashboard/rain-checks : my upcoming sales with bad weather forecast
+// (lib/rainChecks.js); empty when weather is off or unavailable.
+router.get('/rain-checks', async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    return res.json({ results: await require('../lib/rainChecks').forSeller(req.user.id) });
+  } catch (err) { return res.json({ results: [] }); }
+});
+
 module.exports = router;

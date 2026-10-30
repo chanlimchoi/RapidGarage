@@ -47,6 +47,11 @@ module.exports = (sequelize, DataTypes) => {
     // IANA time zone of the sale days (lib/schedule.js); startDate/endDate are
     // then the first start and last end of those days.
     timeZone: { type: DataTypes.STRING(64), allowNull: true },
+    // Rain checks (lib/rainChecks.js): when the seller last postponed and the first
+    // date it moved from; the bad-weather date the seller chose to keep.
+    postponedAt: { type: DataTypes.DATE, allowNull: true },
+    postponedFrom: { type: DataTypes.STRING(10), allowNull: true },
+    rainCheckDismissed: { type: DataTypes.STRING(10), allowNull: true },
     // Random code for the QR short link /s/<code> (see lib/shortlinks.js).
     shortCode: { type: DataTypes.STRING(12), allowNull: true, unique: 'posts_short_code_uniq' },
     // Free on the curb (lib/curbside.js): leftovers free until curbsideUntil.

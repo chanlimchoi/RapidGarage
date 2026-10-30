@@ -681,5 +681,16 @@ Google Maps starts from the phone's location. The location is only used for that
     + Uncomment the corresponding code in `app.js`
     + Add a `/views` folder and the appropriate templates
 
+## Rain checks (lib/weather.js, lib/rainChecks.js)
 
-
+- `lib/weather.js`: Open-Meteo daily forecast (`weather_code`, `precipitation_probability_max`, `precipitation_sum`,
+  `wind_speed_10m_max`, `temperature_2m_max`), cached in `WeatherForecasts` per 0.01 deg cell; failures cached 15 min
+  (a forecast up to a day old is served meanwhile). Never throws; off under `WEATHER_ENABLED=false` and in tests unless a
+  provider is set (`weather.setProvider`). `assess(day)`: storm (95-99), snow (71-77, 85, 86), rain (63/65/66/67/81/82,
+  or precipitation probability >= `RAIN_CHECK_POP` with >= 1 mm), wind (>= 50 km/h).
+- `GET /post/:id/weather` -> `{ weather: { days, bad } | null, rainCheck }` (`rainCheck` for the owner only).
+- `POST /post/:id/postpone { byDays: 1-14 } | { schedule }` (owner): later start required; sets `postponedAt`,
+  `postponedFrom`; bell `sale_postponed` + push to everyone who saved it (not across blocks).
+- `POST /post/:id/rain-check/dismiss { date }` (owner) and `GET /dashboard/rain-checks`.
+- Worker pass (alert worker, every `RAIN_CHECK_MINUTES`): sales opening within `RAIN_CHECK_DAYS` get one `rain_check`
+  bell notice per bad day for the seller. Migration `20261030160000-rain-checks`.

@@ -294,4 +294,56 @@ router.delete('/:id', requireLogin, loadPost, requireOwnerOrAdmin, (req, res) =>
     .catch((err) => serverError(res, err));
 });
 
+// ---- rain checks (lib/weather.js, lib/rainChecks.js) --------------------------
+// GET /post/:id/weather : the forecast for the sale's upcoming days (Open-Meteo,
+// cached), or { weather: null } when off or unavailable. Never an error page.
+router.get('/:id/weather', loadPost, async (req, res) => {
+  try {
+    const w = await require('../lib/weather').saleWeather(req.post, req.post.saleDays || [], schedule.now());
+    const isOwner = !!(req.user && req.user.id === req.post.userId);
+    const rain = isOwner ? require('../lib/rainChecks').firstBad(w, req.post) : null;
+    res.set('Cache-Control', isOwner ? 'private, no-store' : 'private, max-age=600');
+    return res.json({ weather: w, rainCheck: rain && !schedule.isEnded(req.post) ? rain : null });
+  } catch (err) { return res.json({ weather: null, rainCheck: null }); }
+});
+
+// POST /post/:id/postpone { byDays: 1-14 } | { schedule } (owner): move the sale
+// later. Everyone who saved it hears about the new date (bell + push).
+router.post('/:id/postpone', requireLogin, loadPost, requireOwner, async (req, res) => {
+  const rc = require('../lib/rainChecks');
+  const body = req.body || {};
+  const t = schedule.now();
+  try {
+    const before = (req.post.saleDays || []).filter((d) => new Date(d.endsAt) > t).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
+    if (!before.length || schedule.isEnded(req.post)) return sendError(res, 409, 'sale_ended', 'This sale has no upcoming days to postpone.');
+    let raw;
+    if (body.schedule !== undefined) raw = body.schedule;
+    else {
+      const n = Number(body.byDays);
+      if (!Number.isInteger(n) || n < 1 || n > rc.MAX_SHIFT_DAYS) return badRequest(res, 'Invalid request.', { byDays: 'Postpone by 1 to ' + rc.MAX_SHIFT_DAYS + ' days.' });
+      raw = rc.shiftedSchedule(req.post, before, n, t);
+    }
+    const sched = schedule.validateSchedule(raw, true);
+    if (Object.keys(sched.errors).length) return badRequest(res, 'Invalid schedule.', sched.errors);
+    if (!sched.value.days.length) return badRequest(res, 'Invalid schedule.', { schedule: 'Pick at least one new day.' });
+    if (new Date(sched.value.days[0].startsAt) <= new Date(before[0].startsAt)) return badRequest(res, 'Invalid schedule.', { schedule: 'Pick a later start than the current one to postpone.' });
+    await schedule.saveSchedule(models, req.post, sched.value);
+    await req.post.update({ postponedAt: t, postponedFrom: before[0].date, rainCheckDismissed: null });
+    const post = await reload(req.post);
+    const first = sched.value.days[0];
+    const told = await rc.notifyPostponed(post, before[0].date, first);
+    return res.json({ post, told });
+  } catch (err) { return serverError(res, err); }
+});
+
+// POST /post/:id/rain-check/dismiss { date } (owner): keep the date; no more prompt for it.
+router.post('/:id/rain-check/dismiss', requireLogin, loadPost, requireOwner, async (req, res) => {
+  const date = (req.body || {}).date;
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return badRequest(res, 'Invalid request.', { date: 'date must be YYYY-MM-DD.' });
+  try {
+    await req.post.update({ rainCheckDismissed: date });
+    return res.json({ ok: true });
+  } catch (err) { return serverError(res, err); }
+});
+
 module.exports = router;
