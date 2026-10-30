@@ -202,7 +202,20 @@
   "weekly.head": "本周末的甩卖",
   "weekly.intro": {
    "other": "本周末有 {count} 场甩卖符合你的 RapidGarage 周末摘要："
-  }
+  },
+  "suggest.title.any": "旧货出售",
+  "suggest.title.furniture": "家具出售",
+  "suggest.title.electronics": "电子产品出售",
+  "suggest.title.kids": "儿童和婴儿用品",
+  "suggest.title.clothing": "衣服、鞋子和包",
+  "suggest.title.tools": "工具出售",
+  "suggest.title.sports": "运动和户外用品",
+  "suggest.title.books": "书籍、唱片和影碟",
+  "suggest.title.kitchen": "厨房用品出售",
+  "suggest.title.toys": "玩具和游戏",
+  "suggest.title.garden": "花园和庭院用品",
+  "suggest.title.music": "乐器出售",
+  "suggest.title.decor": "家居装饰出售"
  },
  "messages": {
   "Login required.": "需要登录。",

@@ -23,6 +23,9 @@ const sellerTools = require('../lib/sellerTools');
 const aiItems = require('../lib/aiItems');
 const aiAccess = require('../lib/aiAccess');
 const i18n = require('../lib/i18n');
+const listingSuggest = require('../lib/listingSuggest');
+const multer = require('multer');
+const { MAX_FILE_BYTES, sniffImageType } = require('../lib/photos');
 
 const ADDRESS_FIELDS = ['street', 'city', 'state', 'zipCode'];
 
@@ -58,6 +61,30 @@ function readSchedule(body, creating) {
 }
 
 const reload = (post) => Post.findByPk(post.id, { include: [photoInclude, daysInclude, itemsInclude], order: photoOrder });
+
+// Photo-to-listing: suggest a title, category and price range from one photo
+// (multipart field "photo", optional) and the words typed so far ("hint").
+// Nothing is stored: not the photo, not the suggestion.
+const suggestUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_FILE_BYTES, files: 1, fields: 4, parts: 6 },
+}).single('photo');
+router.post('/suggest', requireLogin, (req, res, next) => suggestUpload(req, res, (err) => {
+  if (!err) return next();
+  if (err.code === 'LIMIT_FILE_SIZE') return sendError(res, 413, 'file_too_large', 'Each photo must be 8 MB or smaller.');
+  return badRequest(res, 'Invalid upload.');
+}), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const file = req.file || null;
+  if (file && !sniffImageType(file.buffer)) return sendError(res, 415, 'unsupported_type', `"${file.originalname}" is not a JPEG, PNG or WebP image.`);
+  try {
+    const out = await listingSuggest.suggest({
+      userId: req.user.id, buf: file ? file.buffer : null, fileName: file ? file.originalname : '',
+      hint: req.body && typeof req.body.hint === 'string' ? req.body.hint : '', lang: i18n.requestLang(req),
+    });
+    return res.json(out);
+  } catch (err) { return serverError(res, err); }
+});
 
 // Create: the owner is always the session user, never a body userId.
 // body.schedule ({ timeZone, days }) wins over the legacy startDate/endDate.

@@ -22,6 +22,8 @@ module.exports = (sequelize, DataTypes) => {
     priceMin: { type: DataTypes.INTEGER, allowNull: true },
     priceMax: { type: DataTypes.INTEGER, allowNull: true },
     isFree: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    // Optional category (lib/wanted.js CATEGORY_KEYS); see lib/listingSuggest.js.
+    category: { type: DataTypes.STRING(20), allowNull: true },
     // Last-hour markdown (lib/markdown.js): X% off from a local time. Serialized as `markdown`.
     // Bundle deal (lib/bundles.js): N+ items, X% off.
     bundleMinItems: { type: DataTypes.INTEGER, allowNull: true },
@@ -59,7 +61,7 @@ module.exports = (sequelize, DataTypes) => {
     calendarSeq: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     calendarDates: { type: DataTypes.TEXT, allowNull: true },
   }, {
-    indexes: [{ name: 'posts_curbside_until_idx', fields: ['curbsideUntil'] }],
+    indexes: [{ name: 'posts_curbside_until_idx', fields: ['curbsideUntil'] }, { name: 'posts_category_idx', fields: ['category'] }],
     hooks: {
       beforeUpdate: (post) => {
         const cal = require('../lib/calendar');

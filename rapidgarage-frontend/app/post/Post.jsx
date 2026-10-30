@@ -27,6 +27,7 @@ import JoinEventPanel from '../events/JoinEventPanel';
 import FollowButton from '../follows/FollowButton';
 import DuplicateButton from './DuplicateButton';
 import { scrollBehavior, photoAlt } from '../lib/a11y';
+import { categoryLabel } from '../wanted/WantedCard';
 import { t } from '../i18n';
 import * as activity from '../lib/activity';
 
@@ -278,6 +279,7 @@ class Post extends Component {
             {markdownChip(post) ? <span className={'chip chip-markdown' + (markdownNow(post) ? ' is-now' : '')}><Percent size={12} aria-hidden="true" />{markdownChip(post)}</span> : null}
             {post.bundle && !post.isFree ? <span className="chip chip-bundle"><Package size={12} aria-hidden="true" />{describeBundle(post.bundle)}</span> : null}
             {liveOffer(post) ? <span className="chip chip-free chip-curb" title={t('curb.until', { time: holdTime(post.curbside.until) })}><Gift size={12} aria-hidden="true" />{t('curb.badge')}</span> : null}
+            {post.category ? <span className="chip chip-category">{categoryLabel(post.category)}</span> : null}
             {address ? <span className="chip"><MapPin size={12} aria-hidden="true" />{[post.city, post.state].filter(Boolean).join(', ')}</span> : null}
             <span className="chip"><Clock size={12} aria-hidden="true" />{t('card.posted', { when: timeAgo(post.createdAt) })}</span>
             {post.event ? <Link className="chip chip-event" to={'/events/' + post.event.id}><UsersRound size={12} aria-hidden="true" />{t('ev.partOf', { name: post.event.name })}</Link> : null}

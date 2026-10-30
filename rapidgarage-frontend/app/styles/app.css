@@ -1348,3 +1348,15 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .route-form .alert-form-row { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 560px) { .route-form .alert-form-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .route-form .alert-form-row .input { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+
+/* Photo-to-listing suggestions (post/SuggestPanel.jsx) */
+.suggest-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.suggest-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.suggest-row { display: grid; grid-template-columns: minmax(5rem, 8rem) minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+.suggest-row:last-child { border-bottom: 0; }
+.suggest-label { color: var(--color-text-muted); font-size: var(--text-sm); }
+.suggest-value { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .suggest-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .suggest-label { grid-column: 1 / -1; }
+}

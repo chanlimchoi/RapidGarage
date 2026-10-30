@@ -16,6 +16,8 @@ router.get('/', (req, res) => {
       emailVerification: require('../lib/emailVerify').required(),
       // The app reports its own crashes to POST /client-errors (only when error tracking is on).
       errorReporting: require('../lib/errorTracking').enabled(),
+      // Photo-to-listing: suggestions come from a vision model (true) or from similar sales (false).
+      listingSuggestAi: require('../lib/listingSuggest').isConfigured(),
     }))
     .catch((err) => serverError(res, err));
 });
