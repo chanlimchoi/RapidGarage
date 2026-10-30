@@ -27,6 +27,7 @@ router.use('/route', require('./route'));
 router.use('/push', require('./push'));
 router.use('/live', require('./live'));
 router.use('/reminders', require('./reminders'));
+router.use('/calendar', require('./saleCalendar'));
 router.use('/share', require('./share'));
 router.use('/ratings', require('./ratings'));
 router.use('/dashboard', require('./dashboard'));

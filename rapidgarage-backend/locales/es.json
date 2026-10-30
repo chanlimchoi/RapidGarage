@@ -237,7 +237,8 @@
   "suggest.title.toys": "Juguetes y juegos",
   "suggest.title.garden": "Artículos de jardín y patio",
   "suggest.title.music": "Venta de instrumentos musicales",
-  "suggest.title.decor": "Venta de decoración"
+  "suggest.title.decor": "Venta de decoración",
+  "push.reminderEveTitle": "Mañana: una venta de la que pediste aviso"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -664,6 +665,12 @@
   "Choose the bundle discount.": "Elige el descuento por lote.",
   "Unknown activity.": "Actividad desconocida.",
   "Unknown page.": "Página desconocida.",
-  "Unknown target.": "Destino desconocido."
+  "Unknown target.": "Destino desconocido.",
+  "Invalid calendar request.": "Solicitud de calendario no válida.",
+  "Saved search not found.": "No se encontró la búsqueda guardada.",
+  "alert must be a saved search id.": "alert debe ser el id de una búsqueda guardada.",
+  "date must be YYYY-MM-DD.": "date debe tener el formato AAAA-MM-DD.",
+  "view must be one of: weekend, day, week.": "view debe ser weekend, day o week.",
+  "nightBefore must be true or false.": "nightBefore debe ser true o false."
  }
 }

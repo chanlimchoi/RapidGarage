@@ -11,7 +11,8 @@ function models() { return require('../models'); }
 
 // search_match: a saved search matched a new sale. price_drop / item_sold: a
 // favorited sale got cheaper / had items sold (lib/favorites.js).
-const KINDS = ['search_match', 'price_drop', 'item_sold'];
+// reminder_eve: a sale the person asked to be reminded about is tomorrow (lib/eveReminders.js).
+const KINDS = ['search_match', 'price_drop', 'item_sold', 'reminder_eve'];
 const LIST_MAX = 50;
 const KEEP_DAYS = 60;
 

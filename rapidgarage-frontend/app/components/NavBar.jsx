@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, UsersRound, LayoutDashboard, PackageSearch, UserCheck, Bell, Heart } from 'lucide-react';
+import { Store, Plus, Menu as MenuIcon, X, ChevronDown, User, Settings as SettingsIcon, ShieldCheck, LogOut, LogIn, UserPlus, Search, Info, MessageCircle, UsersRound, LayoutDashboard, PackageSearch, UserCheck, Bell, Heart, CalendarDays } from 'lucide-react';
 import { initials, displayName } from '../lib/format';
 import InstallMenuItem from '../pwa/InstallMenuItem';
 import LanguagePicker from './LanguagePicker';
@@ -232,6 +232,7 @@ export default class NavBar extends React.Component {
           <nav id="mobile-nav" className="mobile-nav" aria-label={t('nav.mobile')} ref={this.mobileRef}>
             <Link className="menu-item" to="/"><Search size={18} aria-hidden="true" />{t('nav.browseSales')}</Link>
             <Link className="menu-item" to="/newpost"><Plus size={18} aria-hidden="true" />{t('nav.postSale')}</Link>
+            <Link className="menu-item" to="/calendar"><CalendarDays size={18} aria-hidden="true" />{t('nav.calendar')}</Link>
             <Link className="menu-item" to="/events"><UsersRound size={18} aria-hidden="true" />{t('nav.events')}</Link>
             <Link className="menu-item" to="/wanted"><PackageSearch size={18} aria-hidden="true" />{t('nav.wanted')}
               {this.props.wantedNew ? <span className="nav-badge menu-badge" aria-label={wantedLabel(this.props.wantedNew)}>{badgeText(this.props.wantedNew)}</span> : null}</Link>

@@ -48,6 +48,14 @@ export function money(cents) {
 }
 const dollars = (d) => (d === null || d === undefined ? '' : money(Math.round(d * 100)));
 
+// "8 AM" / "2:30 PM" from "HH:MM" (sale-local time, shown as written).
+function clock(hhmm) {
+  const m = /^(\d{2}):(\d{2})$/.exec(hhmm || '');
+  if (!m) return '';
+  const opts = { hour: 'numeric', minute: Number(m[2]) ? '2-digit' : undefined, timeZone: 'UTC' };
+  try { return new Intl.DateTimeFormat(intlLocale(), opts).format(new Date(Date.UTC(2000, 0, 1, Number(m[1]), Number(m[2])))); } catch (e) { return hhmm; }
+}
+
 // One line for a notification, in the reader's language.
 export function notificationText(n) {
   const title = n.post ? n.post.title || t('bell.untitled') : '';
@@ -68,6 +76,10 @@ export function notificationText(n) {
     const items = d.items || [];
     if (items.length === 1) return t('bell.itemSold', { title, item: items[0].name });
     return t('bell.itemsSold', { title, count: items.length });
+  }
+  if (n.kind === 'reminder_eve') {
+    const time = d.start && d.end ? clock(d.start) + '–' + clock(d.end) : '';
+    return time ? t('bell.reminderEve', { title, time }) : t('bell.reminderEvePlain', { title });
   }
   if (n.kind === 'search_match') {
     const search = n.search ? (n.search.label || (n.search.keyword ? '“' + n.search.keyword + '”' : '')) : '';

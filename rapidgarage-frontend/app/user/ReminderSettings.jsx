@@ -12,7 +12,7 @@ import { t } from '../i18n';
 export default class ReminderSettings extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { loading: true, defaultOn: false, emailAvailable: true, hour: 7, applyToSaved: false, busy: false, error: '' };
+    this.state = { loading: true, defaultOn: false, emailAvailable: true, hour: 7, nightBefore: true, eveHour: 19, applyToSaved: false, busy: false, error: '' };
   }
 
   componentDidMount() {
@@ -20,7 +20,7 @@ export default class ReminderSettings extends React.Component {
     fetchReminderSettings().then(({ ok, data }) => {
       if (!this.mounted) return;
       if (!ok) return this.setState({ loading: false, error: errorMessage(data, t('rem.loadFailed')) });
-      this.setState({ loading: false, defaultOn: data.defaultOn, emailAvailable: data.emailAvailable, hour: data.hour });
+      this.setState({ loading: false, defaultOn: data.defaultOn, emailAvailable: data.emailAvailable, hour: data.hour, nightBefore: data.nightBefore !== false, eveHour: data.eveHour || 19 });
       if (window.location.hash === '#reminders' && this.ref && this.ref.scrollIntoView) this.ref.scrollIntoView({ block: 'start' });
     }).catch(() => this.mounted && this.setState({ loading: false, error: t('common.networkShort') }));
   }
@@ -35,6 +35,17 @@ export default class ReminderSettings extends React.Component {
       this.setState({ busy: false, defaultOn: data.defaultOn, applyToSaved: false });
       toast.success(next.applyToSaved ? t('rem.appliedToast', { count: data.changed || 0 }) : t('rem.settingsSaved'));
       if (next.applyToSaved) saved.refresh();
+    }).catch(() => this.mounted && this.setState({ busy: false, error: t('common.networkShort') }));
+  }
+
+  // Night-before reminder (bell + push): its own switch.
+  saveNightBefore(on) {
+    this.setState({ busy: true, error: '' });
+    saveReminderSettings({ nightBefore: on }).then(({ ok, data }) => {
+      if (!this.mounted) return;
+      if (!ok) return this.setState({ busy: false, error: errorMessage(data, t('rem.saveFailed')) });
+      this.setState({ busy: false, nightBefore: data.nightBefore });
+      toast.success(t('rem.settingsSaved'));
     }).catch(() => this.mounted && this.setState({ busy: false, error: t('common.networkShort') }));
   }
 
@@ -62,6 +73,14 @@ export default class ReminderSettings extends React.Component {
                 {s.defaultOn ? t('rem.applyOn') : t('rem.applyOff')}
               </button>
             </div>
+            <label className="checkbox-row" htmlFor="remind-eve">
+              <span className="switch">
+                <input id="remind-eve" type="checkbox" role="switch" checked={s.nightBefore} disabled={s.busy}
+                  onChange={(e) => this.saveNightBefore(e.target.checked)} />
+                <span className="switch-track" aria-hidden="true" />
+              </span>
+              <span><strong>{t('rem.eveLabel')}</strong><span className="field-hint" style={{ display: 'block' }}>{t('rem.eveHint', { time: timeLabel(String(s.eveHour).padStart(2, '0') + ':00') })}</span></span>
+            </label>
             {!s.emailAvailable ? <Alert tone="info" live={false}><p>{t('rem.noEmail')}</p></Alert> : null}
             {s.error ? <Alert tone="danger">{s.error}</Alert> : null}
           </div>

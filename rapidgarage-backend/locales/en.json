@@ -237,7 +237,8 @@
   "suggest.title.toys": "Toys and games",
   "suggest.title.garden": "Garden and patio items",
   "suggest.title.music": "Musical instruments for sale",
-  "suggest.title.decor": "Home decor for sale"
+  "suggest.title.decor": "Home decor for sale",
+  "push.reminderEveTitle": "Tomorrow: a sale you wanted a reminder for"
  },
  "messages": {
   "Login required.": "Login required.",
@@ -664,6 +665,12 @@
   "Choose the bundle discount.": "Choose the bundle discount.",
   "Unknown activity.": "Unknown activity.",
   "Unknown page.": "Unknown page.",
-  "Unknown target.": "Unknown target."
+  "Unknown target.": "Unknown target.",
+  "Invalid calendar request.": "Invalid calendar request.",
+  "Saved search not found.": "Saved search not found.",
+  "alert must be a saved search id.": "alert must be a saved search id.",
+  "date must be YYYY-MM-DD.": "date must be YYYY-MM-DD.",
+  "view must be one of: weekend, day, week.": "view must be one of: weekend, day, week.",
+  "nightBefore must be true or false.": "nightBefore must be true or false."
  }
 }

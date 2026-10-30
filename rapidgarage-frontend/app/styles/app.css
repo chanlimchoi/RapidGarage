@@ -1360,3 +1360,32 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
   .suggest-row { grid-template-columns: minmax(0, 1fr) auto; }
   .suggest-label { grid-column: 1 / -1; }
 }
+
+/* "This weekend" calendar (calendar/SaleCalendar.jsx) */
+.hero-links { margin-top: var(--space-2); }
+.cal-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+.cal-nav { display: inline-flex; align-items: center; gap: var(--space-1); }
+.cal-range { font-weight: var(--weight-semibold); min-width: 10rem; text-align: center; }
+.cal-where { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-left: auto; }
+.cal-where .input { width: auto; min-width: 10rem; }
+.cal-zip { display: inline-flex; gap: var(--space-2); }
+.cal-zip .input { min-width: 8rem; }
+.cal-days { display: grid; gap: var(--space-4); }
+.cal-day-title { display: flex; align-items: baseline; gap: var(--space-2); margin: 0 0 var(--space-2); }
+.cal-list { list-style: none; margin: 0; padding: 0; }
+.cal-sale { display: grid; grid-template-columns: 4.5rem 56px minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+.cal-sale:first-child { border-top: 0; }
+.cal-time { display: flex; flex-direction: column; font-variant-numeric: tabular-nums; }
+.cal-time-start { font-weight: var(--weight-semibold); }
+.cal-thumb { width: 56px; height: 56px; border-radius: var(--radius-md); object-fit: cover; background: var(--color-surface-2); }
+.cal-thumb-empty { display: inline-flex; align-items: center; justify-content: center; color: var(--color-text-muted); }
+.cal-title { font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.cal-body .chips { margin-top: var(--space-1); }
+.cal-foot { margin-top: var(--space-2); }
+@media (max-width: 640px) {
+  .cal-where { margin-left: 0; width: 100%; }
+  .cal-where .input { flex: 1 1 10rem; min-width: 0; }
+  .cal-sale { grid-template-columns: 4rem minmax(0, 1fr); }
+  .cal-thumb { display: none; }
+  .cal-action { grid-column: 2; }
+}

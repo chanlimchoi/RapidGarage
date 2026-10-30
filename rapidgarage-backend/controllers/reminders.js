@@ -42,17 +42,28 @@ router.post('/:id/seen', async (req, res) => {
   } catch (err) { return serverError(res, err); }
 });
 
-const settings = (user) => ({ defaultOn: !!user.remindSaved, emailAvailable: mailer.isConfigured(), hour: R.reminderHour() });
+const settings = (user) => ({ defaultOn: !!user.remindSaved, emailAvailable: mailer.isConfigured(), hour: R.reminderHour(),
+  // Night-before reminder in the bell / push (lib/eveReminders.js).
+  nightBefore: user.remindEve !== false, eveHour: require('../lib/eveReminders').eveHour() });
 
 router.get('/settings', (req, res) => res.json(settings(req.user)));
 
 router.put('/settings', async (req, res) => {
   const body = req.body || {};
+  if (body.nightBefore !== undefined && typeof body.nightBefore !== 'boolean') return badRequest(res, 'Invalid reminder settings.', { nightBefore: 'nightBefore must be true or false.' });
+  // Only the night-before switch: { nightBefore }.
+  if (body.defaultOn === undefined && typeof body.nightBefore === 'boolean') {
+    try {
+      const user = await models.User.findByPk(req.user.id);
+      await user.update({ remindEve: body.nightBefore });
+      return res.json(Object.assign(settings(user), { changed: 0 }));
+    } catch (err) { return serverError(res, err); }
+  }
   if (typeof body.defaultOn !== 'boolean') return badRequest(res, 'Invalid reminder settings.', { defaultOn: 'defaultOn must be true or false.' });
   if (body.applyToSaved !== undefined && typeof body.applyToSaved !== 'boolean') return badRequest(res, 'Invalid reminder settings.', { applyToSaved: 'applyToSaved must be true or false.' });
   try {
     const user = await models.User.findByPk(req.user.id);
-    await user.update({ remindSaved: body.defaultOn });
+    await user.update(Object.assign({ remindSaved: body.defaultOn }, typeof body.nightBefore === 'boolean' ? { remindEve: body.nightBefore } : {}));
     let changed = 0;
     if (body.applyToSaved) [changed] = await models.SavedPost.update({ remind: body.defaultOn }, { where: { userId: user.id } });
     return res.json(Object.assign(settings(user), { changed }));

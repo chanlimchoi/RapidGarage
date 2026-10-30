@@ -143,7 +143,16 @@ function reminder(userId, { title, postId }) {
   });
 }
 
+// The evening before a saved sale (lib/eveReminders.js); same switch as reminders.
+function reminderEve(userId, { title, postId }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'reminder', { title: i18n.t(lang, 'push.reminderEveTitle'), body: title, url: '/post/' + postId, tag: 'reminder-eve-' + postId });
+  });
+}
+
 module.exports = {
+  reminderEve,
   KINDS, MAX_PER_USER, allowedEndpoint, validKeys, publicKey, isConfigured, setSender,
   subscribe, unsubscribe, deviceCount, sendTo, message, newSale, reminder, idle, track,
 };

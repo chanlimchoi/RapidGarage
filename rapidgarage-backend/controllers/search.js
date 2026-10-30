@@ -270,3 +270,7 @@ router.get('/', async (req, res) => {
 
 module.exports = router;
 module.exports.parseQuery = parseQuery;
+// The sale calendar (controllers/saleCalendar.js) reuses the same filters.
+module.exports.nearbyRanked = nearbyRanked;
+module.exports.textMatch = textMatch;
+module.exports.NOTICES = NOTICES;
