@@ -2086,4 +2086,9 @@ export default {
   "rem.eveHint": "对于开启了“提醒我”的出售：在开始前一晚 {time} 发送通知（如果你开启了推送，也会推送）。",
   "bell.reminderEve": "明天：{title}，{time}",
   "bell.reminderEvePlain": "明天：{title}",
+  "bell.eventJoin": "{title} 申请加入 {event}。请在活动页面批准或拒绝。",
+  "bell.eventJoined": "{title} 已加入 {event}。",
+  "bell.eventApproved": "{title} 现已加入 {event}。",
+  "bell.eventDeclined": "{event} 的组织者拒绝了 {title}。",
+  "bell.eventRemoved": "{title} 已从 {event} 中移除。",
 };

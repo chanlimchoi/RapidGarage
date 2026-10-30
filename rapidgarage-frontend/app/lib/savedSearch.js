@@ -36,6 +36,8 @@ export function searchKey(s) {
 }
 
 export function notificationLink(n) {
+  // Neighborhood-sale notices open the event (where the organizer approves).
+  if (n.kind && n.kind.indexOf('event_') === 0 && n.data && n.data.eventId) return '/events/' + n.data.eventId;
   return n.post ? '/post/' + n.post.id : '/settings#alerts';
 }
 
@@ -81,6 +83,10 @@ export function notificationText(n) {
     const time = d.start && d.end ? clock(d.start) + '–' + clock(d.end) : '';
     return time ? t('bell.reminderEve', { title, time }) : t('bell.reminderEvePlain', { title });
   }
+  if (n.kind === 'event_join') return t('bell.eventJoin', { title, event: d.eventName || '' });
+  if (n.kind === 'event_joined') return t('bell.eventJoined', { title, event: d.eventName || '' });
+  if (n.kind === 'event_approved') return t('bell.eventApproved', { title, event: d.eventName || '' });
+  if (n.kind === 'event_removed') return t(d.declined ? 'bell.eventDeclined' : 'bell.eventRemoved', { title, event: d.eventName || '' });
   if (n.kind === 'search_match') {
     const search = n.search ? (n.search.label || (n.search.keyword ? '“' + n.search.keyword + '”' : '')) : '';
     return search ? t('bell.searchMatch', { search, title }) : t('bell.searchMatchPlain', { title });

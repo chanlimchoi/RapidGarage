@@ -2086,4 +2086,9 @@ export default {
   "rem.eveHint": "Para las ventas con Recuérdame activado: una notificación (y un aviso push, si lo activaste) a las {time} la noche antes de que abran.",
   "bell.reminderEve": "Mañana: {title}, {time}",
   "bell.reminderEvePlain": "Mañana: {title}",
+  "bell.eventJoin": "{title} pidió unirse a {event}. Apruébala o recházala en la página del evento.",
+  "bell.eventJoined": "{title} se unió a {event}.",
+  "bell.eventApproved": "{title} ya forma parte de {event}.",
+  "bell.eventDeclined": "Quien organiza {event} rechazó {title}.",
+  "bell.eventRemoved": "{title} se quitó de {event}.",
 };

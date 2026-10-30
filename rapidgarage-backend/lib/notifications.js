@@ -12,7 +12,11 @@ function models() { return require('../models'); }
 // search_match: a saved search matched a new sale. price_drop / item_sold: a
 // favorited sale got cheaper / had items sold (lib/favorites.js).
 // reminder_eve: a sale the person asked to be reminded about is tomorrow (lib/eveReminders.js).
-const KINDS = ['search_match', 'price_drop', 'item_sold', 'reminder_eve'];
+// event_join / event_joined: a seller asked to join / joined the organizer's neighborhood
+// sale. event_approved / event_removed: the organizer approved / declined or removed
+// the seller's sale (lib/eventNotices.js). data.eventId links to the event.
+const KINDS = ['search_match', 'price_drop', 'item_sold', 'reminder_eve', 'event_join', 'event_joined', 'event_approved', 'event_removed'];
+const EVENT_KINDS = ['event_join', 'event_joined', 'event_approved', 'event_removed'];
 const LIST_MAX = 50;
 const KEEP_DAYS = 60;
 
@@ -75,12 +79,20 @@ async function list(user, opts) {
     ],
   });
   const blocked = await blockedWith(user.id);
+  // Neighborhood-sale notices only while the event still exists and the reader may see it.
+  const parsed = new Map(rows.map((n) => { let d = null; try { d = n.data ? JSON.parse(n.data) : null; } catch (e) { d = null; } return [n.id, d]; }));
+  const eventIds = Array.from(new Set(rows.filter((n) => EVENT_KINDS.indexOf(n.kind) >= 0).map((n) => (parsed.get(n.id) || {}).eventId).filter(Boolean)));
+  const events = new Map(eventIds.length ? (await m.SaleEvent.findAll({ where: { id: eventIds }, attributes: ['id', 'name', 'hidden', 'organizerId'] })).map((e) => [e.id, e]) : []);
   const out = [];
   for (const n of rows) {
     const p = n.Post;
     if (n.postId && (!p || p.hidden || blocked.has(p.userId))) continue;
-    let data = null;
-    try { data = n.data ? JSON.parse(n.data) : null; } catch (e) { data = null; }
+    let data = parsed.get(n.id);
+    if (EVENT_KINDS.indexOf(n.kind) >= 0) {
+      const ev = data && events.get(data.eventId);
+      if (!ev || (ev.hidden && ev.organizerId !== user.id) || blocked.has(ev.organizerId)) continue;
+      data = Object.assign({}, data, { eventName: ev.name });
+    }
     out.push({
       id: n.id, kind: n.kind, createdAt: n.updatedAt || n.createdAt, seen: !!n.seenAt, data,
       post: p ? { id: p.id, title: p.title, city: p.city, state: p.state, priceMin: p.priceMin, priceMax: p.priceMax, isFree: p.isFree, seller: publicUser(p.User) } : null,
@@ -107,4 +119,4 @@ async function prune(now) {
   return models().Notification.destroy({ where: { createdAt: { [Op.lt]: new Date((now || new Date()).getTime() - KEEP_DAYS * 86400000) } } });
 }
 
-module.exports = { KINDS, LIST_MAX, KEEP_DAYS, add, bump, list, unreadCount, markSeen, prune };
+module.exports = { EVENT_KINDS, KINDS, LIST_MAX, KEEP_DAYS, add, bump, list, unreadCount, markSeen, prune };
