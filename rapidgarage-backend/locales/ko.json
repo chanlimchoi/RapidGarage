@@ -202,7 +202,20 @@
   "weekly.head": "이번 주말 세일",
   "weekly.intro": {
    "other": "이번 주말 RapidGarage 주말 요약에 맞는 세일 {count}개:"
-  }
+  },
+  "suggest.title.any": "개러지 세일",
+  "suggest.title.furniture": "가구 판매",
+  "suggest.title.electronics": "전자제품 판매",
+  "suggest.title.kids": "아동·유아용품",
+  "suggest.title.clothing": "옷, 신발, 가방",
+  "suggest.title.tools": "공구 판매",
+  "suggest.title.sports": "스포츠·아웃도어 용품",
+  "suggest.title.books": "책, 음반, 영화",
+  "suggest.title.kitchen": "주방용품 판매",
+  "suggest.title.toys": "장난감과 게임",
+  "suggest.title.garden": "정원·파티오 용품",
+  "suggest.title.music": "악기 판매",
+  "suggest.title.decor": "인테리어 소품 판매"
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",

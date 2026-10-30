@@ -7,6 +7,8 @@ import { priceErrors, toPriceNumber, formatPrice } from '../lib/price';
 import { PERCENT_CHOICES, markdownBody, markdownValues } from '../lib/markdown';
 import { markdownErrors, describe as describeMarkdown } from '../lib/markdownText';
 import { MIN_CHOICES as BUNDLE_MINS, PERCENT_CHOICES as BUNDLE_PERCENTS, bundleValues, bundleBody, bundleErrors, describe as describeBundle } from '../lib/bundles';
+import { CATEGORIES } from '../lib/wanted';
+import { categoryLabel } from '../wanted/WantedCard';
 import { t } from '../i18n';
 
 const SCHEMA = {
@@ -27,6 +29,7 @@ export function initialValues(post) {
     title: p.title || '', street: p.street || '', city: p.city || '', state: p.state || '', zipCode: p.zipCode || '',
     days: formDays(p), timeZone: (p.schedule && p.schedule.timeZone) || browserTimeZone(), description: p.description || '',
     isFree: !!p.isFree,
+    category: p.category || '',
     priceMin: p.priceMin === null || p.priceMin === undefined ? '' : String(p.priceMin),
     priceMax: p.priceMax === null || p.priceMax === undefined ? '' : String(p.priceMax),
     ...markdownValues(p),
@@ -41,6 +44,7 @@ export function toBody(v) {
     schedule: v.days.length ? { timeZone: v.timeZone, days: v.days.map((d) => ({ date: d.date, start: d.start, end: d.end })) } : null,
     description: v.description,
     isFree: !!v.isFree,
+    category: v.category || null,
     priceMin: v.isFree ? null : toPriceNumber(v.priceMin),
     priceMax: v.isFree ? null : toPriceNumber(v.priceMax),
     // A free sale has nothing to mark down.
@@ -143,6 +147,12 @@ export default class PostForm extends React.Component {
           <fieldset disabled={textDisabled} style={{ border: 0, padding: 0, margin: 0 }} className="form-grid">
             <Field id="title" label={t('form.title')} error={this.shown('title', errors)} hint={t('form.titleHint')}>
               {this.input('title', 'title', { maxLength: 255, autoFocus: this.props.autoFocus, required: true })}
+            </Field>
+            <Field id="category" label={t('form.category')} optional error={this.shown('category', errors)}>
+              <select className="input" name="category" value={v.category} onChange={this.change('category')} onBlur={this.blur('category')}>
+                <option value="">{t('form.categoryNone')}</option>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{categoryLabel(c)}</option>)}
+              </select>
             </Field>
             <Field id="address" label={t('form.street')} error={this.shown('street', errors)}>
               {this.input('street', 'address', { autoComplete: 'street-address', required: true })}

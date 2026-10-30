@@ -224,7 +224,20 @@
   "weekly.intro": {
    "one": "{count} venta de este fin de semana coincide con tu resumen de RapidGarage:",
    "other": "{count} ventas de este fin de semana coinciden con tu resumen de RapidGarage:"
-  }
+  },
+  "suggest.title.any": "Venta de garaje",
+  "suggest.title.furniture": "Venta de muebles",
+  "suggest.title.electronics": "Venta de electrónica",
+  "suggest.title.kids": "Artículos para niños y bebés",
+  "suggest.title.clothing": "Ropa, zapatos y bolsos",
+  "suggest.title.tools": "Venta de herramientas",
+  "suggest.title.sports": "Artículos deportivos y de exterior",
+  "suggest.title.books": "Libros, discos y películas",
+  "suggest.title.kitchen": "Venta de artículos de cocina",
+  "suggest.title.toys": "Juguetes y juegos",
+  "suggest.title.garden": "Artículos de jardín y patio",
+  "suggest.title.music": "Venta de instrumentos musicales",
+  "suggest.title.decor": "Venta de decoración"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",

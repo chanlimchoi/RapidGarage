@@ -298,3 +298,17 @@ export const unsubscribeFollow = (f, token) => apiFetch('/follows/unsubscribe', 
 export function recordShare(postId, channel) {
   try { return apiFetch('/post/' + postId + '/share', { method: 'POST', body: JSON.stringify({ channel }), keepalive: true }).catch(() => null); } catch (e) { return Promise.resolve(null); }
 }
+
+// Photo-to-listing: a title, category and price range suggested from one photo
+// (and the title typed so far). Nothing is saved; the seller accepts or edits.
+export function suggestListing(file, hint) {
+  const form = new FormData();
+  if (file) form.append('photo', file, file.name);
+  if (hint) form.append('hint', String(hint).slice(0, 255));
+  return fetch('/api/post/suggest', { method: 'POST', body: form, credentials: 'same-origin', headers: { 'Accept-Language': locale() } })
+    .then((response) => response.text().then((text) => {
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+      return { ok: response.ok, status: response.status, data };
+    }));
+}

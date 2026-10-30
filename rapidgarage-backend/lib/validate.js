@@ -49,6 +49,12 @@ function validatePost(body, partial, existing) {
   const markdown = validateMarkdown(body, existing);
   Object.assign(errors, markdown.errors);
   Object.assign(out, markdown.values);
+  if (body.category !== undefined) {
+    const { CATEGORY_KEYS } = require('./wanted');
+    if (body.category === null || body.category === '') out.category = null;
+    else if (CATEGORY_KEYS.indexOf(body.category) === -1) errors.category = 'Choose one of the categories.';
+    else out.category = body.category;
+  }
   const bundle = validateBundle(body, existing);
   Object.assign(errors, bundle.errors);
   Object.assign(out, bundle.values);

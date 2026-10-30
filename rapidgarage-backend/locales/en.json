@@ -224,7 +224,20 @@
   "weekly.intro": {
    "one": "{count} sale this weekend matches your RapidGarage weekend digest:",
    "other": "{count} sales this weekend match your RapidGarage weekend digest:"
-  }
+  },
+  "suggest.title.any": "Garage sale",
+  "suggest.title.furniture": "Furniture for sale",
+  "suggest.title.electronics": "Electronics for sale",
+  "suggest.title.kids": "Kids' and baby gear",
+  "suggest.title.clothing": "Clothes, shoes and bags",
+  "suggest.title.tools": "Tools for sale",
+  "suggest.title.sports": "Sports and outdoor gear",
+  "suggest.title.books": "Books, records and movies",
+  "suggest.title.kitchen": "Kitchenware for sale",
+  "suggest.title.toys": "Toys and games",
+  "suggest.title.garden": "Garden and patio items",
+  "suggest.title.music": "Musical instruments for sale",
+  "suggest.title.decor": "Home decor for sale"
  },
  "messages": {
   "Login required.": "Login required.",

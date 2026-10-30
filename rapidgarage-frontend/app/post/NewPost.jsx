@@ -4,6 +4,7 @@ import { LogIn, Images } from 'lucide-react';
 import { apiFetch, errorMessage, uploadPhotos, MAX_PHOTOS } from '../api';
 import PhotoPicker from '../components/PhotoPicker';
 import PostForm from './PostForm';
+import SuggestPanel from './SuggestPanel';
 import { EmptyState } from '../components/ui';
 import toast from '../components/toast';
 import { t } from '../i18n';
@@ -86,6 +87,9 @@ class NewPost extends Component {
             <p className="muted small">{t('new.photosLead')}</p>
             <PhotoPicker max={MAX_PHOTOS} onChange={(photos, alts) => this.setState({ photos, alts })} />
           </section>
+          <SuggestPanel file={this.state.photos[0] || null}
+            hint={() => (this.form.current ? this.form.current.state.values.title : '')}
+            onUse={(patch) => { if (this.form.current) this.form.current.setText(patch); }} />
         </PostForm>
       </div>
     );
