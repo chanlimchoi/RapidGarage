@@ -2,6 +2,7 @@
 // test/saved-search.test.js). The server (controllers/alerts.js,
 // lib/notifications.js) has the final say.
 import { t, intlLocale } from '../i18n/index.js';
+import { reasonText, dayName } from './weatherText.js';
 
 export const KEYWORD_MAX = 60;
 export const LABEL_MAX = 80;
@@ -87,6 +88,11 @@ export function notificationText(n) {
   if (n.kind === 'event_joined') return t('bell.eventJoined', { title, event: d.eventName || '' });
   if (n.kind === 'event_approved') return t('bell.eventApproved', { title, event: d.eventName || '' });
   if (n.kind === 'event_removed') return t(d.declined ? 'bell.eventDeclined' : 'bell.eventRemoved', { title, event: d.eventName || '' });
+  if (n.kind === 'rain_check') return t('bell.rainCheck', { title, what: reasonText(d.reason), day: dayName(d.date) });
+  if (n.kind === 'sale_postponed') {
+    const time = d.start && d.end ? clock(d.start) + '–' + clock(d.end) : '';
+    return time ? t('bell.postponed', { title, day: dayName(d.date), time }) : t('bell.postponedPlain', { title, day: dayName(d.date) });
+  }
   if (n.kind === 'search_match') {
     const search = n.search ? (n.search.label || (n.search.keyword ? '“' + n.search.keyword + '”' : '')) : '';
     return search ? t('bell.searchMatch', { search, title }) : t('bell.searchMatchPlain', { title });

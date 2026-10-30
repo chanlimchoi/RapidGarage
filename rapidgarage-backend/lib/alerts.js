@@ -265,6 +265,10 @@ async function processQueue(now) {
     console.error('Night-before reminder pass failed:', err && err.message);
     summary.eveReminders = { error: true };
   }
+  try { summary.rainChecks = await require('./rainChecks').processDue(now); } catch (err) {
+    console.error('Rain check pass failed:', err && err.message);
+    summary.rainChecks = { error: true };
+  }
   try { summary.weekly = await require('./weekendDigest').processWeekly(now); } catch (err) {
     console.error('Weekend digest pass failed:', err && err.message);
     summary.weekly = { error: true };
@@ -279,6 +283,7 @@ async function processQueue(now) {
   }
   // In-app notifications older than KEEP_DAYS go away.
   try { await require('./notifications').prune(); } catch (err) { console.error('Notification prune failed:', err && err.message); }
+  try { await require('./weather').prune(); } catch (err) { console.error('Weather cache prune failed:', err && err.message); }
   return summary;
 }
 

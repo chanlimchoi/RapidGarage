@@ -144,6 +144,22 @@ function reminder(userId, { title, postId }) {
   });
 }
 
+// Rain check (lib/rainChecks.js): bad weather is forecast for the seller's own sale.
+function rainCheck(userId, { title, postId }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'reminder', { title: i18n.t(lang, 'push.rainCheckTitle'), body: title, url: '/post/' + postId, tag: 'rain-' + postId });
+  });
+}
+
+// A sale the person saved or set a reminder for was postponed (lib/rainChecks.js).
+function salePostponed(userId, { title, postId }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'reminder', { title: i18n.t(lang, 'push.postponedTitle'), body: title, url: '/post/' + postId, tag: 'postponed-' + postId });
+  });
+}
+
 // An offer step in a conversation (lib/notify.js). Like messages, an open tab shows it live instead.
 const OFFER_TITLES = { requested: 'push.offerTitle', countered: 'push.counterTitle', accepted: 'push.offerAcceptedTitle', agreed: 'push.offerAcceptedTitle' };
 function offer(recipientId, { senderName, postTitle, conversationId, event }) {
@@ -179,7 +195,7 @@ function reminderEve(userId, { title, postId }) {
 }
 
 module.exports = {
-  reminderEve, offer, searchMatch, OFFER_TITLES,
+  reminderEve, offer, searchMatch, OFFER_TITLES, rainCheck, salePostponed,
   KINDS, MAX_PER_USER, allowedEndpoint, validKeys, publicKey, isConfigured, setSender,
   subscribe, unsubscribe, deviceCount, sendTo, message, newSale, reminder, idle, track,
 };

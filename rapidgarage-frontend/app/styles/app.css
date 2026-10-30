@@ -1409,3 +1409,14 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .dash-pickup { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
 .dash-pickup:first-child { border-top: 0; }
 .dash-pickup-main { display: grid; gap: 2px; min-width: 0; }
+
+/* Rain checks (post/SaleWeather.jsx, dashboard/RainChecks.jsx) */
+.sale-weather { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
+.weather-chips { list-style: none; margin: 0; padding: 0; }
+.weather-chips .chip { display: inline-flex; align-items: center; gap: 4px; }
+.weather-credit { margin: 0; }
+.rain-check p { margin: 0 0 var(--space-2); }
+.postponed-chip { display: inline-flex; align-items: center; gap: 4px; margin-top: var(--space-1); }
+.postpone-choices { border: 0; padding: 0; margin: 0 0 var(--space-2); display: grid; gap: var(--space-1); }
+.dash-rain { margin-bottom: var(--space-4); }
+.dash-rain h2 { display: flex; align-items: center; gap: var(--space-2); }

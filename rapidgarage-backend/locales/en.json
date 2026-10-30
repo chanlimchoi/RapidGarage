@@ -243,7 +243,9 @@
   "push.counterTitle": "{name} sent a counteroffer",
   "push.offerAcceptedTitle": "{name} accepted the offer",
   "push.searchTitle": "A new sale matches your saved search",
-  "push.searchTitleNamed": "New match for “{name}”"
+  "push.searchTitleNamed": "New match for “{name}”",
+  "push.rainCheckTitle": "Bad weather is forecast for your sale",
+  "push.postponedTitle": "A sale you saved was postponed"
  },
  "messages": {
   "Login required.": "Login required.",
@@ -689,6 +691,11 @@
   "This pickup changed. Refresh and try again.": "This pickup changed. Refresh and try again.",
   "Invalid pickup time.": "Invalid pickup time.",
   "Pick one of the offered times.": "Pick one of the offered times.",
-  "That time has passed. Pick another one.": "That time has passed. Pick another one."
+  "That time has passed. Pick another one.": "That time has passed. Pick another one.",
+  "This sale has no upcoming days to postpone.": "This sale has no upcoming days to postpone.",
+  "Postpone by 1 to 14 days.": "Postpone by 1 to 14 days.",
+  "Pick at least one new day.": "Pick at least one new day.",
+  "Pick a later start than the current one to postpone.": "Pick a later start than the current one to postpone.",
+  "Invalid schedule.": "Invalid schedule."
  }
 }

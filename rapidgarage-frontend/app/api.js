@@ -135,6 +135,11 @@ export const fetchPickup = (conversationId) => apiFetch('/conversations/' + conv
 export const offerPickup = (conversationId, body) => apiFetch('/conversations/' + conversationId + '/pickup', { method: 'POST', body: JSON.stringify(body) });
 export const pickupAction = (conversationId, action, body) => apiFetch('/conversations/' + conversationId + '/pickup/' + action, { method: 'POST', body: JSON.stringify(body || {}) });
 export const fetchUpcomingPickups = () => apiFetch('/pickups/upcoming');
+// Rain checks (backend lib/weather.js, lib/rainChecks.js).
+export const fetchSaleWeather = (postId) => apiFetch('/post/' + postId + '/weather');
+export const postponeSale = (postId, body) => apiFetch('/post/' + postId + '/postpone', { method: 'POST', body: JSON.stringify(body) });
+export const dismissRainCheck = (postId, date) => apiFetch('/post/' + postId + '/rain-check/dismiss', { method: 'POST', body: JSON.stringify({ date }) });
+export const fetchRainChecks = () => apiFetch('/dashboard/rain-checks');
 // Admin: safe meetup spots.
 export const adminSpots = (q) => apiFetch('/admin/meetup-spots' + (q ? '?q=' + encodeURIComponent(q) : ''));
 export const adminSaveSpot = (id, body) => apiFetch('/admin/meetup-spots' + (id ? '/' + id : ''), { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });

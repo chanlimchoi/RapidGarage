@@ -365,6 +365,12 @@ From a conversation, a buyer can ask the seller to hold one item of the sale, op
 - **Notifications.** Each step is posted into the conversation as an event message (shown as a centred line, worded for each side in the reader's language), so it counts toward the unread badge and appears in the inbox preview. No email is sent.
 - **Pickup scheduling.** Once the seller has accepted a hold or an offer, a **Pickup** card in the conversation lets them offer up to 6 pickup times (15, 30, 60 or 120 minute slots, before the sale ends). The buyer books one; the booked time becomes the hold's pickup time, so the reservation lasts until an hour after it. Either person can **Reschedule** (the buyer picks another slot or the seller offers new ones) or **Cancel pickup** (the hold itself stays). Every step is an event in the thread, and both people see their next pickups under **Upcoming pickups** on the dashboard. Pickup is at the sale's address; nothing about either person's location is stored.
 
+## Rain checks
+
+Each upcoming sale's page shows a short forecast for its days (from the free, keyless [Open-Meteo](https://open-meteo.com) API; no account or key). When storms, snow, heavy rain or strong wind are likely in the next few days, the seller gets a **rain check**: a bell notice (and a push under their reminders switch), plus a prompt on the sale page and the dashboard with **Postpone** (move every upcoming day 1 day or 1 week later, or edit the dates) or **Keep the date**. Postponing tells everyone who saved the sale or set a reminder (bell + push), never across a block, and the sale page shows "Postponed from ..." for two weeks.
+
+Forecasts are cached per ~1 km area in the database (`WEATHER_CACHE_MINUTES`, 180) and failures for 15 minutes, so the API is called rarely. If it's unreachable, slow (`WEATHER_TIMEOUT_MS`) or turned off (`WEATHER_ENABLED=false`), there's simply no forecast and no prompt. Only the sale's public coordinates, rounded, are sent. See `.env.example` for `OPEN_METEO_URL`, `RAIN_CHECK_DAYS`, `RAIN_CHECK_MINUTES` and `RAIN_CHECK_POP`.
+
 ## Neighborhood sales
 
 Anyone logged in can organize a **neighborhood sale** (`/events/new`): a name, an area (a center typed as a neighborhood, ZIP code or address, or the organizer's location, plus a radius of 0.25–5 mi), up to 7 days with times (same editor and time-zone rules as a sale), a description, and how sellers join: **approval required** (default) or **open**. The area can't change after creating, so sales that joined stay inside it.

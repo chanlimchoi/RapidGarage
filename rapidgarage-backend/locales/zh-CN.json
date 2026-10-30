@@ -221,7 +221,9 @@
   "push.counterTitle": "{name} 发来还价",
   "push.offerAcceptedTitle": "{name} 接受了出价",
   "push.searchTitle": "有新甩卖符合你保存的搜索",
-  "push.searchTitleNamed": "“{name}”有新匹配"
+  "push.searchTitleNamed": "“{name}”有新匹配",
+  "push.rainCheckTitle": "你的甩卖当天预报有恶劣天气",
+  "push.postponedTitle": "你收藏的甩卖已延期"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -667,6 +669,11 @@
   "This pickup changed. Refresh and try again.": "此取货已更改，请刷新后重试。",
   "Invalid pickup time.": "取货时间无效。",
   "Pick one of the offered times.": "请从提供的时间中选择一个。",
-  "That time has passed. Pick another one.": "该时间已过，请选择其他时间。"
+  "That time has passed. Pick another one.": "该时间已过，请选择其他时间。",
+  "This sale has no upcoming days to postpone.": "此甩卖没有可延期的后续日期。",
+  "Postpone by 1 to 14 days.": "请延期 1 到 14 天。",
+  "Pick at least one new day.": "请至少选择一个新日期。",
+  "Pick a later start than the current one to postpone.": "延期需选择比当前更晚的开始时间。",
+  "Invalid schedule.": "日程无效。"
  }
 }

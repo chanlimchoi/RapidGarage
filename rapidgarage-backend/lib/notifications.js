@@ -15,7 +15,9 @@ function models() { return require('../models'); }
 // event_join / event_joined: a seller asked to join / joined the organizer's neighborhood
 // sale. event_approved / event_removed: the organizer approved / declined or removed
 // the seller's sale (lib/eventNotices.js). data.eventId links to the event.
-const KINDS = ['search_match', 'price_drop', 'item_sold', 'reminder_eve', 'event_join', 'event_joined', 'event_approved', 'event_removed'];
+// rain_check: bad weather is forecast for the seller's own sale; sale_postponed: a saved
+// sale moved to a later date (lib/rainChecks.js).
+const KINDS = ['search_match', 'price_drop', 'item_sold', 'reminder_eve', 'event_join', 'event_joined', 'event_approved', 'event_removed', 'rain_check', 'sale_postponed'];
 const EVENT_KINDS = ['event_join', 'event_joined', 'event_approved', 'event_removed'];
 const LIST_MAX = 50;
 const KEEP_DAYS = 60;
