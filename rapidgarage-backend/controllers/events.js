@@ -13,6 +13,7 @@
 //   GET    /events/:id/print               code, short URL, scans (organizer, admin)
 //   GET    /events/:id/qr.png | qr.svg | flyer.pdf        organizer, while visible
 const router = require('express').Router();
+const notices = require('../lib/eventNotices');
 const { Op } = require('sequelize');
 const models = require('../models');
 const { badRequest, forbidden, notFound, conflict, sendError, serverError, requireLogin, parseId } = require('../lib/http');
@@ -227,6 +228,7 @@ router.post('/:id/join', requireLogin, loadEvent, async (req, res) => {
     if (count >= ev.maxSales()) return sendError(res, 409, 'event_full', 'This neighborhood sale is full.');
     const auto = e.joinMode === 'open' || ev.isOrganizer(req.user, e);
     const p = await models.EventParticipant.create({ eventId: e.id, postId, status: auto ? 'approved' : 'pending', decidedAt: auto ? new Date() : null });
+    if (!ev.isOrganizer(req.user, e)) notices.joined(e, post, p).catch((err) => console.error('Event notice failed:', err && err.message));
     return res.status(201).json({ eventId: e.id, postId, status: p.status });
   } catch (err) {
     if (err && err.name === 'SequelizeUniqueConstraintError') return conflict(res, 'This sale is already part of another neighborhood sale. Leave it first.');
@@ -253,6 +255,7 @@ router.post('/:id/participants/:postId/approve', requireLogin, loadEvent, organi
     const why = ev.ineligible(post, req.event);
     if (why) return sendError(res, 409, why.code, why.message);
     await p.update({ status: 'approved', decidedAt: new Date() });
+    if (post.userId !== req.user.id) notices.approved(req.event, post, p).catch((err) => console.error('Event notice failed:', err && err.message));
     return res.json({ eventId: req.event.id, postId: p.postId, status: p.status });
   } catch (err) { return serverError(res, err); }
 });
@@ -264,7 +267,9 @@ router.delete('/:id/participants/:postId', requireLogin, loadEvent, async (req, 
     const post = await models.Post.findByPk(p.postId, { attributes: ['id', 'userId'] });
     const seller = post && post.userId === req.user.id;
     if (!seller && !ev.isOrganizer(req.user, req.event)) return forbidden(res, 'Only the organizer or the seller can do that.');
+    const wasPending = p.status !== 'approved';
     await p.destroy();
+    if (!seller && post) notices.removed(req.event, post, p, wasPending).catch((err) => console.error('Event notice failed:', err && err.message));
     return res.status(204).end();
   } catch (err) { return serverError(res, err); }
 });

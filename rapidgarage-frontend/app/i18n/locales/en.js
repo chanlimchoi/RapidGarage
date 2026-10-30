@@ -2086,4 +2086,9 @@ export default {
   "rem.eveHint": "For sales with Remind me on: a notification (and a push, if you turned push on) at {time} the night before they open.",
   "bell.reminderEve": "Tomorrow: {title}, {time}",
   "bell.reminderEvePlain": "Tomorrow: {title}",
+  "bell.eventJoin": "{title} asked to join {event}. Approve or decline it on the event page.",
+  "bell.eventJoined": "{title} joined {event}.",
+  "bell.eventApproved": "{title} is now part of {event}.",
+  "bell.eventDeclined": "The organizer of {event} declined {title}.",
+  "bell.eventRemoved": "{title} was removed from {event}.",
 };

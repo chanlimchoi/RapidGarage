@@ -2086,4 +2086,9 @@ export default {
   "rem.eveHint": "알림 받기를 켠 세일은 시작 전날 {time}에 알림(푸시를 켰다면 푸시도)을 보내요.",
   "bell.reminderEve": "내일: {title}, {time}",
   "bell.reminderEvePlain": "내일: {title}",
+  "bell.eventJoin": "{title}이(가) {event}에 참여를 요청했어요. 이벤트 페이지에서 승인하거나 거절하세요.",
+  "bell.eventJoined": "{title}이(가) {event}에 참여했어요.",
+  "bell.eventApproved": "{title}이(가) 이제 {event}에 포함됐어요.",
+  "bell.eventDeclined": "{event} 주최자가 {title}을(를) 거절했어요.",
+  "bell.eventRemoved": "{title}이(가) {event}에서 빠졌어요.",
 };
