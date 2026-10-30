@@ -238,7 +238,12 @@
   "suggest.title.garden": "Artículos de jardín y patio",
   "suggest.title.music": "Venta de instrumentos musicales",
   "suggest.title.decor": "Venta de decoración",
-  "push.reminderEveTitle": "Mañana: una venta de la que pediste aviso"
+  "push.reminderEveTitle": "Mañana: una venta de la que pediste aviso",
+  "push.offerTitle": "Nueva oferta de {name}",
+  "push.counterTitle": "{name} envió una contraoferta",
+  "push.offerAcceptedTitle": "{name} aceptó la oferta",
+  "push.searchTitle": "Una venta nueva coincide con tu búsqueda guardada",
+  "push.searchTitleNamed": "Nueva coincidencia para «{name}»"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",

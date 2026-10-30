@@ -10,6 +10,8 @@ const KINDS = [
   { key: 'messages', label: 'notif.messages' },
   { key: 'follows', label: 'notif.follows' },
   { key: 'reminders', label: 'notif.reminders' },
+  { key: 'offers', label: 'notif.offers' },
+  { key: 'searches', label: 'notif.searches' },
 ];
 
 // Settings > Notifications: push on this device, what to be told about, and a test.

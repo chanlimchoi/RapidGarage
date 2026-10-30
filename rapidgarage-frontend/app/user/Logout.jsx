@@ -4,6 +4,7 @@ import { apiFetch } from '../api';
 import { Spinner } from '../components/ui';
 import toast from '../components/toast';
 import { t } from '../i18n';
+import { clearRecentSales } from '../pwa/recent';
 
 export default class Logout extends React.Component {
   constructor(props) {
@@ -17,6 +18,7 @@ export default class Logout extends React.Component {
     apiFetch('/logout', { method: 'POST' })
       .catch(() => {})
       .then(() => {
+        clearRecentSales();
         if (this.props.onAuthChange) this.props.onAuthChange();
         toast.info(t('logout.done'));
         this.setState({ done: true });

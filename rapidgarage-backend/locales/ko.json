@@ -216,7 +216,12 @@
   "suggest.title.garden": "정원·파티오 용품",
   "suggest.title.music": "악기 판매",
   "suggest.title.decor": "인테리어 소품 판매",
-  "push.reminderEveTitle": "내일: 알림을 요청한 세일"
+  "push.reminderEveTitle": "내일: 알림을 요청한 세일",
+  "push.offerTitle": "{name}님의 새 제안",
+  "push.counterTitle": "{name}님이 역제안을 보냈어요",
+  "push.offerAcceptedTitle": "{name}님이 제안을 수락했어요",
+  "push.searchTitle": "저장한 검색과 맞는 새 세일이 있어요",
+  "push.searchTitleNamed": "“{name}”에 맞는 새 세일"
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",

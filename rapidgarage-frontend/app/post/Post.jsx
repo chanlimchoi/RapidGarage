@@ -259,6 +259,11 @@ class Post extends Component {
     return (
       <div className="container">
         <Link to="/" className="back-link"><ArrowLeft size={16} aria-hidden="true" />{t('post.allSales')}</Link>
+        {post.offlineSavedAt ? (
+          <Alert tone="info" className="offline-copy-banner">
+            <p><strong>{t('post.offlineCopyTitle')}</strong>{' '}{t('post.offlineCopy', { when: timeAgo(post.offlineSavedAt) })}</p>
+          </Alert>
+        ) : null}
         {badge && badge.kind === 'ended' ? (
           <Alert tone="info" className="ended-banner">
             <p><strong>{t('post.endedTitle')}</strong>{' '}

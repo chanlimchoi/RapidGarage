@@ -238,7 +238,12 @@
   "suggest.title.garden": "Garden and patio items",
   "suggest.title.music": "Musical instruments for sale",
   "suggest.title.decor": "Home decor for sale",
-  "push.reminderEveTitle": "Tomorrow: a sale you wanted a reminder for"
+  "push.reminderEveTitle": "Tomorrow: a sale you wanted a reminder for",
+  "push.offerTitle": "New offer from {name}",
+  "push.counterTitle": "{name} sent a counteroffer",
+  "push.offerAcceptedTitle": "{name} accepted the offer",
+  "push.searchTitle": "A new sale matches your saved search",
+  "push.searchTitleNamed": "New match for “{name}”"
  },
  "messages": {
   "Login required.": "Login required.",
