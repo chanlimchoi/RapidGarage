@@ -12,6 +12,8 @@ const PW = 'correct-horse';
 const H = 3600000;
 const C = { lat: 40.758, lng: -73.9855 };
 const ymd = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(d);
+// Calendar days after `d` in New York (24-hour steps repeat a date across DST changes).
+const daysAfter = (d, n) => { const t = new Date(ymd(d) + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 
 describe('rain checks (Open-Meteo forecasts, postpone)', function () {
   this.timeout(30000);
@@ -31,7 +33,7 @@ describe('rain checks (Open-Meteo forecasts, postpone)', function () {
     if (mode === 'down') return Promise.reject(new Error('ECONNREFUSED'));
     if (mode === 'junk') return Promise.resolve({ error: true });
     const time = [];
-    for (let i = -1; i < 16; i++) time.push(ymd(new Date(now.getTime() + i * 24 * H)));
+    for (let i = -1; i < 16; i++) time.push(daysAfter(now, i));
     const bad = (date) => date === d1;
     const pick = (date, wet, dry) => (bad(date) ? wet : dry);
     return Promise.resolve({ daily: {
