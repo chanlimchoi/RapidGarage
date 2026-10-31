@@ -371,7 +371,7 @@ class PostList extends React.Component {
         <section className="hero">
           <h1>{t('list.heroTitle')}</h1>
           <p>{t('list.heroLead')}</p>
-          <p className="hero-links"><Link className="btn btn-ghost btn-sm" to="/calendar"><CalendarDays size={16} aria-hidden="true" />{t('cal.heroLink')}</Link></p>
+          <p className="hero-links"><Link className="btn btn-ghost btn-sm" to="/calendar"><CalendarDays size={16} aria-hidden="true" />{t('cal.heroLink')}</Link><Link className="btn btn-ghost btn-sm" to="/curb/new"><Gift size={16} aria-hidden="true" />{t('quick.heroLink')}</Link></p>
           <form className="search-bar map-search" onSubmit={this.handleSubmit} role="search" aria-label={t('list.searchSales')}>
             <div className="search-field search-field-what">
               <Package size={18} aria-hidden="true" />

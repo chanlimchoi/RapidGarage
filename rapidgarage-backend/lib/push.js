@@ -202,8 +202,16 @@ function earlyBird(userId, { title, postId }) {
   });
 }
 
+// Free stuff at the curb within the person's alert radius (lib/curbAlerts.js).
+function curbFree(userId, { title, postId, miles }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'search', { title: i18n.t(lang, 'push.curbFreeTitle', { miles }), body: title, url: '/post/' + postId, tag: 'curb-' + postId });
+  });
+}
+
 module.exports = {
-  reminderEve, offer, searchMatch, OFFER_TITLES, rainCheck, salePostponed, earlyBird,
+  curbFree, reminderEve, offer, searchMatch, OFFER_TITLES, rainCheck, salePostponed, earlyBird,
   KINDS, MAX_PER_USER, allowedEndpoint, validKeys, publicKey, isConfigured, setSender,
   subscribe, unsubscribe, deviceCount, sendTo, message, newSale, reminder, idle, track,
 };

@@ -13,7 +13,8 @@ import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../com
 import toast from '../components/toast';
 import { RatingBadge } from '../ratings/Stars';
 import ScanStats from '../print/ScanStats';
-import { fetchPrintInfo, recordView, markCurbTaken, undoCurbTaken } from '../api';
+import { fetchPrintInfo, recordView, markCurbTaken, undoCurbTaken, endCurbPost } from '../api';
+import { minutesLeft } from '../lib/curbPost';
 import { liveOffer } from '../lib/curbside';
 import { holdTime } from '../messages/holdText';
 import CurbsidePanel from './CurbsidePanel';
@@ -118,6 +119,29 @@ class Post extends Component {
     apiFetch('/post/' + id).then(({ ok, data }) => {
       if (ok && this.state.post && this.state.post.id === id) this.setState({ post: Object.assign({}, this.state.post, { items: data.items, curbside: data.curbside }) });
     }).catch(() => null);
+  }
+
+  // Quick "free at the curb" post: the poster takes it down early.
+  endQuick(post) {
+    if (!window.confirm(t('quick.endConfirm'))) return;
+    endCurbPost(post.id).then(({ ok, data }) => {
+      if (!ok) return toast.error(errorMessage(data, t('quick.endFailed')));
+      toast.success(t('quick.ended'));
+      return this.setState({ post: Object.assign({}, this.state.post, data) });
+    }).catch(() => toast.error(t('common.networkShort')));
+  }
+
+  renderQuick(post, isOwner) {
+    if (!post.quickCurb || !liveOffer(post)) return null;
+    const mins = minutesLeft(post.curbside.until);
+    const left = mins >= 60 ? t('quick.hoursLeft', { count: Math.round(mins / 60) }) : t('quick.minutesLeft', { count: Math.max(1, mins) });
+    return (
+      <div className="markdown-note quick-curb-note is-now" role="status">
+        <Gift size={16} aria-hidden="true" />
+        <span>{t('quick.postNote', { time: holdTime(post.curbside.until) })} {left}</span>
+        {isOwner ? <button type="button" className="btn btn-secondary btn-sm" onClick={() => this.endQuick(post)}>{t('quick.end')}</button> : null}
+      </div>
+    );
   }
 
   curbTaken(item) {
@@ -325,6 +349,7 @@ class Post extends Component {
               </p>
             ) : null}
             {this.renderEarly(post, isOwner)}
+            {this.renderQuick(post, isOwner)}
             {this.renderGallery(post)}
             {post.description ? (
               <section>

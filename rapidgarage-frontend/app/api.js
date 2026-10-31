@@ -89,6 +89,13 @@ export function searchPosts(params) {
   return apiFetch('/search?' + qs);
 }
 
+// Free stuff at the curb (backend controllers/curb.js).
+export const createCurbPost = (body) => apiFetch('/curb', { method: 'POST', body: JSON.stringify(body) });
+export const endCurbPost = (id) => apiFetch('/curb/' + id + '/end', { method: 'POST' });
+export const fetchCurbAlert = () => apiFetch('/curb/alert');
+export const saveCurbAlert = (body) => apiFetch('/curb/alert', { method: 'PUT', body: JSON.stringify(body) });
+export const deleteCurbAlert = () => apiFetch('/curb/alert', { method: 'DELETE' });
+
 // Individual items matching the words (backend controllers/search.js /items).
 export function searchItems(params) {
   const qs = Object.keys(params)

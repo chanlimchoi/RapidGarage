@@ -526,6 +526,26 @@ When a window opens, the alert worker's pass tells each follower and saver once 
 bell notification `early_bird` (`data: { until, minutes }`) and a push (reminders switch). Hidden
 sales never announce. Lists, search and the map are unchanged (the sale shows its normal times).
 
+## Free stuff at the curb (lib/curbAlerts.js, controllers/curb.js)
+
+A quick "free at the curb" post: a photo, where it is, a few words, and how long it stays up.
+It is an ordinary post with `quickCurb: true`, `isFree`, `startDate` = now, `endDate` = the
+expiry and a whole-post curbside offer until the same time, so lists, search (including the
+`curbside` filter), the map, "Taken" marks, reports and moderation work as for curbside
+leftovers, and it disappears by itself (no sweeper). No follower or sale-alert emails.
+
+| | |
+|---|---|
+| `POST /curb` | Login + verified. `{ lat, lng }` or `{ street, zipCode }` (geocoded), optional `title` (80), `note` (200), `hours` (1–12, default `CURB_POST_HOURS`). 201 with the post. Add photos with `POST /post/:id/photos`. 429 + `Retry-After` past `CURB_POSTS_PER_HOUR` / `CURB_POSTS_PER_DAY`. |
+| `POST /curb/:id/end` | The poster takes it down now. 403 for anyone else, 404 for non-quick posts. |
+| `GET /curb/alert` | Your alert (`{ alert, radii }`, `alert` null when off). |
+| `PUT /curb/alert` | `{ lat, lng, radiusMiles, enabled? }`, radius one of 0.5, 1, 2, 3, 5, 10 miles. The place is stored rounded (about 10 m) and never shown to anyone. |
+| `DELETE /curb/alert` | Turn off and forget the place. |
+
+When a quick post goes up, everyone whose enabled alert circle holds it gets a bell notification
+`curb_free` (`data: { miles, until }`) and a push (saved-search alerts switch), at most
+`CURB_ALERTS_PER_DAY` a day each, never for their own posts or across a block either way.
+
 ## Saved sales & route
 
 All under `/saved`, login required, `Cache-Control: no-store`; nobody sees anyone else's list.

@@ -37,6 +37,9 @@ module.exports = (sequelize, DataTypes) => {
     aiFlagReason: { type: DataTypes.STRING(300), allowNull: true },
     aiFlaggedAt: { type: DataTypes.DATE, allowNull: true },
     aiReviewHash: { type: DataTypes.STRING(64), allowNull: true },
+    // Quick "free at the curb" post (lib/curbAlerts.js): no sale, just a curbside
+    // offer that expires (startDate..endDate = the offer), with nearby alerts.
+    quickCurb: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     // Early-bird access (lib/earlyBird.js): minutes before each day's start that
     // followers and savers may come; null = off. Serialized only via post.earlyBird.
     earlyMinutes: { type: DataTypes.INTEGER, allowNull: true },
