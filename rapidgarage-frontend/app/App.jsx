@@ -48,6 +48,7 @@ const Following = lazy(() => import('./follows/Following'));
 const Notifications = lazy(() => import('./notifications/Notifications'));
 const RoutePlanner = lazy(() => import('./route/RoutePlanner'));
 const ItemsEditor = lazy(() => import('./post/ItemsEditor'));
+const SellMode = lazy(() => import('./post/SellMode'));
 const EventsIndex = lazy(() => import('./events/EventsIndex'));
 const EventForm = lazy(() => import('./events/EventForm'));
 const EventPage = lazy(() => import('./events/EventPage'));
@@ -217,6 +218,7 @@ class App extends Component {
                 <Route path='/newpost' element={<RoutedInner component={NewPost} />} />
                 <Route path='/post/:id/print' element={<RoutedInner component={PrintFlyer} />} />
                 <Route path='/post/:id/items' element={<RoutedInner component={ItemsEditor} />} />
+                <Route path='/post/:id/sell' element={<RoutedInner component={SellMode} />} />
                 <Route path='/post/:id/edit' element={<RoutedInner component={EditPost} />} />
                 <Route path='/post/:id' element={<RoutedInner component={Post} />} />
                 <Route path='/dashboard' element={<RoutedInner component={Dashboard} />} />

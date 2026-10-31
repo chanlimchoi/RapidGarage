@@ -15,6 +15,7 @@ const curbside = require('../lib/curbside');
 const aiItems = require('../lib/aiItems');
 const aiAccess = require('../lib/aiAccess');
 const i18n = require('../lib/i18n');
+const whatsLeft = require('../lib/whatsLeft');
 
 const sorted = (list) => list.slice().sort((a, b) => a.position - b.position || a.id - b.id);
 const listOf = async (post) => sorted(await models.SaleItem.findAll({ where: { postId: post.id } }));
@@ -37,6 +38,16 @@ async function loadItem(req, res, next) {
 }
 
 const soldFields = (sold, item) => (sold === undefined || (item && !!item.sold === sold) ? {} : { sold, soldAt: sold ? schedule.now() : null });
+
+// Live "what's left" snapshot (lib/whatsLeft.js): ids with sold/reserved,
+// when the seller last changed the list and how often to poll. Small and
+// ETag-cached, so a page can poll it while the sale is on.
+router.get('/status', async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-cache');
+    return res.json(await whatsLeft.status(req.post));
+  } catch (err) { return serverError(res, err); }
+});
 
 router.get('/', async (req, res) => {
   try {
@@ -102,6 +113,7 @@ router.post('/', requireLogin, owner, async (req, res) => {
     delete value.sold;
     const item = await models.SaleItem.create(Object.assign(value, soldFields(sold || false), { postId: req.post.id, position: (Number.isFinite(last) ? last : -1) + 1 }));
     res.status(201).json(item);
+    await whatsLeft.touched(req.post);
     // A new item may be what someone is looking for.
     if (!item.sold) wanted.schedulePost(req.post.id);
     if (!item.sold) alerts.schedulePostMatch(req.post, { keywordOnly: true });
@@ -133,6 +145,7 @@ router.post('/bulk', requireLogin, owner, async (req, res) => {
     const created = await models.sequelize.transaction((transaction) => models.SaleItem.bulkCreate(rows, { transaction }));
     const fresh = await models.SaleItem.findAll({ where: { id: created.map((c) => c.id).filter(Boolean) } });
     res.status(201).json({ items: sorted(fresh.length ? fresh : created).map((i) => i.toJSON()) });
+    await whatsLeft.touched(req.post);
     wanted.schedulePost(req.post.id);
     alerts.schedulePostMatch(req.post, { keywordOnly: true });
     require('../lib/aiReview').schedule(req.post.id);
@@ -173,7 +186,8 @@ router.put('/:itemId', requireLogin, owner, loadItem, async (req, res) => {
     if (becameSold) await holds.itemSold(updated);
     // A curbside item sold (or back): the offer may now be all gone (or not).
     if (sold !== undefined && updated.curbside) await curbside.refreshGone(req.post.id);
-    res.json(updated);
+    await whatsLeft.touched(req.post);
+    res.json(Object.assign(updated.toJSON(), { itemsUpdatedAt: req.post.itemsUpdatedAt }));
     // Renamed, repriced or back on sale: it may match a wanted post now.
     if (!updated.sold && (value.name !== undefined || value.priceCents !== undefined || sold === false)) wanted.schedulePost(req.post.id);
     // Sold or cheaper: people who favorited the sale hear about it.
@@ -189,6 +203,7 @@ router.delete('/:itemId', requireLogin, (req, res, next) => (isAdmin(req.user) ?
     const wasCurbside = req.item.curbside;
     await req.item.destroy();
     if (wasCurbside) await curbside.refreshGone(req.post.id);
+    await whatsLeft.touched(req.post);
     return res.status(204).end();
   } catch (err) { return serverError(res, err); }
 });

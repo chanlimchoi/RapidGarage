@@ -483,6 +483,7 @@ response echoes it as `filter.when`.
 | | |
 |---|---|
 | `GET /` | `{ items, max }`, in list order. `GET /post/:id` also includes `items`. |
+| `GET /status` | Live "what's left": `{ postId, updatedAt, pollSeconds, total, sold, items: [{ id, sold, reserved }] }`. Ids and flags only, `Cache-Control: no-cache` with an ETag (304 when unchanged). |
 | `POST /` | Seller only. `{ name, price?, photoId?, sold? }` → 201 item. |
 | `PUT /:itemId` | Seller only. Any of `name`, `price`, `photoId`, `sold`. |
 | `PUT /order` | Seller only. `{ ids }`: every item of the sale once. |
@@ -493,6 +494,15 @@ characters. `price`: optional, dollars with up to 2 decimals (`"2.50"`, `5`), 0 
 $100,000; stored as cents. `photoId`: one of **this** sale's photos or `null`; deleting the
 photo keeps the item without it. `soldAt` is set when marked sold and cleared when unmarked.
 Up to 100 items per sale (400 `too_many`). Deleting the sale deletes its items.
+
+**Live "what's left"** (`lib/whatsLeft.js`): every change to the list (add, edit, sold or
+available, delete) stamps `Posts.itemsUpdatedAt` (in `GET /post/:id` as `itemsUpdatedAt`, shown
+as "updated 3 min ago"). The sale page polls `GET /status` at the server's `pollSeconds` hint:
+20 s while the sale (or its curbside leftovers) is on or starts within the hour, 300 s before
+that, 0 (stop) after it ended. People who saved the sale and have a tab open also get an `items`
+live event (`/live`, `{ postId }` only) so their page refreshes at once. Bell notifications for
+sold items stay as before (`item_sold`, coalesced), and holds on a sold item are closed and the
+buyers told. The seller's phone view is `/post/:id/sell` in the app (big Sold / Available buttons).
 
 **Keyword search**: `/search` and `/allPosts` take `keyword` (≤ 60 characters, up to 5 words).
 Every word must appear (case-insensitive, literally; `%` and `_` are not wildcards) in the

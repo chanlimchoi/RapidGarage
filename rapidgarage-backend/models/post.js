@@ -37,6 +37,8 @@ module.exports = (sequelize, DataTypes) => {
     aiFlagReason: { type: DataTypes.STRING(300), allowNull: true },
     aiFlaggedAt: { type: DataTypes.DATE, allowNull: true },
     aiReviewHash: { type: DataTypes.STRING(64), allowNull: true },
+    // Live "what's left" (lib/whatsLeft.js): when the seller last changed the item list.
+    itemsUpdatedAt: { type: DataTypes.DATE, allowNull: true },
     // Post-sale summary email sent (lib/sellerTools.js).
     summarySentAt: { type: DataTypes.DATE, allowNull: true },
     // Moderation (lib/moderation.js). Hidden posts are visible only to the owner and admins.
