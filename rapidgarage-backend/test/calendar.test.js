@@ -34,7 +34,8 @@ describe('add to calendar + morning-of reminders', function () {
     return [agent, r.body.id];
   }
   const transport = { sendMail: async (msg) => { sent.push(msg); return { messageId: 'x' + sent.length }; } };
-  const dayN = (n) => schedule.localDate(new Date(start.getTime() + n * 24 * HOUR), TZ);
+  // Calendar days after `start` in TZ (24-hour steps repeat a date across DST changes).
+  const dayN = (n) => { const t = new Date(schedule.localDate(start, TZ) + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
   // Sale on day+1 (and day+2 with two=true), 08:00-12:00 New York time.
   async function sale(extra, days) {
     const r = await sam.post('/post').send(Object.assign({ title: 'Moving sale', description: 'Furniture, lamps; books', street: '1 mi St', city: 'New York', state: 'NY', zipCode: '10036',
