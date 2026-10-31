@@ -11,6 +11,8 @@ const MI_PER_DEG = (Math.PI / 180) * geo.EARTH_RADIUS_MI;
 const north = (miles) => ({ lat: CENTER.lat + miles / MI_PER_DEG, lng: CENTER.lng });
 const H = 3600000;
 const ymd = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(d);
+// Calendar days after `d` in New York (not 24-hour steps, which repeat a date across DST changes).
+const daysAfter = (d, n) => { const t = new Date(ymd(d) + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 
 describe('item search (GET /search/items)', function () {
   this.timeout(30000);
@@ -23,7 +25,7 @@ describe('item search (GET /search/items)', function () {
     return Promise.resolve({ status: 'not_found' });
   }
   const sale = (agent, mi, title, dayOffset) => agent.post('/post').send({ title, street: mi + ' mi St', city: 'New York', state: 'NY', zipCode: '10036',
-    schedule: { timeZone: 'America/New_York', days: [{ date: ymd(new Date(now.getTime() + (dayOffset || 1) * 24 * H)), start: '08:00', end: '14:00' }] } });
+    schedule: { timeZone: 'America/New_York', days: [{ date: daysAfter(now, dayOffset || 1), start: '08:00', end: '14:00' }] } });
   const item = (agent, postId, body) => agent.post('/post/' + postId + '/items').send(body);
 
   before(() => { process.env.GOOGLE_MAPS_API_KEY = 'test-server-key'; });
