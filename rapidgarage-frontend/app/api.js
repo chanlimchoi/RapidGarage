@@ -311,6 +311,7 @@ export const addItemsBulk = (postId, items) => apiFetch('/post/' + postId + '/it
 export const describeSale = (postId, oneTimeKey) => apiFetch('/post/' + postId + '/describe', jsonBody('POST', oneTimeKey ? { oneTimeKey } : {}));
 export const duplicateSale = (postId) => apiFetch('/post/' + postId + '/duplicate', { method: 'POST' });
 export const fetchSaleSummary = (postId) => apiFetch('/post/' + postId + '/summary');
+export const fetchSaleReport = (postId) => apiFetch('/post/' + postId + '/report');
 
 // ---- Following sellers (lib/follows.js on the server) ----------------------
 export const fetchFollows = () => apiFetch('/follows');

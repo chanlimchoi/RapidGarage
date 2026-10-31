@@ -526,6 +526,23 @@ When a window opens, the alert worker's pass tells each follower and saver once 
 bell notification `early_bird` (`data: { until, minutes }`) and a push (reminders switch). Hidden
 sales never announce. Lists, search and the map are unchanged (the sale shows its normal times).
 
+## Seller sale report (lib/saleReport.js)
+
+`GET /post/:id/report` (owner only, `Cache-Control: no-store`): a printable after-sale summary
+built on the same count-only analytics as `GET /post/:id/summary` and the dashboard.
+
+- `post`: title, city/state, status, schedule; `generatedAt`.
+- `sold`: `[{ id, name, listedCents, soldCents, priceSource, soldAt }]`. `soldCents` is the agreed
+  offer price of the item's completed hold (offers, bundle deals), else its listed price
+  (`priceSource` `offer` / `listed` / `null` for no price). `unsold`: `[{ id, name, listedCents }]`.
+- `totals`: `items, sold, unsold, earnedCents, listedValueSoldCents, unsoldListedCents,
+  soldWithoutPrice, soldByOffer`.
+- `reach`: `views, scans, shares, saves` (favorites), `conversations, messages` (text messages
+  not removed), `holdsCompleted`; `daily`: per-day `views, scans, shares` (last 60 days with data).
+
+Counts only: no visitor, buyer or message text is included. The frontend page
+`/post/:id/report` prints (or saves as PDF through the browser) and downloads the item lines as CSV.
+
 ## Free stuff at the curb (lib/curbAlerts.js, controllers/curb.js)
 
 A quick "free at the curb" post: a photo, where it is, a few words, and how long it stays up.

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { PartyPopper, Gift } from 'lucide-react';
+import { PartyPopper, Gift, FileText } from 'lucide-react';
 import { fetchSaleSummary } from '../api';
 import { formatCents } from '../lib/items';
 import DuplicateButton from '../post/DuplicateButton';
@@ -34,6 +34,7 @@ export default class SaleRecap extends React.Component {
         {!this.props.hidden ? (
           <div className="form-actions">
             {s.items.unsold ? <Link className="btn btn-secondary btn-sm" to={'/post/' + s.postId}><Gift size={14} aria-hidden="true" />{t('recap.curb')}</Link> : null}
+            <Link className="btn btn-secondary btn-sm" to={'/post/' + s.postId + '/report'}><FileText size={14} aria-hidden="true" />{t('report.link')}</Link>
             <DuplicateButton postId={s.postId} small label={t('recap.again')} />
           </div>
         ) : null}
