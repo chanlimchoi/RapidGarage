@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3, Gift, Percent, Smartphone } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3, Gift, Percent, Smartphone, Sunrise } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
-import { addressLine, timeAgo, formatMiles } from '../lib/format';
+import { addressLine, timeAgo, formatMiles, formatTime, formatDay } from '../lib/format';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
 import { BADGE_CLASS } from '../components/PostCard';
 import { formatPrice } from '../lib/price';
@@ -24,6 +24,7 @@ import AddToCalendar from '../components/AddToCalendar';
 import ShareButton from '../components/ShareButton';
 import ItemList from './ItemList';
 import LiveItems from './LiveItems';
+import { earlyState } from '../lib/earlyBird';
 import JoinEventPanel from '../events/JoinEventPanel';
 import FollowButton from '../follows/FollowButton';
 import DuplicateButton from './DuplicateButton';
@@ -202,6 +203,22 @@ class Post extends Component {
     );
   }
 
+  // Early-bird access (lib/earlyBird.js): times only for people who have it.
+  renderEarly(post, isOwner) {
+    const e = earlyState(post);
+    if (!e) return null;
+    if (e.kind === 'offered') {
+      return <p className="markdown-note early-note"><Sunrise size={16} aria-hidden="true" /><span>{t('early.offered')}</span></p>;
+    }
+    const key = isOwner ? (e.kind === 'active' ? 'early.ownerActive' : 'early.ownerUpcoming') : (e.kind === 'active' ? 'early.active' : 'early.upcoming');
+    return (
+      <p className={'markdown-note early-note' + (e.kind === 'active' ? ' is-now' : '')}>
+        <Sunrise size={16} aria-hidden="true" />
+        <span>{t(key, { from: e.kind === 'active' ? formatTime(e.startsAt) : formatDay(e.startsAt) + ' ' + formatTime(e.startsAt), until: formatTime(e.until) })}</span>
+      </p>
+    );
+  }
+
   renderGallery(post) {
     const photos = post.photos || [];
     const active = Math.min(this.state.active, photos.length - 1);
@@ -307,6 +324,7 @@ class Post extends Component {
                 <span>{describeBundle(post.bundle)}. {t('bundle.postNote')}</span>
               </p>
             ) : null}
+            {this.renderEarly(post, isOwner)}
             {this.renderGallery(post)}
             {post.description ? (
               <section>

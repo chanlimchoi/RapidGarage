@@ -194,8 +194,16 @@ function reminderEve(userId, { title, postId }) {
   });
 }
 
+// Early-bird window opened at a sale the person follows the seller of or saved (lib/earlyBird.js).
+function earlyBird(userId, { title, postId }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'reminder', { title: i18n.t(lang, 'push.earlyBirdTitle'), body: title, url: '/post/' + postId, tag: 'early-' + postId });
+  });
+}
+
 module.exports = {
-  reminderEve, offer, searchMatch, OFFER_TITLES, rainCheck, salePostponed,
+  reminderEve, offer, searchMatch, OFFER_TITLES, rainCheck, salePostponed, earlyBird,
   KINDS, MAX_PER_USER, allowedEndpoint, validKeys, publicKey, isConfigured, setSender,
   subscribe, unsubscribe, deviceCount, sendTo, message, newSale, reminder, idle, track,
 };

@@ -510,6 +510,22 @@ title, the description or the name of an item that is **not sold**. Each result 
 `matchedItems`: up to 3 unsold item names that match the most words. `/search` echoes it as
 `filter.keyword`.
 
+## Early-bird access (lib/earlyBird.js)
+
+A seller can open each sale day early for their followers and for people who saved the sale:
+`earlyMinutes` on `POST /post` / `PUT /post/:id` (15–180, in steps of 15; `null` turns it off).
+It is never in the plain post JSON. `GET /post/:id` adds `earlyBird`:
+
+- seller, admins, followers and savers (no block either way): `{ minutes, forYou: true, startsAt,
+  until, active }` for the current or next sale day (`startsAt` = that day's start minus the
+  minutes; `null` once no day is left);
+- everyone else, while a window is ahead: `{ offered: true, forYou: false }` only (never the time),
+  so they can follow or save. They see the normal start time.
+
+When a window opens, the alert worker's pass tells each follower and saver once per sale day: a
+bell notification `early_bird` (`data: { until, minutes }`) and a push (reminders switch). Hidden
+sales never announce. Lists, search and the map are unchanged (the sale shows its normal times).
+
 ## Saved sales & route
 
 All under `/saved`, login required, `Cache-Control: no-store`; nobody sees anyone else's list.

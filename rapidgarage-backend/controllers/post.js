@@ -233,6 +233,7 @@ router.get('/:id', loadPost, async (req, res) => {
     const ev = (await events.eventsForPosts([req.post.id], req.user)).get(req.post.id) || null;
     const json = Object.assign(req.post.toJSON(), { seller }, ev ? { event: ev } : {});
     await curbside.annotate([json], req.user, { marks: true });
+    await require('../lib/earlyBird').annotate(json, req.post, req.user);
     return res.json(json);
   } catch (err) { return serverError(res, err); }
 });

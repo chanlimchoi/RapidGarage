@@ -245,7 +245,8 @@
   "push.searchTitle": "A new sale matches your saved search",
   "push.searchTitleNamed": "New match for “{name}”",
   "push.rainCheckTitle": "Bad weather is forecast for your sale",
-  "push.postponedTitle": "A sale you saved was postponed"
+  "push.postponedTitle": "A sale you saved was postponed",
+  "push.earlyBirdTitle": "Early-bird access is open"
  },
  "messages": {
   "Login required.": "Login required.",
@@ -697,6 +698,7 @@
   "Pick at least one new day.": "Pick at least one new day.",
   "Pick a later start than the current one to postpone.": "Pick a later start than the current one to postpone.",
   "Invalid schedule.": "Invalid schedule.",
-  "Type what you are looking for.": "Type what you are looking for."
+  "Type what you are looking for.": "Type what you are looking for.",
+  "Early-bird access is 15 minutes to 3 hours before the start, in 15-minute steps.": "Early-bird access is 15 minutes to 3 hours before the start, in 15-minute steps."
  }
 }

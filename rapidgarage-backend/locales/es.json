@@ -245,7 +245,8 @@
   "push.searchTitle": "Una venta nueva coincide con tu búsqueda guardada",
   "push.searchTitleNamed": "Nueva coincidencia para «{name}»",
   "push.rainCheckTitle": "Se pronostica mal tiempo para tu venta",
-  "push.postponedTitle": "Una venta que guardaste se aplazó"
+  "push.postponedTitle": "Una venta que guardaste se aplazó",
+  "push.earlyBirdTitle": "El acceso anticipado está abierto"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -697,6 +698,7 @@
   "Pick at least one new day.": "Elige al menos un día nuevo.",
   "Pick a later start than the current one to postpone.": "Para aplazar, elige un inicio posterior al actual.",
   "Invalid schedule.": "Horario no válido.",
-  "Type what you are looking for.": "Escribe lo que buscas."
+  "Type what you are looking for.": "Escribe lo que buscas.",
+  "Early-bird access is 15 minutes to 3 hours before the start, in 15-minute steps.": "El acceso anticipado va de 15 minutos a 3 horas antes del inicio, en pasos de 15 minutos."
  }
 }

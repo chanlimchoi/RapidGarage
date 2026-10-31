@@ -17,7 +17,8 @@ function models() { return require('../models'); }
 // the seller's sale (lib/eventNotices.js). data.eventId links to the event.
 // rain_check: bad weather is forecast for the seller's own sale; sale_postponed: a saved
 // sale moved to a later date (lib/rainChecks.js).
-const KINDS = ['search_match', 'price_drop', 'item_sold', 'reminder_eve', 'event_join', 'event_joined', 'event_approved', 'event_removed', 'rain_check', 'sale_postponed'];
+// early_bird: a sale the person follows the seller of (or saved) opened its early-bird window (lib/earlyBird.js).
+const KINDS = ['search_match', 'price_drop', 'item_sold', 'reminder_eve', 'event_join', 'event_joined', 'event_approved', 'event_removed', 'rain_check', 'sale_postponed', 'early_bird'];
 const EVENT_KINDS = ['event_join', 'event_joined', 'event_approved', 'event_removed'];
 const LIST_MAX = 50;
 const KEEP_DAYS = 60;

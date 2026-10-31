@@ -6,6 +6,7 @@ import ScheduleEditor from './ScheduleEditor';
 import { priceErrors, toPriceNumber, formatPrice } from '../lib/price';
 import { PERCENT_CHOICES, markdownBody, markdownValues } from '../lib/markdown';
 import { markdownErrors, describe as describeMarkdown } from '../lib/markdownText';
+import { EARLY_CHOICES, earlyValues, earlyBody } from '../lib/earlyBird';
 import { MIN_CHOICES as BUNDLE_MINS, PERCENT_CHOICES as BUNDLE_PERCENTS, bundleValues, bundleBody, bundleErrors, describe as describeBundle } from '../lib/bundles';
 import { CATEGORIES } from '../lib/wanted';
 import { categoryLabel } from '../wanted/WantedCard';
@@ -34,6 +35,7 @@ export function initialValues(post) {
     priceMax: p.priceMax === null || p.priceMax === undefined ? '' : String(p.priceMax),
     ...markdownValues(p),
     ...bundleValues(p),
+    ...earlyValues(p),
   };
 }
 
@@ -51,6 +53,8 @@ export function toBody(v) {
     ...markdownBody(v.isFree ? { markdownPercent: '' } : v),
     // Bundle deal: N+ items, X% off (none on a free sale).
     ...bundleBody(v.isFree ? {} : v),
+    // Early-bird access for followers and savers (minutes before each day's start).
+    ...earlyBody(v),
   };
 }
 
@@ -247,6 +251,12 @@ export default class PostForm extends React.Component {
                 </span>
               </fieldset>
             ) : null}
+            <Field id="earlyMinutes" label={t('early.legend')} optional hint={t('early.hint')}>
+              <select className="input" name="earlyMinutes" value={v.earlyMinutes} onChange={this.change('earlyMinutes')}>
+                <option value="">{t('early.off')}</option>
+                {EARLY_CHOICES.map((n) => <option key={n} value={String(n)}>{n < 60 ? t('early.minutesBefore', { count: n }) : t('early.hoursBefore', { count: n / 60 })}</option>)}
+              </select>
+            </Field>
             <Field id="description" label={t('form.description')} optional hint={t('form.descriptionHint')}>
               <textarea className="textarea" name="description" rows="6" value={v.description} onChange={this.change('description')} />
             </Field>
