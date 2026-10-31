@@ -213,6 +213,16 @@ equals `q`, or whose address or title contains it, with `distanceMiles: null` an
 explaining why. An address Google can't find returns `404 location_not_found`. Invalid input
 returns `400 bad_request` with per-field details.
 
+`GET /search/items` (public) finds individual items instead of sales: unsold items whose name
+contains every word of `keyword` (required, literal and case-insensitive). It takes the same
+parameters and filters as `GET /search`, but the place is optional: without `lat`/`lng` or `q` it
+searches the newest sales (no distances). Results are ordered by the sale's distance (or newest
+sale first), then the seller's list order; each is `{ id, name, priceCents, reserved, photo:
+{ url, thumbUrl, alt, ofSale } | null, sale: { id, title, city, state, distanceMiles, window,
+schedule, markdown } }`, where `photo.ofSale` means the item has no photo of its own and the
+sale's cover is shown. `sales` lists the full sales on the page (for the map pins). Hidden and
+ended sales follow the same rules as `GET /search`; sold items never match.
+
 Distance math: a lat/lng bounding box in SQL (indexed, and handles the antimeridian), then
 exact haversine in Node, so no PostGIS is needed.
 

@@ -14,6 +14,8 @@ const PW = 'correct-horse';
 const C = { lat: 40.758, lng: -73.9855 };
 const H = 3600000;
 const ymd = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(d);
+// Calendar days after `d` in New York (24-hour steps repeat a date across DST changes).
+const daysAfter = (d, n) => { const t = new Date(ymd(d) + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 // "<n> mi St" geocodes n miles due north of C; "Hell's Kitchen" geocodes to C.
 function fakeProvider(address) {
   if (/hell's kitchen/i.test(address)) return Promise.resolve({ status: 'ok', lat: C.lat, lng: C.lng });
@@ -59,9 +61,9 @@ describe('neighborhood sales', function () {
     t0 = new Date(); now = t0;
     schedule.setClock(() => now);
     scans.setClock(() => now);
-    d1 = ymd(new Date(t0.getTime() + 24 * H));
-    d2 = ymd(new Date(t0.getTime() + 48 * H));
-    d5 = ymd(new Date(t0.getTime() + 5 * 24 * H));
+    d1 = daysAfter(t0, 1);
+    d2 = daysAfter(t0, 2);
+    d5 = daysAfter(t0, 5);
     [org, orgId] = await user('olga@example.com', 'Olga', 'Ortiz');
     [sam, samId] = await user('sam@example.com', 'Sam', 'Stone');
     [bea, beaId] = await user('bea@example.com', 'Bea', 'Banks');
@@ -102,7 +104,7 @@ describe('neighborhood sales', function () {
     const f = r.body.error.details;
     ['name', 'areaLabel', 'radiusMiles', 'joinMode', 'schedule'].forEach((k) => assert.ok(f[k], k + ' ' + JSON.stringify(f)));
     const many = [];
-    for (let i = 1; i <= 8; i++) many.push(ymd(new Date(t0.getTime() + i * 24 * H)));
+    for (let i = 1; i <= 8; i++) many.push(daysAfter(t0, i));
     assert.ok((await org.post('/events').send(base({ schedule: sched(many) }))).body.error.details.schedule);
     assert.ok((await org.post('/events').send(base({ areaLabel: 'Nowhere at all' }))).body.error.details.areaLabel, 'unknown area');
     await makeEvent(org);

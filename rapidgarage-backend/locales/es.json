@@ -696,6 +696,7 @@
   "Postpone by 1 to 14 days.": "Aplaza entre 1 y 14 días.",
   "Pick at least one new day.": "Elige al menos un día nuevo.",
   "Pick a later start than the current one to postpone.": "Para aplazar, elige un inicio posterior al actual.",
-  "Invalid schedule.": "Horario no válido."
+  "Invalid schedule.": "Horario no válido.",
+  "Type what you are looking for.": "Escribe lo que buscas."
  }
 }
