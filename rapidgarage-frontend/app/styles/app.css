@@ -1420,3 +1420,47 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .postpone-choices { border: 0; padding: 0; margin: 0 0 var(--space-2); display: grid; gap: var(--space-1); }
 .dash-rain { margin-bottom: var(--space-4); }
 .dash-rain h2 { display: flex; align-items: center; gap: var(--space-2); }
+
+/* Item search (components/ItemResultCard.jsx) */
+.item-result-price { display: flex; align-items: baseline; gap: var(--space-2, 0.5rem); margin: 0.25rem 0; flex-wrap: wrap; }
+.item-result-price strong { font-size: 1.125rem; }
+.show-toggle button { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+/* Live what's left (post/LiveItems.jsx, post/SellMode.jsx) */
+.live-items { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.25rem 0; }
+.live-dot { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--color-success, #1a7f37); font-weight: 600; }
+.sell-mode-link { margin: 0.25rem 0; }
+.sell-mode-tools { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin: 0.75rem 0; }
+.sell-mode-tools .search-field { flex: 1 1 12rem; }
+.sell-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+.sell-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem; border: 1px solid var(--color-border, #ddd); border-radius: 0.75rem; }
+.sell-row.is-sold .sell-name { text-decoration: line-through; opacity: 0.7; }
+.sell-toggle { min-height: 3rem; min-width: 9rem; justify-content: center; font-size: 1rem; }
+
+/* Free stuff at the curb: quick posts */
+.quick-curb-note { flex-wrap: wrap; }
+.quick-curb-note .btn { margin-left: auto; }
+.quick-curb fieldset { border: 0; padding: 0; margin: 0; }
+.hero-links { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Seller sale report (printable) */
+.sale-report-actions { gap: var(--space-2); margin: var(--space-3) 0; }
+.report-sheet { background: var(--color-surface, #fff); border: 1px solid var(--color-border); border-radius: var(--radius-lg, 12px); padding: var(--space-5, 24px); max-width: 860px; }
+.report-sheet h1 { margin: 0 0 var(--space-1); }
+.report-days { list-style: none; padding: 0; margin: var(--space-2) 0; }
+.report-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); margin: 0; }
+.report-totals > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+.report-totals dt { font-size: 0.85rem; color: var(--color-text-muted, #5b6472); }
+.report-totals dd { margin: 0; font-size: 1.25rem; font-weight: 600; }
+.report-table { width: 100%; border-collapse: collapse; margin-top: var(--space-2); }
+.report-table th, .report-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--color-border); }
+.report-table td:not(:first-child), .report-table th:not(:first-child) { text-align: right; }
+.report-table tfoot th, .report-table tfoot td { font-weight: 700; border-bottom: 0; }
+.report-unsold { columns: 2; padding-left: 1.2em; }
+@media print {
+  .sale-report { max-width: none !important; padding: 0 !important; }
+  .report-sheet { border: 0; padding: 0; max-width: none; }
+  .report-section, .report-table tr { break-inside: avoid; }
+  .report-totals > div { border-color: #999; }
+  a.back-link { display: none !important; }
+}

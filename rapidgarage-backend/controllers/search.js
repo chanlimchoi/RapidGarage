@@ -31,6 +31,7 @@ const itemsLib = require('../lib/items');
 const eventsLib = require('../lib/events');
 const curbside = require('../lib/curbside');
 const markdownLib = require('../lib/markdown');
+const itemSearch = require('../lib/itemSearch');
 
 const MAX_PAGE_SIZE = 50;
 const MAX_CANDIDATES = 5000; // hard cap on rows pulled by the bounding box
@@ -38,7 +39,7 @@ const photoInclude = { model: models.PostPhoto, as: 'photos' };
 const photoOrder = [{ model: models.PostPhoto, as: 'photos' }, 'position', 'ASC'];
 const daysInclude = { model: models.SaleDay, as: 'saleDays' };
 
-function parseQuery(query) {
+function parseQuery(query, opts) {
   const errors = {};
   const out = {};
   const num = (v) => (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v.trim()) ? Number(v) : NaN);
@@ -55,7 +56,7 @@ function parseQuery(query) {
   } else if (q) {
     if (q.length > 200) errors.q = 'Search text is too long (200 characters max).';
     out.q = q;
-  } else if (!errors.q) {
+  } else if (!errors.q && !(opts && opts.centerOptional)) {
     errors.center = 'Give lat & lng, or q (an address or zip code).';
   }
   const radius = query.radius === undefined || query.radius === '' ? 10 : num(query.radius);
@@ -142,16 +143,19 @@ async function curbsideRows(rows, filter) {
   return curbside.dropReportedLeftovers(kept, (r) => !passesAsSale(r, filter, schedOk, now), now);
 }
 
+// center null: no distance (the newest MAX_CANDIDATES sales, newest first);
+// used by the item search when no place is given.
 async function nearbyRanked(center, radius, filter, user) {
-  const box = geo.boundingBox(center, radius);
+  const box = center ? geo.boundingBox(center, radius) : null;
   const rows = await models.Post.findAll({
     attributes: ['id', 'lat', 'lng', 'createdAt', 'startDate', 'endDate', 'timeZone', 'hidden', 'isFree', 'priceMin', 'priceMax', 'curbsideUntil', 'curbsideGoneAt', 'markdownPercent', 'markdownFrom', 'markdownLastDay'],
     where: and(
-      { lat: { [Op.between]: [box.minLat, box.maxLat] } },
-      { [Op.or]: box.lngRanges.map(([a, b]) => ({ lng: { [Op.between]: [a, b] } })) },
+      box ? { lat: { [Op.between]: [box.minLat, box.maxLat] } } : null,
+      box ? { [Op.or]: box.lngRanges.map(([a, b]) => ({ lng: { [Op.between]: [a, b] } })) } : null,
       saleWhere(filter, user),
       visibleWhere(user)
     ),
+    order: box ? undefined : [['createdAt', 'DESC'], ['id', 'DESC']],
     limit: MAX_CANDIDATES,
     raw: true,
   });
@@ -165,6 +169,7 @@ async function nearbyRanked(center, radius, filter, user) {
     kept = kept.filter((r) => inEvent.has(r.id));
   }
   if (filter.markdown) kept = await markdownLib.filterActive(models, kept);
+  if (!center) return kept.map((p) => ({ id: p.id, createdAt: new Date(p.createdAt), distance: null })).sort((a, b) => b.createdAt - a.createdAt || b.id - a.id);
   return kept
     .map((p) => ({ id: p.id, createdAt: new Date(p.createdAt), distance: geo.haversineMiles(center, { lat: p.lat, lng: p.lng }) }))
     .filter((r) => r.distance <= radius)
@@ -263,6 +268,48 @@ router.get('/', async (req, res) => {
     // No results: counted by the nearest known city only, never the search text.
     if (!pageInfo.total && (values.page || 1) === 1) await require('../lib/activity').searchEmpty(req, center);
     return res.json(Object.assign({ mode: 'distance', center, radius: values.radius, filter: filterOf(values), notice: null }, pageInfo, { events }));
+  } catch (err) {
+    return serverError(res, err);
+  }
+});
+
+// GET /search/items - individual items (lib/itemSearch.js). Same parameters
+// and filters as GET /search, but keyword is required and the place is
+// optional (without one: the newest sales, no distances). Results are items,
+// nearest sale first; `sales` holds the sales on this page for the map.
+router.get('/items', async (req, res) => {
+  const { errors, values } = parseQuery(req.query || {}, { centerOptional: true });
+  if (!values.words && !errors.keyword) errors.keyword = 'Type what you are looking for.';
+  if (Object.keys(errors).length) return badRequest(res, 'Invalid search.', errors);
+  try {
+    let center = values.center ? Object.assign({ source: 'coords' }, values.center) : null;
+    let mode = center ? 'distance' : 'recent';
+    let notice = null;
+    let ranked;
+    if (!center && values.q) {
+      const clientId = req.user ? 'u:' + req.user.id : 'ip:' + req.ip;
+      let r;
+      if (!geo.allowClientGeocode(clientId, Date.now())) r = { status: 'rate_limited' };
+      else r = await geo.geocodeAddress(values.q, await geo.resolveGeocodeKey(req.user));
+      if (r.status === 'ok') {
+        center = { lat: r.lat, lng: r.lng, source: 'geocoded', query: values.q };
+        mode = 'distance';
+      } else if (r.status === 'not_found') {
+        return sendError(res, 404, 'location_not_found', 'Could not find that address or zip code.');
+      } else {
+        mode = 'text';
+        notice = { code: r.status, message: i18n.translate(i18n.requestLang(req), NOTICES[r.status] || NOTICES.error) };
+        ranked = (await textMatch(values.q, Object.assign({}, values, { words: null }), req.user)).map((p) => ({ id: p.id, distance: null }));
+      }
+    }
+    if (!ranked) ranked = await nearbyRanked(center, values.radius, Object.assign({}, values, { words: null }), req.user);
+    const ordered = itemSearch.order(await itemSearch.matching(models, values.words, ranked.map((r) => r.id)), ranked);
+    const pageInfo = paginate(ordered, values.page, values.pageSize);
+    const ids = Array.from(new Set(pageInfo.results.map((x) => x.row.postId)));
+    const posts = ids.length ? await models.Post.findAll({ where: { id: ids }, include: [photoInclude, daysInclude], order: [photoOrder] }) : [];
+    const shaped = itemSearch.shape(pageInfo.results, new Map(posts.map((p) => [p.id, p])));
+    shaped.sales = await curbside.annotate(await withEvents(shaped.sales, req.user), req.user);
+    return res.json(Object.assign({ mode, center, radius: center ? values.radius : null, filter: filterOf(values), notice }, pageInfo, shaped));
   } catch (err) {
     return serverError(res, err);
   }

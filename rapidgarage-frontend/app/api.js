@@ -89,6 +89,22 @@ export function searchPosts(params) {
   return apiFetch('/search?' + qs);
 }
 
+// Free stuff at the curb (backend controllers/curb.js).
+export const createCurbPost = (body) => apiFetch('/curb', { method: 'POST', body: JSON.stringify(body) });
+export const endCurbPost = (id) => apiFetch('/curb/' + id + '/end', { method: 'POST' });
+export const fetchCurbAlert = () => apiFetch('/curb/alert');
+export const saveCurbAlert = (body) => apiFetch('/curb/alert', { method: 'PUT', body: JSON.stringify(body) });
+export const deleteCurbAlert = () => apiFetch('/curb/alert', { method: 'DELETE' });
+
+// Individual items matching the words (backend controllers/search.js /items).
+export function searchItems(params) {
+  const qs = Object.keys(params)
+    .filter((k) => params[k] !== undefined && params[k] !== null && params[k] !== '')
+    .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+    .join('&');
+  return apiFetch('/search/items?' + qs);
+}
+
 // ---- Reports & moderation ----------------------------------------------
 export const REPORT_REASONS = [
   { value: 'spam', get label() { return t('reason.spam'); } },
@@ -295,6 +311,7 @@ export const addItemsBulk = (postId, items) => apiFetch('/post/' + postId + '/it
 export const describeSale = (postId, oneTimeKey) => apiFetch('/post/' + postId + '/describe', jsonBody('POST', oneTimeKey ? { oneTimeKey } : {}));
 export const duplicateSale = (postId) => apiFetch('/post/' + postId + '/duplicate', { method: 'POST' });
 export const fetchSaleSummary = (postId) => apiFetch('/post/' + postId + '/summary');
+export const fetchSaleReport = (postId) => apiFetch('/post/' + postId + '/report');
 
 // ---- Following sellers (lib/follows.js on the server) ----------------------
 export const fetchFollows = () => apiFetch('/follows');

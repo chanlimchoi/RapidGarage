@@ -245,7 +245,10 @@
   "push.searchTitle": "Una venta nueva coincide con tu búsqueda guardada",
   "push.searchTitleNamed": "Nueva coincidencia para «{name}»",
   "push.rainCheckTitle": "Se pronostica mal tiempo para tu venta",
-  "push.postponedTitle": "Una venta que guardaste se aplazó"
+  "push.postponedTitle": "Una venta que guardaste se aplazó",
+  "push.earlyBirdTitle": "El acceso anticipado está abierto",
+  "curb.defaultTitle": "Gratis en la acera",
+  "push.curbFreeTitle": "Cosas gratis en la acera, a {miles} mi"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -696,6 +699,21 @@
   "Postpone by 1 to 14 days.": "Aplaza entre 1 y 14 días.",
   "Pick at least one new day.": "Elige al menos un día nuevo.",
   "Pick a later start than the current one to postpone.": "Para aplazar, elige un inicio posterior al actual.",
-  "Invalid schedule.": "Horario no válido."
+  "Invalid schedule.": "Horario no válido.",
+  "Type what you are looking for.": "Escribe lo que buscas.",
+  "Early-bird access is 15 minutes to 3 hours before the start, in 15-minute steps.": "El acceso anticipado va de 15 minutos a 3 horas antes del inicio, en pasos de 15 minutos.",
+  "Invalid curb post.": "Publicación de acera no válida.",
+  "Keep the title to {n} characters.": "El título debe tener como máximo {n} caracteres.",
+  "Keep the note to {n} characters.": "La nota debe tener como máximo {n} caracteres.",
+  "Choose 1 to {n} hours.": "Elige de 1 a {n} horas.",
+  "That location is not valid.": "Esa ubicación no es válida.",
+  "Too long.": "Demasiado largo.",
+  "A 5-digit zip code.": "Un código postal de 5 dígitos.",
+  "Use your location, or give a street and zip code.": "Usa tu ubicación o indica una calle y un código postal.",
+  "Give a valid location.": "Indica una ubicación válida.",
+  "Choose one of {list} miles.": "Elige una de estas distancias: {list} millas.",
+  "You've posted a lot of free stuff lately. Please try again later.": "Has publicado muchas cosas gratis últimamente. Inténtalo más tarde.",
+  "We couldn't place that address. Use your location instead.": "No pudimos ubicar esa dirección. Usa tu ubicación.",
+  "Only the person who posted it can end it.": "Solo quien lo publicó puede terminarlo."
  }
 }

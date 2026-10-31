@@ -37,6 +37,14 @@ module.exports = (sequelize, DataTypes) => {
     aiFlagReason: { type: DataTypes.STRING(300), allowNull: true },
     aiFlaggedAt: { type: DataTypes.DATE, allowNull: true },
     aiReviewHash: { type: DataTypes.STRING(64), allowNull: true },
+    // Quick "free at the curb" post (lib/curbAlerts.js): no sale, just a curbside
+    // offer that expires (startDate..endDate = the offer), with nearby alerts.
+    quickCurb: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    // Early-bird access (lib/earlyBird.js): minutes before each day's start that
+    // followers and savers may come; null = off. Serialized only via post.earlyBird.
+    earlyMinutes: { type: DataTypes.INTEGER, allowNull: true },
+    // Live "what's left" (lib/whatsLeft.js): when the seller last changed the item list.
+    itemsUpdatedAt: { type: DataTypes.DATE, allowNull: true },
     // Post-sale summary email sent (lib/sellerTools.js).
     summarySentAt: { type: DataTypes.DATE, allowNull: true },
     // Moderation (lib/moderation.js). Hidden posts are visible only to the owner and admins.
@@ -98,6 +106,7 @@ module.exports = (sequelize, DataTypes) => {
     delete out.hiddenBy; // which admin hid it is only shown in the admin API
     CURBSIDE_FIELDS.forEach((k) => { delete out[k]; });
     delete out.calendarDates; // only used to cancel removed days in .ics files
+    delete out.earlyMinutes; // only as post.earlyBird, for people with early access (lib/earlyBird.js)
     if (Array.isArray(this.saleDays)) out.schedule = require('../lib/schedule').toJSON(this);
     out.markdown = require('../lib/markdown').state(this);
     delete out.markdownPercent;

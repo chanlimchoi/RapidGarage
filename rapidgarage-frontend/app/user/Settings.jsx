@@ -7,6 +7,7 @@ import { Field, Alert, EmptyState, SkeletonBlock, Spinner } from '../components/
 import PasswordInput from './PasswordInput';
 import toast from '../components/toast';
 import SaleAlerts from './SaleAlerts';
+import CurbAlertSettings from './CurbAlertSettings';
 import ReminderSettings from './ReminderSettings';
 import PasswordSettings from './PasswordSettings';
 import AiKeySettings from './AiKeySettings';
@@ -117,7 +118,7 @@ export default class Settings extends React.Component {
       return (
         <div className="container rg-settings">
           {this.header()}
-          <div className="stack-lg">{this.languageSection()}<SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} /><NotificationSettings user={this.props.user} /><PasswordSettings user={this.props.user} />{this.aiKeySection()}<AccountSettings user={this.props.user} onAuthChange={this.props.onAuthChange} history={this.props.history} /></div>
+          <div className="stack-lg">{this.languageSection()}<SaleAlerts user={this.props.user} /><CurbAlertSettings user={this.props.user} /><ReminderSettings user={this.props.user} /><NotificationSettings user={this.props.user} /><PasswordSettings user={this.props.user} />{this.aiKeySection()}<AccountSettings user={this.props.user} onAuthChange={this.props.onAuthChange} history={this.props.history} /></div>
         </div>
       );
     }
@@ -127,7 +128,7 @@ export default class Settings extends React.Component {
         {this.header()}
         <div className="stack-lg">
           {this.languageSection()}
-          <SaleAlerts user={this.props.user} /><ReminderSettings user={this.props.user} />
+          <SaleAlerts user={this.props.user} /><CurbAlertSettings user={this.props.user} /><ReminderSettings user={this.props.user} />
           <NotificationSettings user={this.props.user} />
           <PasswordSettings user={this.props.user} />
           {this.aiKeySection()}
