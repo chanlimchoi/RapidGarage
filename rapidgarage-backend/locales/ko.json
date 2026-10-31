@@ -674,6 +674,7 @@
   "Postpone by 1 to 14 days.": "1일에서 14일 사이로 연기하세요.",
   "Pick at least one new day.": "새 날짜를 하나 이상 고르세요.",
   "Pick a later start than the current one to postpone.": "연기하려면 지금보다 늦은 시작 시간을 고르세요.",
-  "Invalid schedule.": "일정이 올바르지 않아요."
+  "Invalid schedule.": "일정이 올바르지 않아요.",
+  "Type what you are looking for.": "찾는 물건을 입력하세요."
  }
 }

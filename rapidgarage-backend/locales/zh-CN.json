@@ -674,6 +674,7 @@
   "Postpone by 1 to 14 days.": "请延期 1 到 14 天。",
   "Pick at least one new day.": "请至少选择一个新日期。",
   "Pick a later start than the current one to postpone.": "延期需选择比当前更晚的开始时间。",
-  "Invalid schedule.": "日程无效。"
+  "Invalid schedule.": "日程无效。",
+  "Type what you are looking for.": "请输入您要找的东西。"
  }
 }
