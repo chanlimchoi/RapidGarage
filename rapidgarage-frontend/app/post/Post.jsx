@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3, Gift, Percent } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3, Gift, Percent, Smartphone, Sunrise } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
-import { addressLine, timeAgo, formatMiles } from '../lib/format';
+import { addressLine, timeAgo, formatMiles, formatTime, formatDay } from '../lib/format';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
 import { BADGE_CLASS } from '../components/PostCard';
 import { formatPrice } from '../lib/price';
@@ -23,6 +23,8 @@ import RemindToggle from '../saved/RemindToggle';
 import AddToCalendar from '../components/AddToCalendar';
 import ShareButton from '../components/ShareButton';
 import ItemList from './ItemList';
+import LiveItems from './LiveItems';
+import { earlyState } from '../lib/earlyBird';
 import JoinEventPanel from '../events/JoinEventPanel';
 import FollowButton from '../follows/FollowButton';
 import DuplicateButton from './DuplicateButton';
@@ -201,6 +203,22 @@ class Post extends Component {
     );
   }
 
+  // Early-bird access (lib/earlyBird.js): times only for people who have it.
+  renderEarly(post, isOwner) {
+    const e = earlyState(post);
+    if (!e) return null;
+    if (e.kind === 'offered') {
+      return <p className="markdown-note early-note"><Sunrise size={16} aria-hidden="true" /><span>{t('early.offered')}</span></p>;
+    }
+    const key = isOwner ? (e.kind === 'active' ? 'early.ownerActive' : 'early.ownerUpcoming') : (e.kind === 'active' ? 'early.active' : 'early.upcoming');
+    return (
+      <p className={'markdown-note early-note' + (e.kind === 'active' ? ' is-now' : '')}>
+        <Sunrise size={16} aria-hidden="true" />
+        <span>{t(key, { from: e.kind === 'active' ? formatTime(e.startsAt) : formatDay(e.startsAt) + ' ' + formatTime(e.startsAt), until: formatTime(e.until) })}</span>
+      </p>
+    );
+  }
+
   renderGallery(post) {
     const photos = post.photos || [];
     const active = Math.min(this.state.active, photos.length - 1);
@@ -306,6 +324,7 @@ class Post extends Component {
                 <span>{describeBundle(post.bundle)}. {t('bundle.postNote')}</span>
               </p>
             ) : null}
+            {this.renderEarly(post, isOwner)}
             {this.renderGallery(post)}
             {post.description ? (
               <section>
@@ -313,6 +332,9 @@ class Post extends Component {
                 <p className="post-description">{post.description}</p>
               </section>
             ) : <p className="muted">{t('post.noDescription')}</p>}
+            {!post.hidden ? <LiveItems key={'live-' + post.id} post={post} onItems={(items) => this.setState({ post: Object.assign({}, this.state.post, { items }) })}
+              onStamp={(at) => this.setState({ post: Object.assign({}, this.state.post, { itemsUpdatedAt: at }) })} /> : null}
+            {isOwner && (post.items || []).length && !post.hidden ? <p className="sell-mode-link"><Link className="btn btn-secondary btn-sm" to={'/post/' + post.id + '/sell'}><Smartphone size={16} aria-hidden="true" />{t('left.sellMode')}</Link></p> : null}
             <ItemList post={post} owner={isOwner} user={this.props.user} onTaken={(i) => this.curbTaken(i)} onUndo={(i) => this.curbUndo(i)} onItems={(items) => this.setState({ post: Object.assign({}, post, { items }) })}
               onPhoto={(i) => { this.setState({ active: i }); const g = document.querySelector('.post-gallery'); if (g && g.scrollIntoView) g.scrollIntoView({ block: 'nearest', behavior: scrollBehavior() }); }} />
           </div>

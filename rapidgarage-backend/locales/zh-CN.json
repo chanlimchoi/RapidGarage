@@ -223,7 +223,8 @@
   "push.searchTitle": "有新甩卖符合你保存的搜索",
   "push.searchTitleNamed": "“{name}”有新匹配",
   "push.rainCheckTitle": "你的甩卖当天预报有恶劣天气",
-  "push.postponedTitle": "你收藏的甩卖已延期"
+  "push.postponedTitle": "你收藏的甩卖已延期",
+  "push.earlyBirdTitle": "抢先入场已开放"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -674,6 +675,8 @@
   "Postpone by 1 to 14 days.": "请延期 1 到 14 天。",
   "Pick at least one new day.": "请至少选择一个新日期。",
   "Pick a later start than the current one to postpone.": "延期需选择比当前更晚的开始时间。",
-  "Invalid schedule.": "日程无效。"
+  "Invalid schedule.": "日程无效。",
+  "Type what you are looking for.": "请输入您要找的东西。",
+  "Early-bird access is 15 minutes to 3 hours before the start, in 15-minute steps.": "抢先入场可设为开始前 15 分钟到 3 小时，以 15 分钟为单位。"
  }
 }

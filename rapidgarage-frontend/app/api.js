@@ -89,6 +89,15 @@ export function searchPosts(params) {
   return apiFetch('/search?' + qs);
 }
 
+// Individual items matching the words (backend controllers/search.js /items).
+export function searchItems(params) {
+  const qs = Object.keys(params)
+    .filter((k) => params[k] !== undefined && params[k] !== null && params[k] !== '')
+    .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+    .join('&');
+  return apiFetch('/search/items?' + qs);
+}
+
 // ---- Reports & moderation ----------------------------------------------
 export const REPORT_REASONS = [
   { value: 'spam', get label() { return t('reason.spam'); } },

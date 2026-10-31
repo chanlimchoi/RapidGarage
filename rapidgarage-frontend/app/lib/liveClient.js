@@ -1,5 +1,5 @@
 // One EventSource per tab to the backend's /live stream (lib/live.js there).
-// Events are tiny ("badges", "message" { conversationId }); listeners then
+// Events are tiny ("badges", "message" { conversationId }, "items" { postId }); listeners then
 // fetch through the normal API. While connected, pages poll rarely instead of
 // every few seconds; if it drops, the browser reconnects and polling covers the gap.
 let source = null;
@@ -21,7 +21,7 @@ export function connect() {
   source = new EventSource('/api/live', { withCredentials: true });
   source.onopen = () => { open = true; };
   source.onerror = () => { open = false; };
-  ['badges', 'message'].forEach((type) => source.addEventListener(type, (e) => dispatch(type, e)));
+  ['badges', 'message', 'items'].forEach((type) => source.addEventListener(type, (e) => dispatch(type, e)));
 }
 
 export function disconnect() {

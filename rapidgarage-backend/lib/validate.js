@@ -58,6 +58,9 @@ function validatePost(body, partial, existing) {
   const bundle = validateBundle(body, existing);
   Object.assign(errors, bundle.errors);
   Object.assign(out, bundle.values);
+  const early = require('./earlyBird').validate(body);
+  Object.assign(errors, early.errors);
+  Object.assign(out, early.values);
   return { errors, values: out };
 }
 

@@ -7,6 +7,8 @@ const schedule = require('../lib/schedule');
 const PW = 'correct-horse';
 const H = 3600000;
 const ymd = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(d);
+// Calendar days after `d` in New York (24-hour steps repeat a date across DST changes).
+const daysAfter = (d, n) => { const t = new Date(ymd(d) + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 
 describe('pickup scheduling', function () {
   this.timeout(30000);
@@ -28,8 +30,8 @@ describe('pickup scheduling', function () {
     sam = await user('sam@example.com', 'Sam');
     bea = await user('bea@example.com', 'Bea');
     cal = await user('cal@example.com', 'Cal');
-    const d1 = ymd(new Date(now.getTime() + 24 * H));
-    const d2 = ymd(new Date(now.getTime() + 48 * H));
+    const d1 = daysAfter(now, 1);
+    const d2 = daysAfter(now, 2);
     const p = await sam.post('/post').send({ title: 'Moving sale', street: '1 Main St', city: 'Brooklyn', zipCode: '11201',
       schedule: { timeZone: 'America/New_York', days: [{ date: d1, start: '00:00', end: '23:30' }, { date: d2, start: '00:00', end: '23:30' }] } });
     postId = p.body.id;
