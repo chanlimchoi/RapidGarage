@@ -261,7 +261,7 @@ Migration `20261017040000-moderation` adds `Posts.hidden` (plus `hiddenAt`, `hid
 
 | | |
 |---|---|
-| `reason` | one of `spam`, `scam`, `prohibited`, `offensive`, `wrong_info`, `other` |
+| `reason` | one of `spam`, `scam`, `suspicious`, `no_show`, `prohibited`, `offensive`, `wrong_info`, `other` (see "Buyer safety" for `no_show`) |
 | `note` | optional, up to 500 characters |
 | 201 | `{ id, postId, reason, status: "open", createdAt }` |
 | 400 / 401 / 404 | bad input / not logged in / no such (visible) post |
@@ -301,6 +301,37 @@ Reports are kept when a post is deleted (by an admin or its owner), so history s
 - `REPORT_AUTO_HIDE_THRESHOLD` — when set to a positive integer N, a post is hidden
   automatically (`hiddenSource: auto`) once N different users have open reports on it. It
   still shows in the admin queue to dismiss or unhide. Unset (the default) means off.
+
+## Buyer safety (lib/safety.js)
+
+Migration `20261031130000-buyer-safety` adds `Reports.sellerId` (backfilled from the post),
+`Reports.contact` and `Users.safetyHoldAt`.
+
+- **Flags.** Buyers report `suspicious` listings or a seller `no_show` through the same
+  `POST /post/:id/report`, into the same moderation queue. A no-show needs a real dealing on that
+  sale: a hold, or a conversation the reporter started (403 `no_contact` otherwise). Only the kind
+  of contact (`hold` / `conversation`) is stored, never the conversation, so admins still read a
+  conversation only when a participant reports it. Limits: `NO_SHOW_PER_DAY` per reporter
+  (default 3; 429) and one no-show per seller per 7 days (409).
+- **Repeat offenders.** Safety reasons are `scam`, `suspicious`, `no_show` and `prohibited`.
+  When `SAFETY_SELLER_REPORTERS` different trusted people (default 3) filed safety reports about
+  one seller's listings within `SAFETY_WINDOW_DAYS` (default 30), the seller goes on a safety
+  hold: every visible listing is hidden (`hiddenSource: "repeat"`) and new posts start hidden.
+  A seller with `SAFETY_STRIKES` upheld safety reports in 90 days (default 2, distinct posts) has
+  a listing hidden on the first trusted safety report. `0` turns either rule off. Reporters are
+  never told.
+- **Admin review.** `GET /admin/reports` adds `safetyHolds` (seller, since, hidden count,
+  reporters, reasons), `safety` (the thresholds), `sellerOnHold` per group, `contact` per report
+  and each reporter's `standing` (`dismissed`, `upheld`, `untrusted`, last 30 days).
+  `POST /admin/users/:id/safety { action: release|confirm, note? }`: `release` shows the listings
+  the hold hid again and ends the hold (open reports stay in the queue); `confirm` keeps them
+  hidden as a moderator decision, upholds their open reports and keeps the hold (new posts stay
+  hidden) until released.
+- **Flag abuse.** A reporter with `REPORT_DISMISSED_LIMIT` (default 5) dismissed post reports in
+  30 days, and more dismissed than upheld, is untrusted: their reports still reach the queue but
+  never count toward any auto-hide (this one or `REPORT_AUTO_HIDE_THRESHOLD`), and their hourly
+  budget drops to 2. Accounts younger than `REPORT_TRUST_MIN_HOURS` (default 24) don't count
+  toward seller holds.
 
 ## Messaging
 

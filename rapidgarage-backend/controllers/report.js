@@ -1,9 +1,10 @@
-// POST /post/:id/report  { reason, note? }  (logged in; mounted by controllers/post.js
+// POST /post/:id/report  { reason, note? }  reasons include suspicious and no_show (lib/safety.js)  (logged in; mounted by controllers/post.js
 // after loadPost, so req.post is set and already visibility-checked)
 const router = require('express').Router({ mergeParams: true });
 const models = require('../models');
 const { badRequest, forbidden, conflict, sendError, serverError } = require('../lib/http');
 const mod = require('../lib/moderation');
+const safety = require('../lib/safety');
 
 router.post('/', async (req, res) => {
   const body = req.body || {};
@@ -21,13 +22,24 @@ router.post('/', async (req, res) => {
   try {
     const existing = await models.Report.findOne({ where: { postId: post.id, reporterId: req.user.id, status: 'open' } });
     if (existing) return conflict(res, 'You already reported this post. A moderator will review it.');
-    // One hourly budget for every kind of report.
-    if ((await mod.recentReportCount(req.user.id)) >= mod.reportsPerHour()) {
+    // One hourly budget for every kind of report (smaller for reporters whose
+    // flags keep getting dismissed; lib/safety.js).
+    if ((await mod.recentReportCount(req.user.id)) >= (await safety.hourlyBudget(req.user.id))) {
       res.set('Retry-After', '3600');
       return sendError(res, 429, 'rate_limited', 'You have sent a lot of reports. Please try again later.');
     }
-    const report = await models.Report.create({ postId: post.id, postTitle: post.title, reporterId: req.user.id, reason: body.reason, note });
+    let contact = null;
+    if (body.reason === 'no_show') {
+      const chk = await safety.noShowCheck(req.user.id, post);
+      if (chk.status) {
+        if (chk.retryAfter) res.set('Retry-After', String(chk.retryAfter));
+        return sendError(res, chk.status, chk.code, chk.message);
+      }
+      contact = chk.contact;
+    }
+    const report = await models.Report.create({ postId: post.id, postTitle: post.title, reporterId: req.user.id, sellerId: post.userId, reason: body.reason, note, contact });
     await mod.maybeAutoHide(post);
+    await safety.afterReport(report, post);
     // Don't tell reporters whether the post got hidden.
     return res.status(201).json({ id: report.id, postId: post.id, reason: report.reason, status: report.status, createdAt: report.createdAt });
   } catch (err) {

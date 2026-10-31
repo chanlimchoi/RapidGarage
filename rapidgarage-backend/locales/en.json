@@ -714,6 +714,11 @@
   "Choose one of {list} miles.": "Choose one of {list} miles.",
   "You've posted a lot of free stuff lately. Please try again later.": "You've posted a lot of free stuff lately. Please try again later.",
   "We couldn't place that address. Use your location instead.": "We couldn't place that address. Use your location instead.",
-  "Only the person who posted it can end it.": "Only the person who posted it can end it."
+  "Only the person who posted it can end it.": "Only the person who posted it can end it.",
+  "You can flag a no-show only for a seller you arranged to meet.": "You can flag a no-show only for a seller you arranged to meet.",
+  "You have flagged a lot of no-shows today. Please try again tomorrow.": "You have flagged a lot of no-shows today. Please try again tomorrow.",
+  "You already flagged this seller for a no-show this week.": "You already flagged this seller for a no-show this week.",
+  "Invalid safety decision.": "Invalid safety decision.",
+  "That seller is not on a safety hold.": "That seller is not on a safety hold."
  }
 }

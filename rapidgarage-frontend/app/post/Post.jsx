@@ -182,8 +182,12 @@ class Post extends Component {
           return;
         }
         if (status === 409) {
-          this.setState({ reporting: false, reportOpen: false, reported: true });
-          toast.info(t('post.reportedAlready'));
+          this.setState({ reporting: false, reportOpen: false, reported: reason !== 'no_show' });
+          toast.info(reason === 'no_show' ? t('report.noShowAlready') : t('post.reportedAlready'));
+          return;
+        }
+        if (status === 403 && data && data.error && data.error.code === 'no_contact') {
+          this.setState({ reporting: false, reportError: t('report.noShowNeedsContact') });
           return;
         }
         if (status === 429) {
@@ -209,7 +213,7 @@ class Post extends Component {
               <label key={r.value} className="radio-row">
                 <input type="radio" name="report-reason" value={r.value} checked={reason === r.value}
                   onChange={() => this.setState({ reason: r.value, reportError: '' })} />
-                <span>{r.label}</span>
+                <span>{r.label}{r.hint ? <span className="field-hint" style={{ display: 'block' }}>{r.hint}</span> : null}</span>
               </label>
             ))}
           </fieldset>
@@ -317,7 +321,7 @@ class Post extends Component {
         {post.hidden ? (
           <Alert tone="warning" className="hidden-banner">
             <p><strong>{t('post.hiddenTitle')}</strong>{' '}
-              {isOwner ? t('post.hiddenOwner') : t('post.hiddenOther')}</p>
+              {isOwner ? (post.hiddenSource === 'repeat' ? t('post.hiddenReview') : t('post.hiddenOwner')) : t('post.hiddenOther')}</p>
           </Alert>
         ) : null}
         <header className="post-header">

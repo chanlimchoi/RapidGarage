@@ -51,7 +51,7 @@ module.exports = (sequelize, DataTypes) => {
     hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     hiddenAt: { type: DataTypes.DATE, allowNull: true },
     hiddenBy: { type: DataTypes.INTEGER, allowNull: true },
-    hiddenSource: { type: DataTypes.STRING(16), allowNull: true }, // moderator | auto
+    hiddenSource: { type: DataTypes.STRING(16), allowNull: true }, // moderator | auto | repeat
     // IANA time zone of the sale days (lib/schedule.js); startDate/endDate are
     // then the first start and last end of those days.
     timeZone: { type: DataTypes.STRING(64), allowNull: true },
@@ -76,6 +76,12 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     indexes: [{ name: 'posts_curbside_until_idx', fields: ['curbsideUntil'] }, { name: 'posts_category_idx', fields: ['category'] }],
     hooks: {
+      // A seller on a safety hold (lib/safety.js) posts hidden until an admin reviews.
+      beforeCreate: async (post, options) => {
+        if (post.hidden || !post.userId) return;
+        const owner = await sequelize.models.User.findByPk(post.userId, { attributes: ['id', 'safetyHoldAt'], transaction: options && options.transaction });
+        if (owner && owner.safetyHoldAt) Object.assign(post, { hidden: true, hiddenAt: new Date(), hiddenBy: null, hiddenSource: 'repeat' });
+      },
       beforeUpdate: (post) => {
         const cal = require('../lib/calendar');
         cal.bumpOnChange(post, cal.postFields);

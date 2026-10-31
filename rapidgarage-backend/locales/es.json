@@ -714,6 +714,11 @@
   "Choose one of {list} miles.": "Elige una de estas distancias: {list} millas.",
   "You've posted a lot of free stuff lately. Please try again later.": "Has publicado muchas cosas gratis últimamente. Inténtalo más tarde.",
   "We couldn't place that address. Use your location instead.": "No pudimos ubicar esa dirección. Usa tu ubicación.",
-  "Only the person who posted it can end it.": "Solo quien lo publicó puede terminarlo."
+  "Only the person who posted it can end it.": "Solo quien lo publicó puede terminarlo.",
+  "You can flag a no-show only for a seller you arranged to meet.": "Solo puedes señalar una ausencia de un vendedor con quien quedaste.",
+  "You have flagged a lot of no-shows today. Please try again tomorrow.": "Hoy has señalado muchas ausencias. Inténtalo de nuevo mañana.",
+  "You already flagged this seller for a no-show this week.": "Ya señalaste a este vendedor por una ausencia esta semana.",
+  "Invalid safety decision.": "Decisión de seguridad no válida.",
+  "That seller is not on a safety hold.": "Ese vendedor no está en retención de seguridad."
  }
 }

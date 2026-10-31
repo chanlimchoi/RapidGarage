@@ -692,6 +692,11 @@
   "Choose one of {list} miles.": "{list}마일 중 하나를 선택하세요.",
   "You've posted a lot of free stuff lately. Please try again later.": "최근 무료 나눔을 많이 올리셨습니다. 나중에 다시 시도하세요.",
   "We couldn't place that address. Use your location instead.": "해당 주소를 찾을 수 없습니다. 내 위치를 사용하세요.",
-  "Only the person who posted it can end it.": "게시한 사람만 종료할 수 있습니다."
+  "Only the person who posted it can end it.": "게시한 사람만 종료할 수 있습니다.",
+  "You can flag a no-show only for a seller you arranged to meet.": "만나기로 약속한 판매자에 대해서만 노쇼를 신고할 수 있습니다.",
+  "You have flagged a lot of no-shows today. Please try again tomorrow.": "오늘 노쇼 신고를 많이 하셨습니다. 내일 다시 시도하세요.",
+  "You already flagged this seller for a no-show this week.": "이번 주에 이미 이 판매자를 노쇼로 신고하셨습니다.",
+  "Invalid safety decision.": "안전 조치 요청이 올바르지 않습니다.",
+  "That seller is not on a safety hold.": "해당 판매자는 안전 보류 상태가 아닙니다."
  }
 }

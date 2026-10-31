@@ -5,6 +5,7 @@ const { ROLES, isAdmin } = require('../lib/roles');
 const { SETTINGS, getAllSettings, setSetting } = require('../lib/features');
 const { Op } = require('sequelize');
 const analytics = require('../lib/analytics');
+const safety = require('../lib/safety');
 
 function requireAdmin(req, res, next) {
   if (!isAdmin(req.user)) return forbidden(res, 'Admins only.');
@@ -112,7 +113,7 @@ router.get('/reports', async (req, res) => {
     const ids = Array.from(new Set(open.map((r) => r.postId)));
     const posts = await models.Post.findAll({
       where: { [Op.or]: [{ id: ids }, { hidden: true }] },
-      include: [{ model: models.PostPhoto, as: 'photos' }, { model: models.User, attributes: PERSON }],
+      include: [{ model: models.PostPhoto, as: 'photos' }, { model: models.User, attributes: PERSON.concat(['safetyHoldAt']) }],
     });
     const byId = new Map(posts.map((p) => [p.id, p]));
     const groups = new Map();
@@ -125,13 +126,20 @@ router.get('/reports', async (req, res) => {
       g.openCount += 1;
       g.reasons[r.reason] = (g.reasons[r.reason] || 0) + 1;
       g.lastReportedAt = r.createdAt;
-      g.reports.push({ id: r.id, reason: r.reason, note: r.note, reporter: person(r.reporter), createdAt: r.createdAt });
+      g.reports.push({ id: r.id, reason: r.reason, note: r.note, contact: r.contact || null, reporter: person(r.reporter), createdAt: r.createdAt });
     });
     groups.forEach((g) => { g.reporterCount = new Set(g.reports.map((r) => r.reporter && r.reporter.id)).size; });
+    // Reporter standing (lib/safety.js): flags that keep getting dismissed don't count toward auto-hide.
+    const st = await safety.standings(open.map((r) => r.reporterId));
+    groups.forEach((g) => g.reports.forEach((r) => { if (r.reporter) r.reporter.standing = st.get(r.reporter.id) || null; }));
+    groups.forEach((g) => {
+      const p = byId.get(g.postId);
+      g.sellerOnHold = !!(p && p.User && p.User.safetyHoldAt);
+    });
     const list = Array.from(groups.values()).sort((a, b) => b.openCount - a.openCount || new Date(a.firstReportedAt) - new Date(b.firstReportedAt));
     const hidden = posts.filter((p) => p.hidden && !groups.has(p.id)).map((p) => Object.assign(preview(p), { owner: person(p.User) }));
     const conversationOpenCount = await models.ConversationReport.count({ where: { status: 'open' } });
-    return res.json({ groups: list, hidden, reasons: mod.REASON_LABELS, autoHideThreshold: mod.autoHideThreshold(), conversationOpenCount });
+    return res.json({ groups: list, hidden, reasons: mod.REASON_LABELS, autoHideThreshold: mod.autoHideThreshold(), conversationOpenCount, safetyHolds: await safety.holds(), safety: safety.config() });
   } catch (err) {
     return serverError(res, err);
   }
@@ -229,6 +237,25 @@ router.post('/posts/:id/moderate', async (req, res) => {
   } catch (err) {
     return serverError(res, err);
   }
+});
+
+// Buyer safety holds (lib/safety.js): a seller whose listings repeat reports
+// hid. POST /admin/users/:id/safety { action: release|confirm, note? }
+router.post('/users/:id/safety', async (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return badRequest(res, 'User id must be a positive integer.');
+  const body = req.body || {};
+  if (['release', 'confirm'].indexOf(body.action) === -1) return badRequest(res, 'Invalid safety decision.', { action: 'action must be one of: release, confirm.' });
+  if (body.note !== undefined && body.note !== null && (typeof body.note !== 'string' || body.note.length > mod.NOTE_MAX)) return badRequest(res, 'Invalid safety decision.', { note: 'Keep the note under ' + mod.NOTE_MAX + ' characters.' });
+  try {
+    const out = await safety.decide(id, body.action, req.user.id, body.note ? body.note.trim() : null);
+    if (!out) return notFound(res, 'That seller is not on a safety hold.');
+    if (body.action === 'release') {
+      const ids = (await models.Post.findAll({ where: { userId: id, hidden: false }, attributes: ['id'], raw: true })).map((p) => p.id);
+      ids.forEach((pid) => require('../lib/wanted').schedulePost(pid));
+    }
+    return res.json(Object.assign({ userId: id }, out));
+  } catch (err) { return serverError(res, err); }
 });
 
 // Conversation reports (reported conversations only; see the file header).

@@ -692,6 +692,11 @@
   "Choose one of {list} miles.": "请选择 {list} 英里之一。",
   "You've posted a lot of free stuff lately. Please try again later.": "你最近发布了很多免费物品，请稍后再试。",
   "We couldn't place that address. Use your location instead.": "无法定位该地址，请改用你的位置。",
-  "Only the person who posted it can end it.": "只有发布者可以结束它。"
+  "Only the person who posted it can end it.": "只有发布者可以结束它。",
+  "You can flag a no-show only for a seller you arranged to meet.": "只能对你约好见面的卖家标记爽约。",
+  "You have flagged a lot of no-shows today. Please try again tomorrow.": "你今天标记了很多次爽约，请明天再试。",
+  "You already flagged this seller for a no-show this week.": "你本周已标记过该卖家爽约。",
+  "Invalid safety decision.": "安全处理请求无效。",
+  "That seller is not on a safety hold.": "该卖家未处于安全暂停状态。"
  }
 }

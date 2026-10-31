@@ -109,6 +109,8 @@ export function searchItems(params) {
 export const REPORT_REASONS = [
   { value: 'spam', get label() { return t('reason.spam'); } },
   { value: 'scam', get label() { return t('reason.scam'); } },
+  { value: 'suspicious', get label() { return t('reason.suspicious'); } },
+  { value: 'no_show', get label() { return t('reason.noShow'); }, get hint() { return t('reason.noShowHint'); } },
   { value: 'prohibited', get label() { return t('reason.prohibited'); } },
   { value: 'offensive', get label() { return t('reason.offensive'); } },
   { value: 'wrong_info', get label() { return t('reason.wrongInfo'); } },
@@ -119,6 +121,9 @@ export function reasonLabel(value) {
   const r = REPORT_REASONS.filter((x) => x.value === value)[0];
   return r ? r.label : value;
 }
+
+// Admin: a seller on a buyer-safety hold (backend lib/safety.js). action: release | confirm.
+export const decideSafetyHold = (userId, action, note) => apiFetch('/admin/users/' + userId + '/safety', { method: 'POST', body: JSON.stringify({ action, note: note || undefined }) });
 
 export function reportPost(postId, reason, note) {
   return apiFetch('/post/' + postId + '/report', { method: 'POST', body: JSON.stringify({ reason, note: note || undefined }) });
