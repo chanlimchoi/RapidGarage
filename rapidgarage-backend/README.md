@@ -213,6 +213,16 @@ equals `q`, or whose address or title contains it, with `distanceMiles: null` an
 explaining why. An address Google can't find returns `404 location_not_found`. Invalid input
 returns `400 bad_request` with per-field details.
 
+`GET /search/items` (public) finds individual items instead of sales: unsold items whose name
+contains every word of `keyword` (required, literal and case-insensitive). It takes the same
+parameters and filters as `GET /search`, but the place is optional: without `lat`/`lng` or `q` it
+searches the newest sales (no distances). Results are ordered by the sale's distance (or newest
+sale first), then the seller's list order; each is `{ id, name, priceCents, reserved, photo:
+{ url, thumbUrl, alt, ofSale } | null, sale: { id, title, city, state, distanceMiles, window,
+schedule, markdown } }`, where `photo.ofSale` means the item has no photo of its own and the
+sale's cover is shown. `sales` lists the full sales on the page (for the map pins). Hidden and
+ended sales follow the same rules as `GET /search`; sold items never match.
+
 Distance math: a lat/lng bounding box in SQL (indexed, and handles the antimeridian), then
 exact haversine in Node, so no PostGIS is needed.
 
@@ -473,6 +483,7 @@ response echoes it as `filter.when`.
 | | |
 |---|---|
 | `GET /` | `{ items, max }`, in list order. `GET /post/:id` also includes `items`. |
+| `GET /status` | Live "what's left": `{ postId, updatedAt, pollSeconds, total, sold, items: [{ id, sold, reserved }] }`. Ids and flags only, `Cache-Control: no-cache` with an ETag (304 when unchanged). |
 | `POST /` | Seller only. `{ name, price?, photoId?, sold? }` → 201 item. |
 | `PUT /:itemId` | Seller only. Any of `name`, `price`, `photoId`, `sold`. |
 | `PUT /order` | Seller only. `{ ids }`: every item of the sale once. |
@@ -484,11 +495,56 @@ $100,000; stored as cents. `photoId`: one of **this** sale's photos or `null`; d
 photo keeps the item without it. `soldAt` is set when marked sold and cleared when unmarked.
 Up to 100 items per sale (400 `too_many`). Deleting the sale deletes its items.
 
+**Live "what's left"** (`lib/whatsLeft.js`): every change to the list (add, edit, sold or
+available, delete) stamps `Posts.itemsUpdatedAt` (in `GET /post/:id` as `itemsUpdatedAt`, shown
+as "updated 3 min ago"). The sale page polls `GET /status` at the server's `pollSeconds` hint:
+20 s while the sale (or its curbside leftovers) is on or starts within the hour, 300 s before
+that, 0 (stop) after it ended. People who saved the sale and have a tab open also get an `items`
+live event (`/live`, `{ postId }` only) so their page refreshes at once. Bell notifications for
+sold items stay as before (`item_sold`, coalesced), and holds on a sold item are closed and the
+buyers told. The seller's phone view is `/post/:id/sell` in the app (big Sold / Available buttons).
+
 **Keyword search**: `/search` and `/allPosts` take `keyword` (≤ 60 characters, up to 5 words).
 Every word must appear (case-insensitive, literally; `%` and `_` are not wildcards) in the
 title, the description or the name of an item that is **not sold**. Each result then has
 `matchedItems`: up to 3 unsold item names that match the most words. `/search` echoes it as
 `filter.keyword`.
+
+## Early-bird access (lib/earlyBird.js)
+
+A seller can open each sale day early for their followers and for people who saved the sale:
+`earlyMinutes` on `POST /post` / `PUT /post/:id` (15–180, in steps of 15; `null` turns it off).
+It is never in the plain post JSON. `GET /post/:id` adds `earlyBird`:
+
+- seller, admins, followers and savers (no block either way): `{ minutes, forYou: true, startsAt,
+  until, active }` for the current or next sale day (`startsAt` = that day's start minus the
+  minutes; `null` once no day is left);
+- everyone else, while a window is ahead: `{ offered: true, forYou: false }` only (never the time),
+  so they can follow or save. They see the normal start time.
+
+When a window opens, the alert worker's pass tells each follower and saver once per sale day: a
+bell notification `early_bird` (`data: { until, minutes }`) and a push (reminders switch). Hidden
+sales never announce. Lists, search and the map are unchanged (the sale shows its normal times).
+
+## Free stuff at the curb (lib/curbAlerts.js, controllers/curb.js)
+
+A quick "free at the curb" post: a photo, where it is, a few words, and how long it stays up.
+It is an ordinary post with `quickCurb: true`, `isFree`, `startDate` = now, `endDate` = the
+expiry and a whole-post curbside offer until the same time, so lists, search (including the
+`curbside` filter), the map, "Taken" marks, reports and moderation work as for curbside
+leftovers, and it disappears by itself (no sweeper). No follower or sale-alert emails.
+
+| | |
+|---|---|
+| `POST /curb` | Login + verified. `{ lat, lng }` or `{ street, zipCode }` (geocoded), optional `title` (80), `note` (200), `hours` (1–12, default `CURB_POST_HOURS`). 201 with the post. Add photos with `POST /post/:id/photos`. 429 + `Retry-After` past `CURB_POSTS_PER_HOUR` / `CURB_POSTS_PER_DAY`. |
+| `POST /curb/:id/end` | The poster takes it down now. 403 for anyone else, 404 for non-quick posts. |
+| `GET /curb/alert` | Your alert (`{ alert, radii }`, `alert` null when off). |
+| `PUT /curb/alert` | `{ lat, lng, radiusMiles, enabled? }`, radius one of 0.5, 1, 2, 3, 5, 10 miles. The place is stored rounded (about 10 m) and never shown to anyone. |
+| `DELETE /curb/alert` | Turn off and forget the place. |
+
+When a quick post goes up, everyone whose enabled alert circle holds it gets a bell notification
+`curb_free` (`data: { miles, until }`) and a push (saved-search alerts switch), at most
+`CURB_ALERTS_PER_DAY` a day each, never for their own posts or across a block either way.
 
 ## Saved sales & route
 

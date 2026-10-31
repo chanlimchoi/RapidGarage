@@ -93,6 +93,13 @@ export function notificationText(n) {
     const time = d.start && d.end ? clock(d.start) + '–' + clock(d.end) : '';
     return time ? t('bell.postponed', { title, day: dayName(d.date), time }) : t('bell.postponedPlain', { title, day: dayName(d.date) });
   }
+  if (n.kind === 'curb_free') {
+    return d.miles != null ? t('bell.curbFree', { title, miles: d.miles }) : t('bell.curbFreePlain', { title });
+  }
+  if (n.kind === 'early_bird') {
+    const until = d.until ? new Date(d.until) : null;
+    return until && !isNaN(until) ? t('bell.earlyBird', { title, time: until.toLocaleTimeString(intlLocale(), { hour: 'numeric', minute: until.getMinutes() ? '2-digit' : undefined }) }) : t('bell.earlyBirdPlain', { title });
+  }
   if (n.kind === 'search_match') {
     const search = n.search ? (n.search.label || (n.search.keyword ? '“' + n.search.keyword + '”' : '')) : '';
     return search ? t('bell.searchMatch', { search, title }) : t('bell.searchMatchPlain', { title });

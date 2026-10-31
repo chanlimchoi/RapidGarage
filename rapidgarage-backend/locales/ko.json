@@ -223,7 +223,10 @@
   "push.searchTitle": "저장한 검색과 맞는 새 세일이 있어요",
   "push.searchTitleNamed": "“{name}”에 맞는 새 세일",
   "push.rainCheckTitle": "세일 날 궂은 날씨가 예보됐어요",
-  "push.postponedTitle": "저장한 세일이 연기됐어요"
+  "push.postponedTitle": "저장한 세일이 연기됐어요",
+  "push.earlyBirdTitle": "얼리버드 입장이 열렸어요",
+  "curb.defaultTitle": "길가에 무료 나눔",
+  "push.curbFreeTitle": "{miles}마일 거리 길가에 무료 나눔"
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -674,6 +677,21 @@
   "Postpone by 1 to 14 days.": "1일에서 14일 사이로 연기하세요.",
   "Pick at least one new day.": "새 날짜를 하나 이상 고르세요.",
   "Pick a later start than the current one to postpone.": "연기하려면 지금보다 늦은 시작 시간을 고르세요.",
-  "Invalid schedule.": "일정이 올바르지 않아요."
+  "Invalid schedule.": "일정이 올바르지 않아요.",
+  "Type what you are looking for.": "찾는 물건을 입력하세요.",
+  "Early-bird access is 15 minutes to 3 hours before the start, in 15-minute steps.": "얼리버드 입장은 시작 15분~3시간 전으로, 15분 단위로 설정할 수 있습니다.",
+  "Invalid curb post.": "길가 나눔 게시물이 올바르지 않습니다.",
+  "Keep the title to {n} characters.": "제목은 {n}자 이내로 입력하세요.",
+  "Keep the note to {n} characters.": "메모는 {n}자 이내로 입력하세요.",
+  "Choose 1 to {n} hours.": "1~{n}시간 중에서 선택하세요.",
+  "That location is not valid.": "위치가 올바르지 않습니다.",
+  "Too long.": "너무 깁니다.",
+  "A 5-digit zip code.": "5자리 우편번호를 입력하세요.",
+  "Use your location, or give a street and zip code.": "내 위치를 사용하거나 도로명과 우편번호를 입력하세요.",
+  "Give a valid location.": "올바른 위치를 입력하세요.",
+  "Choose one of {list} miles.": "{list}마일 중 하나를 선택하세요.",
+  "You've posted a lot of free stuff lately. Please try again later.": "최근 무료 나눔을 많이 올리셨습니다. 나중에 다시 시도하세요.",
+  "We couldn't place that address. Use your location instead.": "해당 주소를 찾을 수 없습니다. 내 위치를 사용하세요.",
+  "Only the person who posted it can end it.": "게시한 사람만 종료할 수 있습니다."
  }
 }

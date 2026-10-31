@@ -245,7 +245,10 @@
   "push.searchTitle": "A new sale matches your saved search",
   "push.searchTitleNamed": "New match for “{name}”",
   "push.rainCheckTitle": "Bad weather is forecast for your sale",
-  "push.postponedTitle": "A sale you saved was postponed"
+  "push.postponedTitle": "A sale you saved was postponed",
+  "push.earlyBirdTitle": "Early-bird access is open",
+  "curb.defaultTitle": "Free at the curb",
+  "push.curbFreeTitle": "Free stuff at the curb, {miles} mi away"
  },
  "messages": {
   "Login required.": "Login required.",
@@ -696,6 +699,21 @@
   "Postpone by 1 to 14 days.": "Postpone by 1 to 14 days.",
   "Pick at least one new day.": "Pick at least one new day.",
   "Pick a later start than the current one to postpone.": "Pick a later start than the current one to postpone.",
-  "Invalid schedule.": "Invalid schedule."
+  "Invalid schedule.": "Invalid schedule.",
+  "Type what you are looking for.": "Type what you are looking for.",
+  "Early-bird access is 15 minutes to 3 hours before the start, in 15-minute steps.": "Early-bird access is 15 minutes to 3 hours before the start, in 15-minute steps.",
+  "Invalid curb post.": "Invalid curb post.",
+  "Keep the title to {n} characters.": "Keep the title to {n} characters.",
+  "Keep the note to {n} characters.": "Keep the note to {n} characters.",
+  "Choose 1 to {n} hours.": "Choose 1 to {n} hours.",
+  "That location is not valid.": "That location is not valid.",
+  "Too long.": "Too long.",
+  "A 5-digit zip code.": "A 5-digit zip code.",
+  "Use your location, or give a street and zip code.": "Use your location, or give a street and zip code.",
+  "Give a valid location.": "Give a valid location.",
+  "Choose one of {list} miles.": "Choose one of {list} miles.",
+  "You've posted a lot of free stuff lately. Please try again later.": "You've posted a lot of free stuff lately. Please try again later.",
+  "We couldn't place that address. Use your location instead.": "We couldn't place that address. Use your location instead.",
+  "Only the person who posted it can end it.": "Only the person who posted it can end it."
  }
 }

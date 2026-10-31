@@ -223,7 +223,10 @@
   "push.searchTitle": "有新甩卖符合你保存的搜索",
   "push.searchTitleNamed": "“{name}”有新匹配",
   "push.rainCheckTitle": "你的甩卖当天预报有恶劣天气",
-  "push.postponedTitle": "你收藏的甩卖已延期"
+  "push.postponedTitle": "你收藏的甩卖已延期",
+  "push.earlyBirdTitle": "抢先入场已开放",
+  "curb.defaultTitle": "路边免费自取",
+  "push.curbFreeTitle": "{miles} 英里外路边有免费物品"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -674,6 +677,21 @@
   "Postpone by 1 to 14 days.": "请延期 1 到 14 天。",
   "Pick at least one new day.": "请至少选择一个新日期。",
   "Pick a later start than the current one to postpone.": "延期需选择比当前更晚的开始时间。",
-  "Invalid schedule.": "日程无效。"
+  "Invalid schedule.": "日程无效。",
+  "Type what you are looking for.": "请输入您要找的东西。",
+  "Early-bird access is 15 minutes to 3 hours before the start, in 15-minute steps.": "抢先入场可设为开始前 15 分钟到 3 小时，以 15 分钟为单位。",
+  "Invalid curb post.": "路边自取帖子无效。",
+  "Keep the title to {n} characters.": "标题请不超过 {n} 个字符。",
+  "Keep the note to {n} characters.": "备注请不超过 {n} 个字符。",
+  "Choose 1 to {n} hours.": "请选择 1 到 {n} 小时。",
+  "That location is not valid.": "该位置无效。",
+  "Too long.": "太长了。",
+  "A 5-digit zip code.": "请输入 5 位邮政编码。",
+  "Use your location, or give a street and zip code.": "请使用你的位置，或填写街道和邮政编码。",
+  "Give a valid location.": "请提供有效的位置。",
+  "Choose one of {list} miles.": "请选择 {list} 英里之一。",
+  "You've posted a lot of free stuff lately. Please try again later.": "你最近发布了很多免费物品，请稍后再试。",
+  "We couldn't place that address. Use your location instead.": "无法定位该地址，请改用你的位置。",
+  "Only the person who posted it can end it.": "只有发布者可以结束它。"
  }
 }
