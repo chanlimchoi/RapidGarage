@@ -19,6 +19,9 @@ module.exports = (sequelize, DataTypes) => {
     // Set by a moderator: can still read conversations but not send or start them.
     messagingBanned: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     messagingBannedAt: { type: DataTypes.DATE, allowNull: true },
+    // Buyer safety (lib/safety.js): set when repeat reports hid this seller's
+    // listings pending admin review; new posts start hidden while set.
+    safetyHoldAt: { type: DataTypes.DATE, allowNull: true },
     // UI, email and flyer language: 'en' | 'es' | 'ko' | 'zh-CN' (lib/i18n.js); null = not chosen.
     // New saved sales get a morning-of reminder (lib/reminders.js).
     remindSaved: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },

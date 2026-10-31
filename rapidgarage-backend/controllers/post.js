@@ -146,6 +146,16 @@ router.get('/:id/summary', requireLogin, loadPost, requireOwner, async (req, res
   try { return res.json(await sellerTools.summary(req.post)); } catch (err) { return serverError(res, err); }
 });
 
+// Printable after-sale report (owner only): itemized sales and earnings from
+// recorded prices plus count-only reach (lib/saleReport.js).
+router.get('/:id/report', requireLogin, loadPost, requireOwner, async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    const full = await models.Post.findByPk(req.post.id, { include: [{ model: models.SaleDay, as: 'saleDays' }] });
+    return res.json(await require('../lib/saleReport').build(full));
+  } catch (err) { return serverError(res, err); }
+});
+
 // "Write title & description with AI": a suggestion only; the seller edits
 // and saves it with PUT /:id. body: { oneTimeKey? } (same key rules as item drafts).
 router.post('/:id/describe', requireLogin, loadPost, requireOwner, async (req, res) => {
@@ -233,6 +243,7 @@ router.get('/:id', loadPost, async (req, res) => {
     const ev = (await events.eventsForPosts([req.post.id], req.user)).get(req.post.id) || null;
     const json = Object.assign(req.post.toJSON(), { seller }, ev ? { event: ev } : {});
     await curbside.annotate([json], req.user, { marks: true });
+    await require('../lib/earlyBird').annotate(json, req.post, req.user);
     return res.json(json);
   } catch (err) { return serverError(res, err); }
 });

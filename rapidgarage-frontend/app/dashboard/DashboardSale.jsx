@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Pencil, QrCode, Package, Hand, MessageCircle, UsersRound, Lock, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Pencil, QrCode, Package, Hand, MessageCircle, UsersRound, Lock, ShieldCheck, FileText } from 'lucide-react';
 import { fetchDashboardSale, errorMessage } from '../api';
 import { Alert, EmptyState, SkeletonBlock } from '../components/ui';
 import { dayLines } from '../lib/schedule';
@@ -94,6 +94,7 @@ export default class DashboardSale extends React.Component {
             <Link className="btn btn-secondary btn-sm" to={'/post/' + s.id}><ExternalLink size={14} aria-hidden="true" />{t('dash.viewSale')}</Link>
             {!s.ended ? <Link className="btn btn-secondary btn-sm" to={'/post/' + s.id + '/edit'}><Pencil size={14} aria-hidden="true" />{t('post.editPost')}</Link> : null}
             <Link className="btn btn-secondary btn-sm" to={'/post/' + s.id + '/items'}><Package size={14} aria-hidden="true" />{t('dash.items')}</Link>
+            <Link className="btn btn-secondary btn-sm" to={'/post/' + s.id + '/report'}><FileText size={14} aria-hidden="true" />{t('report.link')}</Link>
             {!s.hidden ? <Link className="btn btn-secondary btn-sm" to={'/post/' + s.id + '/print'}><QrCode size={14} aria-hidden="true" />{t('post.printFlyer')}</Link> : null}
             {!s.hidden ? <DuplicateButton postId={s.id} small /> : null}
           </div>

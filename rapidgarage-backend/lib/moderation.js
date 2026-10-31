@@ -9,6 +9,8 @@ const NOTE_MAX = 500;
 const REASON_LABELS = {
   spam: 'Spam',
   scam: 'Scam or fraud',
+  suspicious: 'Suspicious listing',
+  no_show: 'Seller no-show',
   prohibited: 'Prohibited item',
   offensive: 'Offensive',
   wrong_info: 'Wrong information',
@@ -66,7 +68,8 @@ function unhide(post, transaction) {
 async function maybeAutoHide(post) {
   const n = autoHideThreshold();
   if (!n || post.hidden) return false;
-  const reporters = await models().Report.count({ where: { postId: post.id, status: 'open' }, distinct: true, col: 'reporterId' });
+  // Reporters whose flags keep getting dismissed don't count (lib/safety.js).
+  const reporters = await require('./safety').trustedOpenReporters(post.id);
   if (reporters < n) return false;
   await hide(post, null, 'auto');
   return true;

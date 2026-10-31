@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { Search, LocateFixed, Ruler, List, Map as MapIcon, ChevronLeft, ChevronRight, SearchX, Store, Plus, Tag, BellRing, Check, Package, X, UsersRound, Gift, Percent, CalendarDays } from 'lucide-react';
 import Map from './Map';
 import PostCard from './PostCard';
+import ItemResultCard from './ItemResultCard';
 import { Alert, EmptyState, SkeletonGrid, Spinner } from './ui';
-import { apiFetch, searchPosts, errorMessage, SEARCH_RADII, createAlert, fetchEvents } from '../api';
+import { apiFetch, searchPosts, searchItems, errorMessage, SEARCH_RADII, createAlert, fetchEvents } from '../api';
 import EventCard from '../events/EventCard';
 import toast from './toast';
 import { priceFieldError, formatUSD } from '../lib/price';
@@ -14,6 +15,7 @@ import { scrollBehavior } from '../lib/a11y';
 import { t } from '../i18n';
 import { searchAlertBody, searchKey } from '../lib/savedSearch';
 import * as activity from '../lib/activity';
+import { itemParams } from '../lib/itemSearch';
 
 const PAGE_SIZE = 10;
 
@@ -33,6 +35,8 @@ class PostList extends React.Component {
       curbside: false,
       // Last-hour markdown running now (?markdown=true).
       markdown: false,
+      // With words typed: show matching sales, or the individual items (GET /search/items).
+      show: 'sales', items: null,
     };
     this.handleSubmit = this.handleSubmit.bind(this);
     this.useMyLocation = this.useMyLocation.bind(this);
@@ -53,6 +57,7 @@ class PostList extends React.Component {
     if (this.state.activeKeyword) q.push('keyword=' + encodeURIComponent(this.state.activeKeyword));
     if (this.state.curbside) q.push('curbside=true');
     if (this.state.markdown) q.push('markdown=true');
+    this.refreshItems(1);
     apiFetch('/allPosts' + (q.length ? '?' + q.join('&') : ''))
       .then(({ ok, data }) => this.mounted && this.setState({ loading: false, results: ok && Array.isArray(data) ? data.filter((p) => !this.state.neighborhood || p.event) : [],
         error: ok ? '' : errorMessage(data, t('list.loadFailed')) }))
@@ -91,8 +96,24 @@ class PostList extends React.Component {
         total: data.total, resultRadius: data.radius, center: data.center ? { lat: data.center.lat, lng: data.center.lng } : null,
         notice: data.notice ? data.notice.message : '', selectedId: null, lastWhere: where, resultFilter: data.filter || null,
         events: data.events || [],
-      });
+      }, () => this.refreshItems(1));
     }).catch(() => this.mounted && this.setState({ loading: false, error: t('common.network') }));
+  }
+
+  // Items view: the same place, radius and filters, one result per item.
+  refreshItems(page) {
+    if (this.state.show !== 'items' || !this.state.activeKeyword) return Promise.resolve();
+    const seq = (this.itemSeq = (this.itemSeq || 0) + 1);
+    this.setState({ items: Object.assign({}, this.state.items, { loading: true, error: '' }) });
+    return searchItems(itemParams(this.state, page)).then(({ ok, data }) => {
+      if (!this.mounted || seq !== this.itemSeq) return;
+      this.setState({ items: ok ? Object.assign({ loading: false, error: '' }, data) : { loading: false, results: [], sales: [], error: errorMessage(data, t('list.searchFailed')) } });
+    }).catch(() => this.mounted && seq === this.itemSeq && this.setState({ items: { loading: false, results: [], sales: [], error: t('common.network') } }));
+  }
+
+  changeShow(show) {
+    if (show === 'items') activity.track('page', { page: 'item_search' });
+    this.setState({ show, selectedId: null }, () => this.refreshItems(1));
   }
 
   handleSubmit(e) {
@@ -237,8 +258,42 @@ class PostList extends React.Component {
     this.loadRecentEvents();
   }
 
+  itemsShown() { return this.state.show === 'items' && !!this.state.activeKeyword; }
+
+  renderItems() {
+    const s = this.state;
+    const it = s.items;
+    if (!it || it.loading) return <SkeletonGrid count={4} />;
+    if (it.error) return <Alert tone="danger">{it.error}</Alert>;
+    if (!it.results || !it.results.length) {
+      return (
+        <EmptyState icon={SearchX} title={t('itemSearch.none', { keyword: s.activeKeyword })}
+          action={<button type="button" className="btn btn-secondary" onClick={() => this.changeShow('sales')}>{t('itemSearch.showSales')}</button>}>
+          {it.mode === 'distance' ? t('list.noKeywordNear', { miles: it.radius }) : t('list.tryFewer')}
+        </EmptyState>
+      );
+    }
+    return (
+      <React.Fragment>
+        <div className="card-grid">
+          {it.results.map((item) => <ItemResultCard key={item.id} item={item} selected={item.sale.id === s.selectedId} onShowOnMap={item.sale.distanceMiles !== null ? this.showOnMap : null} />)}
+        </div>
+        {it.totalPages > 1 ? (
+          <nav className="pager search-pager" aria-label={t('list.pages')}>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={it.page <= 1}
+              onClick={() => this.refreshItems(it.page - 1)}><ChevronLeft size={16} aria-hidden="true" />{t('common.prev')}</button>
+            <span className="small muted">{t('common.pageOf', { page: it.page, total: it.totalPages })}</span>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={it.page >= it.totalPages}
+              onClick={() => this.refreshItems(it.page + 1)}>{t('common.next')}<ChevronRight size={16} aria-hidden="true" /></button>
+          </nav>
+        ) : null}
+      </React.Fragment>
+    );
+  }
+
   renderResults() {
     const s = this.state;
+    if (this.itemsShown()) return this.renderItems();
     if (s.loading) return <SkeletonGrid count={4} />;
     if (!s.results.length) {
       if (s.activeKeyword && !s.error) {
@@ -316,7 +371,7 @@ class PostList extends React.Component {
         <section className="hero">
           <h1>{t('list.heroTitle')}</h1>
           <p>{t('list.heroLead')}</p>
-          <p className="hero-links"><Link className="btn btn-ghost btn-sm" to="/calendar"><CalendarDays size={16} aria-hidden="true" />{t('cal.heroLink')}</Link></p>
+          <p className="hero-links"><Link className="btn btn-ghost btn-sm" to="/calendar"><CalendarDays size={16} aria-hidden="true" />{t('cal.heroLink')}</Link><Link className="btn btn-ghost btn-sm" to="/curb/new"><Gift size={16} aria-hidden="true" />{t('quick.heroLink')}</Link></p>
           <form className="search-bar map-search" onSubmit={this.handleSubmit} role="search" aria-label={t('list.searchSales')}>
             <div className="search-field search-field-what">
               <Package size={18} aria-hidden="true" />
@@ -389,7 +444,15 @@ class PostList extends React.Component {
         {s.error ? <Alert tone="danger" className="search-error">{s.error}</Alert> : null}
 
         <div className="browse-toolbar">
-          <h2 className="search-heading" aria-live="polite">{s.loading ? t('list.searching') : heading + filterNote}</h2>
+          <h2 className="search-heading" aria-live="polite">{this.itemsShown()
+            ? (s.items && !s.items.loading ? t('itemSearch.heading', { count: s.items.total || 0, keyword: s.activeKeyword }) + (s.items.mode === 'distance' ? ' · ' + t('list.withinMi', { miles: s.items.radius }) : '') : t('list.searching'))
+            : s.loading ? t('list.searching') : heading + filterNote}</h2>
+          {s.activeKeyword ? (
+            <div className="segmented show-toggle" role="group" aria-label={t('itemSearch.showLabel')}>
+              <button type="button" aria-pressed={s.show === 'sales'} onClick={() => this.changeShow('sales')}><Store size={16} aria-hidden="true" />{t('itemSearch.sales')}</button>
+              <button type="button" aria-pressed={s.show === 'items'} onClick={() => this.changeShow('items')}><Package size={16} aria-hidden="true" />{t('itemSearch.items')}</button>
+            </div>
+          ) : null}
           {this.renderAlertCta()}
           <div className="segmented view-toggle" role="group" aria-label={t('list.view')}>
             <button type="button" aria-pressed={s.view === 'list'} onClick={() => this.setState({ view: 'list' })}><List size={16} aria-hidden="true" />{t('list.list')}</button>
@@ -410,7 +473,7 @@ class PostList extends React.Component {
         <div className={'browse' + (s.view === 'map' ? ' show-map' : '')}>
           <section className="browse-list" aria-label={t('list.sales')}>{this.renderResults()}</section>
           <section className="browse-map" aria-label={t('card.map')}>
-            <Map posts={s.results} events={s.mode === 'distance' ? s.events : null} onOpenEvent={(id) => this.props.history.push('/events/' + id)} user={this.props.user} config={this.props.config}
+            <Map posts={this.itemsShown() ? ((s.items && s.items.sales) || []) : s.results} events={s.mode === 'distance' && !this.itemsShown() ? s.events : null} onOpenEvent={(id) => this.props.history.push('/events/' + id)} user={this.props.user} config={this.props.config}
               center={s.mode === 'distance' ? s.center : null} radius={s.mode === 'distance' ? s.resultRadius : null}
               selectedId={s.selectedId} onSelect={this.select} />
           </section>

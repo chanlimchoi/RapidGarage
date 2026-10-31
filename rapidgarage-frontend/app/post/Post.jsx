@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3, Gift, Percent } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, CalendarDays, Clock, Pencil, ImageOff, Navigation, ExternalLink, SearchX, Tag, Flag, MessageCircle, Package, UserRound, QrCode, UsersRound, BarChart3, Gift, Percent, Smartphone, Sunrise } from 'lucide-react';
 import { apiFetch, errorMessage, canEditPost, reportPost, REPORT_REASONS, REPORT_NOTE_MAX, startConversation } from '../api';
-import { addressLine, timeAgo, formatMiles } from '../lib/format';
+import { addressLine, timeAgo, formatMiles, formatTime, formatDay } from '../lib/format';
 import { dayLines, saleBadge, zoneNote } from '../lib/schedule';
 import { BADGE_CLASS } from '../components/PostCard';
 import { formatPrice } from '../lib/price';
@@ -13,7 +13,8 @@ import { EmptyState, SkeletonBlock, Alert, Dialog, Field, Spinner } from '../com
 import toast from '../components/toast';
 import { RatingBadge } from '../ratings/Stars';
 import ScanStats from '../print/ScanStats';
-import { fetchPrintInfo, recordView, markCurbTaken, undoCurbTaken } from '../api';
+import { fetchPrintInfo, recordView, markCurbTaken, undoCurbTaken, endCurbPost } from '../api';
+import { minutesLeft } from '../lib/curbPost';
 import { liveOffer } from '../lib/curbside';
 import { holdTime } from '../messages/holdText';
 import CurbsidePanel from './CurbsidePanel';
@@ -23,6 +24,8 @@ import RemindToggle from '../saved/RemindToggle';
 import AddToCalendar from '../components/AddToCalendar';
 import ShareButton from '../components/ShareButton';
 import ItemList from './ItemList';
+import LiveItems from './LiveItems';
+import { earlyState } from '../lib/earlyBird';
 import JoinEventPanel from '../events/JoinEventPanel';
 import FollowButton from '../follows/FollowButton';
 import DuplicateButton from './DuplicateButton';
@@ -118,6 +121,29 @@ class Post extends Component {
     }).catch(() => null);
   }
 
+  // Quick "free at the curb" post: the poster takes it down early.
+  endQuick(post) {
+    if (!window.confirm(t('quick.endConfirm'))) return;
+    endCurbPost(post.id).then(({ ok, data }) => {
+      if (!ok) return toast.error(errorMessage(data, t('quick.endFailed')));
+      toast.success(t('quick.ended'));
+      return this.setState({ post: Object.assign({}, this.state.post, data) });
+    }).catch(() => toast.error(t('common.networkShort')));
+  }
+
+  renderQuick(post, isOwner) {
+    if (!post.quickCurb || !liveOffer(post)) return null;
+    const mins = minutesLeft(post.curbside.until);
+    const left = mins >= 60 ? t('quick.hoursLeft', { count: Math.round(mins / 60) }) : t('quick.minutesLeft', { count: Math.max(1, mins) });
+    return (
+      <div className="markdown-note quick-curb-note is-now" role="status">
+        <Gift size={16} aria-hidden="true" />
+        <span>{t('quick.postNote', { time: holdTime(post.curbside.until) })} {left}</span>
+        {isOwner ? <button type="button" className="btn btn-secondary btn-sm" onClick={() => this.endQuick(post)}>{t('quick.end')}</button> : null}
+      </div>
+    );
+  }
+
   curbTaken(item) {
     if (!this.props.user) {
       toast.info(t('curb.loginToMark'));
@@ -156,8 +182,12 @@ class Post extends Component {
           return;
         }
         if (status === 409) {
-          this.setState({ reporting: false, reportOpen: false, reported: true });
-          toast.info(t('post.reportedAlready'));
+          this.setState({ reporting: false, reportOpen: false, reported: reason !== 'no_show' });
+          toast.info(reason === 'no_show' ? t('report.noShowAlready') : t('post.reportedAlready'));
+          return;
+        }
+        if (status === 403 && data && data.error && data.error.code === 'no_contact') {
+          this.setState({ reporting: false, reportError: t('report.noShowNeedsContact') });
           return;
         }
         if (status === 429) {
@@ -183,7 +213,7 @@ class Post extends Component {
               <label key={r.value} className="radio-row">
                 <input type="radio" name="report-reason" value={r.value} checked={reason === r.value}
                   onChange={() => this.setState({ reason: r.value, reportError: '' })} />
-                <span>{r.label}</span>
+                <span>{r.label}{r.hint ? <span className="field-hint" style={{ display: 'block' }}>{r.hint}</span> : null}</span>
               </label>
             ))}
           </fieldset>
@@ -198,6 +228,22 @@ class Post extends Component {
           </div>
         </form>
       </Dialog>
+    );
+  }
+
+  // Early-bird access (lib/earlyBird.js): times only for people who have it.
+  renderEarly(post, isOwner) {
+    const e = earlyState(post);
+    if (!e) return null;
+    if (e.kind === 'offered') {
+      return <p className="markdown-note early-note"><Sunrise size={16} aria-hidden="true" /><span>{t('early.offered')}</span></p>;
+    }
+    const key = isOwner ? (e.kind === 'active' ? 'early.ownerActive' : 'early.ownerUpcoming') : (e.kind === 'active' ? 'early.active' : 'early.upcoming');
+    return (
+      <p className={'markdown-note early-note' + (e.kind === 'active' ? ' is-now' : '')}>
+        <Sunrise size={16} aria-hidden="true" />
+        <span>{t(key, { from: e.kind === 'active' ? formatTime(e.startsAt) : formatDay(e.startsAt) + ' ' + formatTime(e.startsAt), until: formatTime(e.until) })}</span>
+      </p>
     );
   }
 
@@ -275,7 +321,7 @@ class Post extends Component {
         {post.hidden ? (
           <Alert tone="warning" className="hidden-banner">
             <p><strong>{t('post.hiddenTitle')}</strong>{' '}
-              {isOwner ? t('post.hiddenOwner') : t('post.hiddenOther')}</p>
+              {isOwner ? (post.hiddenSource === 'repeat' ? t('post.hiddenReview') : t('post.hiddenOwner')) : t('post.hiddenOther')}</p>
           </Alert>
         ) : null}
         <header className="post-header">
@@ -306,6 +352,8 @@ class Post extends Component {
                 <span>{describeBundle(post.bundle)}. {t('bundle.postNote')}</span>
               </p>
             ) : null}
+            {this.renderEarly(post, isOwner)}
+            {this.renderQuick(post, isOwner)}
             {this.renderGallery(post)}
             {post.description ? (
               <section>
@@ -313,6 +361,9 @@ class Post extends Component {
                 <p className="post-description">{post.description}</p>
               </section>
             ) : <p className="muted">{t('post.noDescription')}</p>}
+            {!post.hidden ? <LiveItems key={'live-' + post.id} post={post} onItems={(items) => this.setState({ post: Object.assign({}, this.state.post, { items }) })}
+              onStamp={(at) => this.setState({ post: Object.assign({}, this.state.post, { itemsUpdatedAt: at }) })} /> : null}
+            {isOwner && (post.items || []).length && !post.hidden ? <p className="sell-mode-link"><Link className="btn btn-secondary btn-sm" to={'/post/' + post.id + '/sell'}><Smartphone size={16} aria-hidden="true" />{t('left.sellMode')}</Link></p> : null}
             <ItemList post={post} owner={isOwner} user={this.props.user} onTaken={(i) => this.curbTaken(i)} onUndo={(i) => this.curbUndo(i)} onItems={(items) => this.setState({ post: Object.assign({}, post, { items }) })}
               onPhoto={(i) => { this.setState({ active: i }); const g = document.querySelector('.post-gallery'); if (g && g.scrollIntoView) g.scrollIntoView({ block: 'nearest', behavior: scrollBehavior() }); }} />
           </div>

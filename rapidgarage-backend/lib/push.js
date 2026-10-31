@@ -194,8 +194,24 @@ function reminderEve(userId, { title, postId }) {
   });
 }
 
+// Early-bird window opened at a sale the person follows the seller of or saved (lib/earlyBird.js).
+function earlyBird(userId, { title, postId }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'reminder', { title: i18n.t(lang, 'push.earlyBirdTitle'), body: title, url: '/post/' + postId, tag: 'early-' + postId });
+  });
+}
+
+// Free stuff at the curb within the person's alert radius (lib/curbAlerts.js).
+function curbFree(userId, { title, postId, miles }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'search', { title: i18n.t(lang, 'push.curbFreeTitle', { miles }), body: title, url: '/post/' + postId, tag: 'curb-' + postId });
+  });
+}
+
 module.exports = {
-  reminderEve, offer, searchMatch, OFFER_TITLES, rainCheck, salePostponed,
+  curbFree, reminderEve, offer, searchMatch, OFFER_TITLES, rainCheck, salePostponed, earlyBird,
   KINDS, MAX_PER_USER, allowedEndpoint, validKeys, publicKey, isConfigured, setSender,
   subscribe, unsubscribe, deviceCount, sendTo, message, newSale, reminder, idle, track,
 };

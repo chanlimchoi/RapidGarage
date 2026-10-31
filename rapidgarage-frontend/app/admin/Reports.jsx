@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Flag, EyeOff, Eye, Trash2, Check, ImageOff, History, Inbox, ExternalLink } from 'lucide-react';
-import { errorMessage, fetchReportQueue, fetchReportHistory, moderatePost, reasonLabel, REPORT_NOTE_MAX } from '../api';
+import { Flag, EyeOff, Eye, Trash2, Check, ImageOff, History, Inbox, ExternalLink, ShieldAlert } from 'lucide-react';
+import { errorMessage, fetchReportQueue, fetchReportHistory, moderatePost, reasonLabel, REPORT_NOTE_MAX, decideSafetyHold } from '../api';
+import { standingChip, hiddenKey, reasonCounts } from '../lib/reportSafety';
 import { Alert, EmptyState, SkeletonBlock, Spinner } from '../components/ui';
 import { displayName, timeAgo } from '../lib/format';
 import { formatPrice } from '../lib/price';
@@ -20,6 +21,9 @@ const ACTION_TEXT = {
   unhide: { get done() { return t('rep.visible'); }, get verb() { return t('rep.unhide'); } },
   delete: { get done() { return t('rep.deleted'); }, get verb() { return t('rep.delete'); } },
 };
+const HIDDEN_LABEL = { auto: () => t('rep.autoHidden'), repeat: () => t('rep.repeatHidden'), moderator: () => t('card.hidden') };
+const STANDING_LABEL = { untrusted: () => t('rep.untrusted'), reliable: () => t('rep.reliable') };
+const CONTACT_LABEL = { hold: () => t('rep.contactHold'), conversation: () => t('rep.contactConversation') };
 const OUTCOME = {
   get dismissed() { return t('rep.outDismissed'); }, get hidden() { return t('rep.outHidden'); },
   get unhidden() { return t('rep.outUnhidden'); }, get deleted() { return t('rep.outDeleted'); },
@@ -29,7 +33,7 @@ const OUTCOME = {
 export default class Reports extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { kind: 'posts', convCount: 0, view: 'open', loading: true, error: '', groups: [], hidden: [], threshold: null, history: null, page: 1, notes: {}, busy: null };
+    this.state = { kind: 'posts', convCount: 0, view: 'open', loading: true, error: '', groups: [], hidden: [], holds: [], safety: null, threshold: null, history: null, page: 1, notes: {}, busy: null };
   }
 
   componentDidMount() { this.loadQueue(); }
@@ -40,7 +44,7 @@ export default class Reports extends React.Component {
       .then(({ ok, data }) => {
         if (!ok) return this.setState({ loading: false, error: errorMessage(data, t('rep.loadFailed')) });
         const postCount = data.groups.reduce((n, g) => n + g.openCount, 0);
-        this.setState({ loading: false, groups: data.groups, hidden: data.hidden, threshold: data.autoHideThreshold, postCount, convCount: data.conversationOpenCount || 0 });
+        this.setState({ loading: false, groups: data.groups, hidden: data.hidden, holds: data.safetyHolds || [], safety: data.safety || null, threshold: data.autoHideThreshold, postCount, convCount: data.conversationOpenCount || 0 });
         this.reportCount();
         return null;
       })
@@ -97,6 +101,63 @@ export default class Reports extends React.Component {
       .catch(() => { this.setState({ busy: null }); toast.error(t('common.networkShort')); });
   }
 
+  decideHold(h, action) {
+    const name = displayName(h.user);
+    if (!window.confirm(action === 'release' ? t('rep.releaseConfirm', { name }) : t('rep.confirmHoldConfirm', { name }))) return;
+    const key = 'hold:' + h.user.id;
+    this.setState({ busy: key + ':' + action });
+    decideSafetyHold(h.user.id, action, (this.state.notes[key] || '').trim())
+      .then(({ ok, data }) => {
+        this.setState({ busy: null });
+        if (!ok) { toast.error(errorMessage(data, t('rep.actionFailed'))); return null; }
+        toast.success(action === 'release' ? t('rep.released', { count: data.posts }) : t('rep.holdConfirmed', { count: data.posts }));
+        return this.loadQueue();
+      })
+      .catch(() => { this.setState({ busy: null }); toast.error(t('common.networkShort')); });
+  }
+
+  // Buyer safety holds (lib/safety.js): sellers whose listings repeat reports hid.
+  renderHolds() {
+    const { holds, safety, busy } = this.state;
+    if (!holds.length) return safety && safety.sellerReporters ? <p className="muted small" style={{ margin: 0 }}>{t('rep.safetyRule', { n: safety.sellerReporters, days: safety.windowDays })}</p> : null;
+    return (
+      <section aria-labelledby="holds-heading" className="stack">
+        <h3 id="holds-heading" className="h4"><ShieldAlert size={18} aria-hidden="true" /> {t('rep.holdsTitle', { count: holds.length })}</h3>
+        {safety ? <p className="muted small" style={{ margin: 0 }}>{t('rep.safetyRule', { n: safety.sellerReporters, days: safety.windowDays })}</p> : null}
+        {holds.map((h) => {
+          const key = 'hold:' + h.user.id;
+          return (
+            <article key={h.user.id} className="panel report-group safety-hold">
+              <div className="report-thumb"><ShieldAlert size={22} aria-hidden="true" /></div>
+              <div>
+                <h3>{displayName(h.user)} <span className="muted small">{h.user.email}</span></h3>
+                <div className="chips">
+                  <span className="chip chip-warning"><EyeOff size={12} aria-hidden="true" />{t('rep.holdHidden', { count: h.hiddenCount })}</span>
+                  <span className="chip chip-danger"><Flag size={12} aria-hidden="true" />{t('rep.holdReporters', { count: h.reporters })}</span>
+                  {reasonCounts(h.reasons).map((r) => <span key={r.reason} className="chip">{reasonLabel(r.reason)} × {r.count}</span>)}
+                  <span className="chip">{t('rep.holdSince', { when: timeAgo(h.since) })}</span>
+                </div>
+                <div className="moderate-row">
+                  <div className="field">
+                    <label className="field-label" htmlFor={'mod-note-' + key}>{t('rep.note')}<span className="optional"> {t('ui.optional')}</span></label>
+                    <input id={'mod-note-' + key} className="input" type="text" maxLength={REPORT_NOTE_MAX} value={this.state.notes[key] || ''}
+                      onChange={(e) => this.setState({ notes: Object.assign({}, this.state.notes, { [key]: e.target.value }) })} placeholder={t('rep.notePlaceholder')} />
+                  </div>
+                  <button type="button" className="btn btn-sm btn-secondary" disabled={!!busy} onClick={() => this.decideHold(h, 'release')}>
+                    {busy === key + ':release' ? <Spinner /> : <Eye size={14} aria-hidden="true" />}{t('rep.release')}
+                  </button>
+                  <button type="button" className="btn btn-sm btn-primary" disabled={!!busy} onClick={() => this.decideHold(h, 'confirm')}>
+                    {busy === key + ':confirm' ? <Spinner /> : <EyeOff size={14} aria-hidden="true" />}{t('rep.confirmHold')}
+                  </button>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </section>
+    );
+  }
+
   renderActions(post, title, actions) {
     const busy = this.state.busy;
     const noteId = 'mod-note-' + post;
@@ -140,7 +201,8 @@ export default class Reports extends React.Component {
           <div className="chips">
             <span className="chip chip-danger"><Flag size={12} aria-hidden="true" />{t('rep.openReports', { count: g.openCount })}</span>
             {Object.keys(g.reasons).map((r) => <span key={r} className="chip">{reasonLabel(r)} × {g.reasons[r]}</span>)}
-            {p && p.hidden ? <span className="chip chip-warning"><EyeOff size={12} aria-hidden="true" />{p.hiddenSource === 'auto' ? t('rep.autoHidden') : t('card.hidden')}</span> : null}
+            {p && p.hidden ? <span className="chip chip-warning"><EyeOff size={12} aria-hidden="true" />{HIDDEN_LABEL[hiddenKey(p.hiddenSource)]()}</span> : null}
+            {g.sellerOnHold ? <span className="chip chip-danger"><ShieldAlert size={12} aria-hidden="true" />{t('rep.sellerOnHold')}</span> : null}
             <span className="chip">{t('rep.last', { when: timeAgo(g.lastReportedAt) })}</span>
           </div>
           {p && p.description ? <p className="muted" style={{ margin: 0 }}>{p.description}</p> : null}
@@ -148,6 +210,8 @@ export default class Reports extends React.Component {
             {g.reports.map((r) => (
               <li key={r.id}>
                 <strong>{reasonLabel(r.reason)}</strong> · {r.reporter ? r.reporter.email : t('rep.deletedUser')} · {timeAgo(r.createdAt)}
+                {r.contact && CONTACT_LABEL[r.contact] ? <span className="chip">{CONTACT_LABEL[r.contact]()}</span> : null}
+                {(() => { const c = standingChip(r.reporter && r.reporter.standing); return c ? <span className={'chip chip-' + c.tone} title={t('rep.standingTitle', { dismissed: r.reporter.standing.dismissed, upheld: r.reporter.standing.upheld })}>{STANDING_LABEL[c.key]()}</span> : null; })()}
                 {r.note ? <div><q>{r.note}</q></div> : null}
               </li>
             ))}
@@ -165,6 +229,7 @@ export default class Reports extends React.Component {
         <p className="muted" style={{ margin: 0 }}>
           {threshold ? t('rep.threshold', { n: threshold }) : t('rep.noAutoHide')}
         </p>
+        {this.renderHolds()}
         {groups.length ? groups.map((g) => this.renderGroup(g)) : <EmptyState icon={Inbox} title={t('rep.noneOpen')}>{t('rep.nothing')}</EmptyState>}
         {hidden.length ? (
           <section aria-labelledby="hidden-heading" className="stack">
@@ -175,7 +240,7 @@ export default class Reports extends React.Component {
                 <div>
                   <h3><Link to={'/post/' + p.id}>{p.title}</Link></h3>
                   <div className="chips">
-                    <span className="chip chip-warning"><EyeOff size={12} aria-hidden="true" />{p.hiddenSource === 'auto' ? t('rep.autoHidden') : t('card.hidden')} {p.hiddenAt ? timeAgo(p.hiddenAt) : ''}</span>
+                    <span className="chip chip-warning"><EyeOff size={12} aria-hidden="true" />{HIDDEN_LABEL[hiddenKey(p.hiddenSource)]()} {p.hiddenAt ? timeAgo(p.hiddenAt) : ''}</span>
                     {p.owner ? <span className="chip">{p.owner.email}</span> : null}
                   </div>
                   {this.renderActions(p.id, p.title, ['unhide', 'delete'])}
