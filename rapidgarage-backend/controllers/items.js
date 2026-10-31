@@ -112,8 +112,8 @@ router.post('/', requireLogin, owner, async (req, res) => {
     const sold = value.sold;
     delete value.sold;
     const item = await models.SaleItem.create(Object.assign(value, soldFields(sold || false), { postId: req.post.id, position: (Number.isFinite(last) ? last : -1) + 1 }));
-    res.status(201).json(item);
     await whatsLeft.touched(req.post);
+    res.status(201).json(item);
     // A new item may be what someone is looking for.
     if (!item.sold) wanted.schedulePost(req.post.id);
     if (!item.sold) alerts.schedulePostMatch(req.post, { keywordOnly: true });
@@ -144,8 +144,8 @@ router.post('/bulk', requireLogin, owner, async (req, res) => {
     const rows = values.map((v) => { const sold = v.sold; delete v.sold; return Object.assign(v, soldFields(sold || false), { postId: req.post.id, position: pos++ }); });
     const created = await models.sequelize.transaction((transaction) => models.SaleItem.bulkCreate(rows, { transaction }));
     const fresh = await models.SaleItem.findAll({ where: { id: created.map((c) => c.id).filter(Boolean) } });
-    res.status(201).json({ items: sorted(fresh.length ? fresh : created).map((i) => i.toJSON()) });
     await whatsLeft.touched(req.post);
+    res.status(201).json({ items: sorted(fresh.length ? fresh : created).map((i) => i.toJSON()) });
     wanted.schedulePost(req.post.id);
     alerts.schedulePostMatch(req.post, { keywordOnly: true });
     require('../lib/aiReview').schedule(req.post.id);
