@@ -8,6 +8,8 @@ const holds = require('../lib/holds');
 const PW = 'correct-horse';
 const H = 3600000;
 const ymd = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(d);
+// Calendar days after `d` in New York (24-hour steps repeat a date across DST changes).
+const daysAfter = (d, n) => { const t = new Date(ymd(d) + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 
 describe('item holds', function () {
   this.timeout(30000);
@@ -39,8 +41,8 @@ describe('item holds', function () {
     [buyer2] = await user('cal@example.com', 'Cal');
     [stranger] = await user('sue@example.com', 'Sue');
     // Two-day sale: tomorrow and the day after, 8am-6pm New York.
-    const d1 = ymd(new Date(t0.getTime() + 24 * H));
-    const d2 = ymd(new Date(t0.getTime() + 48 * H));
+    const d1 = daysAfter(t0, 1);
+    const d2 = daysAfter(t0, 2);
     const p = await seller.post('/post').send({ title: 'Moving sale', street: '1 Main St', city: 'Brooklyn', state: 'NY', zipCode: '11201',
       schedule: { timeZone: 'America/New_York', days: [{ date: d1, start: '08:00', end: '18:00' }, { date: d2, start: '08:00', end: '18:00' }] } });
     assert.strictEqual(p.status, 201, JSON.stringify(p.body));
