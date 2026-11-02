@@ -226,7 +226,10 @@
   "push.postponedTitle": "你收藏的甩卖已延期",
   "push.earlyBirdTitle": "抢先入场已开放",
   "curb.defaultTitle": "路边免费自取",
-  "push.curbFreeTitle": "{miles} 英里外路边有免费物品"
+  "push.curbFreeTitle": "{miles} 英里外路边有免费物品",
+  "push.checklistTitle": {
+   "other": "今天有 {count} 件甩卖准备事项"
+  }
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -702,6 +705,11 @@
   "Invalid offer rules.": "出价规则无效。",
   "Set it below the asking price (offers are always below it).": "请设为低于标价（出价总是低于标价）。",
   "The floor has to be below the auto-accept price.": "最低价必须低于自动接受价。",
-  "Choose a percentage from 1 to 99.": "请选择 1 到 99 之间的百分比。"
+  "Choose a percentage from 1 to 99.": "请选择 1 到 99 之间的百分比。",
+  "Invalid checklist item.": "清单事项无效。",
+  "Write what needs doing.": "请写下要做的事。",
+  "Choose 0 to 14 days before the sale.": "请选择甩卖前 0 到 14 天。",
+  "Checklist item not found.": "找不到该清单事项。",
+  "A checklist can have up to {n} items.": "清单最多可有 {n} 项。"
  }
 }

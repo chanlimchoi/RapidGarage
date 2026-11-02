@@ -39,6 +39,8 @@ export function searchKey(s) {
 export function notificationLink(n) {
   // Neighborhood-sale notices open the event (where the organizer approves).
   if (n.kind && n.kind.indexOf('event_') === 0 && n.data && n.data.eventId) return '/events/' + n.data.eventId;
+  // The seller's sale-day checklist reminder opens the checklist.
+  if (n.kind === 'checklist' && n.post) return '/post/' + n.post.id + '/checklist';
   return n.post ? '/post/' + n.post.id : '/settings#alerts';
 }
 
@@ -92,6 +94,10 @@ export function notificationText(n) {
   if (n.kind === 'sale_postponed') {
     const time = d.start && d.end ? clock(d.start) + '–' + clock(d.end) : '';
     return time ? t('bell.postponed', { title, day: dayName(d.date), time }) : t('bell.postponedPlain', { title, day: dayName(d.date) });
+  }
+  if (n.kind === 'checklist') {
+    const count = Number(d.count) || 0;
+    return d.date && d.saleDate && d.date === d.saleDate ? t('bell.checklistToday', { title, count }) : t('bell.checklist', { title, count, day: dayName(d.saleDate || d.date) });
   }
   if (n.kind === 'curb_free') {
     return d.miles != null ? t('bell.curbFree', { title, miles: d.miles }) : t('bell.curbFreePlain', { title });

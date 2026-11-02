@@ -226,7 +226,10 @@
   "push.postponedTitle": "저장한 세일이 연기됐어요",
   "push.earlyBirdTitle": "얼리버드 입장이 열렸어요",
   "curb.defaultTitle": "길가에 무료 나눔",
-  "push.curbFreeTitle": "{miles}마일 거리 길가에 무료 나눔"
+  "push.curbFreeTitle": "{miles}마일 거리 길가에 무료 나눔",
+  "push.checklistTitle": {
+   "other": "오늘 세일 준비할 일이 {count}개 있어요"
+  }
  },
  "messages": {
   "Login required.": "로그인이 필요합니다.",
@@ -702,6 +705,11 @@
   "Invalid offer rules.": "제안 규칙이 올바르지 않습니다.",
   "Set it below the asking price (offers are always below it).": "요청 가격보다 낮게 설정하세요(제안은 항상 요청 가격보다 낮습니다).",
   "The floor has to be below the auto-accept price.": "최저가는 자동 수락 가격보다 낮아야 합니다.",
-  "Choose a percentage from 1 to 99.": "1에서 99 사이의 비율을 선택하세요."
+  "Choose a percentage from 1 to 99.": "1에서 99 사이의 비율을 선택하세요.",
+  "Invalid checklist item.": "체크리스트 항목이 올바르지 않습니다.",
+  "Write what needs doing.": "할 일을 입력하세요.",
+  "Choose 0 to 14 days before the sale.": "세일 0~14일 전 중에서 선택하세요.",
+  "Checklist item not found.": "체크리스트 항목을 찾을 수 없습니다.",
+  "A checklist can have up to {n} items.": "체크리스트에는 최대 {n}개 항목까지 넣을 수 있습니다."
  }
 }

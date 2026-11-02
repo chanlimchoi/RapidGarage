@@ -631,6 +631,24 @@ hold requests, counteroffers or bundles). The 201 response carries `auto: "accep
   you're welcome to offer more") that never states the floor; no 24 h cooldown.
 Duplicating a sale copies the sale-wide percentages.
 
+## Sale-day checklist (lib/checklist.js, controllers/checklist.js)
+
+All under `/post/:id/checklist`, seller only (401/403), `Cache-Control: no-store`, never in public JSON.
+
+| | |
+|---|---|
+| `GET /` | `{ items: [{ id, key, label, dueDays, dueDate, position, done, doneAt }], saleDate, timeZone, remind, reminderHour, limits }`. The first open creates the default list: flyers (3 days before), pricing (2), signs (1), change (1), setup (sale day). Default items have a `key` the apps translate; edited or added ones a `label`. |
+| `POST /` | `{ label (120), dueDays (0–14) }`, up to 30 items. |
+| `PUT /:itemId` | `{ label?, dueDays?, done? }` (renaming a default item turns it into the seller's own text). |
+| `DELETE /:itemId`, `POST /reset` | Remove one; back to the default list. |
+| `PUT /settings` | `{ remind }` reminders on/off (on by default, `Posts.checklistRemind`). |
+
+Due dates count calendar days back from the sale's first day in the sale's time zone. On each due
+day that still has open items, the seller gets one bell notification `checklist`
+(`data: { date, saleDate, count, keys, labels }`) and a push (reminders switch) at
+`CHECKLIST_REMINDER_HOUR` (default 9) local time; sale-day items come at the latest an hour before
+opening, and nothing is sent once the sale has opened. Runs in the alert worker tick.
+
 ## Saved sales & route
 
 All under `/saved`, login required, `Cache-Control: no-store`; nobody sees anyone else's list.

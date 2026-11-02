@@ -160,6 +160,14 @@ function salePostponed(userId, { title, postId }) {
   });
 }
 
+// The seller's sale-day checklist has open items due today (lib/checklist.js).
+function checklistDue(userId, { title, postId, count }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'reminder', { title: i18n.t(lang, 'push.checklistTitle', { count }), body: title, url: '/post/' + postId + '/checklist', tag: 'checklist-' + postId });
+  });
+}
+
 // An offer step in a conversation (lib/notify.js). Like messages, an open tab shows it live instead.
 const OFFER_TITLES = { requested: 'push.offerTitle', countered: 'push.counterTitle', accepted: 'push.offerAcceptedTitle', agreed: 'push.offerAcceptedTitle', auto_accepted: 'push.offerAcceptedTitle' };
 function offer(recipientId, { senderName, postTitle, conversationId, event }) {
@@ -211,7 +219,7 @@ function curbFree(userId, { title, postId, miles }) {
 }
 
 module.exports = {
-  curbFree, reminderEve, offer, searchMatch, OFFER_TITLES, rainCheck, salePostponed, earlyBird,
+  curbFree, reminderEve, checklistDue, offer, searchMatch, OFFER_TITLES, rainCheck, salePostponed, earlyBird,
   KINDS, MAX_PER_USER, allowedEndpoint, validKeys, publicKey, isConfigured, setSender,
   subscribe, unsubscribe, deviceCount, sendTo, message, newSale, reminder, idle, track,
 };

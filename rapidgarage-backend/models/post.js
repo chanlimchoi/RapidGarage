@@ -52,6 +52,8 @@ module.exports = (sequelize, DataTypes) => {
     // item's asking price. Seller-only (GET /post/:id/offer-rules), never in toJSON.
     offerAcceptPercent: { type: DataTypes.INTEGER, allowNull: true },
     offerFloorPercent: { type: DataTypes.INTEGER, allowNull: true },
+    // Sale-day checklist reminders (lib/checklist.js), on until the seller turns them off.
+    checklistRemind: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     hiddenAt: { type: DataTypes.DATE, allowNull: true },
     hiddenBy: { type: DataTypes.INTEGER, allowNull: true },
@@ -103,6 +105,7 @@ module.exports = (sequelize, DataTypes) => {
     Post.hasMany(models.PostViewDay, { as: 'viewDays', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.PostShareDay, { as: 'shareDays', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.SavedPost, { as: 'saves', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
+    Post.hasMany(models.SaleChecklistItem, { as: 'checklist', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.CurbsideMark, { as: 'curbsideMarks', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
     Post.hasOne(models.EventParticipant, { as: 'participation', foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
   };
@@ -127,6 +130,7 @@ module.exports = (sequelize, DataTypes) => {
     delete out.bundlePercent;
     delete out.offerAcceptPercent; // offer rules are the seller's secret (lib/offerRules.js)
     delete out.offerFloorPercent;
+    delete out.checklistRemind; // the seller's own setting (GET /post/:id/checklist)
     ['aiFlagStatus', 'aiFlagCategories', 'aiFlagReason', 'aiFlaggedAt', 'aiReviewHash', 'summarySentAt'].forEach((k) => { delete out[k]; });
     delete out.saleDays;
     return out;

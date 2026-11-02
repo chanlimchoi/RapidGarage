@@ -321,6 +321,13 @@ export const fetchSaleReport = (postId) => apiFetch('/post/' + postId + '/report
 export const fetchOfferRules = (postId) => apiFetch('/post/' + postId + '/offer-rules');
 export const saveSaleOfferRule = (postId, body) => apiFetch('/post/' + postId + '/offer-rules', jsonBody('PUT', body));
 export const saveItemOfferRule = (postId, itemId, body) => apiFetch('/post/' + postId + '/offer-rules/items/' + itemId, jsonBody('PUT', body));
+// Sale-day checklist (backend lib/checklist.js), seller only.
+export const fetchChecklist = (postId) => apiFetch('/post/' + postId + '/checklist');
+export const addChecklistItem = (postId, body) => apiFetch('/post/' + postId + '/checklist', jsonBody('POST', body));
+export const updateChecklistItem = (postId, id, body) => apiFetch('/post/' + postId + '/checklist/' + id, jsonBody('PUT', body));
+export const deleteChecklistItem = (postId, id) => apiFetch('/post/' + postId + '/checklist/' + id, { method: 'DELETE' });
+export const resetChecklist = (postId) => apiFetch('/post/' + postId + '/checklist/reset', { method: 'POST' });
+export const setChecklistRemind = (postId, remind) => apiFetch('/post/' + postId + '/checklist/settings', jsonBody('PUT', { remind }));
 
 // ---- Following sellers (lib/follows.js on the server) ----------------------
 export const fetchFollows = () => apiFetch('/follows');

@@ -248,7 +248,11 @@
   "push.postponedTitle": "Una venta que guardaste se aplazó",
   "push.earlyBirdTitle": "El acceso anticipado está abierto",
   "curb.defaultTitle": "Gratis en la acera",
-  "push.curbFreeTitle": "Cosas gratis en la acera, a {miles} mi"
+  "push.curbFreeTitle": "Cosas gratis en la acera, a {miles} mi",
+  "push.checklistTitle": {
+   "one": "{count} cosa por hacer hoy para tu venta",
+   "other": "{count} cosas por hacer hoy para tu venta"
+  }
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -724,6 +728,11 @@
   "Invalid offer rules.": "Reglas de ofertas no válidas.",
   "Set it below the asking price (offers are always below it).": "Ponlo por debajo del precio pedido (las ofertas siempre son menores).",
   "The floor has to be below the auto-accept price.": "El mínimo tiene que ser menor que el precio de aceptación automática.",
-  "Choose a percentage from 1 to 99.": "Elige un porcentaje del 1 al 99."
+  "Choose a percentage from 1 to 99.": "Elige un porcentaje del 1 al 99.",
+  "Invalid checklist item.": "Tarea de la lista no válida.",
+  "Write what needs doing.": "Escribe lo que hay que hacer.",
+  "Choose 0 to 14 days before the sale.": "Elige de 0 a 14 días antes de la venta.",
+  "Checklist item not found.": "No se encontró la tarea de la lista.",
+  "A checklist can have up to {n} items.": "Una lista puede tener hasta {n} tareas."
  }
 }

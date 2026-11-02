@@ -273,6 +273,10 @@ async function processQueue(now) {
     console.error('Early-bird pass failed:', err && err.message);
     summary.earlyBird = { error: true };
   }
+  try { summary.checklist = await require('./checklist').processDue(now); } catch (err) {
+    console.error('Checklist reminder pass failed:', err && err.message);
+    summary.checklist = { error: true };
+  }
   try { summary.weekly = await require('./weekendDigest').processWeekly(now); } catch (err) {
     console.error('Weekend digest pass failed:', err && err.message);
     summary.weekly = { error: true };

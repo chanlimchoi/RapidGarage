@@ -248,7 +248,11 @@
   "push.postponedTitle": "A sale you saved was postponed",
   "push.earlyBirdTitle": "Early-bird access is open",
   "curb.defaultTitle": "Free at the curb",
-  "push.curbFreeTitle": "Free stuff at the curb, {miles} mi away"
+  "push.curbFreeTitle": "Free stuff at the curb, {miles} mi away",
+  "push.checklistTitle": {
+   "one": "{count} thing to do for your sale today",
+   "other": "{count} things to do for your sale today"
+  }
  },
  "messages": {
   "Login required.": "Login required.",
@@ -724,6 +728,11 @@
   "Invalid offer rules.": "Invalid offer rules.",
   "Set it below the asking price (offers are always below it).": "Set it below the asking price (offers are always below it).",
   "The floor has to be below the auto-accept price.": "The floor has to be below the auto-accept price.",
-  "Choose a percentage from 1 to 99.": "Choose a percentage from 1 to 99."
+  "Choose a percentage from 1 to 99.": "Choose a percentage from 1 to 99.",
+  "Invalid checklist item.": "Invalid checklist item.",
+  "Write what needs doing.": "Write what needs doing.",
+  "Choose 0 to 14 days before the sale.": "Choose 0 to 14 days before the sale.",
+  "Checklist item not found.": "Checklist item not found.",
+  "A checklist can have up to {n} items.": "A checklist can have up to {n} items."
  }
 }
