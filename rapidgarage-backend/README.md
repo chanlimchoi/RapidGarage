@@ -670,6 +670,23 @@ Bell kinds: `donation_lot` (people whose free-at-the-curb alert circle holds the
 saved-searches switch), `donation_claimed` (seller; push on the messages switch) and `donation_update`
 (`data.event`: unclaimed, released, done, withdrawn).
 
+## Buyer wish radar (lib/wishRadar.js, controllers/radar.js)
+
+Sellers see what buyers near their sale are hunting for, counts only. Nothing new for buyers to fill
+in: it reads saved searches that have words (`SaleAlerts.keyword`, enabled, with the new per-search
+`radar` switch on; on by default, "Count toward the wish radar" in Saved searches) and active, visible,
+unexpired wanted posts (words and category). A buyer counts when the place is inside their own circle.
+Searches are grouped by their words (filler words dropped, simple singular, order ignored).
+
+| | |
+|---|---|
+| `GET /post/:id/radar` | Seller only. Terms near the sale with buyer counts, a typical max price (median, only when at least the minimum gave one), whether an unsold item already matches (`onYourList`), and wanted categories. |
+| `GET /radar?lat&lng` | Logged in. The same for any place (e.g. planning a sale). |
+
+Privacy: a term or category appears only when at least `RADAR_MIN_HUNTERS` (default 3, 2-50) different
+buyers share it; the viewer's own searches never count; the total reads "fewer than N" below the
+minimum; no names, ids, places or one-off search text are returned. Responses are `no-store`.
+
 ## Saved sales & route
 
 All under `/saved`, login required, `Cache-Control: no-store`; nobody sees anyone else's list.

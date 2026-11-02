@@ -191,6 +191,17 @@ router.put('/:id/offer-rules/items/:itemId', requireLogin, loadPost, requireOwne
   } catch (err) { return serverError(res, err); }
 });
 
+// Buyer wish radar for this sale's place (lib/wishRadar.js): count-only
+// demand from nearby saved searches and wanted posts. Owner only.
+router.get('/:id/radar', requireLogin, loadPost, requireOwner, async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    if (typeof req.post.lat !== 'number' || typeof req.post.lng !== 'number') return sendError(res, 409, 'no_location', 'This sale has no map location yet.');
+    const unsold = (req.post.items || []).filter((i) => !i.sold).map((i) => i.name);
+    return res.json(await require('../lib/wishRadar').demand({ lat: req.post.lat, lng: req.post.lng }, { viewerId: req.user.id, itemNames: unsold }));
+  } catch (err) { return serverError(res, err); }
+});
+
 // "Write title & description with AI": a suggestion only; the seller edits
 // and saves it with PUT /:id. body: { oneTimeKey? } (same key rules as item drafts).
 router.post('/:id/describe', requireLogin, loadPost, requireOwner, async (req, res) => {

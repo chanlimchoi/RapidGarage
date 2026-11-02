@@ -44,7 +44,7 @@ function validate(body, partial) {
       else values.maxPrice = p;
     }
   }
-  ['freeOnly', 'enabled'].forEach((k) => {
+  ['freeOnly', 'enabled', 'radar'].forEach((k) => {
     if (!has(k)) return;
     if (typeof body[k] !== 'boolean') errors[k] = k + ' must be true or false.';
     else values[k] = body[k];

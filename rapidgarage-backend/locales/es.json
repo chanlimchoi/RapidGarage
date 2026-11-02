@@ -751,6 +751,7 @@
   "Pick one of the pickup times offered.": "Elige una de las horas de recogida ofrecidas.",
   "You can have up to {n} donation pickups at a time.": "Puedes tener hasta {n} recogidas de donación a la vez.",
   "Only the person who claimed it can do this.": "Solo quien lo reservó puede hacer esto.",
+  "This sale has no map location yet.": "Esta venta aún no tiene ubicación en el mapa.",
   "Pick a time within the next {n} days.": "Elige una hora dentro de los próximos {n} días."
  }
 }

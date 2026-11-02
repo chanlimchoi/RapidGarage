@@ -751,6 +751,7 @@
   "Pick one of the pickup times offered.": "Pick one of the pickup times offered.",
   "You can have up to {n} donation pickups at a time.": "You can have up to {n} donation pickups at a time.",
   "Only the person who claimed it can do this.": "Only the person who claimed it can do this.",
+  "This sale has no map location yet.": "This sale has no map location yet.",
   "Pick a time within the next {n} days.": "Pick a time within the next {n} days."
  }
 }

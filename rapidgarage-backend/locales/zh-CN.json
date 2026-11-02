@@ -728,6 +728,7 @@
   "Pick one of the pickup times offered.": "请选择提供的取货时间之一。",
   "You can have up to {n} donation pickups at a time.": "同一时间最多可认领 {n} 份捐赠。",
   "Only the person who claimed it can do this.": "只有认领人可以执行此操作。",
+  "This sale has no map location yet.": "该甩卖尚无地图位置。",
   "Pick a time within the next {n} days.": "请选择未来 {n} 天内的时间。"
  }
 }

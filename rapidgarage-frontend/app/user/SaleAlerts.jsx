@@ -9,7 +9,7 @@ import { t } from '../i18n';
 import { cleanKeyword, KEYWORD_MAX } from '../lib/savedSearch';
 
 const LABEL_MAX = 80;
-const EMPTY_FORM = { id: null, label: '', keyword: '', where: 'address', address: '', coords: null, radiusMiles: '10', maxPrice: '', freeOnly: false, frequency: 'instant' };
+const EMPTY_FORM = { id: null, label: '', keyword: '', where: 'address', address: '', coords: null, radiusMiles: '10', maxPrice: '', freeOnly: false, frequency: 'instant', radar: true };
 
 export function alertSummary(a) {
   const parts = [t('list.withinMi', { miles: a.radiusMiles })];
@@ -45,7 +45,7 @@ export default class SaleAlerts extends React.Component {
   openNew() { this.setState({ form: Object.assign({}, EMPTY_FORM), errors: {} }); }
   openEdit(a) {
     this.setState({ errors: {}, form: { id: a.id, label: a.label || '', keyword: a.keyword || '', where: 'keep', address: '', coords: null,
-      radiusMiles: String(a.radiusMiles), maxPrice: a.maxPrice === null || a.maxPrice === undefined ? '' : String(a.maxPrice), freeOnly: a.freeOnly, frequency: a.frequency || 'instant' } });
+      radiusMiles: String(a.radiusMiles), maxPrice: a.maxPrice === null || a.maxPrice === undefined ? '' : String(a.maxPrice), freeOnly: a.freeOnly, frequency: a.frequency || 'instant', radar: a.radar !== false } });
   }
   setForm(patch) { this.setState((s) => ({ form: Object.assign({}, s.form, patch), errors: {} })); }
 
@@ -77,7 +77,7 @@ export default class SaleAlerts extends React.Component {
     const f = this.state.form;
     const errors = this.validate(f);
     if (Object.keys(errors).length) return this.setState({ errors });
-    const body = { label: f.label.trim() || null, keyword: cleanKeyword(f.keyword) || null, radiusMiles: Number(f.radiusMiles), freeOnly: f.freeOnly, frequency: f.frequency,
+    const body = { label: f.label.trim() || null, keyword: cleanKeyword(f.keyword) || null, radiusMiles: Number(f.radiusMiles), freeOnly: f.freeOnly, frequency: f.frequency, radar: f.radar,
       maxPrice: f.freeOnly || !f.maxPrice.trim() ? null : Number(f.maxPrice) };
     if (f.where === 'address') body.address = f.address.trim();
     if (f.where === 'here') { body.lat = f.coords.lat; body.lng = f.coords.lng; }
@@ -161,6 +161,13 @@ export default class SaleAlerts extends React.Component {
             <span className="switch-track" aria-hidden="true" />
           </span>
           <span><strong>{t('list.freeOnly')}</strong><span className="field-hint" style={{ display: 'block' }}>{t('alerts.freeHint')}</span></span>
+        </label>
+        <label className="checkbox-row" htmlFor="alert-radar">
+          <span className="switch">
+            <input id="alert-radar" type="checkbox" role="switch" checked={f.radar} onChange={(ev) => this.setForm({ radar: ev.target.checked })} />
+            <span className="switch-track" aria-hidden="true" />
+          </span>
+          <span><strong>{t('radar.optIn')}</strong><span className="field-hint" style={{ display: 'block' }}>{t('radar.optInHint')}</span></span>
         </label>
         <fieldset className="alert-frequency">
           <legend className="field-label">{t('alerts.frequency')}</legend>

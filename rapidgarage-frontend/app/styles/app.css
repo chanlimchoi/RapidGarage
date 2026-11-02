@@ -1469,3 +1469,10 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
   .report-totals > div { border-color: #999; }
   a.back-link { display: none !important; }
 }
+/* Buyer wish radar */
+.radar-list { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .6rem; }
+.radar-row { display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+.radar-term { font-weight: 600; }
+.radar-bar { height: 6px; border-radius: 3px; background: var(--surface-2, #eee); overflow: hidden; }
+.radar-bar > span { display: block; height: 100%; background: var(--primary, #2563eb); }
+.radar-privacy { display: flex; gap: .35rem; align-items: center; }

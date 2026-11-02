@@ -322,6 +322,8 @@ export const fetchOfferRules = (postId) => apiFetch('/post/' + postId + '/offer-
 export const saveSaleOfferRule = (postId, body) => apiFetch('/post/' + postId + '/offer-rules', jsonBody('PUT', body));
 export const saveItemOfferRule = (postId, itemId, body) => apiFetch('/post/' + postId + '/offer-rules/items/' + itemId, jsonBody('PUT', body));
 // Sale-day checklist (backend lib/checklist.js), seller only.
+export const fetchSaleRadar = (postId) => apiFetch('/post/' + postId + '/radar');
+export const fetchRadar = (lat, lng) => apiFetch('/radar?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng));
 export const fetchChecklist = (postId) => apiFetch('/post/' + postId + '/checklist');
 export const addChecklistItem = (postId, body) => apiFetch('/post/' + postId + '/checklist', jsonBody('POST', body));
 export const updateChecklistItem = (postId, id, body) => apiFetch('/post/' + postId + '/checklist/' + id, jsonBody('PUT', body));

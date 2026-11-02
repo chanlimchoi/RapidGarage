@@ -53,6 +53,7 @@ const QuickCurb = lazy(() => import('./post/QuickCurb'));
 const SaleReport = lazy(() => import('./post/SaleReport'));
 const OfferRules = lazy(() => import('./post/OfferRules'));
 const Checklist = lazy(() => import('./post/Checklist'));
+const WishRadar = lazy(() => import('./post/WishRadar'));
 const DonateLeftovers = lazy(() => import('./post/DonateLeftovers'));
 const Donations = lazy(() => import('./donations/Donations'));
 const DonationLot = lazy(() => import('./donations/DonationLot'));
@@ -229,6 +230,7 @@ class App extends Component {
                 <Route path='/curb/new' element={<RoutedInner component={QuickCurb} />} />
                 <Route path='/post/:id/report' element={<RoutedInner component={SaleReport} />} />
                 <Route path='/post/:id/offer-rules' element={<RoutedInner component={OfferRules} />} />
+                <Route path='/post/:id/radar' element={<RoutedInner component={WishRadar} />} />
                 <Route path='/post/:id/checklist' element={<RoutedInner component={Checklist} />} />
                 <Route path='/post/:id/donate' element={<RoutedInner component={DonateLeftovers} />} />
                 <Route path='/donations' element={<RoutedInner component={Donations} />} />

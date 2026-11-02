@@ -12,6 +12,8 @@ module.exports = (sequelize, DataTypes) => {
     maxPrice: { type: DataTypes.INTEGER, allowNull: true },
     freeOnly: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     enabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    // Counts (anonymously, in aggregate) toward the wish radar sellers see (lib/wishRadar.js).
+    radar: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     // instant: an email per new sale (batched); weekly: one weekend digest (lib/weekendDigest.js).
     frequency: { type: DataTypes.STRING(8), allowNull: false, defaultValue: 'instant', validate: { isIn: [['instant', 'weekly']] } },
     weeklySentAt: { type: DataTypes.DATE, allowNull: true },
@@ -29,7 +31,7 @@ module.exports = (sequelize, DataTypes) => {
     const v = this.get();
     return {
       id: v.id, label: v.label, keyword: v.keyword || null, lat: v.lat, lng: v.lng, radiusMiles: v.radiusMiles,
-      maxPrice: v.maxPrice, freeOnly: v.freeOnly, enabled: v.enabled, frequency: v.frequency || 'instant', createdAt: v.createdAt, updatedAt: v.updatedAt,
+      maxPrice: v.maxPrice, freeOnly: v.freeOnly, enabled: v.enabled, radar: v.radar !== false, frequency: v.frequency || 'instant', createdAt: v.createdAt, updatedAt: v.updatedAt,
     };
   };
   return SaleAlert;
