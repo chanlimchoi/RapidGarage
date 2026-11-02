@@ -2322,4 +2322,8 @@ export default {
   "rep.confirmHoldConfirm": "保持隐藏 {name} 的帖子？其未处理的举报将判定成立，新帖子在解除暂停前也会隐藏。",
   "rep.released": {"one": "已解除，{count} 个帖子恢复显示。", "other": "已解除，{count} 个帖子恢复显示。"},
   "rep.holdConfirmed": {"one": "保持隐藏：{count} 个帖子。", "other": "保持隐藏：{count} 个帖子。"},
+  "priceCheck.range": {"other": "{miles} 英里内类似物品售价 {low}–{high}，中位数 {median}（{count} 笔成交）。"},
+  "priceCheck.same": {"other": "{miles} 英里内类似物品以 {median} 售出（{count} 笔成交）。"},
+  "priceCheck.notEnough": {"other": "附近目前只有 {count} 笔类似成交；至少需要 {min} 笔才能比价。"},
+  "priceCheck.use": "使用 {price}",
 };

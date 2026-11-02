@@ -8,6 +8,7 @@ import toast from '../components/toast';
 import { t } from '../i18n';
 import { holdTime } from '../messages/holdText';
 import AiDraftPanel from './AiDraftPanel';
+import PriceCheck from './PriceCheck';
 
 const MAX_ITEMS = 100;
 const blank = () => ({ name: '', price: '', photoId: null });
@@ -32,7 +33,7 @@ function PhotoChoice({ idPrefix, photos, value, onChange }) {
   );
 }
 
-function ItemFields({ idPrefix, values, errors, photos, onChange }) {
+function ItemFields({ idPrefix, values, errors, photos, onChange, postId }) {
   return (
     <React.Fragment>
       <div className="item-form-row">
@@ -45,6 +46,7 @@ function ItemFields({ idPrefix, values, errors, photos, onChange }) {
             onChange={(e) => onChange({ price: e.target.value })} aria-invalid={errors.price ? 'true' : undefined} />
         </Field>
       </div>
+      {postId ? <PriceCheck postId={postId} name={values.name} onUse={(price) => onChange({ price })} /> : null}
       <PhotoChoice idPrefix={idPrefix} photos={photos} value={values.photoId} onChange={(photoId) => onChange({ photoId })} />
     </React.Fragment>
   );
@@ -164,7 +166,7 @@ class ItemsEditor extends Component {
       return (
         <li key={item.id} className="item-row" data-item-id={item.id}>
           <form className="item-form item-edit" onSubmit={(e) => this.saveEdit(e, item)} noValidate>
-            <ItemFields idPrefix={'edit-' + item.id} values={edit} errors={editErrors} photos={photos}
+            <ItemFields idPrefix={'edit-' + item.id} values={edit} errors={editErrors} photos={photos} postId={this.state.post.id}
               onChange={(patch) => this.setState({ edit: Object.assign({}, this.state.edit, patch) })} />
             <div className="form-actions">
               <button type="submit" className="btn btn-primary btn-sm" disabled={busy === item.id}>{busy === item.id ? <Spinner /> : <Check size={14} aria-hidden="true" />}{t('common.save')}</button>
@@ -214,7 +216,7 @@ class ItemsEditor extends Component {
           ) : null}
           <form className="card-form item-form" onSubmit={(e) => this.add(e)} noValidate aria-labelledby="add-item-title">
             <h2 id="add-item-title" className="h4">{t('items.addAnItem')}</h2>
-            <ItemFields idPrefix="new" values={draft} errors={draftErrors} photos={photos}
+            <ItemFields idPrefix="new" values={draft} errors={draftErrors} photos={photos} postId={post.id}
               onChange={(patch) => this.setState({ draft: Object.assign({}, draft, patch) })} />
             <div className="form-actions">
               <button type="submit" className="btn btn-primary" disabled={adding || items.length >= MAX_ITEMS}>{adding ? <Spinner /> : <Plus size={16} aria-hidden="true" />}{t('items.addItem')}</button>

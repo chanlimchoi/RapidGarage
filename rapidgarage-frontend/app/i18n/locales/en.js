@@ -2322,4 +2322,8 @@ export default {
   "rep.confirmHoldConfirm": "Keep {name}'s listings hidden? Their open reports are upheld, and new posts stay hidden until you release the hold.",
   "rep.released": {"one": "Released. {count} listing is visible again.", "other": "Released. {count} listings are visible again."},
   "rep.holdConfirmed": {"one": "Kept hidden: {count} listing.", "other": "Kept hidden: {count} listings."},
+  "priceCheck.range": {"one": "Similar items sold within {miles} mi: {low}–{high}, median {median} ({count} sale).", "other": "Similar items sold within {miles} mi: {low}–{high}, median {median} ({count} sales)."},
+  "priceCheck.same": {"one": "Similar items sold within {miles} mi for {median} ({count} sale).", "other": "Similar items sold within {miles} mi for {median} ({count} sales)."},
+  "priceCheck.notEnough": {"one": "Only {count} similar sale nearby so far; a price check needs {min}.", "other": "Only {count} similar sales nearby so far; a price check needs {min}."},
+  "priceCheck.use": "Use {price}",
 };

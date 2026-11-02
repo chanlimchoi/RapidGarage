@@ -2322,4 +2322,8 @@ export default {
   "rep.confirmHoldConfirm": "{name} 님의 게시물을 계속 숨길까요? 열린 신고는 인정 처리되고, 보류를 해제할 때까지 새 게시물도 숨겨져요.",
   "rep.released": {"one": "해제했어요. 게시물 {count}개가 다시 보여요.", "other": "해제했어요. 게시물 {count}개가 다시 보여요."},
   "rep.holdConfirmed": {"one": "게시물 {count}개를 계속 숨겨요.", "other": "게시물 {count}개를 계속 숨겨요."},
+  "priceCheck.range": {"other": "{miles}마일 안에서 비슷한 물건이 {low}–{high}에 팔렸어요. 중간값 {median} (판매 {count}건)."},
+  "priceCheck.same": {"other": "{miles}마일 안에서 비슷한 물건이 {median}에 팔렸어요 (판매 {count}건)."},
+  "priceCheck.notEnough": {"other": "근처에서 비슷한 판매가 아직 {count}건뿐이에요. 가격 비교는 {min}건부터 보여 드려요."},
+  "priceCheck.use": "{price}로 정하기",
 };

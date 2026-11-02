@@ -719,6 +719,7 @@
   "You have flagged a lot of no-shows today. Please try again tomorrow.": "You have flagged a lot of no-shows today. Please try again tomorrow.",
   "You already flagged this seller for a no-show this week.": "You already flagged this seller for a no-show this week.",
   "Invalid safety decision.": "Invalid safety decision.",
-  "That seller is not on a safety hold.": "That seller is not on a safety hold."
+  "That seller is not on a safety hold.": "That seller is not on a safety hold.",
+  "Type the item name first.": "Type the item name first."
  }
 }

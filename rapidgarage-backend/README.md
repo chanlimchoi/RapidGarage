@@ -594,6 +594,20 @@ When a quick post goes up, everyone whose enabled alert circle holds it gets a b
 `curb_free` (`data: { miles, until }`) and a push (saved-search alerts switch), at most
 `CURB_ALERTS_PER_DAY` a day each, never for their own posts or across a block either way.
 
+## Price check (lib/priceCheck.js)
+
+`GET /post/:id/items/price-check?name=<item name>`: the seller only (401/403 otherwise), `Cache-Control: no-store`.
+While the seller types an item name on the item editor, this shows what similar items sold for near
+the sale, from this site's own data only: items marked sold in the last `PRICE_CHECK_DAYS` days at
+visible sales within `PRICE_CHECK_RADIUS_MILES` miles, other than this sale. An item's recorded price
+is the agreed offer of its completed hold when there is one, else its listed price; free and unpriced
+items are left out. The name is reduced to up to three keywords (filler words dropped, simple
+singular); with too few matches on all of them, the most specific single keyword is used (`basis: "broad"`).
+
+Response: `{ words, sample, minSample, radiusMiles, days, enough, basis }` plus, only when
+`sample >= PRICE_CHECK_MIN_SAMPLES` (default 5), `medianCents`, `lowCents`/`highCents` (25th/75th
+percentile) and `minCents`/`maxCents`. Never item names, sales, sellers or buyers.
+
 ## Saved sales & route
 
 All under `/saved`, login required, `Cache-Control: no-store`; nobody sees anyone else's list.

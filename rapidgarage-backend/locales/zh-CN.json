@@ -697,6 +697,7 @@
   "You have flagged a lot of no-shows today. Please try again tomorrow.": "你今天标记了很多次爽约，请明天再试。",
   "You already flagged this seller for a no-show this week.": "你本周已标记过该卖家爽约。",
   "Invalid safety decision.": "安全处理请求无效。",
-  "That seller is not on a safety hold.": "该卖家未处于安全暂停状态。"
+  "That seller is not on a safety hold.": "该卖家未处于安全暂停状态。",
+  "Type the item name first.": "请先输入物品名称。"
  }
 }

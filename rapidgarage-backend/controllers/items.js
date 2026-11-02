@@ -16,6 +16,7 @@ const aiItems = require('../lib/aiItems');
 const aiAccess = require('../lib/aiAccess');
 const i18n = require('../lib/i18n');
 const whatsLeft = require('../lib/whatsLeft');
+const priceCheck = require('../lib/priceCheck');
 
 const sorted = (list) => list.slice().sort((a, b) => a.position - b.position || a.id - b.id);
 const listOf = async (post) => sorted(await models.SaleItem.findAll({ where: { postId: post.id } }));
@@ -55,6 +56,20 @@ router.get('/', async (req, res) => {
     const json = { id: req.post.id, items: (await listOf(req.post)).map((i) => i.toJSON()) };
     await curbside.annotate([json], req.user);
     return res.json({ items: json.items, max: items.MAX_ITEMS });
+  } catch (err) { return serverError(res, err); }
+});
+
+// Price check while listing (lib/priceCheck.js): median and range of what
+// similar items sold for near this sale, from this site's own sold items.
+// Aggregates only, and nothing below the minimum sample size.
+//   ?name=<item name being typed>
+router.get('/price-check', requireLogin, owner, async (req, res) => {
+  const name = req.query.name;
+  if (typeof name !== 'string' || !name.trim()) return badRequest(res, 'Invalid request.', { name: 'Type the item name first.' });
+  if (name.length > priceCheck.NAME_MAX) return badRequest(res, 'Invalid request.', { name: 'Keep it to ' + priceCheck.NAME_MAX + ' characters.' });
+  try {
+    res.set('Cache-Control', 'no-store');
+    return res.json(await priceCheck.check({ name, post: req.post }));
   } catch (err) { return serverError(res, err); }
 });
 

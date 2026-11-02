@@ -2322,4 +2322,8 @@ export default {
   "rep.confirmHoldConfirm": "¿Mantener ocultas las publicaciones de {name}? Sus reportes abiertos se confirman y las nuevas publicaciones seguirán ocultas hasta que liberes la retención.",
   "rep.released": {"one": "Liberado. {count} publicación vuelve a estar visible.", "other": "Liberado. {count} publicaciones vuelven a estar visibles."},
   "rep.holdConfirmed": {"one": "Se mantiene oculta: {count} publicación.", "other": "Se mantienen ocultas: {count} publicaciones."},
+  "priceCheck.range": {"one": "Artículos similares vendidos a menos de {miles} mi: {low}–{high}, mediana {median} ({count} venta).", "other": "Artículos similares vendidos a menos de {miles} mi: {low}–{high}, mediana {median} ({count} ventas)."},
+  "priceCheck.same": {"one": "Artículos similares se vendieron a menos de {miles} mi por {median} ({count} venta).", "other": "Artículos similares se vendieron a menos de {miles} mi por {median} ({count} ventas)."},
+  "priceCheck.notEnough": {"one": "Solo {count} venta similar cerca por ahora; la comparación de precios necesita {min}.", "other": "Solo {count} ventas similares cerca por ahora; la comparación de precios necesita {min}."},
+  "priceCheck.use": "Usar {price}",
 };
