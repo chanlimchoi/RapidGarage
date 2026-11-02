@@ -26,6 +26,7 @@ router.use('/follows', require('./follows'));
 router.use('/notifications', require('./notifications'));
 router.use('/route', require('./route'));
 router.use('/curb', require('./curb'));
+router.use('/donations', require('./donations'));
 router.use('/push', require('./push'));
 router.use('/live', require('./live'));
 router.use('/reminders', require('./reminders'));

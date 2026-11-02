@@ -229,7 +229,9 @@
   "push.curbFreeTitle": "{miles} 英里外路边有免费物品",
   "push.checklistTitle": {
    "other": "今天有 {count} 件甩卖准备事项"
-  }
+  },
+  "push.donationTitle": "{miles} 英里外有剩余物品可领取捐赠",
+  "push.donationClaimedTitle": "{name} 认领了你的捐赠物品"
  },
  "messages": {
   "Login required.": "需要登录。",
@@ -552,7 +554,6 @@
   "Choose a meetup spot or name a public place.": "请选择见面地点或填写一个公共场所。",
   "Pick a date and time to meet.": "请选择见面的日期和时间。",
   "Pick a time in the future.": "请选择将来的时间。",
-  "Pick a time within the next {n} days.": "请选择未来 {n} 天内的时间。",
   "Search for 2 to 80 characters.": "请输入 2 到 80 个字符进行搜索。",
   "Type what kind of place to look for.": "请输入要查找的地点类型。",
   "Nearby place search is not set up on this site. Pick a listed spot or type a place.": "本网站未启用附近地点搜索。请选择列表中的地点或自行输入。",
@@ -710,6 +711,23 @@
   "Write what needs doing.": "请写下要做的事。",
   "Choose 0 to 14 days before the sale.": "请选择甩卖前 0 到 14 天。",
   "Checklist item not found.": "找不到该清单事项。",
-  "A checklist can have up to {n} items.": "清单最多可有 {n} 项。"
+  "A checklist can have up to {n} items.": "清单最多可有 {n} 项。",
+  "Choose unsold items from this sale.": "请选择本次甩卖中未售出的物品。",
+  "Choose what is left to donate, or describe it in the note.": "请选择要捐赠的剩余物品，或在备注中说明。",
+  "Choose a place on the map.": "请在地图上选择地点。",
+  "Choose 1, 2, 5, 10 or 25 miles.": "请选择 1、2、5、10 或 25 英里。",
+  "There is no donation lot for this sale.": "本次甩卖没有捐赠物品。",
+  "This donation lot changed. Refresh and try again.": "捐赠物品已更新，请刷新后重试。",
+  "You can list leftovers for donation once the sale has ended.": "甩卖结束后才能发布剩余物品捐赠。",
+  "This sale is unavailable.": "该甩卖不可用。",
+  "Someone has claimed this lot. Release the claim first to change it.": "已有人认领。请先解除认领再修改。",
+  "You can't claim your own donation lot.": "不能认领自己的捐赠物品。",
+  "Invalid claim.": "认领无效。",
+  "Invalid donation lot.": "捐赠物品信息无效。",
+  "Someone already claimed this lot.": "已有人认领。",
+  "Pick one of the pickup times offered.": "请选择提供的取货时间之一。",
+  "You can have up to {n} donation pickups at a time.": "同一时间最多可认领 {n} 份捐赠。",
+  "Only the person who claimed it can do this.": "只有认领人可以执行此操作。",
+  "Pick a time within the next {n} days.": "请选择未来 {n} 天内的时间。"
  }
 }

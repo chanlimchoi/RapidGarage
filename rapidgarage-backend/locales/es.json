@@ -252,7 +252,9 @@
   "push.checklistTitle": {
    "one": "{count} cosa por hacer hoy para tu venta",
    "other": "{count} cosas por hacer hoy para tu venta"
-  }
+  },
+  "push.donationTitle": "Sobrantes para donar a {miles} mi",
+  "push.donationClaimedTitle": "{name} reservó tu lote de donación"
  },
  "messages": {
   "Login required.": "Necesitas iniciar sesión.",
@@ -575,7 +577,6 @@
   "Choose a meetup spot or name a public place.": "Elige un lugar de encuentro o escribe un lugar público.",
   "Pick a date and time to meet.": "Elige una fecha y hora para verse.",
   "Pick a time in the future.": "Elige una hora en el futuro.",
-  "Pick a time within the next {n} days.": "Elige una hora dentro de los próximos {n} días.",
   "Search for 2 to 80 characters.": "Busca entre 2 y 80 caracteres.",
   "Type what kind of place to look for.": "Escribe qué tipo de lugar buscar.",
   "Nearby place search is not set up on this site. Pick a listed spot or type a place.": "La búsqueda de lugares cercanos no está configurada en este sitio. Elige un lugar de la lista o escribe uno.",
@@ -733,6 +734,23 @@
   "Write what needs doing.": "Escribe lo que hay que hacer.",
   "Choose 0 to 14 days before the sale.": "Elige de 0 a 14 días antes de la venta.",
   "Checklist item not found.": "No se encontró la tarea de la lista.",
-  "A checklist can have up to {n} items.": "Una lista puede tener hasta {n} tareas."
+  "A checklist can have up to {n} items.": "Una lista puede tener hasta {n} tareas.",
+  "Choose unsold items from this sale.": "Elige artículos no vendidos de esta venta.",
+  "Choose what is left to donate, or describe it in the note.": "Elige lo que queda para donar o descríbelo en la nota.",
+  "Choose a place on the map.": "Elige un lugar en el mapa.",
+  "Choose 1, 2, 5, 10 or 25 miles.": "Elige 1, 2, 5, 10 o 25 millas.",
+  "There is no donation lot for this sale.": "Esta venta no tiene un lote de donación.",
+  "This donation lot changed. Refresh and try again.": "Este lote de donación cambió. Actualiza e inténtalo de nuevo.",
+  "You can list leftovers for donation once the sale has ended.": "Puedes ofrecer los sobrantes para donar cuando termine la venta.",
+  "This sale is unavailable.": "Esta venta no está disponible.",
+  "Someone has claimed this lot. Release the claim first to change it.": "Alguien reservó este lote. Libera la reserva antes de cambiarlo.",
+  "You can't claim your own donation lot.": "No puedes reservar tu propio lote de donación.",
+  "Invalid claim.": "Reserva no válida.",
+  "Invalid donation lot.": "Lote de donación no válido.",
+  "Someone already claimed this lot.": "Alguien ya reservó este lote.",
+  "Pick one of the pickup times offered.": "Elige una de las horas de recogida ofrecidas.",
+  "You can have up to {n} donation pickups at a time.": "Puedes tener hasta {n} recogidas de donación a la vez.",
+  "Only the person who claimed it can do this.": "Solo quien lo reservó puede hacer esto.",
+  "Pick a time within the next {n} days.": "Elige una hora dentro de los próximos {n} días."
  }
 }

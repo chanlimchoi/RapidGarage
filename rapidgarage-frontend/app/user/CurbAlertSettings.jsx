@@ -70,7 +70,7 @@ export default class CurbAlertSettings extends React.Component {
       <section className="settings-section card-form" id="curb-alerts" aria-labelledby="curb-alerts-heading">
         <header>
           <h2 id="curb-alerts-heading"><Gift size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />{t('curbAlert.title')}</h2>
-          <p>{t('curbAlert.lead')} <Link to="/curb/new">{t('curbAlert.postLink')}</Link></p>
+          <p>{t('curbAlert.lead')} <Link to="/curb/new">{t('curbAlert.postLink')}</Link> <Link to="/donations">{t('donation.nearbyLink')}</Link></p>
         </header>
         {s.loading ? <SkeletonBlock lines={2} /> : (
           <div className="stack">

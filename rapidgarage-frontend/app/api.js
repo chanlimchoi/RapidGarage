@@ -328,6 +328,14 @@ export const updateChecklistItem = (postId, id, body) => apiFetch('/post/' + pos
 export const deleteChecklistItem = (postId, id) => apiFetch('/post/' + postId + '/checklist/' + id, { method: 'DELETE' });
 export const resetChecklist = (postId) => apiFetch('/post/' + postId + '/checklist/reset', { method: 'POST' });
 export const setChecklistRemind = (postId, remind) => apiFetch('/post/' + postId + '/checklist/settings', jsonBody('PUT', { remind }));
+// Leftover donation lots (backend lib/donations.js).
+export const fetchDonation = (postId) => apiFetch('/donations/' + postId);
+export const saveDonation = (postId, body) => apiFetch('/donations/' + postId, jsonBody('PUT', body));
+export const deleteDonation = (postId) => apiFetch('/donations/' + postId, { method: 'DELETE' });
+export const claimDonation = (postId, body) => apiFetch('/donations/' + postId + '/claim', jsonBody('POST', body));
+export const donationStep = (postId, step) => apiFetch('/donations/' + postId + '/' + step, jsonBody('POST', {}));
+export const fetchNearbyDonations = (lat, lng, radius) => apiFetch('/donations/nearby?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng) + '&radius=' + encodeURIComponent(radius));
+export const fetchMyDonations = () => apiFetch('/donations/mine');
 
 // ---- Following sellers (lib/follows.js on the server) ----------------------
 export const fetchFollows = () => apiFetch('/follows');

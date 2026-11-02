@@ -649,6 +649,27 @@ day that still has open items, the seller gets one bell notification `checklist`
 `CHECKLIST_REMINDER_HOUR` (default 9) local time; sale-day items come at the latest an hour before
 opening, and nothing is sent once the sale has opened. Runs in the alert worker tick.
 
+## Leftover donation pickup (lib/donations.js, controllers/donations.js)
+
+After a sale has ended, the seller lists unsold items (all, or a chosen few, plus an optional note) as
+one donation lot with up to 6 pickup times in the next `DONATION_SLOT_DAYS` days (default 7; slot
+lengths 15/30/60/120 minutes, as in pickup scheduling). A nearby person, or someone picking up for an
+organization, claims it for one time; that opens (or reuses) their conversation with the seller.
+
+| | |
+|---|---|
+| `GET /donations/nearby?lat&lng&radius` | Open lots with a future pickup time within 1/2/5/10/25 miles (default 10), nearest first, with `distanceMiles`. Blocks either way and hidden sales are left out. |
+| `GET /donations/mine` | Lots I listed (open/claimed) or claimed. |
+| `GET /donations/:postId` | One lot. Others see items, note, city, seller "First L." and open slots; once claimed only `claimed: true`. The seller also sees the claimer ("First L.") and organization; both see the chosen time and conversation. |
+| `PUT /donations/:postId` | Seller: `{ itemIds?, note?, slots, minutes }` (409 `sale_not_ended` before the sale ends, 409 while claimed). |
+| `DELETE /donations/:postId` | Seller: take it down. |
+| `POST /donations/:postId/claim` | `{ slot, org? }` login + verified; one claimer (409 for the rest), up to 3 open claims per person. |
+| `POST /donations/:postId/unclaim` / `release` / `done` | Claimer gives it back / seller releases it (open again) / seller marks it picked up. |
+
+Bell kinds: `donation_lot` (people whose free-at-the-curb alert circle holds the sale; push on the
+saved-searches switch), `donation_claimed` (seller; push on the messages switch) and `donation_update`
+(`data.event`: unclaimed, released, done, withdrawn).
+
 ## Saved sales & route
 
 All under `/saved`, login required, `Cache-Control: no-store`; nobody sees anyone else's list.

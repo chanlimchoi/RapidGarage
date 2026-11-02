@@ -3,6 +3,7 @@
 // lib/notifications.js) has the final say.
 import { t, intlLocale } from '../i18n/index.js';
 import { reasonText, dayName } from './weatherText.js';
+import { donationBell, donationLink } from './donations.js';
 
 export const KEYWORD_MAX = 60;
 export const LABEL_MAX = 80;
@@ -39,6 +40,7 @@ export function searchKey(s) {
 export function notificationLink(n) {
   // Neighborhood-sale notices open the event (where the organizer approves).
   if (n.kind && n.kind.indexOf('event_') === 0 && n.data && n.data.eventId) return '/events/' + n.data.eventId;
+  if (n.kind && n.kind.indexOf('donation_') === 0) return donationLink(n);
   // The seller's sale-day checklist reminder opens the checklist.
   if (n.kind === 'checklist' && n.post) return '/post/' + n.post.id + '/checklist';
   return n.post ? '/post/' + n.post.id : '/settings#alerts';
@@ -60,6 +62,14 @@ function clock(hhmm) {
   const opts = { hour: 'numeric', minute: Number(m[2]) ? '2-digit' : undefined, timeZone: 'UTC' };
   try { return new Intl.DateTimeFormat(intlLocale(), opts).format(new Date(Date.UTC(2000, 0, 1, Number(m[1]), Number(m[2])))); } catch (e) { return hhmm; }
 }
+
+// Literal keys for the donation bell lines (lib/donations.js donationBell).
+const DONATION_TEXT = {
+  'bell.donationLot': (v) => t('bell.donationLot', v), 'bell.donationLotPlain': (v) => t('bell.donationLotPlain', v),
+  'bell.donationClaimed': (v) => t('bell.donationClaimed', v), 'bell.donationClaimedOrg': (v) => t('bell.donationClaimedOrg', v),
+  'bell.donationUnclaimed': (v) => t('bell.donationUnclaimed', v), 'bell.donationReleased': (v) => t('bell.donationReleased', v),
+  'bell.donationDone': (v) => t('bell.donationDone', v), 'bell.donationWithdrawn': (v) => t('bell.donationWithdrawn', v),
+};
 
 // One line for a notification, in the reader's language.
 export function notificationText(n) {
@@ -94,6 +104,10 @@ export function notificationText(n) {
   if (n.kind === 'sale_postponed') {
     const time = d.start && d.end ? clock(d.start) + '–' + clock(d.end) : '';
     return time ? t('bell.postponed', { title, day: dayName(d.date), time }) : t('bell.postponedPlain', { title, day: dayName(d.date) });
+  }
+  if (n.kind && n.kind.indexOf('donation_') === 0) {
+    const b = donationBell(n);
+    if (b && DONATION_TEXT[b.key]) return DONATION_TEXT[b.key](Object.assign({ title }, b.vars));
   }
   if (n.kind === 'checklist') {
     const count = Number(d.count) || 0;

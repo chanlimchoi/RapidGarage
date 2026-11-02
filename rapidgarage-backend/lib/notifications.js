@@ -19,8 +19,11 @@ function models() { return require('../models'); }
 // sale moved to a later date (lib/rainChecks.js).
 // early_bird: a sale the person follows the seller of (or saved) opened its early-bird window (lib/earlyBird.js).
 // checklist: the seller's own sale-day checklist has open items due today (lib/checklist.js).
+// donation_lot: a sale in the person's curb-alert circle listed leftovers for donation;
+// donation_claimed / donation_update: the seller's lot was claimed / a claim was cancelled,
+// released or marked picked up (lib/donations.js). data.lotId, data.event.
 // curb_free: free stuff was put out at the curb within the person's alert radius (lib/curbAlerts.js).
-const KINDS = ['search_match', 'price_drop', 'item_sold', 'reminder_eve', 'event_join', 'event_joined', 'event_approved', 'event_removed', 'rain_check', 'sale_postponed', 'early_bird', 'curb_free', 'checklist'];
+const KINDS = ['search_match', 'price_drop', 'item_sold', 'reminder_eve', 'event_join', 'event_joined', 'event_approved', 'event_removed', 'rain_check', 'sale_postponed', 'early_bird', 'curb_free', 'checklist', 'donation_lot', 'donation_claimed', 'donation_update'];
 const EVENT_KINDS = ['event_join', 'event_joined', 'event_approved', 'event_removed'];
 const LIST_MAX = 50;
 const KEEP_DAYS = 60;

@@ -218,7 +218,24 @@ function curbFree(userId, { title, postId, miles }) {
   });
 }
 
+// A sale near the person listed its leftovers for donation (lib/donations.js); curb-alert people, saved-searches switch.
+function donationNearby(userId, { title, postId, miles }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'search', { title: i18n.t(lang, 'push.donationTitle', { miles }), body: title, url: '/donations/' + postId, tag: 'donation-' + postId });
+  });
+}
+
+// Someone claimed the seller's donation lot (lib/donations.js); messages switch, like a new conversation.
+function donationClaimed(userId, { name, title, postId, conversationId }) {
+  return track(async () => {
+    const lang = await langOf(userId);
+    return sendTo(userId, 'message', { title: i18n.t(lang, 'push.donationClaimedTitle', { name: name || '' }), body: title, url: conversationId ? '/messages/' + conversationId : '/donations/' + postId, tag: 'donation-' + postId });
+  });
+}
+
 module.exports = {
+  donationNearby, donationClaimed,
   curbFree, reminderEve, checklistDue, offer, searchMatch, OFFER_TITLES, rainCheck, salePostponed, earlyBird,
   KINDS, MAX_PER_USER, allowedEndpoint, validKeys, publicKey, isConfigured, setSender,
   subscribe, unsubscribe, deviceCount, sendTo, message, newSale, reminder, idle, track,
