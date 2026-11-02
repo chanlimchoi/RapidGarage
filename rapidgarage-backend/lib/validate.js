@@ -55,6 +55,12 @@ function validatePost(body, partial, existing) {
     else if (CATEGORY_KEYS.indexOf(body.category) === -1) errors.category = 'Choose one of the categories.';
     else out.category = body.category;
   }
+  if (body.language !== undefined) {
+    const i18n = require('./i18n');
+    if (body.language === null || body.language === '') out.language = null;
+    else if (!isStr(body.language) || i18n.CODES.indexOf(body.language) === -1) errors.language = 'Choose one of the languages.';
+    else out.language = body.language;
+  }
   const bundle = validateBundle(body, existing);
   Object.assign(errors, bundle.errors);
   Object.assign(out, bundle.values);

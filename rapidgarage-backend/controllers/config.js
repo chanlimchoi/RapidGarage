@@ -18,6 +18,8 @@ router.get('/', (req, res) => {
       errorReporting: require('../lib/errorTracking').enabled(),
       // Photo-to-listing: suggestions come from a vision model (true) or from similar sales (false).
       listingSuggestAi: require('../lib/listingSuggest').isConfigured(),
+      // Multi-language listings: a translation provider is set (TRANSLATE_URL); otherwise originals + a language badge.
+      translation: require('../lib/translate').configured(),
     }))
     .catch((err) => serverError(res, err));
 });

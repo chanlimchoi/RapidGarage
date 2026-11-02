@@ -10,7 +10,7 @@ import { EARLY_CHOICES, earlyValues, earlyBody } from '../lib/earlyBird';
 import { MIN_CHOICES as BUNDLE_MINS, PERCENT_CHOICES as BUNDLE_PERCENTS, bundleValues, bundleBody, bundleErrors, describe as describeBundle } from '../lib/bundles';
 import { CATEGORIES } from '../lib/wanted';
 import { categoryLabel } from '../wanted/WantedCard';
-import { t } from '../i18n';
+import { t, LOCALES, locale } from '../i18n';
 
 const SCHEMA = {
   title: rules.title,
@@ -31,6 +31,7 @@ export function initialValues(post) {
     days: formDays(p), timeZone: (p.schedule && p.schedule.timeZone) || browserTimeZone(), description: p.description || '',
     isFree: !!p.isFree,
     category: p.category || '',
+    language: p.language || (p.id ? '' : locale()),
     priceMin: p.priceMin === null || p.priceMin === undefined ? '' : String(p.priceMin),
     priceMax: p.priceMax === null || p.priceMax === undefined ? '' : String(p.priceMax),
     ...markdownValues(p),
@@ -47,6 +48,7 @@ export function toBody(v) {
     description: v.description,
     isFree: !!v.isFree,
     category: v.category || null,
+    language: v.language || null,
     priceMin: v.isFree ? null : toPriceNumber(v.priceMin),
     priceMax: v.isFree ? null : toPriceNumber(v.priceMax),
     // A free sale has nothing to mark down.
@@ -156,6 +158,12 @@ export default class PostForm extends React.Component {
               <select className="input" name="category" value={v.category} onChange={this.change('category')} onBlur={this.blur('category')}>
                 <option value="">{t('form.categoryNone')}</option>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{categoryLabel(c)}</option>)}
+              </select>
+            </Field>
+            <Field id="language" label={t('lang.field')} optional error={this.shown('language', errors)} hint={t('lang.fieldHint')}>
+              <select className="input" name="language" value={v.language} onChange={this.change('language')} onBlur={this.blur('language')}>
+                <option value="">{t('lang.notSet')}</option>
+                {LOCALES.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.name}</option>)}
               </select>
             </Field>
             <Field id="address" label={t('form.street')} error={this.shown('street', errors)}>

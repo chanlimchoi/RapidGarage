@@ -32,6 +32,8 @@ import DuplicateButton from './DuplicateButton';
 import { scrollBehavior, photoAlt } from '../lib/a11y';
 import { categoryLabel } from '../wanted/WantedCard';
 import SaleWeather from './SaleWeather';
+import ListingLanguage from './ListingLanguage';
+import { applyTranslation } from '../lib/listingLanguage';
 import { postponedNote } from '../lib/weatherText';
 import { t } from '../i18n';
 import * as activity from '../lib/activity';
@@ -40,7 +42,7 @@ import * as activity from '../lib/activity';
 class Post extends Component {
   constructor(props) {
     super(props);
-    this.state = { post: null, error: '', active: 0, reportOpen: false, reason: '', note: '', reportError: '', reporting: false, reported: false, starting: false };
+    this.state = { post: null, error: '', active: 0, reportOpen: false, reason: '', note: '', reportError: '', reporting: false, reported: false, starting: false, translation: null, showTranslated: false };
     this.onKey = this.onKey.bind(this);
   }
 
@@ -298,6 +300,8 @@ class Post extends Component {
         </div>
       );
     }
+    // Multi-language listings: the translated text while "Translate" is on (never for the seller).
+    const shown = this.state.showTranslated && this.state.translation && this.state.translation.postId === post.id ? applyTranslation(post, this.state.translation) : post;
     const lines = dayLines(post);
     const badge = saleBadge(post);
     const zone = lines.length ? zoneNote(post) : null;
@@ -325,7 +329,9 @@ class Post extends Component {
           </Alert>
         ) : null}
         <header className="post-header">
-          <h1>{post.title}</h1>
+          <h1 lang={shown !== post ? undefined : post.language || undefined}>{shown.title}</h1>
+          <ListingLanguage post={post} config={this.props.config} translation={this.state.translation} showing={shown !== post}
+            onTranslation={(tr) => this.setState({ translation: Object.assign({ postId: post.id }, tr) })} onToggle={(on) => this.setState({ showTranslated: on })} />
           <div className="chips">
             {formatPrice(post) ? <span className={'chip chip-price' + (post.isFree ? ' chip-free' : '')}><Tag size={12} aria-hidden="true" />{formatPrice(post)}</span> : null}
             {badge ? <span className={'chip sale-badge sale-badge-' + badge.kind + ' ' + BADGE_CLASS[badge.kind]}>{badge.label}</span> : null}
@@ -358,13 +364,13 @@ class Post extends Component {
             {post.description ? (
               <section>
                 <h2 className="h4">{t('post.aboutSale')}</h2>
-                <p className="post-description">{post.description}</p>
+                <p className="post-description" lang={shown !== post ? undefined : post.language || undefined}>{shown.description}</p>
               </section>
             ) : <p className="muted">{t('post.noDescription')}</p>}
             {!post.hidden ? <LiveItems key={'live-' + post.id} post={post} onItems={(items) => this.setState({ post: Object.assign({}, this.state.post, { items }) })}
               onStamp={(at) => this.setState({ post: Object.assign({}, this.state.post, { itemsUpdatedAt: at }) })} /> : null}
             {isOwner && (post.items || []).length && !post.hidden ? <p className="sell-mode-link"><Link className="btn btn-secondary btn-sm" to={'/post/' + post.id + '/sell'}><Smartphone size={16} aria-hidden="true" />{t('left.sellMode')}</Link></p> : null}
-            <ItemList post={post} owner={isOwner} user={this.props.user} onTaken={(i) => this.curbTaken(i)} onUndo={(i) => this.curbUndo(i)} onItems={(items) => this.setState({ post: Object.assign({}, post, { items }) })}
+            <ItemList post={shown} owner={isOwner} user={this.props.user} onTaken={(i) => this.curbTaken(i)} onUndo={(i) => this.curbUndo(i)} onItems={(items) => this.setState({ post: Object.assign({}, post, { items }) })}
               onPhoto={(i) => { this.setState({ active: i }); const g = document.querySelector('.post-gallery'); if (g && g.scrollIntoView) g.scrollIntoView({ block: 'nearest', behavior: scrollBehavior() }); }} />
           </div>
           <aside className="post-aside">

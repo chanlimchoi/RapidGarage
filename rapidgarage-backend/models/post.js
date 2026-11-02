@@ -54,6 +54,8 @@ module.exports = (sequelize, DataTypes) => {
     offerFloorPercent: { type: DataTypes.INTEGER, allowNull: true },
     // Sale-day checklist reminders (lib/checklist.js), on until the seller turns them off.
     checklistRemind: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    // Language the listing is written in (en, es, ko, zh-CN); null = not set. lib/translate.js.
+    language: { type: DataTypes.STRING(10), allowNull: true },
     hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     hiddenAt: { type: DataTypes.DATE, allowNull: true },
     hiddenBy: { type: DataTypes.INTEGER, allowNull: true },

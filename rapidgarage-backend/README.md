@@ -687,6 +687,24 @@ Privacy: a term or category appears only when at least `RADAR_MIN_HUNTERS` (defa
 buyers share it; the viewer's own searches never count; the total reads "fewer than N" below the
 minimum; no names, ids, places or one-off search text are returned. Responses are `no-store`.
 
+## Multi-language listings (lib/translate.js)
+
+Each sale records the language it is written in (`Posts.language`: en, es, ko or zh-CN). New sales
+default to the seller's own language; the seller can change it in the sale form. When a reader's app
+language differs, the sale page shows a "Written in …" badge, and, if a translation provider is set,
+a "Translate to …" button that swaps the title, description and item names (with "Show original").
+
+| | |
+|---|---|
+| `GET /post/:id/translation?to=` | Public (hidden sales stay hidden). `to` defaults to the request's language. Returns `{ from, to, available, translated, reason?, title, description, items: [{ id, name }] }`; `reason` is `same`, `unavailable` (no provider), `failed` or `too_long`, and the text is then the original. Rate-limited per IP (`TRANSLATE_PER_MINUTE`, default 20). |
+
+The provider is optional and off by default: set `TRANSLATE_URL` to any LibreTranslate-compatible
+server (`POST <url>/translate`; self-hosting LibreTranslate is free), plus `TRANSLATE_API_KEY` only if
+that server requires one, and `TRANSLATE_TIMEOUT_MS` (default 8000). Each distinct text is sent once and
+cached in `Translations` by a hash of (source, target, text), so edits only resend what changed. Any
+provider error falls back to the original text. App buttons and labels always come from the existing
+UI catalogs (`app/i18n/locales`); `/config` reports `translation: true|false`.
+
 ## Saved sales & route
 
 All under `/saved`, login required, `Cache-Control: no-store`; nobody sees anyone else's list.

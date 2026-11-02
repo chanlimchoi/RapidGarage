@@ -97,6 +97,8 @@ router.post('/', requireLogin, requireVerified, async (req, res) => {
   if (sched.value) { delete values.startDate; delete values.endDate; }
   try {
     // Explicit price defaults so the 201 body always has all three price fields.
+    // The listing's language defaults to the seller's own (lib/translate.js).
+    if (values.language === undefined) values.language = require('../lib/i18n').normalize(req.user.locale) || null;
     let post = await Post.create(Object.assign({ priceMin: null, priceMax: null, isFree: false }, values, { userId: req.user.id }));
     if (sched.value) await schedule.saveSchedule(models, post, sched.value);
     // Geocoding never fails the request; without a key the post just has no coordinates.
@@ -188,6 +190,21 @@ router.put('/:id/offer-rules/items/:itemId', requireLogin, loadPost, requireOwne
     if (parsed.errors) return badRequest(res, 'Invalid offer rules.', parsed.errors);
     await item.update(parsed.values);
     return res.json(await offerRulesView(req.post));
+  } catch (err) { return serverError(res, err); }
+});
+
+// Multi-language listings (lib/translate.js): the sale's title, description
+// and item names in ?to= (default: the request's language). Falls back to the
+// original text (translated: false + reason) without a provider.
+const translateLimiter = require('../lib/rateLimit').limiter({ name: 'translate', windowMs: 60000,
+  max: () => { const n = Number(process.env.TRANSLATE_PER_MINUTE); return Number.isInteger(n) && n > 0 && n <= 1000 ? n : 20; } });
+router.get('/:id/translation', translateLimiter, loadPost, async (req, res) => {
+  const i18n = require('../lib/i18n');
+  const to = req.query.to === undefined ? i18n.requestLang(req) : (typeof req.query.to === 'string' && i18n.CODES.indexOf(req.query.to) >= 0 ? req.query.to : null);
+  if (!to) return badRequest(res, 'Invalid request.', { to: 'Choose one of the languages.' });
+  try {
+    res.set('Cache-Control', 'private, no-cache');
+    return res.json(await require('../lib/translate').listing(req.post, to));
   } catch (err) { return serverError(res, err); }
 });
 

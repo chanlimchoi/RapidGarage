@@ -1476,3 +1476,6 @@ button.cal-menu-item { width: 100%; background: none; border: 0; font: inherit; 
 .radar-bar { height: 6px; border-radius: 3px; background: var(--surface-2, #eee); overflow: hidden; }
 .radar-bar > span { display: block; height: 100%; background: var(--primary, #2563eb); }
 .radar-privacy { display: flex; gap: .35rem; align-items: center; }
+/* Multi-language listings */
+.listing-language { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .25rem 0 .5rem; }
+.chip-language { gap: .25rem; }
