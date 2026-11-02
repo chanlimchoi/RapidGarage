@@ -61,6 +61,9 @@ const SUMMARY = {
   cancelled: (n) => 'Cancelled the hold on “' + n + '”.',
   expired: (n) => 'The hold on “' + n + '” expired.',
   sold: (n) => '“' + n + '” was sold.',
+  // Offer rules (lib/offerRules.js), attributed to the seller.
+  auto_accepted: (n, c) => 'Accepted ' + usd(c) + ' for “' + n + '” automatically.',
+  auto_declined: (n, c) => 'Thanks for the offer' + (c ? ' of ' + usd(c) : '') + ' on “' + n + '”. The seller can’t go that low; you’re welcome to offer more.',
   // Bundle deals (lib/bundles.js): n is the item list, c the bundle total.
   bundle_requested: (n, c) => 'Asked for a bundle: ' + n + (c ? ' for ' + usd(c) : '') + '.',
   bundle_accepted: (n, c) => 'Accepted the bundle: ' + n + (c ? ' for ' + usd(c) : '') + '.',
@@ -151,6 +154,39 @@ function holdJSON(h, me) {
   };
 }
 
+// Reserve the item for a pending hold and mark the hold accepted: the item is
+// reserved first, atomically, so two accepts can't both win it; other pending
+// requests for the item are then declined as taken. `by`: who acts (the seller
+// accepting, the buyer taking a counteroffer, or the seller's offer rule);
+// `fields`: extra hold fields (the agreed price); `guard`: extra conditions on
+// the hold row. -> { hold } | { status, code, message }
+async function reserveHold(h, { by, hours, fields, event, cents, guard }) {
+  const m = models();
+  const post = await m.Post.findByPk(h.postId, { include: [{ model: m.SaleDay, as: 'saleDays' }] });
+  const item = h.item || await m.SaleItem.findByPk(h.itemId);
+  const t = now();
+  if (!post || !item || item.sold) return { status: 409, code: 'item_unavailable', message: 'This item is no longer available.' };
+  if (item.reservedUntil && new Date(item.reservedUntil) > t) return { status: 409, code: 'item_reserved', message: 'This item is already reserved.' };
+  const expiresAt = acceptExpiry(h, post, hours, t);
+  if (expiresAt <= t) return { status: 409, code: 'sale_ended', message: 'This sale has ended.' };
+  const [reserved] = await m.SaleItem.update({ reservedUntil: expiresAt },
+    { where: { id: item.id, sold: false, [Op.or]: [{ reservedUntil: null }, { reservedUntil: { [Op.lte]: t } }] } });
+  if (!reserved) return { status: 409, code: 'item_reserved', message: 'This item is already reserved.' };
+  const [changed] = await m.ItemHold.update(Object.assign({ status: 'accepted', expiresAt, decidedAt: t }, fields || {}), { where: Object.assign({ id: h.id, status: 'pending' }, guard || {}) });
+  if (!changed) {
+    await m.SaleItem.update({ reservedUntil: null }, { where: { id: item.id, reservedUntil: expiresAt } });
+    return { status: 409, code: 'hold_closed', message: 'This hold is no longer open.' };
+  }
+  await h.reload({ include: [{ model: m.SaleItem, as: 'item' }] });
+  await postEvent(h, event, by, item.name, cents);
+  const others = await m.ItemHold.findAll({ where: { itemId: item.id, status: 'pending', id: { [Op.ne]: h.id } } });
+  for (const o of others) {
+    await o.update({ status: 'declined', endedReason: 'taken', decidedAt: t });
+    await postEvent(o, 'declined', o.sellerId, item.name);
+  }
+  return { hold: h };
+}
+
 // ---- validation -----------------------------------------------------------
 // -> { value: Date|null } | { error }
 function parsePickup(raw, post, t) {
@@ -201,5 +237,5 @@ function acceptExpiry(hold, post, hours, t) {
 module.exports = {
   MAX_PER_SALE, MAX_PENDING_PER_ITEM, DECLINE_COOLDOWN_MS, PICKUP_MAX_DAYS, ACCEPT_HOURS_MAX,
   requestHours, holdHours, maxActive, maxPerDay, now, saleEnd,
-  postEvent, clearReservation, sweep, itemSold, endBetween, holdJSON, parsePickup, parseOffer, parseHours, requestExpiry, acceptExpiry,
+  postEvent, clearReservation, reserveHold, sweep, itemSold, endBetween, holdJSON, parsePickup, parseOffer, parseHours, requestExpiry, acceptExpiry,
 };

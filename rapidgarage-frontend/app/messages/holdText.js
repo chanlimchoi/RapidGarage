@@ -5,11 +5,14 @@ const MINE = {
   requested: 'hold.ev.requested.mine', accepted: 'hold.ev.accepted.mine', declined: 'hold.ev.declined.mine',
   released: 'hold.ev.released.mine', cancelled: 'hold.ev.cancelled.mine',
   offered: 'hold.ev.offered.mine', acceptedAt: 'hold.ev.acceptedAt.mine', countered: 'hold.ev.countered.mine', agreed: 'hold.ev.agreed.mine',
+  // Offer rules answered for the seller (the seller is the sender).
+  auto_accepted: 'hold.ev.autoAccepted.mine', auto_declined: 'hold.ev.autoDeclined.mine',
 };
 const OTHER = {
   requested: 'hold.ev.requested.other', accepted: 'hold.ev.accepted.other', declined: 'hold.ev.declined.other',
   released: 'hold.ev.released.other', cancelled: 'hold.ev.cancelled.other',
   offered: 'hold.ev.offered.other', acceptedAt: 'hold.ev.acceptedAt.other', countered: 'hold.ev.countered.other', agreed: 'hold.ev.agreed.other',
+  auto_accepted: 'hold.ev.autoAccepted.other', auto_declined: 'hold.ev.autoDeclined.other',
 };
 const SYSTEM = { expired: 'hold.ev.expired', sold: 'hold.ev.sold' };
 // Bundle deals: one event for the whole bundle (m.hold.bundle.items).

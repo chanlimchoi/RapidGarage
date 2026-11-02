@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Package, Plus, Pencil, Trash2, ArrowUp, ArrowDown, Check, SearchX, Lock, ImageOff } from 'lucide-react';
+import { ArrowLeft, Package, Plus, Pencil, Trash2, ArrowUp, ArrowDown, Check, SearchX, Lock, ImageOff, Gavel } from 'lucide-react';
 import { apiFetch, errorMessage } from '../api';
 import { Field, Alert, EmptyState, SkeletonBlock, Spinner, Dialog } from '../components/ui';
 import { formatCents, centsInput, validateItemFields, itemSummary, ITEM_NAME_MAX } from '../lib/items';
@@ -209,7 +209,8 @@ class ItemsEditor extends Component {
     return (
       <div className="container container-narrow items-editor">
         <Link to={'/post/' + post.id} className="back-link"><ArrowLeft size={16} aria-hidden="true" />{t('edit.backToSale')}</Link>
-        <header className="page-header"><div><h1>{t('items.title')}</h1><p>{post.title}{items.length ? ' · ' + itemSummary(items) : ''}</p></div></header>
+        <header className="page-header"><div><h1>{t('items.title')}</h1><p>{post.title}{items.length ? ' · ' + itemSummary(items) : ''}</p></div>
+          {items.length ? <div className="form-actions"><Link className="btn btn-secondary btn-sm" to={'/post/' + post.id + '/offer-rules'}><Gavel size={14} aria-hidden="true" />{t('offerRules.link')}</Link></div> : null}</header>
         <div className="stack">
           {this.props.config && this.props.config.aiItems && photos.length ? (
             <AiDraftPanel post={post} photos={photos} config={this.props.config} room={MAX_ITEMS - items.length} onAdded={(added) => this.setItems(this.items().concat(added))} />

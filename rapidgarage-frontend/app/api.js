@@ -317,6 +317,10 @@ export const describeSale = (postId, oneTimeKey) => apiFetch('/post/' + postId +
 export const duplicateSale = (postId) => apiFetch('/post/' + postId + '/duplicate', { method: 'POST' });
 export const fetchSaleSummary = (postId) => apiFetch('/post/' + postId + '/summary');
 export const fetchSaleReport = (postId) => apiFetch('/post/' + postId + '/report');
+// Offer rules (backend lib/offerRules.js): auto-accept and floor prices, seller only.
+export const fetchOfferRules = (postId) => apiFetch('/post/' + postId + '/offer-rules');
+export const saveSaleOfferRule = (postId, body) => apiFetch('/post/' + postId + '/offer-rules', jsonBody('PUT', body));
+export const saveItemOfferRule = (postId, itemId, body) => apiFetch('/post/' + postId + '/offer-rules/items/' + itemId, jsonBody('PUT', body));
 
 // ---- Following sellers (lib/follows.js on the server) ----------------------
 export const fetchFollows = () => apiFetch('/follows');

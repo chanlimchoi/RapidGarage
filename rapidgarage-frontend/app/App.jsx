@@ -51,6 +51,7 @@ const ItemsEditor = lazy(() => import('./post/ItemsEditor'));
 const SellMode = lazy(() => import('./post/SellMode'));
 const QuickCurb = lazy(() => import('./post/QuickCurb'));
 const SaleReport = lazy(() => import('./post/SaleReport'));
+const OfferRules = lazy(() => import('./post/OfferRules'));
 const EventsIndex = lazy(() => import('./events/EventsIndex'));
 const EventForm = lazy(() => import('./events/EventForm'));
 const EventPage = lazy(() => import('./events/EventPage'));
@@ -223,6 +224,7 @@ class App extends Component {
                 <Route path='/post/:id/sell' element={<RoutedInner component={SellMode} />} />
                 <Route path='/curb/new' element={<RoutedInner component={QuickCurb} />} />
                 <Route path='/post/:id/report' element={<RoutedInner component={SaleReport} />} />
+                <Route path='/post/:id/offer-rules' element={<RoutedInner component={OfferRules} />} />
                 <Route path='/post/:id/edit' element={<RoutedInner component={EditPost} />} />
                 <Route path='/post/:id' element={<RoutedInner component={Post} />} />
                 <Route path='/dashboard' element={<RoutedInner component={Dashboard} />} />

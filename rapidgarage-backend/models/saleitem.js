@@ -15,6 +15,10 @@ module.exports = (sequelize, DataTypes) => {
     curbside: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     curbsideGoneAt: { type: DataTypes.DATE, allowNull: true },
     curbsideGoneSource: { type: DataTypes.STRING(16), allowNull: true },
+    // Offer rules (lib/offerRules.js): offers at or above accept are accepted, below floor declined.
+    // Seller-only: never in toJSON.
+    offerAcceptCents: { type: DataTypes.INTEGER, allowNull: true },
+    offerFloorCents: { type: DataTypes.INTEGER, allowNull: true },
   }, {
     indexes: [
       { name: 'sale_items_post_position_idx', fields: ['postId', 'position'] },

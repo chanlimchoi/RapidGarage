@@ -608,6 +608,29 @@ Response: `{ words, sample, minSample, radiusMiles, days, enough, basis }` plus,
 `sample >= PRICE_CHECK_MIN_SAMPLES` (default 5), `medianCents`, `lowCents`/`highCents` (25th/75th
 percentile) and `minCents`/`maxCents`. Never item names, sales, sellers or buyers.
 
+## Offer rules (lib/offerRules.js)
+
+The seller sets the price at or above which an offer is accepted automatically and a floor below
+which it is politely declined; only offers in between wait for an answer. Owner only, `Cache-Control: no-store`,
+never in public post/item JSON:
+
+| | |
+|---|---|
+| `GET /post/:id/offer-rules` | `{ sale: { acceptPercent, floorPercent }, items: [{ id, name, priceCents, sold, acceptCents, floorCents, effective: { acceptCents, floorCents, source } }], limits }` |
+| `PUT /post/:id/offer-rules` | `{ acceptPercent, floorPercent }`: whole sale, 1–99 % of each item's asking price, floor below accept; null clears. |
+| `PUT /post/:id/offer-rules/items/:itemId` | `{ accept, floor }` in dollars: below the asking price, floor below accept, not on free items; null clears. Overrides the sale rule. |
+
+Applied right after a single-item offer (`POST /conversations/:id/holds` with `offerCents`; never plain
+hold requests, counteroffers or bundles). The 201 response carries `auto: "accepted" | "declined" | null`.
+* At or above auto-accept: reserved exactly as if the seller accepted (default hold length or pickup
+  time), other pending requests for the item are declined as taken, one `auto_accepted` event from the
+  seller goes into the thread and the buyer gets the "offer accepted" push. Holds are respected: not
+  while another buyer's pending request for the item is a full-price hold or an offer at least as high
+  (then the seller decides as usual).
+* Below the floor: declined (`endedReason: "floor"`) with an `auto_declined` event ("can't go that low,
+  you're welcome to offer more") that never states the floor; no 24 h cooldown.
+Duplicating a sale copies the sale-wide percentages.
+
 ## Saved sales & route
 
 All under `/saved`, login required, `Cache-Control: no-store`; nobody sees anyone else's list.

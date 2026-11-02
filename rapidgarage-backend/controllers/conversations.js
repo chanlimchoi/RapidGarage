@@ -9,6 +9,7 @@ const msg = require('../lib/messaging');
 const { publicUser } = require('../lib/people');
 const ratings = require('../lib/ratings');
 const holds = require('../lib/holds');
+const offerRules = require('../lib/offerRules');
 const activity = require('../lib/activity');
 const bundles = require('../lib/bundles');
 const meetups = require('../lib/meetups');
@@ -514,9 +515,12 @@ router.post('/:id/holds', loadConversation, async (req, res) => {
     }
     const hold = await H.create({ itemId, postId: post.id, conversationId: conv.id, buyerId: me, sellerId: conv.sellerId, status: 'pending', pickupAt: pickup.value, offerCents: offer.value, expiresAt: holds.requestExpiry(post, t) });
     hold.item = item;
-    await holds.postEvent(hold, 'requested', me, item.name, offer.value);
+    // The seller's offer rules (lib/offerRules.js) may answer right away; then
+    // that answer is the only event in the thread and the seller isn't asked.
+    const auto = offer.value ? await offerRules.apply(hold, item, post) : null;
+    if (!auto) await holds.postEvent(hold, 'requested', me, item.name, offer.value);
     await activity.onPost(req, offer.value ? 'offer' : 'hold', post);
-    return res.status(201).json(holds.holdJSON(hold, me));
+    return res.status(201).json(Object.assign(holds.holdJSON(hold, me), { auto }));
   } catch (err) { return serverError(res, err); }
 });
 

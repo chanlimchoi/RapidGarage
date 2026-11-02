@@ -698,6 +698,10 @@
   "You already flagged this seller for a no-show this week.": "你本周已标记过该卖家爽约。",
   "Invalid safety decision.": "安全处理请求无效。",
   "That seller is not on a safety hold.": "该卖家未处于安全暂停状态。",
-  "Type the item name first.": "请先输入物品名称。"
+  "Type the item name first.": "请先输入物品名称。",
+  "Invalid offer rules.": "出价规则无效。",
+  "Set it below the asking price (offers are always below it).": "请设为低于标价（出价总是低于标价）。",
+  "The floor has to be below the auto-accept price.": "最低价必须低于自动接受价。",
+  "Choose a percentage from 1 to 99.": "请选择 1 到 99 之间的百分比。"
  }
 }

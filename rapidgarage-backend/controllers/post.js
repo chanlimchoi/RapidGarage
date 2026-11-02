@@ -156,6 +156,39 @@ router.get('/:id/report', requireLogin, loadPost, requireOwner, async (req, res)
   } catch (err) { return serverError(res, err); }
 });
 
+// Offer rules (lib/offerRules.js), owner only and never public:
+//   GET /:id/offer-rules                     sale rule, each item's rule and the effective prices
+//   PUT /:id/offer-rules { acceptPercent, floorPercent }       sale-wide, % of asking price (null clears)
+//   PUT /:id/offer-rules/items/:itemId { accept, floor }       one item, dollars (null clears)
+const offerRules = require('../lib/offerRules');
+async function offerRulesView(post) {
+  const items = await models.SaleItem.findAll({ where: { postId: post.id }, order: [['position', 'ASC'], ['id', 'ASC']] });
+  return offerRules.view(post, items);
+}
+router.get('/:id/offer-rules', requireLogin, loadPost, requireOwner, async (req, res) => {
+  try { res.set('Cache-Control', 'no-store'); return res.json(await offerRulesView(req.post)); } catch (err) { return serverError(res, err); }
+});
+router.put('/:id/offer-rules', requireLogin, loadPost, requireOwner, async (req, res) => {
+  const parsed = offerRules.parseSaleRule(req.body || {});
+  if (parsed.errors) return badRequest(res, 'Invalid offer rules.', parsed.errors);
+  try {
+    res.set('Cache-Control', 'no-store');
+    await models.Post.update(parsed.values, { where: { id: req.post.id } });
+    return res.json(await offerRulesView(await models.Post.findByPk(req.post.id)));
+  } catch (err) { return serverError(res, err); }
+});
+router.put('/:id/offer-rules/items/:itemId', requireLogin, loadPost, requireOwner, async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    const item = await models.SaleItem.findOne({ where: { id: parseId(req.params.itemId) || 0, postId: req.post.id } });
+    if (!item) return notFound(res, 'Item not found.');
+    const parsed = offerRules.parseItemRule(req.body || {}, item);
+    if (parsed.errors) return badRequest(res, 'Invalid offer rules.', parsed.errors);
+    await item.update(parsed.values);
+    return res.json(await offerRulesView(req.post));
+  } catch (err) { return serverError(res, err); }
+});
+
 // "Write title & description with AI": a suggestion only; the seller edits
 // and saves it with PUT /:id. body: { oneTimeKey? } (same key rules as item drafts).
 router.post('/:id/describe', requireLogin, loadPost, requireOwner, async (req, res) => {

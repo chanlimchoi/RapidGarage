@@ -698,6 +698,10 @@
   "You already flagged this seller for a no-show this week.": "이번 주에 이미 이 판매자를 노쇼로 신고하셨습니다.",
   "Invalid safety decision.": "안전 조치 요청이 올바르지 않습니다.",
   "That seller is not on a safety hold.": "해당 판매자는 안전 보류 상태가 아닙니다.",
-  "Type the item name first.": "먼저 품목 이름을 입력하세요."
+  "Type the item name first.": "먼저 품목 이름을 입력하세요.",
+  "Invalid offer rules.": "제안 규칙이 올바르지 않습니다.",
+  "Set it below the asking price (offers are always below it).": "요청 가격보다 낮게 설정하세요(제안은 항상 요청 가격보다 낮습니다).",
+  "The floor has to be below the auto-accept price.": "최저가는 자동 수락 가격보다 낮아야 합니다.",
+  "Choose a percentage from 1 to 99.": "1에서 99 사이의 비율을 선택하세요."
  }
 }

@@ -45,29 +45,9 @@ async function canAct(req, res) {
 // (the seller accepting, or the buyer taking a counteroffer); `fields`: extra
 // hold fields (the agreed price). Sends the response.
 async function reserve(req, res, hours, fields, event, cents, guard) {
-  const h = req.hold;
-  const post = await models.Post.findByPk(h.postId, { include: [{ model: models.SaleDay, as: 'saleDays' }] });
-  const item = h.item;
-  const t = holds.now();
-  if (!post || !item || item.sold) return sendError(res, 409, 'item_unavailable', 'This item is no longer available.');
-  if (item.reservedUntil && new Date(item.reservedUntil) > t) return sendError(res, 409, 'item_reserved', 'This item is already reserved.');
-  const expiresAt = holds.acceptExpiry(h, post, hours, t);
-  if (expiresAt <= t) return sendError(res, 409, 'sale_ended', 'This sale has ended.');
-  // Reserve the item first, atomically, so two accepts can't both win it.
-  const [reserved] = await models.SaleItem.update({ reservedUntil: expiresAt },
-    { where: { id: item.id, sold: false, [Op.or]: [{ reservedUntil: null }, { reservedUntil: { [Op.lte]: t } }] } });
-  if (!reserved) return sendError(res, 409, 'item_reserved', 'This item is already reserved.');
-  const [changed] = await models.ItemHold.update(Object.assign({ status: 'accepted', expiresAt, decidedAt: t }, fields), { where: Object.assign({ id: h.id, status: 'pending' }, guard) });
-  if (!changed) { await models.SaleItem.update({ reservedUntil: null }, { where: { id: item.id, reservedUntil: expiresAt } }); return stateError(res); }
-  await h.reload({ include: [{ model: models.SaleItem, as: 'item' }] });
-  await holds.postEvent(h, event, req.user.id, item.name, cents);
-  // Other people waiting for the same item: it's taken.
-  const others = await models.ItemHold.findAll({ where: { itemId: item.id, status: 'pending', id: { [Op.ne]: h.id } } });
-  for (const o of others) {
-    await o.update({ status: 'declined', endedReason: 'taken', decidedAt: t });
-    await holds.postEvent(o, 'declined', o.sellerId, item.name);
-  }
-  return res.json(json(req, h));
+  const out = await holds.reserveHold(req.hold, { by: req.user.id, hours, fields, event, cents, guard });
+  if (!out.hold) return sendError(res, out.status, out.code, out.message);
+  return res.json(json(req, out.hold));
 }
 
 // ---- bundles (lib/bundles.js): the seller answers the whole bundle ---------

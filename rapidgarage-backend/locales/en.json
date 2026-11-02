@@ -720,6 +720,10 @@
   "You already flagged this seller for a no-show this week.": "You already flagged this seller for a no-show this week.",
   "Invalid safety decision.": "Invalid safety decision.",
   "That seller is not on a safety hold.": "That seller is not on a safety hold.",
-  "Type the item name first.": "Type the item name first."
+  "Type the item name first.": "Type the item name first.",
+  "Invalid offer rules.": "Invalid offer rules.",
+  "Set it below the asking price (offers are always below it).": "Set it below the asking price (offers are always below it).",
+  "The floor has to be below the auto-accept price.": "The floor has to be below the auto-accept price.",
+  "Choose a percentage from 1 to 99.": "Choose a percentage from 1 to 99."
  }
 }

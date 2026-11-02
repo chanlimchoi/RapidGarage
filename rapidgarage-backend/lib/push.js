@@ -161,7 +161,7 @@ function salePostponed(userId, { title, postId }) {
 }
 
 // An offer step in a conversation (lib/notify.js). Like messages, an open tab shows it live instead.
-const OFFER_TITLES = { requested: 'push.offerTitle', countered: 'push.counterTitle', accepted: 'push.offerAcceptedTitle', agreed: 'push.offerAcceptedTitle' };
+const OFFER_TITLES = { requested: 'push.offerTitle', countered: 'push.counterTitle', accepted: 'push.offerAcceptedTitle', agreed: 'push.offerAcceptedTitle', auto_accepted: 'push.offerAcceptedTitle' };
 function offer(recipientId, { senderName, postTitle, conversationId, event }) {
   return track(async () => {
     if (require('./live').isConnected(recipientId)) return 0;

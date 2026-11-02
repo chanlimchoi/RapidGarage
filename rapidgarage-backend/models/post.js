@@ -48,6 +48,10 @@ module.exports = (sequelize, DataTypes) => {
     // Post-sale summary email sent (lib/sellerTools.js).
     summarySentAt: { type: DataTypes.DATE, allowNull: true },
     // Moderation (lib/moderation.js). Hidden posts are visible only to the owner and admins.
+    // Offer rules (lib/offerRules.js): sale-wide auto-accept / floor as a % of each
+    // item's asking price. Seller-only (GET /post/:id/offer-rules), never in toJSON.
+    offerAcceptPercent: { type: DataTypes.INTEGER, allowNull: true },
+    offerFloorPercent: { type: DataTypes.INTEGER, allowNull: true },
     hidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     hiddenAt: { type: DataTypes.DATE, allowNull: true },
     hiddenBy: { type: DataTypes.INTEGER, allowNull: true },
@@ -121,6 +125,8 @@ module.exports = (sequelize, DataTypes) => {
     out.bundle = require('../lib/bundles').state(this);
     delete out.bundleMinItems;
     delete out.bundlePercent;
+    delete out.offerAcceptPercent; // offer rules are the seller's secret (lib/offerRules.js)
+    delete out.offerFloorPercent;
     ['aiFlagStatus', 'aiFlagCategories', 'aiFlagReason', 'aiFlaggedAt', 'aiReviewHash', 'summarySentAt'].forEach((k) => { delete out[k]; });
     delete out.saleDays;
     return out;
